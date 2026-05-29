@@ -1,0 +1,6 @@
+# macOS junk
+.DS_Store
+
+# Local backups created by the sync process
+*.bak
+*.bak-*

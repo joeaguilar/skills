@@ -1,0 +1,4 @@
+interface:
+  display_name: "Story Style"
+  short_description: "Capture project issue-writing conventions"
+  default_prompt: "Use $story-style to create or update STORY_STYLE.md from examples or an interview."

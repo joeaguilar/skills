@@ -1,0 +1,4 @@
+interface:
+  display_name: "itr"
+  short_description: "File issues with the itr CLI"
+  default_prompt: "Use $itr to file a clear issue in this project's itr tracker."

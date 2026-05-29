@@ -1,0 +1,4 @@
+interface:
+  display_name: "Alignment"
+  short_description: "Stress-test plans through focused questions"
+  default_prompt: "Use $alignment to stress-test this plan before implementation."

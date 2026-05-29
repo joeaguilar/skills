@@ -1,0 +1,4 @@
+interface:
+  display_name: "kgr"
+  short_description: "Navigate codebases with the kgr CLI"
+  default_prompt: "Use $kgr to trace where this symbol is used before editing it."

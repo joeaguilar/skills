@@ -1,0 +1,4 @@
+interface:
+  display_name: "Sprint Review"
+  short_description: "Review sprints and triage follow-ups"
+  default_prompt: "Use $sprint-review to review and close out the current sprint."

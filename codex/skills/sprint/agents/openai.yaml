@@ -1,0 +1,4 @@
+interface:
+  display_name: "Sprint Planning"
+  short_description: "Plan groomed Sprint backlogs"
+  default_prompt: "Use $sprint to turn this spec into a groomed sprint backlog."

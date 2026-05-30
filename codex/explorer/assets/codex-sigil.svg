@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 148" role="img" aria-label="Codex sigil">
+  <defs>
+    <linearGradient id="g" x1="18" y1="8" x2="112" y2="138" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#6ad7d2"/>
+      <stop offset="0.46" stop-color="#f0c866"/>
+      <stop offset="1" stop-color="#ff7f50"/>
+    </linearGradient>
+  </defs>
+  <path fill="#0c0d0b" stroke="url(#g)" stroke-width="6" d="M64 5 121 38v72l-57 33-57-33V38L64 5Z"/>
+  <path fill="url(#g)" d="M64 22 102 44v47l-38 22-38-22V44l38-22Zm0 18L42 53v29l22 13 22-13V53L64 40Z"/>
+  <path fill="#f4efe2" d="M55 57h18c10 0 17 6 17 16 0 11-7 17-18 17H55V57Zm16 22c4 0 7-2 7-6 0-3-3-5-7-5h-5v11h5Z"/>
+</svg>

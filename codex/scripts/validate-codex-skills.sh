@@ -44,4 +44,8 @@ if [ "$status" -eq 0 ]; then
   echo "Codex skill validation passed for $ROOT"
 fi
 
+if [ -f "$(dirname "${BASH_SOURCE[0]}")/skill-tree.js" ]; then
+  "$(dirname "${BASH_SOURCE[0]}")/skill-tree.js" validate
+fi
+
 exit "$status"

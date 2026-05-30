@@ -63,24 +63,9 @@ claude	agents	ml-integration-specialist.md
 
 # --- Claude-only legacy commands (imported from ~/.claude/commands; awaiting Codex ports) ---
 claude	commands	agent_spawner.md
-claude	commands	claudes_context_primer.md
 claude	commands	claudes_create_documents.md
-claude	commands	context_prime.md
-claude	commands	context_prime_with_lead.md
 claude	commands	create_documents.md
 claude	commands	creative.md
-claude	commands	full_project_context.md
-claude	commands	full_project_context_with_lead.md
 claude	commands	opinionated_code_review.md
-claude	commands	read_all_the_things.md
 claude	commands	set_up_test_environment.md
 claude	commands	tdd_process.md
-
-# --- Claude-only agent-workflow commands (imported from ~/.claude/commands; awaiting Codex ports) ---
-claude	commands	agent-00-project-initialization-trigger.md
-claude	commands	agent-00-spec-analyzer-workflow.md
-claude	commands	agent-01-initialize-project-workflow.md
-claude	commands	agent-02-feature-development-workflow.md
-claude	commands	agent-05-security-audit-workflow.md
-claude	commands	agent-06-mobile-app-development-workflow.md
-claude	commands	command-conventions.md

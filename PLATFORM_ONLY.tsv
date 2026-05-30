@@ -74,11 +74,6 @@ claude	skills	ml-integration
 # --- Claude-only agents (imported from ~/.claude/agents; awaiting Codex ports) ---
 # (none — every remaining Claude agent now has a Codex peer; see git history for the prior imports)
 
-# --- Claude-only legacy commands (imported from ~/.claude/commands; awaiting Codex ports) ---
-claude	commands	agent_spawner.md
-claude	commands	claudes_create_documents.md
-claude	commands	create_documents.md
-claude	commands	creative.md
-claude	commands	opinionated_code_review.md
-claude	commands	set_up_test_environment.md
+# --- Claude-only commands (awaiting Codex ports) ---
+# tdd_process is the quick-reference companion to the tdd-coach skill; kept deliberately.
 claude	commands	tdd_process.md

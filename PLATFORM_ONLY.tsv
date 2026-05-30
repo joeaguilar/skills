@@ -28,9 +28,14 @@ codex	skills	code-roast
 codex	skills	spicy-code-roast
 
 # --- Codex-only agents (drift: Claude converted these imports to skills; Codex keeps the agent form) ---
+codex	agents	analytics-event-architect.md
 codex	agents	api-contract-designer.md
 codex	agents	backend-security-auditor.md
 codex	agents	changelog-curator.md
+codex	agents	cicd-pipeline-architect.md
+codex	agents	data-pipeline-architect.md
+codex	agents	database-schema-architect.md
+codex	agents	docker-compose-architect.md
 codex	agents	prd-task-generator.md
 codex	agents	tdd-workflow-coach.md
 
@@ -56,10 +61,18 @@ claude	skills	security-audit
 # below /sprint. Replaces 5 feature/PRD/orchestrator agents. (prd-task-generator drift peer above.)
 claude	skills	spec-writer
 claude	skills	feature-build
+# Architect-advisor agents -> skills: all 7 were design-from-requirements personas that interview
+# the user (an isolated subagent can't), so they fit a skill, not an agent. (5 drift peers above.)
+claude	skills	analytics-events
+claude	skills	cicd-pipeline
+claude	skills	data-pipeline
+claude	skills	database-schema
+claude	skills	docker-compose
+claude	skills	microservices
+claude	skills	ml-integration
 
 # --- Claude-only agents (imported from ~/.claude/agents; awaiting Codex ports) ---
-claude	agents	microservice-decomposer.md
-claude	agents	ml-integration-specialist.md
+# (none — every remaining Claude agent now has a Codex peer; see git history for the prior imports)
 
 # --- Claude-only legacy commands (imported from ~/.claude/commands; awaiting Codex ports) ---
 claude	commands	agent_spawner.md

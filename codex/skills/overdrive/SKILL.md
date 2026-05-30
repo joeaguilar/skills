@@ -1,20 +1,20 @@
 ---
 name: overdrive
-description: Run an autonomous plan→execute→review loop that combines `/sprint`, `/blitz`, and `/sprint-review`. Use when the user asks for `/overdrive`, an autonomous sprint, a hands-off backlog swarm, or to clear the backlog end to end until every ticket is closed or quarantined. Do not use for coached planning, execution-only backlog work, review-only work, or one-off issue filing.
+description: Autonomous plan→execute→review loop. Condenses `/sprint`, `/blitz`, and `/sprint-review` into one hands-off swarm. Pre-plans an implementation plus exact owned-file set for every ticket (the arm model), runs conflict-free waves of parallel Codex agents on the same branch, and commits once per wave so any wave rolls back cleanly. The only human touch is a per-wave visual smoke test; planning, file assignment, execution, verify gates, quarantine triage, and review are autonomous. Use when the user asks for `/overdrive`, an autonomous sprint, a hands-off backlog swarm, or to clear the backlog end to end until every ticket is closed or quarantined. `--auto`/`--trust` collapses per-wave gates to one end-of-run review. Do not use for coached planning, execution-only backlog work, review-only work, or one-off issue filing.
 metadata:
   short-description: Autonomous sprint swarm
 ---
 
 # /overdrive — autonomous plan · swarm · review loop
 
-`/overdrive` is the autonomous super-skill. It fuses the three coached skills into a single loop:
+`/overdrive` is the autonomous super-skill. It fuses the three coached skills into one loop:
 
-- **Plan** (what `/sprint` does, minus the gates) — turn a spec / `/plan` / conversation into a groomed `itr` backlog.
-- **Pre-plan the arms** (new) — for *every* ticket, bake a concrete implementation plan + an exact owned-file set, so wave-agents are **arms executing a plan**, not explorers rediscovering the codebase.
-- **Swarm** (what `/blitz` does, plus commits) — run conflict-free waves of parallel agents on the **same branch**, the orchestrator committing **once per wave** so any wave can roll back to a clean state.
-- **Review** (what `/sprint-review` does, minus the ceremony) — fill Outcomes / Demo / Retro, file triage, close the epic.
+- **Plan** (`/sprint` minus gates) — spec / `/plan` / conversation → groomed `itr` backlog.
+- **Pre-plan the arms** (new) — bake an implementation plan + exact owned-file set for *every* ticket, so agents are **arms executing a plan**, not explorers.
+- **Swarm** (`/blitz` plus commits) — conflict-free waves on the **same branch**; the orchestrator commits **once per wave** so any wave rolls back cleanly.
+- **Review** (`/sprint-review` minus ceremony) — fill Outcomes / Demo / Retro, file triage, close the epic.
 
-The governing philosophy is **"how can the human let the agents do what they need to do?"** Every gate the coached trio uses for human approval is removed *except one*: a per-wave **visual smoke test**. The human looks at the running result, says *accept* or *reject*, and the loop keeps going until **every ticket is closed** (or quarantined). Planning, file ownership, execution, verify gates, quarantine triage, and review are all autonomous.
+Philosophy: **let the agents do what they need to do.** Every coached-trio human gate is removed *except one*: the per-wave **visual smoke test** (accept/reject). The loop runs until **every ticket is closed** or quarantined. Everything else is autonomous.
 
 > **Coached vs autonomous.** If you want to approve the goal, the backlog, or each story — use the coached trio (`/sprint` → `/blitz` → `/sprint-review`). `/overdrive` is for *"go clear this, I'll glance at each wave."* The two paths write the **same artifacts** (`sprint/{folder}/plan.md`, `itr` epic + stories), so you can switch between them.
 
@@ -28,58 +28,58 @@ The governing philosophy is **"how can the human let the agents do what they nee
 
 | Arg | Default | Meaning |
 |---|---|---|
-| `input` | — | A spec path, an inline brief, or nothing (use the recent `/plan` block or conversation). Drives **plan mode**. |
-| `--backlog` | — | Skip planning; run against the existing **open `itr` backlog**. Drives **execute mode**. Auto-selected when there's no usable input but open tickets exist. |
-| `--auto` / `--trust` | off | Collapse the per-wave visual gate into **one** end-of-run review. Fully hands-off between start and that review. **Strongly pair with `--time-budget`.** |
-| `--concurrency N` | `5` | Max parallel arms per wave. **Hard cap 5** — higher is overridden with a warning (orchestrator monitoring degrades past ~5). |
-| `--max-waves N` | unset | Circuit breaker on total waves. |
-| `--max-retries K` | `2` | Re-planned retries per ticket before quarantine (so up to `K+1` total attempts). |
-| `--time-budget T` | unset | e.g. `2h`, `45m`. Stop launching new waves once elapsed; the in-flight wave finishes. |
-| `--branch name` | current | Run on a fresh branch cut from HEAD instead of the current branch. |
-| `--name slug` | auto | Override the sprint-folder slug. Sanitized to `[a-z0-9-]`, capped 32. |
-| `--verify "cmd"` | auto-detect | Override the verify gate (see Phase 0 detection table). |
-| `--tracker "cmd"` | `itr` | Override the backlog source/record commands. |
-| `--repos p1,p2` | `.` | Comma-separated repo paths in scope. |
-| `--retro` / `--no-retro` | adaptive | Force or suppress the retro in Phase 8. Default is adaptive (friction-triggered). |
-| `--dry-run` | off | Run plan + pre-plan + wave-pack and **print** them, then stop. No `itr` writes, no agent spawn, no commits. The way to preview an autonomous run. |
+| `input` | — | Spec path, inline brief, or nothing (recent `/plan` / conversation). → **plan mode**. |
+| `--backlog` | — | Skip planning; run the existing open `itr` backlog. → **execute mode**. Auto-picked when no input but open tickets exist. |
+| `--auto` / `--trust` | off | Collapse per-wave gate → **one** end-of-run review. Hands-off until then. **Pair with `--time-budget`.** |
+| `--concurrency N` | `5` | Max arms/wave. **Hard cap 5** (higher → clamp + warn; monitoring degrades past ~5). |
+| `--max-waves N` | unset | Total-wave circuit breaker. |
+| `--max-retries K` | `2` | Re-planned retries/ticket before quarantine (`K+1` total attempts). |
+| `--time-budget T` | unset | `2h`, `45m`. No new waves once elapsed; in-flight wave finishes. |
+| `--branch name` | current | Run on a fresh branch off HEAD. |
+| `--name slug` | auto | Sprint-folder slug override. Sanitized `[a-z0-9-]`, cap 32. |
+| `--verify "cmd"` | auto | Override verify gate (Phase 0 table). |
+| `--tracker "cmd"` | `itr` | Override backlog source/record commands. |
+| `--repos p1,p2` | `.` | Repo paths in scope. |
+| `--retro` / `--no-retro` | adaptive | Force/suppress Phase 8 retro (default friction-triggered). |
+| `--dry-run` | off | Run plan + pre-plan + wave-pack, **print**, stop. No `itr` writes, no agents, no commits. Preview an autonomous run. |
 
-All flags optional. Anything unsupplied is auto-detected in Phase 0.
+Unsupplied flags → auto-detected in Phase 0.
 
 ---
 
 ## Roles & artifacts
 
-`/overdrive` plays **autonomous orchestrator**, not Scrum Master — it coaches little and *does* much.
+`/overdrive` = **autonomous orchestrator**, not Scrum Master. It coaches little and does much.
 
-- **You** are the Product Owner, but your only live decision is the per-wave visual smoke verdict. Everything else you've delegated by invoking the autonomous path.
-- **Pre-plan agents** turn tickets into baked plans + file assignments.
-- **Arm agents** are the swarm — each owns a disjoint file set and executes its baked plan.
-- **The orchestrator** is the single git committer, the wave packer, the quarantine warden, and the reviewer.
+- **You** = Product Owner. Only live decision = per-wave visual smoke verdict.
+- **Pre-plan agents** (Phase 2) — tickets → baked plans + file sets. Read-only, never edit.
+- **Arms** (Phase 4) — execution swarm, one/ticket, each owns a disjoint file set, runs its baked plan.
+- **Orchestrator** — sole git committer, wave packer, quarantine warden, reviewer.
 
-Artifacts (identical schema to the coached trio, so they interoperate):
+Artifacts (same schema as coached trio → interoperate):
 
 - **`itr` epic + stories** — the backlog. Tags `sprint-N`, `risk:<tier>`; `--files` written back by the pre-plan.
 - **`sprint/{folder}/plan.md`** — the durable per-sprint record. **Exact `/sprint` schema** so `/sprint-review` can re-open it. `/overdrive` fills Outcomes / Demo / Retro itself in Phase 8.
 - **`sprint/{folder}/overdrive/wave-N.md`** — per-wave run log (config, arms, files, interventions, retries, quarantines, commit SHA, smoke verdict).
-- **`sprint/{folder}/overdrive/run.md`** — run metadata (mode, baseline SHA, config, `itr agent-info` snapshot, wave timeline).
+- **`sprint/{folder}/overdrive/run.md`** — run metadata (mode, baseline SHA, config, `agent-info` snapshot, timeline).
 - **`sprint/CURRENT`** — single line naming the in-flight sprint folder. Written at planning, repointed/removed at close.
-- **Git commits** — one per accepted wave on the working branch (the rollback checkpoints).
+- **Git commits** — one/accepted wave on the branch (rollback checkpoints).
 
 ---
 
 ## The loop at a glance
 
 ```
-Phase 0  Preflight & baseline ........ resolve input, detect tooling, git-safe baseline commit
+Phase 0  Preflight & baseline ........ resolve input, detect tooling, clean git baseline (stash WIP)
 Phase 1  Plan (autonomous) ........... spec → itr epic + stories   [skipped in --backlog mode]
 Phase 2  Pre-plan the arms ........... every ticket → impl plan + exact owned files + neighbors
 Phase 3  Wave-pack ................... conflict graph → disjoint-file waves, topo-ordered
 ─ loop while open tickets remain ───────────────────────────────────────────────
 Phase 4  Spawn wave ................. static file audit → swarm arms (same branch, no commits)
-Phase 5  Monitor & self-heal ........ unblock, re-plan failures, quarantine after K retries
+Phase 5  Monitor & self-heal ........ unblock, re-plan failures, quarantine after K attempts
 Phase 6  Wave gate & commit ......... full-repo verify (flaky double-check) → ONE commit
 Phase 7  Visual smoke gate .......... accept → next wave | reject → rollback + iterate
-─ stop when: backlog empty · only-quarantined · 2 zero-waves · max-waves · time-budget ──
+─ stop: backlog empty · only-quarantined · 2 zero-waves · blocking-quarantine · max-waves · time-budget ─
 Phase 8  Finalize ................... fill plan.md, adaptive retro, triage, close epic, report
 ```
 
@@ -89,45 +89,47 @@ The **only** human interaction inside the loop is Phase 7. With `--auto`/`--trus
 
 ## Phase 0 — Preflight & baseline
 
-Announce: `Phase 0 — Preflight & baseline`. Terse logging from here; no coaching essays.
+Announce `Phase 0 — Preflight & baseline`. Terse logging throughout.
 
-1. **Resolve input → mode.** In order:
-   - `--backlog` flag, or an input that's empty AND the tracker has open tickets → **execute mode** (skip Phase 1).
-   - An input path that exists, inline brief, recent `/plan` block, or a clear conversational ask → **plan mode** (run Phase 1).
-   - Nothing usable and no open tickets → **stop and ask** for a spec path, inline brief, or `--backlog`.
+1. **Input → mode**, in order:
+   - `--backlog`, or empty input + tracker has open tickets → **execute mode** (skip Phase 1).
+   - Path that exists / inline brief / recent `/plan` / clear conversational ask → **plan mode**.
+   - Nothing usable, no open tickets → **terminal no-op** (not a gate): print `Nothing to clear — no spec/brief and no open tickets. Re-invoke with a spec, brief, or --backlog.` Stop.
 
-2. **Tracker.** Default `itr`. Run `itr stats` (offer `itr init` if no `.itr.db`) and `itr agent-info` once — prefer what it reports over anything hardcoded here. If `--tracker` overrides, capture a *list-open* and a *close* command. Snapshot `agent-info` into `run.md`.
+2. **Tracker.** Default `itr`. `itr stats`; no `.itr.db` → **autonomously `itr init`** (init fail → surface + stop). `itr agent-info` once — prefer its syntax for `update`/`close`/`--files`/body fields over anything here. `--tracker` override → capture list-open + close commands. Snapshot `agent-info` → `run.md`.
 
-3. **Detect tooling (non-blocking surfaces):**
-   - `kgr` on PATH → use for file inference (`kgr refs`, `kgr query --who-imports`) and the Phase 6 contract check. Note absence.
-   - `STORY_STYLE.md` (canonical) / `CLAUDE.md` / `AGENTS.md` → mirror issue conventions. Note which won.
-   - `docs/ROADMAP.md` → seed the Sprint Goal in plan mode; update in Phase 8. Note absence.
-   - `sprint/CURRENT` → an in-flight sprint. In execute mode this is how the folder is found.
+3. **Detect tooling** (non-blocking):
+   - `kgr` on PATH → file inference (`kgr refs`, `kgr query --who-imports`) + Phase 6 contract check.
+   - `STORY_STYLE.md` / `AGENTS.md` / `CODEX.md` / `CLAUDE.md` → mirror issue conventions, preferring Codex repo instructions over Claude fallbacks.
+   - `docs/ROADMAP.md` → seed goal (plan mode), update Phase 8.
+   - `sprint/CURRENT` → in-flight sprint (execute mode finds the folder here).
 
-4. **Sprint number & folder.** Max `sprint-{N}` under `sprint/` + 1 (fallback: max `sprint-N` tag + 1; else `sprint-1`). Slug from `--name`, else 2–4 keywords from the goal (plan mode) or from the input (execute mode), sanitized `[a-z0-9-]`, capped 32. Folder = `sprint-{N}-{YYYY-MM-DD}-{slug}`; if it collides, append `-{HHMM}`.
+4. **Sprint number & folder.** Execute mode + valid `sprint/CURRENT` → reuse that folder + `sprint-{N}` (continuing; don't allocate new). Else: max `sprint-{N}` under `sprint/` +1 (fallback max `sprint-N` tag +1; else `sprint-1`). Slug = `--name`, else 2–4 keywords from goal (plan) / input (execute), `[a-z0-9-]`, cap 32. Folder = `sprint-{N}-{YYYY-MM-DD}-{slug}`; collision → append `-{HHMM}`.
 
 5. **Stale-ticket sweep (inherited from `/sprint`).** `git log --grep='closes\? #'` / `fixes\? #` / `resolves\? #` over the last 30 days; for each referenced ID still `open` in `itr`, it shipped but never closed. **Autonomously exclude** these from scope and log them under `run.md` → `Stale (excluded)`. (Autonomous skill — don't pause for the three-way choice `/sprint` offers; excluding is the safe default since the commit already shipped the work.)
 
-6. **Git safety & baseline (load-bearing — this is what makes rollback safe).** The orchestrator commits, so the tree must be sane:
-   - **Not a repo** → stop and offer `git init` (one-time; can't commit-per-wave without it).
-   - **Detached HEAD** → create `overdrive-{slug}` and check it out. Log it.
-   - **No commits yet** → `git commit --allow-empty -m "overdrive: baseline"`.
-   - **`--branch name`** → `git checkout -b name` from current HEAD.
-   - **Dirty tree** → **do not discard it.** Stage and commit it as the baseline: `git add -A && git commit -m "overdrive: baseline before sprint-N (pre-existing changes)"`. This preserves the user's in-flight work *and* gives rollback a clean target. Surface the SHA.
-   - Capture `BASELINE_SHA = git rev-parse HEAD`. Record in `run.md`. Verify clean: `git diff-index --quiet HEAD --` must exit 0.
+6. **Git safety & baseline** (load-bearing — makes rollback safe). Orchestrator commits → tree must be sane. Resolve **autonomously** except the one hard blocker:
+   - **Not a repo** → **hard stop**: print `overdrive needs a git repo — run \`git init\` and retry (per-wave commits are load-bearing).` No auto-init.
+   - **Detached HEAD** → create + checkout `overdrive-{slug}`. Log.
+   - **`--branch name`** → `git checkout -b name` off HEAD.
+   - **No commits** → `git commit --allow-empty -m "overdrive: baseline"`; confirm landed (`git rev-parse HEAD` exit 0).
+   - **Dirty tree** → **don't commit user WIP, don't gate — stash it.** `git stash push --include-untracked -m "overdrive: pre-run WIP (sprint-N)"`. Preserves their work (recoverable) + clean baseline. Surface stash ref + restore hint (`git stash list` / `git stash pop`).
+   - `BASELINE_SHA = git rev-parse HEAD`. Record `run.md`. Verify clean: `git diff-index --quiet HEAD --` exit 0 — else surface + stop (never swarm a dirty tree).
 
-7. **Config & verify gate.** Resolve `concurrency` (cap 5, warn-and-clamp if higher), `max-waves`, `max-retries` (2), `time-budget`, `--auto`/`--trust`. Auto-detect the verify gate per repo unless `--verify`:
+7. **Config & verify gate.** `concurrency` (cap 5, clamp+warn), `max-waves`, `max-retries` (2), `time-budget`, `--auto`/`--trust`. **`--auto` backstop:** `--auto` + neither `--time-budget` nor `--max-waves` → set `max-waves = 2 × open-ticket-count`, warn `Auto with no cap — backstopping at <N> waves; override with --max-waves/--time-budget.` Auto-detect verify gate/repo unless `--verify`:
 
-   | File present | Default verify gate |
+   | File | Default verify gate |
    |---|---|
    | `Cargo.toml` | `cargo test && cargo clippy -- -D warnings && cargo fmt --check` |
    | `package.json` | union of existing `test`/`lint`/`typecheck`/`format:check` scripts |
    | `pyproject.toml` | `pytest && ruff check . && ruff format --check .` |
    | `go.mod` | `go test ./... && go vet ./... && test -z "$(gofmt -l .)"` |
    | `Makefile` w/ `test` | `make test` + any of `lint`/`check`/`verify` |
-   | nothing matched | **stop and ask** for the gate command |
+   | nothing matched | **stop and ask** for the gate command (one-time setup input, same class as repo/tracker — *not* a workflow gate) |
 
-8. **Print the preflight summary** (transparency, not a gate — proceed straight through unless a genuine blocker above stopped you):
+   No-op/`true` gate is **deliberately not** the fallback: unverified per-wave commits ship broken code + kill self-healing. Supply `--verify` once to stay hands-off on odd stacks.
+
+8. **Preflight summary** (transparency, not a gate — proceed unless a blocker stopped you):
 
    ```
    overdrive preflight
@@ -136,10 +138,10 @@ Announce: `Phase 0 — Preflight & baseline`. Terse logging from here; no coachi
      Story style:  STORY_STYLE.md | inferred | base default
      Roadmap:      docs/ROADMAP.md (next: §A.16 [wide dep]) | absent
      Sprint:       sprint-N → sprint/sprint-N-YYYY-MM-DD-<slug>/
-     Branch:       <branch>   Baseline: <sha7>   Tree: clean ✓ (committed M pre-existing changes)
+     Branch:       <branch>   Baseline: <sha7>   Tree: clean ✓ (stashed M pre-run changes → git stash pop to restore)
      Verify gate:  <cmd>      Concurrency: 5      Retries: 2
      Gate mode:    per-wave visual smoke | --auto (single end-of-run review)
-     Stop when:    backlog empty | only-quarantined | 2 zero-waves | max-waves=<N> | time-budget=<T>
+     Stop when:    backlog empty | only-quarantined | 2 zero-waves | blocking-quarantine | max-waves=<N> | time-budget=<T>
      Stale:        none | excluded #<id> (shipped in <sha>)
    ```
 
@@ -147,27 +149,27 @@ Announce: `Phase 0 — Preflight & baseline`. Terse logging from here; no coachi
 
 ## Phase 1 — Plan (autonomous; plan mode only)
 
-Announce: `Phase 1 — Plan`. **Skipped entirely in execute mode.** No approval gate — this is the autonomous path. (Want to approve the plan first? Use coached `/sprint`, or `--dry-run`.)
+Announce `Phase 1 — Plan`. **Skipped in execute mode.** No approval gate (want one? coached `/sprint`, or `--dry-run`).
 
-1. **Draft one Sprint Goal** (`Deliver <value> by <change> so that <outcome>.`) + a short **Non-Goals** list. If `docs/ROADMAP.md` surfaced next-section candidates, seed from the top one and note any divergence into `## Open Assumptions` (for the Phase 8 roadmap update).
+1. **Sprint Goal** (`Deliver <value> by <change> so that <outcome>.`) + short **Non-Goals**. Roadmap candidates → seed from top one; note divergence → `## Open Assumptions` (Phase 8 roadmap update).
 
-2. **Decompose into stories.** Each story: serves the goal, imperative title, sized to one arm (bounded files, single concern, runnable verify at the end). Split oversized stories; flag truly-unsplittable ones as spillover (`product-backlog,needs-sprint`).
+2. **Decompose into stories.** Each: serves goal, imperative title, one-arm sized (bounded files, single concern, runnable verify). Split oversized; truly-unsplittable → spillover (`product-backlog,needs-sprint`).
 
-3. **Risk tier** each (`risk:high|med|low`) and **order** risk → dependency → value. Set `--blocked-by` only on concrete signals (a kgr import edge, an explicit "X before Y").
+3. **Risk tier** (`risk:high|med|low`) + **order** risk → dependency → value. `--blocked-by` only on concrete signal (kgr import edge / explicit "X before Y").
 
-4. **Build the sprint Definition of Done** (AC pass · verify gate green · behavior observable · docs updated when user-facing). It's appended to every story's AC.
+4. **DoD** (AC pass · gate green · behavior observable · docs if user-facing). Appended to every story AC.
 
-5. **File to `itr`** (no gate — autonomous): epic first (`itr add -k epic -p high`, tags `sprint-N`, body = goal + non-goals + DoD), then `itr batch add` the stories (`kind: task`, `parent: <epic-id>`, `acceptance` = story AC + DoD, tags `sprint-N,risk:<tier>` + style tags). Capture all IDs. On partial failure: retry the item once, then surface the failed payload and resume — never roll back the epic.
+5. **File to `itr`** (no gate): epic first (`itr add -k epic -p high -f json`, tags `sprint-N`, body = goal+non-goals+DoD) — **capture epic ID from JSON** for `--parent`. Then `itr batch add` stories (`kind: task`, `parent: <epic-id>`, `acceptance` = AC+DoD, tags `sprint-N,risk:<tier>` + style tags). Capture IDs. Partial fail → retry item once, else surface payload + resume (never roll back the epic).
 
-6. **Write `sprint/{folder}/plan.md`** now (the `/sprint` Phase 6 schema verbatim — `# Sprint-N`, **Sprint Goal**, **Epic**, **Created**, **Story style**, `## Non-Goals`, `## Definition of Done`, `## Sprint Backlog` table, `## Spillover`, `## Open Assumptions`, empty `## Outcomes` / `## Demo` / `## Retro` stubs). Write `sprint/CURRENT` = folder name.
+6. **Write `sprint/{folder}/plan.md`** (`/sprint` Phase 6 schema verbatim: `# Sprint-N`, **Sprint Goal**, **Epic**, **Created**, **Story style**, `## Non-Goals`, `## Definition of Done`, `## Sprint Backlog` table, `## Spillover`, `## Open Assumptions`, empty `## Outcomes`/`## Demo`/`## Retro`). Write `sprint/CURRENT` = folder.
 
 ---
 
-## Phase 2 — Pre-plan the arms (the ARM model — autonomous)
+## Phase 2 — Pre-plan the arms (autonomous)
 
-Announce: `Phase 2 — Pre-plan`. This is the innovation. **Blitz agents discover files at execution time; overdrive bakes the plan at *plan* time so agents are arms, not explorers.** Cheaper conflicts (found now, not mid-wave), faster agents (no rediscovery), tighter waves.
+Announce `Phase 2 — Pre-plan`. Blitz discovers files at run time; overdrive bakes them at plan time → arms not explorers. Conflicts found now (cheap), faster agents, tighter waves.
 
-1. **Fan out planning agents over every open ticket** (parallel, read-only). One agent per ticket (or batched in groups), using Codex subagents suited to codebase exploration. Each reads the ticket body + AC, searches the codebase (`kgr refs`/`kgr query --who-imports` if present, else grep), and returns:
+1. **Fan out pre-plan agents over every open ticket** (parallel, read-only). Use Codex worker subagents suited to codebase exploration, one agent per ticket or batched in groups when needed. Each reads body+AC, searches (`kgr refs`/`kgr query --who-imports`, else grep), returns:
 
    ```json
    { "ticket_id": N, "files": ["src/a.rs", "src/b.rs"], "confidence": "high|medium|low",
@@ -176,77 +178,79 @@ Announce: `Phase 2 — Pre-plan`. This is the innovation. **Blitz agents discove
      "semantic_neighbors": ["#M removes tokenize — don't call it"],
      "blocked_by": [M], "reasoning": "why this file set" }
    ```
-   Planning agents **do not edit files**. Keep file sets minimal — only what the ticket must edit.
+   No edits. Minimal file sets. **Multi-repo:** ticket body `Repo: path/to/repo` → scope search to that repo, paths relative to its root (orchestrator prepends `<repo>:` on writeback); else whole tree.
 
-2. **Write the baked plan back to the ticket** so the arm reads it from the tracker, not from orchestrator memory: `itr update <id> --files "<csv>"` and append the plan + neighbors to the body/context. This survives crashes and makes `--resume` possible.
+2. **Write baked plan back to ticket** (arm reads from tracker, not orchestrator memory): `itr update <id> --files "<csv>"` + plan + neighbors into body/context (exact field per `agent-info` — `--context` or body flag). Tracker-persisted = crash-recoverable: re-run `--backlog` resumes (closed stay closed; open carry their plan).
 
-3. **Cycle detection on `blocked-by`** (DFS). A cycle makes wave ordering impossible. **Autonomously break it** by dropping the lowest-confidence edge in the ring and logging `Cycle broken: #A→#B→#A, dropped #B→#A (low confidence)` to `run.md`. (Autonomous skill — don't stop to ask; log the resolution so the Phase 8 retro can flag it.)
+3. **Cycle detection on `blocked-by`** (DFS). Cycle → **autonomously break**: drop lowest-confidence edge in the ring (tie → drop edge whose *source* ticket has highest ID), **re-derive topo order**, log `Cycle broken: #A→#B→#A, dropped #B→#A (low confidence)` → `run.md`. No ask.
 
-4. **Low-confidence flags.** Tickets with `confidence: low` are kept but tagged in the wave log; if one later quarantines, the retro notes "low-confidence file ownership" as a likely cause.
+4. **Low-confidence flags.** `confidence: low` kept but flagged in wave log; if it later quarantines, retro notes "low-confidence file ownership" as likely cause.
 
 ---
 
 ## Phase 3 — Wave-pack (autonomous)
 
-Announce: `Phase 3 — Wave-pack`.
+Announce `Phase 3 — Wave-pack`. **Eligible pool = currently-open tickets minus any tagged `quarantined-sprint-N`** — quarantined never re-enter (this exclusion = termination). Same filter every re-derive (Phase 4).
 
-1. **Conflict graph.** Map every file → owning tickets. A file owned by ≥2 tickets is a conflict edge — those tickets can't share a wave. Add semantic-conflict edges from `semantic_neighbors`.
+1. **Conflict graph.** From eligible pool, file → owning tickets. File owned by ≥2 = conflict edge (can't share a wave). Add semantic edges from `semantic_neighbors`.
 
-2. **Greedy bin-pack** respecting: topological order of `blocked-by` (a ticket lands strictly after its blockers' waves), no intra-wave file conflict, wave size ≤ `concurrency`.
+2. **Greedy bin-pack** respecting: topo order of `blocked-by` (ticket after its blockers' waves), no intra-wave file conflict, wave ≤ `concurrency`.
 
-3. **Write the wave plan** to `sprint/{folder}/overdrive/wave-plan.md` (waves, per-ticket owned files, neighbors, conflicts and how split). Print a one-screen summary. **No gate** — proceed to the loop. (`--dry-run` stops here after printing.)
+3. **Write** `sprint/{folder}/overdrive/wave-plan.md` (waves, owned files, neighbors, conflicts + split). Print one-screen summary. No gate. (`--dry-run` stops here.)
 
 ---
 
 ## Phase 4 — Spawn the wave (autonomous)
 
-Announce: `Phase 4 — Wave N`. The wave plan is **re-derived from currently-open tickets at the start of each cycle**, so closed/quarantined/new tickets are always reflected.
+Announce `Phase 4 — Wave N`. **Re-derive each cycle from eligible pool = open minus `quarantined-sprint-N`** (re-run Phase 3 bin-pack on it). Newly-closed drop out, new tickets enter, quarantined stay excluded — exclusion is load-bearing for termination.
 
-1. **Record the pre-wave SHA** = the previous wave's commit, or `BASELINE_SHA` for wave 1. This is the rollback target for this wave.
+1. **Pre-wave SHA** = prior wave's commit, or `BASELINE_SHA` for wave 1. Rollback target.
 
-2. **Static file audit** (cheap pre-flight against pre-plan staleness): for each ticket in the wave, re-confirm its owned files still exist and don't now collide with a wave-neighbor (a prior wave may have moved code). If a real collision surfaces, **defer** the offending ticket to the next cycle (don't launch a known conflict) and log it. Scan owned-file directories for stale `*.tmp`/lock files and remove them.
+2. **Static file audit** (vs pre-plan staleness): per ticket, confirm owned files exist + don't now collide with a wave-neighbor (prior wave may have moved code). Real collision → **defer to next cycle** (don't launch a known conflict), **increment attempt counter, quarantine instead if counter > `max-retries`** (can't defer forever). Scan owned dirs for stale `*.tmp`/lock → remove.
 
-3. **Spawn one arm per ticket in parallel** using Codex worker subagents and the **Per-arm prompt template** below. Let the arms run concurrently. Agents work the **same branch / shared tree**; they never commit, push, branch, or spawn worktrees (the shared tree is what powers self-healing).
+3. **Spawn one arm/ticket in parallel** using the active Codex subagent/background-session mechanism and the **Per-arm template** below. Same branch/shared tree; never commit/push/branch/worktree (shared tree powers self-healing). **Per-arm timeout** = `min(time-budget-remaining / (2 × concurrency), 30m)`; exceed without reporting → interrupt, log `Interventions`, treat as verify failure (re-plan) so one hung arm can't stall the wave or drain budget.
 
 ---
 
 ## Phase 5 — Monitor & self-heal (autonomous)
 
-Announce inline as events arrive. Event-driven; no polling. Mid-edit LSP noise is ignored until an agent reports.
+Event-driven, no polling. Mid-edit LSP noise ignored until an arm reports.
 
-- **Permission / missing-dep failure** → orchestrator fixes it (edit manifest, install tool, grant the path), logs to `Interventions`, then sends the arm a follow-up so it can continue.
-- **Verify-gate failure reported by an arm** → **re-plan, don't just retry.** Dispatch a fresh planning agent that sees the failure tail + original ticket → a new plan/file set. Then:
-  - If the new file set stays within the ticket's already-owned files (no new conflict) → respawn a fresh arm **in the same wave window**.
-  - If it now needs a neighbor's file → **defer** the ticket to the next cycle's wave (re-pack), so the swarm stays conflict-free.
-  - Increment the ticket's retry counter either way.
-- **Quarantine-and-continue.** After `max-retries` (default 2) re-planned attempts fail, mark the ticket **quarantined**: reopen-safe state in `itr` (leave it `open`, add tag `quarantined-sprint-N`), append `<!-- quarantine: K attempts, last error: <tail> -->`, write `sprint/{folder}/overdrive/wave-N.md` → `Quarantine`. **The wave continues; the loop continues.** Quarantined tickets do **not** re-enter future waves and surface in Phase 8. This is the guarantee that the loop always terminates.
+- **Permission / missing-dep fail** → orchestrator fixes (edit manifest, install tool, grant path), logs `Interventions`, resumes the arm through the active Codex background-session follow-up mechanism.
+- **Verify-gate fail reported by an arm** → **re-plan, don't just retry.** Fresh pre-plan agent sees failure tail + ticket → new plan/file set. Then, **incrementing the attempt counter either way:**
+  - New file set within already-owned files (no new conflict) → respawn fresh arm **in the same wave window**.
+  - Needs a neighbor's file → **defer to next cycle** (re-pack) → stays conflict-free.
+- **One attempt counter/ticket.** Every re-plan retry *and* every collision-defer (Phase 4.2) increments it — no uncounted path → no unbounded loop.
+- **Quarantine-and-continue.** Counter > `max-retries` (default 2) → **quarantine**: leave `open` in `itr`, add tag `quarantined-sprint-N` (Phase 3/4 exclude it), record durable context — `itr update <id>` body with `Quarantine (sprint-N, wave-M): K attempts. Last error:\n<last ~50 lines>\nRoot cause: <one-line diagnosis>` (field per `agent-info`) + line in `wave-N.md` → `Quarantine`. **Wave + loop continue.** Never re-enters; surfaces Phase 8. This is the termination guarantee.
 
 ---
 
 ## Phase 6 — Wave gate & commit (autonomous)
 
-Announce: `Phase 6 — Wave N gate`. Once every arm has reached a terminal state (closed / quarantined):
+Announce `Phase 6 — Wave N gate`. Once every arm is terminal (closed/quarantined):
 
 1. **Full-repo verify gate** from each repo root.
-2. **Flaky double-check** before trusting a red result: if red, re-run the gate up to **2 more times** on the unchanged tree. Green on a re-run → flaky gate; log `flaky gate detected` to `Interventions` and treat as green. Consistently red → real.
-3. **Red on a slice no arm owned** → orchestrator diagnoses; if the fix is small and obvious, apply and log; if not, **roll the wave back** to the pre-wave SHA (see rollback mechanics), re-plan the implicated tickets, and re-run the wave (counts against a per-wave reject budget of 3). Never commit a red gate.
-4. **Light contract check** (kgr only, if present): for symbols the wave *removed* from its `api_surface`, run `kgr query --who-imports <symbol>`; if a still-open ticket's declared files import a removed symbol, log a `contract-warning` to the wave log and add a neighbor note for the next cycle. Non-blocking — surfaced, not gated.
-5. **Commit the wave (single committer).** Green gate → snapshot:
+2. **Flaky double-check** before trusting red: red → re-run up to **2 more times** on the unchanged tree. Green on a re-run → flaky, log `flaky gate detected` → `Interventions`, treat green. Consistently red → real.
+3. **Red on a slice no arm owned** → diagnose; small+obvious fix → apply+log; else **roll back** to pre-wave SHA (mechanics below), re-plan implicated tickets, re-run wave. Counts against **shared per-wave rework budget** (box). Never commit red. Autonomous — *not* a human gate (human's only verdict = Phase 7 smoke).
+4. **Contract check** (kgr only): for symbols the wave *removed* from `api_surface`, `kgr query --who-imports <symbol>`; still-open ticket importing a removed symbol → log `contract-warning` + neighbor note for next cycle. Non-blocking.
+5. **Commit (single committer).** Green → snapshot. One `-m` per block so git lays out subject/body/trailer with blank lines:
    ```
-   git add -A          # captures modified, deleted, and new untracked files
-   git commit -m "overdrive wave-N: closes itr#a, itr#b, itr#c (3 stories)
-   <one-line gate summary>
-   Co-Authored-By: <orchestrator> <noreply@openai.com>"
+   git add -A   # stages modified, deleted, new (non-ignored) files; ignored stay untracked — fine
+   git commit -m "overdrive wave-N: closes itr#a, itr#b, itr#c (3 stories)" \
+              -m "<one-line gate summary>" \
+              -m "Co-Authored-By: <orchestrator model> <noreply@openai.com>"
    ```
-   Record `WAVE_N_SHA`. **Verify the commit landed** (`git log -1 --oneline` matches; a hook may have aborted it) — if it didn't, stop and surface; do **not** launch wave N+1 on an uncommitted tree. The subject's `closes itr#…` list is the parseable bridge so review tooling (and a later manual `/sprint-review`) can reconstruct which commit closed which ticket.
+   **Verify landed:** `WAVE_N_SHA = git rev-parse HEAD` must differ from pre-wave SHA *and* `git diff-index --quiet HEAD --` exit 0 (hook can silently abort). Fail either → stop+surface, don't launch wave N+1 on an uncommitted tree. Subject's `closes itr#…` is the parseable bridge (`^overdrive wave-\d+: closes ((?:itr#\d+,? ?)+)`) → review tooling / manual `/sprint-review` map commit → tickets.
+
+> **Shared per-wave rework budget (= 3).** Phase 6 red-gate rollbacks + Phase 7 human rejects draw from **one** counter/wave, reset when the wave is accepted. Hits 3 → orchestrator **autonomously quarantines** the wave's still-open tickets (tag + context per Phase 5), moves on — **no ask.** Bounds per-wave iteration; quarantines surface Phase 8.
 
 ---
 
 ## Phase 7 — Visual smoke gate (the one human touch)
 
-Announce: `Phase 7 — Wave N smoke`. **This is the only place a human is asked anything during the loop.** With `--auto`/`--trust`, skip this per-wave and do it once in Phase 8.
+Announce `Phase 7 — Wave N smoke`. **Only human ask in the loop.** `--auto`/`--trust` → skip per wave, do once in Phase 8.
 
-1. **Build the wave report** — unambiguous enough that *accept vs reject* is obvious (a vague report is the documented failure mode):
+1. **Wave report** — unambiguous so accept-vs-reject is obvious (vague report = the failure mode):
    ```
    Wave N — <K> closed, <Q> quarantined   (commit <sha7>)
      Stories:   itr#a ✓  itr#b ✓  itr#c ⚠ quarantined
@@ -256,60 +260,63 @@ Announce: `Phase 7 — Wave N smoke`. **This is the only place a human is asked 
      In scope to eyeball:   <user-visible behavior from this wave's stories>
      Out of scope (ignore): <adjacent stories' territory · sprint Non-Goals>
    ```
-   If any verify check is yellow/partial, **highlight it** and offer three verdicts instead of two.
+   Any check yellow/partial → highlight + offer three verdicts.
 
-2. **Run the visual smoke** the project way (a project `/run` skill, `npm run dev` + screenshot, a CLI invocation, etc.). Show the result.
+2. **Run visual smoke** the project way (project `/run` skill, `npm run dev` + screenshot, CLI invocation). Show result.
 
-3. **Collect the verdict:**
-   - **accept** → log the verdict + timestamp; proceed to the next cycle.
-   - **reject** → **roll back and iterate this wave** (mechanics below): capture the human's one-line reason, splice it into a fresh re-plan of the wave's tickets, re-run the *same* wave number. After **3 rejects** on one wave, surface it and ask whether to quarantine the wave's tickets and move on (keeps the loop terminating).
-   - **accept-with-followup** (offered when checks are mixed) → accept the wave, file a bug for the issue, continue.
+3. **Verdict:**
+   - **accept** → log verdict+timestamp; reset rework budget; next cycle.
+   - **reject** → **roll back + iterate this wave**: capture one-line reason, splice into a fresh re-plan of the wave's tickets, re-run same wave number. Draws on the **shared rework budget** (Phase 6 box); hits 3 → orchestrator **autonomously quarantines** + moves on — **no second ask**. (Smoke verdict is the only gate; want more tries? say so in your reject reason → re-plans with it.)
+   - **accept-with-followup** (offered when checks mixed) → accept, file a bug, continue.
 
 ### Rollback mechanics (reject path)
 
 ```
-1. git status --porcelain  →  if untracked-not-ignored files exist, stash them first:
-   git stash push --include-untracked -m "overdrive-rollback-wave-N"   (never silently nuke human files)
+1. git status --porcelain → untracked-not-ignored files (rare post-commit; e.g. one you added by hand)
+   → back up first, DON'T nuke human work: git stash push --include-untracked -m "overdrive-rollback-wave-N"
 2. git reset --hard <pre-wave-SHA>
-3. git clean -fd            (remove agent-created untracked files; respects .gitignore)
-4. git diff-index --quiet HEAD --   MUST exit 0  (else surface "reset incomplete — resolve manually", stop)
-5. Reopen the wave's itr tickets that were closed:  itr update <id> --status open
-   (git and itr were briefly out of sync; this resyncs them.)
-6. Log the rollback + reason under wave-N.md → Interventions.
+3. git clean -fd            (remove agent-created untracked; respects .gitignore)
+4. git diff-index --quiet HEAD --   MUST exit 0  (else "reset incomplete — resolve manually", stop)
+5. Reopen tickets THIS wave CLOSED (from wave-N.md → Closed:; never reopen quarantined):
+   itr update <id> --status open     (syntax per agent-info; resyncs itr to rolled-back git)
+6. Log rollback + reason → wave-N.md → Interventions.
 ```
+Step-1 stash = **recoverable backup, not auto-restored** (popping re-introduces what we're rolling back). Survives in `git stash list`; recover manually if needed. Retry starts clean.
 
 ---
 
 ## Loop control — stop conditions
 
-After each accepted wave (or each `--auto` wave), re-query open tickets and check — the loop **provably terminates** because quarantined tickets leave the pool:
+Check **once/cycle, right after a wave is accepted (or auto-accepted), before re-deriving the next plan.** Re-query open tickets, test:
 
-- **Backlog empty** (every ticket closed) → success → Phase 8.
-- **Only quarantined remain** → exhausted → Phase 8 (triage there).
-- **Two consecutive waves closed zero tickets** *and no retries are in flight* → poisoned → Phase 8 (surface). (Mid-retry counts as progress; don't false-trigger on a slow-but-moving sprint.)
-- **A blocking quarantine** (a quarantined ticket that others are `blocked-by`) → stop launching its dependents → Phase 8.
-- **`max-waves` reached** → circuit-broken → Phase 8.
-- **`time-budget` elapsed** → finish the in-flight wave (never kill mid-edit), launch no more → Phase 8.
+- **Backlog empty** (no open remain; quarantined are tagged out) → success → Phase 8.
+- **Only quarantined remain** (every open ticket tagged `quarantined-sprint-N`) → exhausted → Phase 8.
+- **Poisoned** — `consecutive-zero` counter: after each accepted wave, +1 if it closed zero else reset 0. Reaches **2** *and* no attempt in flight (no re-plan/defer pending) → stop → Phase 8. Mid-attempt = progress (no false-trigger on slow sprint).
+- **Blocking quarantine** (quarantined ticket that still-open tickets are `blocked-by`) → stop launching dependents → Phase 8.
+- **`max-waves` reached** → Phase 8.
+- **`time-budget` elapsed** → finish in-flight wave (never kill mid-edit), no more → Phase 8.
+
+**Why it always terminates:** every ticket ends `closed` or `quarantined` — re-plan retries + collision-defers share one bounded counter (Phase 5), the rework budget bounds rollback/reject (Phase 6 box), four circuit-breakers cap the outer loop. No uncounted retry/defer/reject path.
 
 ---
 
 ## Phase 8 — Finalize (autonomous review)
 
-Announce: `Phase 8 — Finalize`.
+Announce `Phase 8 — Finalize`.
 
-1. **`--auto`/`--trust` end-of-run gate.** If per-wave gates were skipped, do the **one** visual smoke now against the whole increment: show the full run report + a combined smoke. Verdict:
-   - **accept** → continue close-out.
-   - **reject from wave M onward** → multi-wave rollback: stash untracked, `git reset --hard <WAVE_M_SHA>`, `git clean -fd`, reopen tickets from waves M+1…N, then either re-run from M (per-wave gates on this time) or stop and report kept-vs-discarded. Cap at 2 end-of-run rejects before defaulting to per-wave gates.
+1. **`--auto`/`--trust` end-of-run gate.** Per-wave gates skipped → do the **one** smoke now over the whole increment: full run report + combined smoke.
+   - **accept** → close-out.
+   - **reject from wave M onward** → multi-wave rollback: stash untracked (backup), `git reset --hard <WAVE_M_SHA>`, `git clean -fd`. **Reopen exactly what waves M+1…N CLOSED** — parse each `wave-{k}.md` `Closed:` line → `itr update <id> --status open`; **never reopen `quarantined-sprint-N`**. After **2** end-of-run rejects → orchestrator **autonomously** stops + reports kept-vs-discarded (no re-offer; re-run `/overdrive --backlog` to iterate). Mirrors bounded per-wave reject.
 
-2. **Outcomes.** Plan-vs-actual table (every original ticket → final status), counts, completion rate, goal achievement (yes/partial/no — **quarantined ≠ accepted**), and any `git diff` not tied to a ticket. Read all `wave-*.md` for the friction view.
+2. **Outcomes.** Plan-vs-actual table (every original ticket → final status), counts, completion rate, goal achievement (yes/partial/no — **quarantined ≠ accepted**), `git diff` not tied to a ticket. Read all `wave-*.md` for friction.
 
-3. **Adaptive retro.** Required if any friction signal fired (quarantine · intervention · rollback/reject · bug · completion <80%); otherwise skipped. `--retro`/`--no-retro` override. When it runs: plan-vs-actual, friction log (root-cause each quarantine/intervention/rollback), 1–3 process-improvement action items, agent-learnings — written to `## Retro` and a standalone `sprint/{folder}/retro-{date}.md`.
+3. **Adaptive retro.** Required if any friction fired (quarantine · intervention · rollback/reject · bug · completion <80%); else skip. `--retro`/`--no-retro` override. When run: plan-vs-actual, friction log (root-cause each), 1–3 process-improvement items, agent-learnings → `## Retro` + standalone `sprint/{folder}/retro-{date}.md`.
 
-4. **Triage filing** (autonomous, via `itr`, honoring `STORY_STYLE.md`): quarantined/rejected → `carryover` (`sprint-N+1-candidate`, `product-backlog`); bugs found → `bug` (`from-overdrive-N`); retro items → `task` (`retro`,`process-improvement`).
+4. **Triage filing** (autonomous, via `itr`, honoring `STORY_STYLE.md`): quarantined/rejected → `carryover` (`sprint-N+1-candidate`, `product-backlog`); bugs → `bug` (`from-review-N`); retro items → `task` (`retro`,`process-improvement`). Same taxonomy as `/sprint-review`.
 
-5. **Fill `plan.md`** Outcomes / Demo / Retro in place (the `/sprint-review` section schemas — so the artifact reads identically whether overdrive or the coached trio produced it).
+5. **Fill `plan.md`** Outcomes/Demo/Retro in place (`/sprint-review` schemas → reads identical to a coached close-out).
 
-6. **Close out.** Close the epic **only if** completion ≥ its threshold or the increment was accepted — `itr close <epic-id> "Reviewed <date>. Outcome: <yes|partial|no>. <closed>/<total> accepted."` If goal-critical work is quarantined, leave the epic open and note carryover. Repoint or remove `sprint/CURRENT`. If `docs/ROADMAP.md` exists, call `/roadmap --update` (non-blocking; pass any goal-divergence note from `## Open Assumptions`).
+6. **Close out.** **Scan blocking quarantines first:** any open ticket `blocked-by` a quarantined one → log `run.md`, **leave epic open** (carryover). Else close epic only if **(a)** all goal-critical stories closed (or conditional + filed follow-up) **and** completion ≥ 80%, **or (b)** increment explicitly accepted at a visual gate: `itr close <epic-id> "Reviewed <date>. Outcome: <yes|partial|no>. <closed>/<total> accepted."` Any goal-critical quarantined/rejected → leave open + file carryover. Repoint/remove `sprint/CURRENT`. `docs/ROADMAP.md` exists → `/roadmap --update` (non-blocking; pass goal-divergence note from `## Open Assumptions`).
 
 7. **Final report:**
    ```

@@ -31,6 +31,7 @@ codex	skills	spicy-code-roast
 codex	agents	api-contract-designer.md
 codex	agents	backend-security-auditor.md
 codex	agents	changelog-curator.md
+codex	agents	prd-task-generator.md
 codex	agents	tdd-workflow-coach.md
 
 # --- Claude-only skills (awaiting Codex ports) ---
@@ -51,36 +52,28 @@ claude	skills	code-audit
 claude	skills	cpp-review
 claude	skills	react-review
 claude	skills	security-audit
+# Orchestrator pile distilled into the non-sprint coached track (idea -> spec -> build), sized
+# below /sprint. Replaces 5 feature/PRD/orchestrator agents. (prd-task-generator drift peer above.)
+claude	skills	spec-writer
+claude	skills	feature-build
 
 # --- Claude-only agents (imported from ~/.claude/agents; awaiting Codex ports) ---
-claude	agents	feature-implementation-orchestrator.md
-claude	agents	feature-request-processor.md
 claude	agents	microservice-decomposer.md
 claude	agents	ml-integration-specialist.md
-claude	agents	strict-feat-orchestrator.md
-claude	agents	workflow-architect-analyst.md
 
 # --- Claude-only legacy commands (imported from ~/.claude/commands; awaiting Codex ports) ---
 claude	commands	agent_spawner.md
 claude	commands	claudes_context_primer.md
 claude	commands	claudes_create_documents.md
-claude	commands	claudes_feature_request.md
-claude	commands	claudes_implment_feature.md
 claude	commands	context_prime.md
 claude	commands	context_prime_with_lead.md
 claude	commands	create_documents.md
 claude	commands	creative.md
-claude	commands	feature.md
-claude	commands	feature_request.md
-claude	commands	full_featured.md
 claude	commands	full_project_context.md
 claude	commands	full_project_context_with_lead.md
-claude	commands	implement_feature.md
-claude	commands	implemental.md
 claude	commands	opinionated_code_review.md
 claude	commands	read_all_the_things.md
 claude	commands	set_up_test_environment.md
-claude	commands	structured_feature.md
 claude	commands	tdd_process.md
 
 # --- Claude-only agent-workflow commands (imported from ~/.claude/commands; awaiting Codex ports) ---

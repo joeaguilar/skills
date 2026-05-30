@@ -1,6 +1,6 @@
 ---
 name: tdd-coach
-description: Coach a feature test-first through the 5-step TDD loop — Red (failing test) → Green (minimal code) → Refactor → Expand (edge cases) → Integrate — for TypeScript/React/Vite stacks (Vitest, React Testing Library, Playwright, MSW, userEvent). Trigger when the user types /tdd-coach, or asks to "build this test-first", "guide me through TDD", "do red-green-refactor", "write the test before the code", or wants disciplined TDD coaching on a new component/hook/feature. Do NOT trigger for running or fixing an existing test suite (use /verify), for one-off test writing without the cycle, or for sprint planning (use /sprint). The tdd_process command is the quick-reference version of this same loop.
+description: Coach a feature test-first through the 5-step TDD loop — Red (failing test) → Green (minimal code) → Refactor → Expand (edge cases) → Integrate — for TypeScript/React/Vite stacks (Vitest, React Testing Library, Playwright, MSW, userEvent). Trigger when the user types /tdd-coach, or asks to "build this test-first", "guide me through TDD", "do red-green-refactor", "write the test before the code", or wants disciplined TDD coaching on a new component/hook/feature. Do NOT trigger for running or fixing an existing test suite (use /verify), for one-off test writing without the cycle, or for sprint planning (use /sprint).
 ---
 
 # tdd-coach

@@ -16,9 +16,9 @@ This repository holds two parallel skill trees — the **Claude** sources under 
 
 ## Editing Rules
 
-- The two trees are **parallel ports, not copies**. Codex skills are reworded for Codex (no `AskUserQuestion`, "Codex subagent", `AGENTS.md`/`CODEX.md`); do not paste Claude wording into `codex/skills/`.
+- The two trees are **parallel ports, not copies**. Codex skills are reworded for Codex: replace Claude-only tool names (`AskUserQuestion`, `subagent_type`, `run_in_background`, `SendMessage`) with Codex-native user-input and subagent/background-session language, and prefer `AGENTS.md` / `CODEX.md` for Codex repo instructions. Do not paste Claude wording into `codex/skills/`.
 - A skill's behavior change starts in `claude/skills/<skill>/`. When the Codex port needs the same change, edit `codex/skills/<skill>/` in Codex wording, then refresh that skill's line in `codex/PARITY.tsv` (`git hash-object claude/skills/<skill>/SKILL.md`).
-- Run `./validate-skills.sh` after touching either tree; it flags any skill present in one tree but not the other, and any Codex port whose Claude source moved past its `PARITY.tsv` baseline.
+- Run `./validate-skills.sh` after touching either tree; it flags any skill present in one tree but not the other, and any Codex port whose Claude source moved past its `PARITY.tsv` baseline. Treat staleness warnings as actionable review items: re-port the Codex skill first, then update `PARITY.tsv`; never silence drift by refreshing the hash alone.
 - Do not edit `codex/backups/` or `backups/` unless the task is backup maintenance.
 - Keep `codex/registry/skill-tree.yaml` and `codex/registry/skill-tree.json` in sync when changing skill tree metadata.
 - Keep skill enablement state out of `codex/skills/`; project state belongs in `.codex/project-skills.json` inside the target project.

@@ -74,7 +74,17 @@ Announce: `Phase 0 — Intake & preflight`.
    - Else fall back to `itr search "sprint-" -f json --fields tags`, find max `sprint-N` tag, +1.
    - If neither yields anything, this is `sprint-1`.
 
-7. **Check for in-flight sprints.** Read `sprint/CURRENT` if it exists — its single line names the most-recent open sprint folder. Cross-reference with `itr` for any open `sprint-N` epics. Surface them: `Note: sprint-3 epic is still open (sprint/CURRENT points to sprint-3-...). Stacking is allowed but anti-Scrum — finish or close it first if you can.` Do not block.
+7. **Check for in-flight sprints.** Read `sprint/CURRENT` if it exists — its single line names the most-recent open sprint folder. Cross-reference with `itr` for any open `sprint-N` epics.
+
+   **Detect already-reviewed sprints before flagging as in-flight.** A sprint that has been through `/sprint-review` will have its `plan.md` Outcomes / Demo / Retro sections populated (Phase 6 writes them as empty HTML-comment placeholders; `/sprint-review` Phase 6 replaces them). Without this check, a closed-but-not-yet-incremented sprint will be falsely flagged as in-flight — noise the PO has to mentally filter. This mirrors the sprint-1 stale-tickets pattern (step 8 below): the bookkeeping says open, the reality is closed, and Codex has to read the reality before reporting.
+
+   1. Read `sprint/CURRENT` for the folder name; resolve `sprint/<folder>/plan.md`.
+   2. If the file is missing, treat the sprint as in-flight (no review evidence).
+   3. If the file exists, read its `## Outcomes` section. Treat it as **reviewed** when the section contains substantive content — any non-whitespace line that is **not** the original placeholder `<!-- Populated by /sprint-review after /blitz runs. -->`. (Demo/Retro placeholders are weaker signals; Outcomes is the canonical one.) Optionally cross-check by reading the sprint epic in `itr` — a `closed` epic with a populated Outcomes is fully reviewed.
+   4. **If reviewed:** do not print the in-flight warning. Note it in the Phase 0 summary as `In-flight: none (sprint-K reviewed, awaiting new-sprint increment)`. Proceed.
+   5. **If not reviewed (placeholder Outcomes or no plan.md):** surface as today — `Note: sprint-3 epic is still open (sprint/CURRENT points to sprint-3-...). Stacking is allowed but anti-Scrum — finish or close it first if you can.` Do not block.
+
+   **Self-test (manual, for skill authors):** create a scratch `sprint/sprint-9-2026-01-01-test/plan.md` with the canonical Phase 6 template and confirm step 7 reports it as in-flight. Then replace `<!-- Populated by /sprint-review after /blitz runs. -->` with any single line of real outcomes text and re-run — step 7 should now report `reviewed, awaiting new-sprint increment` and skip the stacking warning. A missing `plan.md` should fall back to the in-flight warning path.
 
 8. **Detect stale itr tickets (commit-closed but still open in `itr`).** Git commit conventions like `closes #186` don't auto-sync into `.itr.db` — `itr` has no post-merge hook. Without this check, a sprint can over-count scope by planning a story that already shipped (sprint-1 hit this with #186; see retro action item #196).
 
@@ -128,7 +138,7 @@ Announce: `Phase 0 — Intake & preflight`.
       Story style:   STORY_STYLE.md | inferred | base default
       Roadmap:       docs/ROADMAP.md (N sections; next: §A.6 popup, §A.16 WindowPicker [wide dep]) | absent — run /roadmap
       Sprint number: sprint-N (auto-incremented from sprint/ folders)
-      In-flight:     none | sprint-K still open per sprint/CURRENT (warning, not blocking)
+      In-flight:     none | sprint-K reviewed, awaiting new-sprint increment | sprint-K still open per sprint/CURRENT (warning, not blocking)
       Stale tickets: none | #<id> (<title>) — closed in <sha> "<subject>"; choose (a) close now / (b) include as no-op / (c) skip
     ```
 

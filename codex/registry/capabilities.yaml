@@ -53,3 +53,57 @@ capabilities:
   primitive-audit:
     label: "Primitive Audit"
     description: "Audit primitive install scope, provider state, drift, and graph integrity."
+  accessibility-audit:
+    label: "Accessibility Audit"
+    description: "Review UI accessibility, WCAG compliance, and assistive-technology behavior."
+  e2e-test-design:
+    label: "E2E Test Design"
+    description: "Design and improve end-to-end test coverage for critical workflows."
+  backend-security-audit:
+    label: "Backend Security Audit"
+    description: "Review backend systems, APIs, authentication, and data handling for security risk."
+  performance-testing:
+    label: "Performance Testing"
+    description: "Design load tests, benchmarks, and bottleneck investigations."
+  api-contract-design:
+    label: "API Contract Design"
+    description: "Design REST, OpenAPI, GraphQL, gRPC, and event API contracts."
+  database-schema-design:
+    label: "Database Schema Design"
+    description: "Design and review schemas, migrations, indexes, and data model boundaries."
+  docker-compose-design:
+    label: "Docker Compose Design"
+    description: "Design and troubleshoot Docker Compose development and test environments."
+  cicd-pipeline-design:
+    label: "CI/CD Pipeline Design"
+    description: "Design and optimize continuous integration, delivery, and deployment workflows."
+  cloud-cost-optimization:
+    label: "Cloud Cost Optimization"
+    description: "Analyze cloud spend and recommend cost-aware infrastructure improvements."
+  analytics-event-design:
+    label: "Analytics Event Design"
+    description: "Design product analytics event taxonomies and measurement plans."
+  data-pipeline-design:
+    label: "Data Pipeline Design"
+    description: "Design batch, streaming, ETL, ELT, and data quality pipelines."
+  changelog-curation:
+    label: "Changelog Curation"
+    description: "Create release notes and stakeholder change summaries."
+  user-documentation:
+    label: "User Documentation"
+    description: "Write user-facing guides, onboarding docs, and feature documentation."
+  api-documentation:
+    label: "API Documentation"
+    description: "Document APIs from code, schemas, specs, and behavior."
+  tdd-coaching:
+    label: "TDD Coaching"
+    description: "Guide test-driven development workflows from red to integration."
+  prd-task-breakdown:
+    label: "PRD Task Breakdown"
+    description: "Convert product requirements into developer-ready implementation tasks."
+  code-roast:
+    label: "Code Roast"
+    description: "Explain code review findings with memorable, respectful humor."
+  spicy-code-roast:
+    label: "Spicy Code Roast"
+    description: "Explain code review findings with explicit opt-in topical roast humor."

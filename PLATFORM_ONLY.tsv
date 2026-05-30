@@ -22,6 +22,45 @@
 # codex/commands/<name>.md, reworded for Codex), DELETE its line here and the validator
 # will start enforcing parity for it normally.
 
+# --- Codex-only skills ---
+codex	skills	retro-game-assets
+
+# --- Claude-only skills (imported from ~/.claude; awaiting Codex ports) ---
+claude	skills	proof-campaign
+
+# --- Claude-only agents (imported from ~/.claude/agents; awaiting Codex ports) ---
+claude	agents	accessibility-compliance-auditor.md
+claude	agents	analytics-event-architect.md
+claude	agents	api-contract-designer.md
+claude	agents	api-docs-generator-role.md
+claude	agents	backend-security-auditor.md
+claude	agents	changelog-curator.md
+claude	agents	cicd-pipeline-architect.md
+claude	agents	cloud-cost-optimizer.md
+claude	agents	comedy-code-roaster.md
+claude	agents	cpp-code-reviewer.md
+claude	agents	css-animation-maestro.md
+claude	agents	css-mastery-expert.md
+claude	agents	data-pipeline-architect.md
+claude	agents	database-schema-architect.md
+claude	agents	docker-compose-architect.md
+claude	agents	e2e-test-architect.md
+claude	agents	efficiency-code-auditor.md
+claude	agents	emoji-translator-pro.md
+claude	agents	feature-implementation-orchestrator.md
+claude	agents	feature-request-processor.md
+claude	agents	microservice-decomposer.md
+claude	agents	ml-integration-specialist.md
+claude	agents	open-api-contract-designer.md
+claude	agents	performance-test-engineer.md
+claude	agents	pragmatic-code-wizard.md
+claude	agents	prd-task-generator.md
+claude	agents	strict-feat-orchestrator.md
+claude	agents	strict-react-reviewer.md
+claude	agents	tdd-workflow-coach.md
+claude	agents	user-guide-writer.md
+claude	agents	workflow-architect-analyst.md
+
 # --- Claude-only legacy commands (imported from ~/.claude/commands; awaiting Codex ports) ---
 claude	commands	agent_spawner.md
 claude	commands	app_pip.md
@@ -46,3 +85,12 @@ claude	commands	read_all_the_things.md
 claude	commands	set_up_test_environment.md
 claude	commands	structured_feature.md
 claude	commands	tdd_process.md
+
+# --- Claude-only agent-workflow commands (imported from ~/.claude/commands; awaiting Codex ports) ---
+claude	commands	agent-00-project-initialization-trigger.md
+claude	commands	agent-00-spec-analyzer-workflow.md
+claude	commands	agent-01-initialize-project-workflow.md
+claude	commands	agent-02-feature-development-workflow.md
+claude	commands	agent-05-security-audit-workflow.md
+claude	commands	agent-06-mobile-app-development-workflow.md
+claude	commands	command-conventions.md

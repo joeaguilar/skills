@@ -1,0 +1,4 @@
+interface:
+  display_name: "Code Roast"
+  short_description: "Funny but rigorous code review style"
+  default_prompt: "Use $code-roast to review this code with memorable humor while keeping findings actionable."

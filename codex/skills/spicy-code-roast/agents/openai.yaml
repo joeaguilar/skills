@@ -1,0 +1,4 @@
+interface:
+  display_name: "Spicy Code Roast"
+  short_description: "Current-event researched code roast style"
+  default_prompt: "Use $spicy-code-roast to review this code with fresh, researched topical humor and actionable findings."

@@ -70,7 +70,25 @@
     "skill-authoring": { "label": "Skill Authoring" },
     "skill-installation": { "label": "Skill Installation" },
     "primitive-architecture": { "label": "Primitive Architecture" },
-    "primitive-audit": { "label": "Primitive Audit" }
+    "primitive-audit": { "label": "Primitive Audit" },
+    "accessibility-audit": { "label": "Accessibility Audit" },
+    "e2e-test-design": { "label": "E2E Test Design" },
+    "backend-security-audit": { "label": "Backend Security Audit" },
+    "performance-testing": { "label": "Performance Testing" },
+    "api-contract-design": { "label": "API Contract Design" },
+    "database-schema-design": { "label": "Database Schema Design" },
+    "docker-compose-design": { "label": "Docker Compose Design" },
+    "cicd-pipeline-design": { "label": "CI/CD Pipeline Design" },
+    "cloud-cost-optimization": { "label": "Cloud Cost Optimization" },
+    "analytics-event-design": { "label": "Analytics Event Design" },
+    "data-pipeline-design": { "label": "Data Pipeline Design" },
+    "changelog-curation": { "label": "Changelog Curation" },
+    "user-documentation": { "label": "User Documentation" },
+    "api-documentation": { "label": "API Documentation" },
+    "tdd-coaching": { "label": "TDD Coaching" },
+    "prd-task-breakdown": { "label": "PRD Task Breakdown" },
+    "code-roast": { "label": "Code Roast" },
+    "spicy-code-roast": { "label": "Spicy Code Roast" }
   },
   "skills": {
     "openai-docs": {
@@ -114,6 +132,34 @@
       "recommends": [],
       "unlockedBy": ["imagegen"],
       "position": { "x": 25, "y": 4 }
+    },
+    "code-roast": {
+      "path": "skills/code-roast",
+      "group": "foundations",
+      "tier": 1,
+      "icon": "RST",
+      "theme": "fire",
+      "title": "Code Roast",
+      "summary": "Turns serious code findings into memorable, funny teaching moments.",
+      "provides": ["code-roast"],
+      "requires": [],
+      "recommends": ["code-graph"],
+      "unlockedBy": [],
+      "position": { "x": 25, "y": 88 }
+    },
+    "spicy-code-roast": {
+      "path": "skills/spicy-code-roast",
+      "group": "foundations",
+      "tier": 2,
+      "icon": "SPC",
+      "theme": "plasma",
+      "title": "Spicy Code Roast",
+      "summary": "Adds explicit opt-in current-event joke research to code roasts.",
+      "provides": ["spicy-code-roast"],
+      "requires": ["code-roast"],
+      "recommends": ["code-graph"],
+      "unlockedBy": ["code-roast"],
+      "position": { "x": 38, "y": 88 }
     },
     "skill-creator": {
       "path": "skills/.system/skill-creator",
@@ -355,6 +401,310 @@
       "recommends": ["skill-installation"],
       "unlockedBy": ["primitive-architect-agent"],
       "position": { "x": 66, "y": 84 }
+    },
+    "accessibility-compliance-auditor-agent": {
+      "type": "agent",
+      "platforms": {
+        "claude": { "path": "agents/accessibility-compliance-auditor.md" },
+        "codex": { "path": "agents/accessibility-compliance-auditor.md" }
+      },
+      "scopes": ["global", "local"],
+      "group": "execution",
+      "tier": 2,
+      "icon": "A11Y",
+      "theme": "wind",
+      "title": "Accessibility Auditor",
+      "summary": "Reviews UI accessibility, WCAG compliance, and assistive technology behavior.",
+      "provides": ["accessibility-audit"],
+      "requires": [],
+      "recommends": ["code-graph"],
+      "unlockedBy": [],
+      "position": { "x": 64, "y": 8 }
+    },
+    "e2e-test-architect-agent": {
+      "type": "agent",
+      "platforms": {
+        "claude": { "path": "agents/e2e-test-architect.md" },
+        "codex": { "path": "agents/e2e-test-architect.md" }
+      },
+      "scopes": ["global", "local"],
+      "group": "execution",
+      "tier": 2,
+      "icon": "E2E",
+      "theme": "water",
+      "title": "E2E Test Architect",
+      "summary": "Designs stable end-to-end test suites for critical workflows.",
+      "provides": ["e2e-test-design"],
+      "requires": [],
+      "recommends": ["code-graph"],
+      "unlockedBy": [],
+      "position": { "x": 64, "y": 18 }
+    },
+    "backend-security-auditor-agent": {
+      "type": "agent",
+      "platforms": {
+        "claude": { "path": "agents/backend-security-auditor.md" },
+        "codex": { "path": "agents/backend-security-auditor.md" }
+      },
+      "scopes": ["global", "local"],
+      "group": "execution",
+      "tier": 2,
+      "icon": "SEC",
+      "theme": "fire",
+      "title": "Backend Security Auditor",
+      "summary": "Reviews backend APIs, authentication, authorization, and data handling for security risk.",
+      "provides": ["backend-security-audit"],
+      "requires": [],
+      "recommends": ["code-graph"],
+      "unlockedBy": [],
+      "position": { "x": 64, "y": 28 }
+    },
+    "performance-test-engineer-agent": {
+      "type": "agent",
+      "platforms": {
+        "claude": { "path": "agents/performance-test-engineer.md" },
+        "codex": { "path": "agents/performance-test-engineer.md" }
+      },
+      "scopes": ["global", "local"],
+      "group": "execution",
+      "tier": 2,
+      "icon": "PERF",
+      "theme": "electric",
+      "title": "Performance Test Engineer",
+      "summary": "Designs load tests, benchmarks, and bottleneck investigations.",
+      "provides": ["performance-testing"],
+      "requires": [],
+      "recommends": ["code-graph"],
+      "unlockedBy": [],
+      "position": { "x": 64, "y": 38 }
+    },
+    "api-contract-designer-agent": {
+      "type": "agent",
+      "platforms": {
+        "claude": { "path": "agents/api-contract-designer.md" },
+        "codex": { "path": "agents/api-contract-designer.md" }
+      },
+      "scopes": ["global", "local"],
+      "group": "planning",
+      "tier": 1,
+      "icon": "API",
+      "theme": "aether",
+      "title": "API Contract Designer",
+      "summary": "Designs REST, OpenAPI, GraphQL, gRPC, and event contracts from requirements.",
+      "provides": ["api-contract-design"],
+      "requires": [],
+      "recommends": ["openai-docs"],
+      "unlockedBy": [],
+      "position": { "x": 44, "y": 6 }
+    },
+    "database-schema-architect-agent": {
+      "type": "agent",
+      "platforms": {
+        "claude": { "path": "agents/database-schema-architect.md" },
+        "codex": { "path": "agents/database-schema-architect.md" }
+      },
+      "scopes": ["global", "local"],
+      "group": "planning",
+      "tier": 1,
+      "icon": "DB",
+      "theme": "earth",
+      "title": "Database Schema Architect",
+      "summary": "Designs schemas, migrations, indexes, and persistence boundaries.",
+      "provides": ["database-schema-design"],
+      "requires": [],
+      "recommends": ["code-graph"],
+      "unlockedBy": [],
+      "position": { "x": 44, "y": 16 }
+    },
+    "docker-compose-architect-agent": {
+      "type": "agent",
+      "platforms": {
+        "claude": { "path": "agents/docker-compose-architect.md" },
+        "codex": { "path": "agents/docker-compose-architect.md" }
+      },
+      "scopes": ["global", "local"],
+      "group": "foundations",
+      "tier": 1,
+      "icon": "DKR",
+      "theme": "water",
+      "title": "Docker Compose Architect",
+      "summary": "Designs and troubleshoots Docker Compose development and test environments.",
+      "provides": ["docker-compose-design"],
+      "requires": [],
+      "recommends": [],
+      "unlockedBy": [],
+      "position": { "x": 44, "y": 26 }
+    },
+    "cicd-pipeline-architect-agent": {
+      "type": "agent",
+      "platforms": {
+        "claude": { "path": "agents/cicd-pipeline-architect.md" },
+        "codex": { "path": "agents/cicd-pipeline-architect.md" }
+      },
+      "scopes": ["global", "local"],
+      "group": "execution",
+      "tier": 2,
+      "icon": "CI",
+      "theme": "forge",
+      "title": "CI/CD Pipeline Architect",
+      "summary": "Designs CI/CD workflows, quality gates, and deployment automation.",
+      "provides": ["cicd-pipeline-design"],
+      "requires": [],
+      "recommends": ["code-graph"],
+      "unlockedBy": [],
+      "position": { "x": 64, "y": 48 }
+    },
+    "cloud-cost-optimizer-agent": {
+      "type": "agent",
+      "platforms": {
+        "claude": { "path": "agents/cloud-cost-optimizer.md" },
+        "codex": { "path": "agents/cloud-cost-optimizer.md" }
+      },
+      "scopes": ["global", "local"],
+      "group": "planning",
+      "tier": 1,
+      "icon": "COST",
+      "theme": "earth",
+      "title": "Cloud Cost Optimizer",
+      "summary": "Analyzes cloud spend and recommends cost-aware infrastructure improvements.",
+      "provides": ["cloud-cost-optimization"],
+      "requires": [],
+      "recommends": [],
+      "unlockedBy": [],
+      "position": { "x": 44, "y": 36 }
+    },
+    "analytics-event-architect-agent": {
+      "type": "agent",
+      "platforms": {
+        "claude": { "path": "agents/analytics-event-architect.md" },
+        "codex": { "path": "agents/analytics-event-architect.md" }
+      },
+      "scopes": ["global", "local"],
+      "group": "planning",
+      "tier": 1,
+      "icon": "EVT",
+      "theme": "prism",
+      "title": "Analytics Event Architect",
+      "summary": "Designs event taxonomies, funnels, and privacy-conscious measurement plans.",
+      "provides": ["analytics-event-design"],
+      "requires": [],
+      "recommends": [],
+      "unlockedBy": [],
+      "position": { "x": 44, "y": 46 }
+    },
+    "data-pipeline-architect-agent": {
+      "type": "agent",
+      "platforms": {
+        "claude": { "path": "agents/data-pipeline-architect.md" },
+        "codex": { "path": "agents/data-pipeline-architect.md" }
+      },
+      "scopes": ["global", "local"],
+      "group": "planning",
+      "tier": 1,
+      "icon": "DATA",
+      "theme": "water",
+      "title": "Data Pipeline Architect",
+      "summary": "Designs batch, streaming, ETL, ELT, and data quality pipelines.",
+      "provides": ["data-pipeline-design"],
+      "requires": [],
+      "recommends": [],
+      "unlockedBy": [],
+      "position": { "x": 44, "y": 56 }
+    },
+    "changelog-curator-agent": {
+      "type": "agent",
+      "platforms": {
+        "claude": { "path": "agents/changelog-curator.md" },
+        "codex": { "path": "agents/changelog-curator.md" }
+      },
+      "scopes": ["global", "local"],
+      "group": "execution",
+      "tier": 2,
+      "icon": "LOG",
+      "theme": "ink",
+      "title": "Changelog Curator",
+      "summary": "Creates changelogs, release notes, and stakeholder change summaries.",
+      "provides": ["changelog-curation"],
+      "requires": [],
+      "recommends": ["issue-tracker"],
+      "unlockedBy": [],
+      "position": { "x": 64, "y": 58 }
+    },
+    "user-guide-writer-agent": {
+      "type": "agent",
+      "platforms": {
+        "claude": { "path": "agents/user-guide-writer.md" },
+        "codex": { "path": "agents/user-guide-writer.md" }
+      },
+      "scopes": ["global", "local"],
+      "group": "planning",
+      "tier": 1,
+      "icon": "GUIDE",
+      "theme": "wind",
+      "title": "User Guide Writer",
+      "summary": "Writes user-facing guides, onboarding docs, and feature documentation.",
+      "provides": ["user-documentation"],
+      "requires": [],
+      "recommends": [],
+      "unlockedBy": [],
+      "position": { "x": 44, "y": 66 }
+    },
+    "api-docs-generator-agent": {
+      "type": "agent",
+      "platforms": {
+        "claude": { "path": "agents/api-docs-generator-role.md" },
+        "codex": { "path": "agents/api-docs-generator-role.md" }
+      },
+      "scopes": ["global", "local"],
+      "group": "planning",
+      "tier": 1,
+      "icon": "DOCS",
+      "theme": "aether",
+      "title": "API Docs Generator",
+      "summary": "Creates API documentation from code, specifications, schemas, and behavior.",
+      "provides": ["api-documentation"],
+      "requires": [],
+      "recommends": ["api-contract-design", "openai-docs"],
+      "unlockedBy": [],
+      "position": { "x": 44, "y": 76 }
+    },
+    "tdd-workflow-coach-agent": {
+      "type": "agent",
+      "platforms": {
+        "claude": { "path": "agents/tdd-workflow-coach.md" },
+        "codex": { "path": "agents/tdd-workflow-coach.md" }
+      },
+      "scopes": ["global", "local"],
+      "group": "execution",
+      "tier": 2,
+      "icon": "TDD",
+      "theme": "fire",
+      "title": "TDD Workflow Coach",
+      "summary": "Guides feature work through red, green, refactor, edge tests, and integration validation.",
+      "provides": ["tdd-coaching"],
+      "requires": [],
+      "recommends": ["code-graph"],
+      "unlockedBy": [],
+      "position": { "x": 64, "y": 68 }
+    },
+    "prd-task-generator-agent": {
+      "type": "agent",
+      "platforms": {
+        "claude": { "path": "agents/prd-task-generator.md" },
+        "codex": { "path": "agents/prd-task-generator.md" }
+      },
+      "scopes": ["global", "local"],
+      "group": "planning",
+      "tier": 1,
+      "icon": "PRD",
+      "theme": "forge",
+      "title": "PRD Task Generator",
+      "summary": "Turns PRDs and feature specs into implementation task lists.",
+      "provides": ["prd-task-breakdown"],
+      "requires": [],
+      "recommends": ["issue-tracker", "story-conventions"],
+      "unlockedBy": [],
+      "position": { "x": 44, "y": 86 }
     }
   }
 }

@@ -2,65 +2,52 @@
 
 ## What this is
 
-The **canonical source for Claude Code skills** — the directory that takes over `~/.claude/skills`.
-Author skills **here**; don't hand-edit copies under `~/.claude` (this repo is the upstream they sync from).
+The **canonical source for two parallel skill distributions**: the **Claude** skills under `claude/skills/` and the **Codex** ports under `codex/skills/`. A root `install.sh` symlinks each tree into its agent home (`~/.claude/skills → claude/skills`, `~/.codex/skills → codex/skills`).
 
-Each top-level directory is one skill, holding a `SKILL.md` (plus any helper scripts it ships).
-A skill is a Markdown file with YAML frontmatter the harness reads to decide *when to fire* and a body it loads into context *to run*.
+Author **Claude** skills in `claude/skills/<skill>/`; don't hand-edit the installed copies under `~/.claude` (that path is just a symlink back here). The Codex tree is a **separate, intentionally reworded port** — same skills, Codex phrasing (see "Two ports" below), not a byte copy.
 
 ## Layout
 
 ```
-<skill>/SKILL.md     one directory per skill (frontmatter + body)
-COMPRESSION.md       caveman-compression method (read before shrinking a skill)
-statusline.sh        Claude Code statusline script (not a skill)
-codex/               Codex-compatible export of the same skills (see below)
-.gitignore           ignores .DS_Store and *.bak local-sync backups
+skills/                         (repo root)
+├── install.sh                  unified installer: ./install.sh <claude|codex|both> [--apply]
+├── validate-skills.sh          cross-tree parity + drift check
+├── claude/skills/<skill>/SKILL.md     the Claude skill sources (10 skills)
+├── codex/
+│   ├── skills/<skill>/SKILL.md + agents/openai.yaml   Codex ports
+│   ├── skills/.system/                Codex system skills (Codex-only)
+│   ├── PARITY.tsv                      per-skill reconcile baseline (drift check)
+│   ├── registry/  explorer/  scripts/  backups/
+├── CLAUDE.md  AGENTS.md  COMPRESSION.md  statusline.sh  .gitignore
 ```
+
+`~/.claude/skills` and `~/.codex/skills` are symlinks created by `install.sh`. Skills produce artifacts **in target repos** (`itr` backlog, `sprint/{folder}/plan.md`, `STORY_STYLE.md`, `docs/ROADMAP.md`), never here.
 
 ## The skills
 
-**Sprint suite — coached, human-in-the-loop Scrum (verbose by design):**
-- `sprint` — spec / `/plan` / conversation → groomed `itr` Sprint backlog (planning only).
-- `blitz` — execute a backlog as conflict-free parallel agent *waves* (execution only; no commits).
-- `sprint-review` — fill Outcomes/Demo/Retro, per-story acceptance, triage, close the epic (review only).
-- `roadmap` — `docs/ROADMAP.md`, the cross-sprint map between spec and backlog.
-- `story-style` — `STORY_STYLE.md`, the project's issue/ticket conventions (setup wizard).
-
-**Autonomous:**
-- `overdrive` — super-skill that condenses sprint+blitz+sprint-review into one hands-off loop (pre-plan every ticket's files → swarm → commit per wave → one visual-smoke gate). **Caveman-compressed** (see register below).
-
-**Standalone:**
-- `itr` — file issues into the project's `itr` tracker (the backlog CLI the sprint suite defers to).
-- `kgr` — navigate/audit a codebase via its dependency graph instead of grep+read loops.
-- `alignment` — relentlessly interview the user to stress-test a plan/design.
-- `shell-prompt` — install a lightweight git-aware zsh prompt (ships `append-prompt.sh`, `README.md`).
-
-> Skills produce artifacts **in target repos**, not here: `itr` backlog, `sprint/{folder}/plan.md`, `STORY_STYLE.md`, `docs/ROADMAP.md`, `sprint/CURRENT`. This repo only holds the skill *definitions*.
+**Sprint suite — coached, human-in-the-loop (verbose by design):** `sprint` (plan), `blitz` (parallel-wave execution), `sprint-review` (review/triage), `roadmap` (`docs/ROADMAP.md`), `story-style` (`STORY_STYLE.md`).
+**Autonomous:** `overdrive` — condenses sprint+blitz+sprint-review into one hands-off loop (**caveman-compressed**, see below).
+**Standalone:** `itr` (file issues), `kgr` (codebase graph), `alignment` (stress-test a plan), `shell-prompt` (zsh prompt).
 
 ## SKILL.md conventions
 
-- **Frontmatter** = `name:` + `description:`. The `description` is the router's signal — it must list concrete **trigger** phrases *and* explicit **"Do NOT trigger"** cases that route to a sibling skill. Mirror the density of the existing descriptions.
-- **Body** = the canonical shared skeleton: title + intro, slash-invocation table, Roles & artifacts, numbered **Phases** (each `Announce: Phase N — …`), Principles, Don't. Keep terminology consistent across siblings (the sprint suite shares Scrum vocabulary on purpose).
-- Skills that emit sub-agent prompts embed them verbatim; treat those as code.
+- **Frontmatter** = `name:` + `description:`. The `description` is the router's signal — list concrete **trigger** phrases *and* explicit **"Do NOT trigger"** routing to siblings. Mirror the density of the existing descriptions.
+- **Body** = shared skeleton: title + intro, slash-invocation table, Roles & artifacts, numbered **Phases** (`Announce: Phase N — …`), Principles, Don't. Keep terminology consistent across siblings.
 
-## Authoring conventions
+## Two ports, two registers
 
-**Two verbosity registers — pick deliberately:**
-- **Verbose** for coached, step-by-step, human-in-the-loop skills (`sprint`, `blitz`, `sprint-review`, `roadmap`, `story-style`). The prose *is* the product — announcements and the *why* of each gate. **Don't compress these.**
-- **Caveman-compressed** for autonomous skills loaded into context every run (`overdrive`), where verbosity is pure token cost. Compress the prose "mouth"; preserve the executable "brain" (commands, thresholds, tables, schemas, guardrails) byte-for-byte. **Method: `COMPRESSION.md`.**
+**Claude vs Codex (per-platform wording).** Codex ports are reworded for Codex (no `AskUserQuestion`, "Codex subagent", `AGENTS.md`/`CODEX.md` instead of `CLAUDE.md`). That difference is intentional — `validate-skills.sh` checks *set parity and drift*, not content equality. Edit Claude skills in `claude/skills/`; when a change needs to reach Codex, port it in `codex/skills/` (Codex wording) and refresh that skill's line in `codex/PARITY.tsv`.
 
-**Other:**
-- Edit skills here; let the sync process push to `~/.claude` — don't author downstream.
-- After a non-trivial skill change, sanity-check structure (fences balanced, every `--flag` referenced, phases present, thresholds/commands intact) — see the integrity checklist in `COMPRESSION.md`.
+**Verbose vs caveman (per-skill density) — pick deliberately:**
+- **Verbose** for coached, step-by-step skills (`sprint`, `blitz`, `sprint-review`, `roadmap`, `story-style`). The prose *is* the product. Don't compress.
+- **Caveman-compressed** for autonomous skills loaded every run (`overdrive`). Compress prose; preserve commands/thresholds/tables/guardrails byte-for-byte. Method: **`COMPRESSION.md`**.
+
+## Working here
+
+- **Install/relink:** `./install.sh claude` (or `codex`/`both`). Dry-run by default; `--apply` to act; `--restore` to roll back.
+- **Validate after any skill change:** `./validate-skills.sh` — flags a skill present in one tree but not the other, and any Codex port whose Claude source drifted past its `PARITY.tsv` baseline. (`overdrive`'s Codex port is currently flagged stale — pending re-port to the caveman rewrite.)
+- Author Claude skills in `claude/skills/`; let `install.sh` link them — never author under `~/.claude`.
 
 ## codex/
 
-A **Codex-compatible export** of the same skills, generated/linked from the root definitions — not a separate set to edit by hand.
-- `codex/skills/` — the mirrored skills (+ a `.system` folder).
-- `codex/registry/` — `skill-tree.{json,yaml}`, `capabilities.yaml`.
-- `codex/explorer/` — a small web UI (`index.html`, `app.js`, `styles.css`) for browsing the tree.
-- `codex/scripts/` — `link-codex-skills.sh`, `skill-tree.js`, `validate-codex-skills.sh`.
-- `codex/ROADMAP.md`, `codex/VALIDATION.md`, `codex/backups/`.
-
-**Workflow:** change the **root** skill, then re-run the codex link/validate scripts to refresh the mirror and registry. Don't edit `codex/skills/*` directly.
+A Codex-compatible export with its own tooling: `codex/skills/` (ports + `.system`), `codex/registry/` (`skill-tree.{json,yaml}`, `capabilities.yaml`), `codex/explorer/` (web UI), `codex/scripts/` (`link-codex-skills.sh` legacy installer, `skill-tree.js`, `validate-codex-skills.sh`), `codex/PARITY.tsv`. Edit the Claude source first, then re-port into `codex/skills/` and update `PARITY.tsv` + the registry. See `AGENTS.md` for the Codex-side workflow.

@@ -4,3 +4,6 @@
 # Local backups created by the sync process
 *.bak
 *.bak-*
+
+# Skill-install backups (install.sh)
+backups/

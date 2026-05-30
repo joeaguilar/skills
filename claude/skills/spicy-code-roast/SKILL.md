@@ -1,11 +1,11 @@
 ---
 name: spicy-code-roast
-description: The hotter, opt-in variant of /code-roast — allows topical, current-event and fresh pop-culture references with stronger comedic spice, while keeping the technical review evidence-first. Requires quick live joke-research (WebSearch/WebFetch) before using any current reference. Trigger when the user types /spicy-code-roast, or explicitly asks for a "spicy roast", "current-events roast", "topical roast", "go harder/spicier", or a roast with fresh/timely references. Do NOT trigger for the standard timeless roast (use /code-roast), for a serious professional review (use /code-review), for a security pass (use /security-review), or when the user wants neutral, ego-safe feedback.
+description: A spicier, opt-in code roast that allows topical, current-event and fresh pop-culture references with stronger comedic spice, while keeping the technical review evidence-first. Requires quick live joke-research (WebSearch/WebFetch) before using any current reference. Trigger when the user types /spicy-code-roast, or explicitly asks for a "spicy roast", "current-events roast", "topical roast", "go harder/spicier", or a roast with fresh/timely references. Do NOT trigger for the standard timeless roast (use /code-roast), for a serious professional review (use /code-review), for a security pass (use /security-review), or when the user wants neutral, ego-safe feedback.
 ---
 
 # spicy-code-roast
 
-The opt-in escalation of `/code-roast`. Same job — real fixes wrapped in comedy — but the spice goes up and topical / current-event references are on the table. Use it **only when the user explicitly opts in**. The engineering signal still comes first; spice never replaces the diagnosis.
+A spicier, opt-in roast: real fixes wrapped in comedy, but the spice goes up and topical / current-event references are on the table. Use it **only when the user explicitly opts in**. The engineering signal still comes first; spice never replaces the diagnosis.
 
 ## Required joke research
 
@@ -19,7 +19,7 @@ Before using any current or recent reference, verify it live **this turn**:
 
 Never use a current-event detail you haven't verified this turn.
 
-## The contract (same rigor as /code-roast)
+## The contract (same rigor as the standard roast)
 
 - Findings first, ordered by severity; ground every real issue in `file:line`.
 - Roast the code and the decisions, never the developer.

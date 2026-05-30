@@ -205,6 +205,7 @@ Coach: *"Now I'll decompose the spec into stories sized to be completed by one `
    - If kgr is present, use `kgr refs <symbol>` and `kgr query --who-imports <file>` to identify the file set.
    - Otherwise, grep for entry points referenced in the spec.
    - Files only go into `--files` when you're confident; ambiguous cases stay blank and `/blitz`'s planner agent will fill them later.
+   - **If a story's acceptance criterion is user-visible** ("user sees X", "surface a warning", "show a notice"), the ownership set must include the UI/surface file that *renders* it — not just the data-layer file that *produces* it. A data-layer change behind an unowned render site ships a dead path and forces the `/blitz` worker agent to skip the AC or reach outside its files. If data and surface naturally belong to different worker agents, split into a data-layer story + a UI-hookup story (`--blocked-by` the data-layer one). *(sprint-4 retro: #407 declared `bg-io` only; its "user sees a warning" AC needed a `bg-app` render site, forcing a `/blitz` orchestrator intervention.)*
 
 3. **Infer dependencies (`--blocked-by`) conservatively:**
    - Only set when there's a concrete signal: a kgr import edge between owned files, or a clear "X must exist before Y" ordering from the spec.

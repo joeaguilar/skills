@@ -1,8 +1,8 @@
-# Codex Primitive Tree Roadmap
+# Primitive Installer Roadmap
 
 ## Product Intent
 
-Build a project primitive explorer that treats Codex skills, agents, slash commands, and future installable roots like an unlockable capability tree. A project starts with foundational primitives, enables them deliberately, and higher-order workflows become available when their capability prerequisites are satisfied.
+Build a project primitive installer UI that treats Claude and Codex skills, agents, slash commands, and future installable roots like an unlockable capability tree. A project starts with foundational primitives, enables them deliberately, and higher-order workflows become available when their capability prerequisites are satisfied.
 
 The explorer should feel like a tactical game interface while remaining honest infrastructure: primitives are still files, enablement is still a manifest, and install/apply steps stay reversible.
 
@@ -13,7 +13,7 @@ The explorer should feel like a tactical game interface while remaining honest i
 - `codex/registry/skill-tree.json` is the UI/CLI-readable registry.
 - `codex/registry/capabilities.yaml` defines shared capability names so dependencies can target capabilities such as `issue-tracker` instead of hard-coding `itr`.
 - `.codex/project-primitives.json` is the per-project enabled-state manifest; `.codex/project-skills.json` is read as a legacy fallback.
-- `codex/explorer/` is the visual primitive tree UI.
+- `codex/explorer/` is the shared Claude/Codex visual primitive installer UI. Serve the repo root and open `/` so both platform payload trees can be read.
 - `codex/scripts/skill-tree.js` is the CLI bridge for listing, enabling, disabling, and writing project manifests.
 - The manifest `providers` map records explicit provider choices when multiple enabled primitives provide the same capability.
 - Registry entries may expose stale port state with `stale`, `stalePort`, or `portState: "stale"` for UI display.
@@ -69,9 +69,9 @@ Status: built in this pass.
 - Persist local UI state with `localStorage`.
 - Render a project manifest preview.
 
-### M4 - Installer Integration
+### M4 - Platform-Aware UI
 
-Status: next.
+Status: built in this pass.
 
 - Add a platform selector to the explorer (`Claude` / `Codex`) beside the existing `Local` / `Global` scope switch.
 - Store UI state independently for all four platform/scope pairs:

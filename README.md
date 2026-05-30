@@ -41,7 +41,7 @@ Do not expect byte-for-byte parity.
 - `codex/agents/`, `codex/commands/`: Codex primitive roots.
 - `codex/registry/`: primitive metadata, capabilities, dependencies, and
   provider routing.
-- `codex/explorer/`: static primitive-tree explorer UI.
+- `codex/explorer/`: static Claude/Codex primitive installer UI.
 - `codex/scripts/`: Codex validation, registry, and install helper scripts.
 - `codex/PARITY.tsv`: Claude source blob baselines for Codex skill ports.
 - `PLATFORM_ONLY.tsv`: intentional one-side-only primitive declarations.
@@ -141,30 +141,68 @@ node codex/scripts/skill-tree.js enable itr --project /path/to/project
 node codex/scripts/skill-tree.js provider primitive-audit auto --project /path/to/project
 ```
 
-Project enablement state belongs in the target project's
-`.codex/project-primitives.json`, not in this repo's canonical primitive roots.
+Project enablement state belongs in the target project's platform manifest
+(`.claude/project-primitives.json` or `.codex/project-primitives.json`), not in
+this repo's canonical primitive roots.
 
-## Visual Explorer
+## Visual Installer
 
-Serve the Codex explorer locally:
+Serve the primitive installer locally from the repository root:
 
 ```bash
-cd codex
 python3 -m http.server 8765
 ```
 
 Open:
 
 ```text
-http://127.0.0.1:8765/explorer/
+http://127.0.0.1:8765/
 ```
 
-The explorer shows skills, agents, commands, capability prerequisites, provider
-routing, and local/global enablement state.
+If port `8765` is occupied, use another port and adjust the URL:
 
-## UI Skill Tree Installer
+```bash
+python3 -m http.server 9876
+```
 
-The UI skill tree installer is the Codex explorer plus the registry CLI:
+```text
+http://127.0.0.1:9876/
+```
+
+The root page redirects to `codex/explorer/`. Start the server from the
+repository root so both platform trees are readable by relative URL:
+`codex/registry/skill-tree.json`, `codex/**` payloads, and `claude/**`
+payloads.
+
+The installer shows:
+
+- A Claude/Codex platform switch beside the Local/Global scope switch.
+- Separate tabs for skills, agents, slash commands, and future primitive types.
+- Platform-specific local/global state and generated primitive manifests:
+  `.claude/project-primitives.json`, `.codex/project-primitives.json`,
+  `~/.claude/primitives.json`, or `~/.codex/primitives.json`.
+- Capability prerequisites, locked/available/enabled states, missing-provider
+  state, stale-port state, and provider routing.
+- The selected primitive's markdown source in the Markdown Explorer.
+
+In Chromium on `localhost`, the browser File System Access API enables two
+project-folder workflows:
+
+- `DIR Project` selects a project, reads the active platform manifest
+  (`.claude/project-primitives.json` or `.codex/project-primitives.json`, with
+  legacy project-skills fallback), and saves manifest changes.
+- `SC` scans the selected folder for managed and unmanaged primitives. It scans
+  `skills`, `agents`, `commands`, and any future registry `primitiveTypes` roots
+  across direct roots plus `codex/`, `claude/`, `.codex/`, `.claude/`, and
+  `.agents/` prefixes. Skills are detected by `SKILL.md`; agents and commands
+  are detected by markdown payload files.
+
+Unsupported browsers still render the tree and manifest preview, but folder
+selection and scanning fall back to browser-local state.
+
+## UI Primitive Installer
+
+The UI primitive installer is the browser UI plus the registry CLI:
 
 - UI code: `codex/explorer/`
 - Registry source: `codex/registry/skill-tree.yaml`
@@ -178,11 +216,14 @@ Current development status:
   commands into tabs, shows capability locks, supports local/global scope state,
   writes project manifests where browser file access is available, and exposes
   provider routing for capabilities with multiple providers.
+- Built: the explorer detects managed and unmanaged primitive payloads in a
+  selected folder and renders `SKILL.md`, agent markdown, and slash-command
+  markdown in the inspector.
 - Built: the CLI can list, inspect, enable, disable, route providers, emit a
   manifest, and validate the registry.
 - Not fully built yet: applying enabled UI state directly into materialized
   project primitive directories. That installer integration is tracked as the
-  next roadmap step (`M4 - Installer Integration`) in `codex/ROADMAP.md`.
+  install planner work in `codex/ROADMAP.md`.
 
 For now, use the UI/CLI to manage and inspect enablement state, then use
 `install.sh` or the Codex link helpers to materialize symlinks.

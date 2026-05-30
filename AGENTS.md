@@ -103,20 +103,19 @@ Install Codex primitives globally (prefer the root `./install.sh codex`; the low
 # legacy equivalent: codex/scripts/link-codex-skills.sh [--apply]
 ```
 
-Run the visual explorer:
+Run the visual primitive installer from the repository root:
 
 ```bash
-cd codex
 python3 -m http.server 8765
 ```
 
 Then open:
 
 ```text
-http://127.0.0.1:8765/explorer/
+http://127.0.0.1:8765/
 ```
 
-If that port is occupied, use another port and adjust the URL.
+If that port is occupied, use another port and adjust the URL. The root page redirects to `codex/explorer/`; launch from the repo root so both `claude/**` and `codex/**` payload markdown can be loaded.
 
 ## Primitive Tree Model
 
@@ -138,11 +137,11 @@ Important progression:
 - `blitz` and `sprint-review` require `sprint-planning`.
 - `overdrive` requires the planning, execution, review, issue-tracker, and code-graph capabilities.
 
-The explorer shows primitives as a full tree with tabs for each primitive type. Missing prerequisites render as sealed silhouettes. Satisfied prerequisites render as ready silhouettes. Enabled primitives render as colored activated nodes. The scope switch separates `global` user-home state from `local` project state.
+The explorer shows primitives as a full tree with tabs for each primitive type. Missing prerequisites render as sealed silhouettes. Satisfied prerequisites render as ready silhouettes. Enabled primitives render as colored activated nodes. The platform switch separates Claude state from Codex state, and the scope switch separates `global` user-home state from `local` project state.
 
 ## Project Selection UI
 
-The explorer has a `DIR Project` control. In Chromium on `localhost`, it uses the File System Access API to select a project folder, read `.codex/project-primitives.json` (falling back to `.codex/project-skills.json`), and write updates back to the primitive manifest.
+The explorer has a `DIR Project` control. In Chromium on `localhost`, it uses the File System Access API to select a project folder, read the active platform manifest (`.claude/project-primitives.json` or `.codex/project-primitives.json`, falling back to the matching legacy `project-skills.json`), and write updates back to the primitive manifest.
 
 The `SC` scan control uses the same browser file-access model to detect managed and unmanaged primitives in the selected folder. It scans every registry primitive type root, including `skills`, `agents`, `commands`, and future `primitiveTypes` roots, across direct roots plus `codex/`, `claude/`, `.codex/`, `.claude/`, and `.agents/` prefixes. Skills are detected by `SKILL.md`; agents, slash commands, and future markdown-file primitives are detected by `.md` payloads. The inspector can render the selected registry or detected markdown payload in the Markdown Explorer.
 
@@ -160,8 +159,11 @@ node --check codex/scripts/skill-tree.js
 
 For UI changes, run a local server and verify the explorer in a browser. Check that:
 
-- All 18 current primitives render: 15 skills, 1 agent, and 2 slash commands.
+- The installer launches from the repo root at `http://127.0.0.1:8765/`.
+- Codex shows 18 current primitives: 15 skills, 1 agent, and 2 slash commands.
+- Claude platform mode hides Codex-only `.system` skills and loads Claude payload markdown.
 - Each primitive type has its own tab.
+- The Claude/Codex platform switch updates path labels, markdown source, manifest path, and enabled/provider state independently.
 - The Local/Global scope switch updates the manifest preview and enabled state independently.
 - Locked future skills are visible as silhouettes.
 - Enabling `itr` and `kgr` makes `sprint` available.
@@ -170,6 +172,6 @@ For UI changes, run a local server and verify the explorer in a browser. Check t
 - Enabling both primitive audit commands exposes provider routing for `primitive-audit`.
 - Enabling `sprint` makes `blitz` and `sprint-review` available.
 - `overdrive` remains visible and sealed until its required capabilities are enabled.
-- The folder picker can load and save `.codex/project-primitives.json` when supported.
+- The folder picker can load and save `.claude/project-primitives.json` and `.codex/project-primitives.json` when supported.
 - The scan control displays managed and unmanaged detected skills, agents, and commands.
 - The Markdown Explorer renders `SKILL.md` for skills and markdown payloads for agents/commands.

@@ -59,7 +59,7 @@ Global installs link roots such as `~/.claude/skills`, `~/.claude/agents`, `~/.c
 
 ## Primitive tree (capability-first)
 
-The primitives form a dependency graph keyed on **capabilities**, not skill names — so a future Linear/Jira skill could satisfy `issue-tracker` the way `itr` does today. Cross-type dependencies are allowed: agents can require skills, skills can require agents or commands, and commands can require skills. `itr` provides `issue-tracker`; `kgr` provides `code-graph`; `sprint` requires both and provides `sprint-planning`; `primitive-architect-agent` requires `skill-authoring`; both primitive audit commands require `primitive-architecture` and provide `primitive-audit`, so provider selection is exercised. This graph is encoded in `codex/registry/` — `capabilities.yaml` and `skill-tree.{json,yaml}` (legacy filename, primitive-aware schema), which **must be kept in sync with each other**. `codex/explorer/` is a static web UI that renders the tree with tabs for skills, agents, commands, and future types, can scan selected folders for managed/unmanaged primitive payloads, and renders selected markdown sources.
+The primitives form a dependency graph keyed on **capabilities**, not skill names — so a future Linear/Jira skill could satisfy `issue-tracker` the way `itr` does today. Cross-type dependencies are allowed: agents can require skills, skills can require agents or commands, and commands can require skills. `itr` provides `issue-tracker`; `kgr` provides `code-graph`; `sprint` requires both and provides `sprint-planning`; `primitive-architect-agent` requires `skill-authoring`; both primitive audit commands require `primitive-architecture` and provide `primitive-audit`, so provider selection is exercised. This graph is encoded in `codex/registry/` — `capabilities.yaml` and `skill-tree.{json,yaml}` (legacy filename, primitive-aware schema), which **must be kept in sync with each other**. `codex/explorer/` is a static web UI that renders the tree with tabs for skills, agents, commands, and future types, switches between Claude/Codex platform state, can scan selected folders for managed/unmanaged primitive payloads, and renders selected markdown sources.
 
 ## codex/ tooling
 
@@ -71,10 +71,10 @@ node codex/scripts/skill-tree.js status --project /path   # a project's enabled 
 node codex/scripts/skill-tree.js provider primitive-audit primitive-audit-summary-command --project /path
 node codex/scripts/skill-tree.js status --scope global    # global Codex primitive state
 node --check codex/explorer/app.js && node --check codex/scripts/skill-tree.js   # after JS edits
-cd codex && python3 -m http.server 8765          # serve explorer at /explorer/
+python3 -m http.server 8765                      # serve repo-root installer at /
 ```
 
-Per-project primitive enablement lives in `.codex/project-primitives.json` inside the **target** project, never in canonical roots. Legacy `.codex/project-skills.json` is still read for compatibility.
+The browser installer is launched from the repo root at `http://127.0.0.1:8765/` so it can load both `claude/**` and `codex/**` payload markdown. Per-project primitive enablement lives in `.claude/project-primitives.json` or `.codex/project-primitives.json` inside the **target** project, never in canonical roots. Legacy project-skills manifests are still read for compatibility.
 
 ## Side ownership
 

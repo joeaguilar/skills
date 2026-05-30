@@ -208,6 +208,8 @@ Prohibited commands — DO NOT run any of these under any circumstances:
 When you finish editing, run the full-repo verify gate from the repo root:
   {verify command}
 
+Run it in the foreground and wait for it to finish in this same turn. Do not launch it as a background task and then end your turn, and do not defer the close to a later turn. The gate result and the close command below must both happen before you yield. A subagent that backgrounds the gate and stops leaves its task stranded: the orchestrator then has to inspect the work and close it.
+
 It MUST exit zero. The full-repo gate is intentional — if another wave subagent left a temporary error in code outside your owned files, attempt to fix it; your verify run is also their safety net. If after best effort the gate is still red on something clearly outside your scope, stop and report.
 
 Only after the gate is fully green:
@@ -224,7 +226,8 @@ Do NOT commit, push, or branch. The user reviews and commits at the end.
 Event-driven only — no polling. React to Codex background subagent completion notifications and any mid-run reports.
 
 - **Mid-edit LSP diagnostics** are noise. Ignore until the subagent reports.
-- **Permission failure** (denied tool, file outside its set, missing dep): read the report, apply the fix yourself (edit `Cargo.toml`/`package.json`/etc., grant the file path, install the missing tool), append to `Interventions` in the plan, then resume the subagent with a one-line note about what changed.
+- **Permission failure** (denied tool, file outside its set, missing dep): read the report, apply the fix yourself (edit `Cargo.toml`/`package.json`/etc., grant the file path, install the missing tool), append to `Interventions` in the plan, then resume the subagent with a one-line note about what changed. If the current harness cannot resume a terminated background subagent, launch a fresh background Codex subagent with the same prompt plus the fix note instead.
+- **Subagent finished its work but left the task open** (it backgrounded the gate and yielded before closing, or its gate went red only on a neighbor's in-flight code): don't re-run the work — it's already on disk. Each subagent owns a disjoint file set, so `git diff -- <its files>` isolates its changes unambiguously. Inspect them, run the wave gate yourself, and if green **close the task yourself** as an intervention (log it). When resume is unavailable, inspect-and-close is the fallback — not a re-spawn of completed work. *(sprint-4: 2 tasks closed this way — a background-yield, and a Wave-2 follower blocked on a sibling's transient red gate.)*
 - **Verify-gate failure on completion**: auto-retry once. Launch a fresh background Codex subagent with the same prompt plus a `Previous attempt failed with:\n{tail of output}` block. Don't block the wave on this — other subagents keep running. Log the retry in `Interventions`.
 - **Retry succeeds**: task closed, normal flow.
 - **Retry fails**: mark the task as **quarantined** in `Outcomes` and defer to Phase 7. The wave continues.

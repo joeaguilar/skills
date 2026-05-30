@@ -145,6 +145,8 @@ The explorer has a `DIR Project` control. In Chromium on `localhost`, it uses th
 
 The `SC` scan control uses the same browser file-access model to detect managed and unmanaged primitives in the selected folder. It scans every registry primitive type root, including `skills`, `agents`, `commands`, and future `primitiveTypes` roots, across direct roots plus `codex/`, `claude/`, `.codex/`, `.claude/`, and `.agents/` prefixes. Skills are detected by `SKILL.md`; agents, slash commands, and future markdown-file primitives are detected by `.md` payloads. The inspector can render the selected registry or detected markdown payload in the Markdown Explorer.
 
+The UI also reads repo-root `PLATFORM_ONLY.tsv` when launched from the repo root. Those entries become platform-specific UI nodes, so Claude-only slash commands are visible/selectable in Claude mode without forcing Codex stubs.
+
 Unsupported browsers fall back to local browser storage. In that mode, `Copy Manifest` can still copy the generated manifest for manual use.
 
 ## Current Validation Expectations
@@ -162,6 +164,7 @@ For UI changes, run a local server and verify the explorer in a browser. Check t
 - The installer launches from the repo root at `http://127.0.0.1:8765/`.
 - Codex shows 18 current primitives: 15 skills, 1 agent, and 2 slash commands.
 - Claude platform mode hides Codex-only `.system` skills and loads Claude payload markdown.
+- Claude platform mode includes Claude-only slash commands declared in `PLATFORM_ONLY.tsv`.
 - Each primitive type has its own tab.
 - The Claude/Codex platform switch updates path labels, markdown source, manifest path, and enabled/provider state independently.
 - The Local/Global scope switch updates the manifest preview and enabled state independently.

@@ -7,6 +7,7 @@ const SCOPE_KEY = "codex.primitive-tree.scope.v1";
 const TYPE_FILTER_KEY = "codex.primitive-tree.type-filter.v1";
 const ZOOM_KEY = "codex.skill-tree.zoom.v1";
 const REGISTRY_URL = "../registry/skill-tree.json";
+const PLATFORM_ONLY_URL = "../../PLATFORM_ONLY.tsv";
 const TREE_WIDTH = 1180;
 const TREE_HEIGHT = 760;
 const MIN_ZOOM = 0.55;
@@ -223,6 +224,10 @@ function stringArray(value) {
   return asArray(value).filter((item) => item !== undefined && item !== null).map((item) => String(item));
 }
 
+function hasOwn(value, key) {
+  return Object.prototype.hasOwnProperty.call(value || {}, key);
+}
+
 function normalizeType(type) {
   const key = String(type || "skill").trim().replace(/\s+/g, "-").toLowerCase();
   return TYPE_ALIASES[key] || key || "skill";
@@ -320,6 +325,103 @@ function normalizeRegistry(raw) {
   return { ...raw, primitives };
 }
 
+async function loadPlatformOnlyPrimitives() {
+  try {
+    const response = await fetch(PLATFORM_ONLY_URL, { cache: "no-store" });
+    if (!response.ok) return;
+    mergePlatformOnlyPrimitives(parsePlatformOnly(response.text ? await response.text() : ""));
+  } catch (error) {
+    console.warn("Unable to load platform-only primitive list", error);
+  }
+}
+
+function parsePlatformOnly(text) {
+  return String(text || "")
+    .split(/\r?\n/)
+    .map((line) => line.replace(/#.*/, "").trim())
+    .filter(Boolean)
+    .map((line) => line.split(/\s+/))
+    .filter((parts) => parts.length >= 3)
+    .map(([platform, root, name]) => ({ platform, root, name }));
+}
+
+function typeForRoot(root) {
+  const normalizedRoot = normalizePath(root);
+  for (const [type, config] of Object.entries(registry?.primitiveTypes || registry?.primitive_types || {})) {
+    if (normalizePath(config?.root || config?.path || `${type}s`) === normalizedRoot) return normalizeType(type);
+  }
+  return normalizeType(normalizedRoot.replace(/s$/, ""));
+}
+
+function slugFromName(name) {
+  return normalizePath(name)
+    .split("/")
+    .pop()
+    .replace(/\.[^.]+$/, "")
+    .replace(/[^a-zA-Z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "")
+    .toLowerCase();
+}
+
+function titleFromName(name) {
+  return slugFromName(name)
+    .split("-")
+    .filter(Boolean)
+    .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+    .join(" ");
+}
+
+function iconFromName(name) {
+  return slugFromName(name).replace(/-/g, "").slice(0, 3).toUpperCase() || "CMD";
+}
+
+function platformOnlyPosition(index) {
+  const columns = [35, 47, 59, 71, 83, 95];
+  const rows = [14, 26, 38, 50, 62, 74, 86];
+  return {
+    x: columns[index % columns.length],
+    y: rows[Math.floor(index / columns.length) % rows.length]
+  };
+}
+
+function mergePlatformOnlyPrimitives(entries) {
+  const counters = {};
+  for (const entry of entries) {
+    const type = typeForRoot(entry.root);
+    const platformPath = normalizePath(`${entry.root}/${entry.name}`);
+    const fullPath = normalizePath(`${entry.platform}/${platformPath}`);
+    const alreadyManaged = primitiveEntries().some(([, primitive]) => registryPathCandidates("", primitive).has(fullPath));
+    if (alreadyManaged) continue;
+
+    const key = `${entry.platform}:${type}`;
+    const index = counters[key] || 0;
+    counters[key] = index + 1;
+    const id = `${entry.platform}-${type}-${slugFromName(entry.name)}`;
+    if (registry.primitives[id]) continue;
+
+    registry.primitives[id] = {
+      id,
+      type,
+      platforms: {
+        [entry.platform]: { path: platformPath }
+      },
+      scopes: ["global", "local"],
+      group: type === "command" ? "execution" : "foundations",
+      tier: 3 + Math.floor(index / 6),
+      icon: iconFromName(entry.name),
+      theme: type === "command" ? "ink" : "aether",
+      title: titleFromName(entry.name),
+      summary: `${platformLabel(entry.platform)}-only ${typeLabel(type).toLowerCase()} payload declared in PLATFORM_ONLY.tsv.`,
+      provides: [],
+      requires: [],
+      recommends: [],
+      unlockedBy: [],
+      position: platformOnlyPosition(index),
+      platformOnly: true
+    };
+  }
+}
+
 function isPrimitiveRecord(value) {
   if (!value || typeof value !== "object" || Array.isArray(value)) return false;
   return ["provides", "requires", "recommends", "path", "position", "group", "title", "type", "kind", "primitiveType"].some(
@@ -371,6 +473,32 @@ function supportsPlatform(primitive, platform = activePlatform) {
   if (!primitive.path) return false;
   if (platform === "claude" && String(primitive.path).startsWith("skills/.system/")) return false;
   return platform === "codex" || platform === "claude";
+}
+
+function platformConfig(primitive, platform = activePlatform) {
+  return primitive?.platforms && typeof primitive.platforms === "object" && !Array.isArray(primitive.platforms)
+    ? primitive.platforms[platform] || {}
+    : {};
+}
+
+function platformStringArray(primitive, key, fallback = []) {
+  const config = platformConfig(primitive);
+  if (hasOwn(config, key)) return stringArray(config[key]);
+  const snake = key.replace(/[A-Z]/g, (char) => `_${char.toLowerCase()}`);
+  if (hasOwn(config, snake)) return stringArray(config[snake]);
+  return stringArray(fallback);
+}
+
+function requiresFor(primitive) {
+  return platformStringArray(primitive, "requires", primitive?.requires || []);
+}
+
+function recommendsFor(primitive) {
+  return platformStringArray(primitive, "recommends", primitive?.recommends || []);
+}
+
+function unlockedByFor(primitive) {
+  return platformStringArray(primitive, "unlockedBy", primitive?.unlockedBy || []);
 }
 
 function platformPrimitivePath(primitive, platform = activePlatform) {
@@ -504,11 +632,11 @@ function providers() {
 }
 
 function missingRequired(primitive, provided = providers()) {
-  return (primitive.requires || []).filter((capability) => !provided[capability]);
+  return requiresFor(primitive).filter((capability) => !provided[capability]);
 }
 
 function missingRecommended(primitive, provided = providers()) {
-  return (primitive.recommends || []).filter((capability) => !provided[capability]);
+  return recommendsFor(primitive).filter((capability) => !provided[capability]);
 }
 
 function stateFor(id, provided = providers()) {
@@ -517,7 +645,7 @@ function stateFor(id, provided = providers()) {
   if (!supportsPlatform(primitive)) return "hidden";
   if (!supportsScope(primitive)) return "hidden";
   if (enabled.has(id)) return "enabled";
-  const lockedByVisibleParent = (primitive.unlockedBy || []).some((parentId) => {
+  const lockedByVisibleParent = unlockedByFor(primitive).some((parentId) => {
     const parent = registry.primitives[parentId];
     return parent && supportsPlatform(parent) && supportsScope(parent) && !enabled.has(parentId);
   });
@@ -1004,7 +1132,7 @@ function renderLinks() {
   const visible = new Set(visiblePrimitiveEntries().map(([id]) => id));
   for (const [id, primitive] of visiblePrimitiveEntries()) {
     const childState = stateFor(id, provided);
-    for (const parentId of primitive.unlockedBy || []) {
+    for (const parentId of unlockedByFor(primitive)) {
       const parent = registry.primitives[parentId];
       if (!parent || !visible.has(parentId) || !parent.position || !primitive.position) continue;
       const line = document.createElementNS("http://www.w3.org/2000/svg", "line");
@@ -1098,8 +1226,8 @@ function renderInspector() {
   els.selectedPath.textContent = primitivePathLabel(primitive);
   renderMeta(primitive);
   renderChips(els.providesList, primitive.provides || [], provided, "provided");
-  renderChips(els.requiresList, primitive.requires || [], provided, "required");
-  renderChips(els.recommendsList, primitive.recommends || [], provided, "recommended");
+  renderChips(els.requiresList, requiresFor(primitive), provided, "required");
+  renderChips(els.recommendsList, recommendsFor(primitive), provided, "recommended");
   renderProviderChoices();
   renderDetectedList();
   renderMarkdownExplorer(primitive);
@@ -1166,6 +1294,7 @@ function renderMeta(primitive) {
   appendMetaChip(activePlatform);
   appendMetaChip(activeScope);
   if ((primitive.scopes || []).length) appendMetaChip(`scopes: ${(primitive.scopes || []).join(", ")}`);
+  if (primitive.platformOnly) appendMetaChip("platform-only");
   const platforms = primitive.platforms && typeof primitive.platforms === "object" && !Array.isArray(primitive.platforms)
     ? Object.keys(primitive.platforms)
     : [];
@@ -1527,6 +1656,7 @@ function escapeHtml(value) {
 async function init() {
   const response = await fetch(REGISTRY_URL);
   registry = normalizeRegistry(await response.json());
+  await loadPlatformOnlyPrimitives();
   updateProjectLabel();
   if (!supportsFolderPicker()) {
     els.selectProject.classList.add("unsupported");

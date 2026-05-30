@@ -196,6 +196,8 @@ project-folder workflows:
   across direct roots plus `codex/`, `claude/`, `.codex/`, `.claude/`, and
   `.agents/` prefixes. Skills are detected by `SKILL.md`; agents and commands
   are detected by markdown payload files.
+- Claude-only slash commands declared in `PLATFORM_ONLY.tsv` are shown in Claude
+  mode even though they are intentionally absent from the Codex registry.
 
 Unsupported browsers still render the tree and manifest preview, but folder
 selection and scanning fall back to browser-local state.

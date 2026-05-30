@@ -24,8 +24,7 @@
 
 # --- Codex-only skills ---
 codex	skills	retro-game-assets
-codex	skills	code-roast
-codex	skills	spicy-code-roast
+codex	skills	panthexia-tiled-materials
 
 # --- Codex-only agents (drift: Claude converted these imports to skills; Codex keeps the agent form) ---
 codex	agents	analytics-event-architect.md
@@ -39,13 +38,12 @@ codex	agents	docker-compose-architect.md
 codex	agents	prd-task-generator.md
 codex	agents	tdd-workflow-coach.md
 
-# --- Claude-only skills (awaiting Codex ports) ---
+# --- Claude-only skills (intentional unless a Codex feature gap appears) ---
 claude	skills	proof-campaign
 # Converted from imported agents — Claude chose skill over agent (interactive / on-demand / style
 # capabilities fit a skill better than an isolated subagent). Codex drift peers noted above.
 claude	skills	api-contract-designer
 claude	skills	changelog
-claude	skills	code-roast
 claude	skills	code-wizard
 claude	skills	css
 claude	skills	emoji-translator
@@ -74,6 +72,6 @@ claude	skills	ml-integration
 # --- Claude-only agents (imported from ~/.claude/agents; awaiting Codex ports) ---
 # (none — every remaining Claude agent now has a Codex peer; see git history for the prior imports)
 
-# --- Claude-only commands (awaiting Codex ports) ---
+# --- Claude-only commands (intentional unless a Codex feature gap appears) ---
 # tdd_process is the quick-reference companion to the tdd-coach skill; kept deliberately.
 claude	commands	tdd_process.md

@@ -75,3 +75,7 @@ cd codex && python3 -m http.server 8765          # serve explorer at /explorer/
 ```
 
 Per-project primitive enablement lives in `.codex/project-primitives.json` inside the **target** project, never in canonical roots. Legacy `.codex/project-skills.json` is still read for compatibility.
+
+## Side ownership
+
+Claude should own Claude-side files: `claude/**`, Claude-facing guidance, and Claude install/config behavior. Avoid editing `codex/**` unless the user gives an explicit one-off exception. When shared repo-level files must change (`install.sh`, `validate-skills.sh`, `PLATFORM_ONLY.tsv`, root docs), keep the edit minimal, state why it crosses the side boundary, and prefer a Claude-only path whenever that can solve the problem. Codex will mirror or port its side separately in Codex wording.

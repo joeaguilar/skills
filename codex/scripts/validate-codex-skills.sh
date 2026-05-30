@@ -4,6 +4,32 @@ set -euo pipefail
 ROOT="${1:-$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd -P)/skills}"
 status=0
 
+validate_yaml_frontmatter() {
+  local file="$1" rel="$2" tmp err
+  tmp="${TMPDIR:-/tmp}/codex-frontmatter.$$"
+  err="${TMPDIR:-/tmp}/codex-frontmatter-error.$$"
+
+  awk '
+    NR == 1 && $0 == "---" { in_fm = 1; next }
+    in_fm && $0 == "---" { exit }
+    in_fm { print }
+  ' "$file" > "$tmp"
+
+  if command -v ruby >/dev/null 2>&1; then
+    if ! ruby -ryaml -e 'YAML.safe_load(STDIN.read)' < "$tmp" >/dev/null 2>"$err"; then
+      echo "ERROR: $rel has invalid YAML frontmatter:"
+      sed 's/^/  /' "$err"
+      status=1
+    fi
+  elif grep -nE '^[A-Za-z_][A-Za-z0-9_-]*:[[:space:]].*:[[:space:]]' "$tmp" > "$err"; then
+    echo "ERROR: $rel has likely invalid YAML frontmatter; quote scalar values containing ': ':"
+    sed 's/^/  /' "$err"
+    status=1
+  fi
+
+  rm -f "$tmp" "$err"
+}
+
 if [ ! -d "$ROOT" ]; then
   echo "Missing skills directory: $ROOT" >&2
   exit 1
@@ -16,6 +42,8 @@ while IFS= read -r skill_md; do
   if ! sed -n '1p' "$skill_md" | grep -qx -- '---'; then
     echo "ERROR: $rel/SKILL.md is missing YAML frontmatter start"
     status=1
+  else
+    validate_yaml_frontmatter "$skill_md" "$rel/SKILL.md"
   fi
 
   if ! sed -n '2,40p' "$skill_md" | grep -q '^name:'; then
@@ -48,6 +76,8 @@ check_markdown_frontmatter() {
   if ! sed -n '1p' "$file" | grep -qx -- '---'; then
     echo "ERROR: $rel is missing YAML frontmatter start"
     status=1
+  else
+    validate_yaml_frontmatter "$file" "$rel"
   fi
 
   if [ "$require_name" -eq 1 ] && ! sed -n '2,40p' "$file" | grep -q '^name:'; then

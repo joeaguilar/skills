@@ -9,8 +9,15 @@ Snapshot: 2026-05-30, current working tree under `codex/`.
 - `diff -qr` reports no differences between each current system skill source and its `codex/skills/.system/<name>` copy.
 - Repo-root skills with `SKILL.md` are all represented under `codex/skills`:
   `alignment`, `blitz`, `itr`, `kgr`, `overdrive`, `roadmap`, `shell-prompt`, `sprint`, `sprint-review`, `story-style`.
+- `~/.agents/skills` is linked to the non-system Codex skills above via
+  `codex/scripts/link-agent-skills.sh`; stale real directories were backed up
+  under `codex/backups/agents-skill-*-before-link-20260530-004149`.
 - Each converted non-system skill currently has `agents/openai.yaml`.
-- All current `codex/skills/**/SKILL.md` files have frontmatter with `name` and `description`.
+- All current `codex/skills/**/SKILL.md` files have parseable YAML
+  frontmatter with `name` and `description`.
+- The installed `~/.agents/skills/*/SKILL.md` files all parse as YAML
+  frontmatter; this covers the previous `sprint` and `sprint-review` load
+  errors from stale installed copies.
 - Optional primitive roots are present for `codex/agents` and `codex/commands`.
 - Current registry validates 18 primitives: 15 skills, 1 agent, and 2 commands.
 - The two primitive audit commands both provide `primitive-audit`, so provider routing is covered by a real registry path.
@@ -19,6 +26,9 @@ Snapshot: 2026-05-30, current working tree under `codex/`.
 - The explorer detector scans registry primitive type roots and shows both managed and unmanaged payloads for skills, agents, commands, and future markdown-file primitive types.
 - The explorer Markdown Explorer renders registry `SKILL.md` files and detected markdown payloads from the selected folder.
 - Current search found no `~/.claude/skills`, `AskUserQuestion`, or Claude-only tool API names in `codex/skills`. Remaining `CLAUDE.md` mentions are project-instruction-file fallbacks, not Claude skill paths or tool calls.
+- Claude legacy commands remain platform-specific unless they are deliberately
+  ported as Codex-native commands with managed frontmatter and registry entries.
+  The Codex command set currently contains the two primitive audit commands.
 
 ## Findings
 

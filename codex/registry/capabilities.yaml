@@ -1,0 +1,46 @@
+capabilities:
+  agent-alignment:
+    label: "Agent Alignment"
+    description: "Plan and design interrogation before execution."
+  issue-tracker:
+    label: "Issue Tracker"
+    description: "Create and manage backlog items through a tracker."
+  code-graph:
+    label: "Code Graph"
+    description: "Navigate symbols, imports, dependencies, and architecture."
+  story-conventions:
+    label: "Story Conventions"
+    description: "Project-specific issue and acceptance criteria style."
+  product-roadmap:
+    label: "Product Roadmap"
+    description: "Cross-sprint product map from spec to backlog."
+  sprint-planning:
+    label: "Sprint Planning"
+    description: "Groom a sprint goal, backlog, ownership, and Definition of Done."
+  backlog-execution:
+    label: "Backlog Execution"
+    description: "Run conflict-free parallel work waves."
+  sprint-review:
+    label: "Sprint Review"
+    description: "Review shipped work, triage follow-ups, and close sprint artifacts."
+  autonomous-orchestration:
+    label: "Autonomous Orchestration"
+    description: "Plan, execute, review, and quarantine in one continuous loop."
+  shell-customization:
+    label: "Shell Customization"
+    description: "Install lightweight shell workflow improvements."
+  image-generation:
+    label: "Image Generation"
+    description: "Create or edit bitmap images and visual assets."
+  openai-docs:
+    label: "OpenAI Docs"
+    description: "Use current official OpenAI product and API documentation."
+  plugin-authoring:
+    label: "Plugin Authoring"
+    description: "Scaffold Codex plugin bundles and manifests."
+  skill-authoring:
+    label: "Skill Authoring"
+    description: "Create and update Codex skills."
+  skill-installation:
+    label: "Skill Installation"
+    description: "Install Codex skills from curated or external sources."

@@ -1,0 +1,228 @@
+version: 1
+manifest_path: ".codex/project-skills.json"
+groups:
+  core:
+    label: "Core Relics"
+    accent: "#6ad7d2"
+    description: "System utilities and always-available Codex helpers."
+  foundations:
+    label: "Foundations"
+    accent: "#f0c866"
+    description: "Base project capabilities that unlock serious workflows."
+  planning:
+    label: "Planning"
+    accent: "#78d878"
+    description: "Skills that shape backlog, roadmap, and sprint intent."
+  execution:
+    label: "Execution"
+    accent: "#ff7f50"
+    description: "Skills that move planned work through agent waves."
+  autonomy:
+    label: "Autonomy"
+    accent: "#d778ff"
+    description: "End-to-end autonomous orchestration."
+  forge:
+    label: "Forge"
+    accent: "#ff5f7e"
+    description: "Skills for building more Codex tools and skills."
+skills:
+  openai-docs:
+    path: "skills/.system/openai-docs"
+    group: "core"
+    tier: 0
+    icon: "DOC"
+    theme: "water"
+    title: "OpenAI Docs"
+    summary: "Current official OpenAI API and product documentation."
+    provides: ["openai-docs"]
+    requires: []
+    recommends: []
+    unlocked_by: []
+    position: { x: 8, y: 18 }
+  imagegen:
+    path: "skills/.system/imagegen"
+    group: "core"
+    tier: 0
+    icon: "IMG"
+    theme: "prism"
+    title: "Imagegen"
+    summary: "Bitmap image generation and editing."
+    provides: ["image-generation"]
+    requires: []
+    recommends: []
+    unlocked_by: []
+    position: { x: 8, y: 46 }
+  skill-creator:
+    path: "skills/.system/skill-creator"
+    group: "forge"
+    tier: 0
+    icon: "SKL"
+    theme: "forge"
+    title: "Skill Creator"
+    summary: "Create or update Codex skills."
+    provides: ["skill-authoring"]
+    requires: []
+    recommends: []
+    unlocked_by: []
+    position: { x: 8, y: 74 }
+  plugin-creator:
+    path: "skills/.system/plugin-creator"
+    group: "forge"
+    tier: 1
+    icon: "PLG"
+    theme: "electric"
+    title: "Plugin Creator"
+    summary: "Scaffold Codex plugin bundles and manifests."
+    provides: ["plugin-authoring"]
+    requires: ["skill-authoring"]
+    recommends: []
+    unlocked_by: ["skill-creator"]
+    position: { x: 25, y: 66 }
+  skill-installer:
+    path: "skills/.system/skill-installer"
+    group: "forge"
+    tier: 1
+    icon: "INS"
+    theme: "wind"
+    title: "Skill Installer"
+    summary: "Install curated or external Codex skills."
+    provides: ["skill-installation"]
+    requires: ["skill-authoring"]
+    recommends: []
+    unlocked_by: ["skill-creator"]
+    position: { x: 25, y: 82 }
+  alignment:
+    path: "skills/alignment"
+    group: "foundations"
+    tier: 0
+    icon: "ALN"
+    theme: "aether"
+    title: "Alignment"
+    summary: "Interrogate plans and designs until expectations are explicit."
+    provides: ["agent-alignment"]
+    requires: []
+    recommends: []
+    unlocked_by: []
+    position: { x: 25, y: 18 }
+  shell-prompt:
+    path: "skills/shell-prompt"
+    group: "foundations"
+    tier: 0
+    icon: "ZSH"
+    theme: "electric"
+    title: "Shell Prompt"
+    summary: "Install a lightweight git-aware zsh prompt."
+    provides: ["shell-customization"]
+    requires: []
+    recommends: []
+    unlocked_by: []
+    position: { x: 25, y: 34 }
+  itr:
+    path: "skills/itr"
+    group: "foundations"
+    tier: 0
+    icon: "ITR"
+    theme: "fire"
+    title: "itr"
+    summary: "File and structure project backlog items."
+    provides: ["issue-tracker"]
+    requires: []
+    recommends: []
+    unlocked_by: []
+    position: { x: 25, y: 50 }
+  kgr:
+    path: "skills/kgr"
+    group: "foundations"
+    tier: 0
+    icon: "KGR"
+    theme: "water"
+    title: "kgr"
+    summary: "Navigate codebases through dependency and symbol graphs."
+    provides: ["code-graph"]
+    requires: []
+    recommends: []
+    unlocked_by: []
+    position: { x: 38, y: 66 }
+  story-style:
+    path: "skills/story-style"
+    group: "planning"
+    tier: 1
+    icon: "STY"
+    theme: "ink"
+    title: "Story Style"
+    summary: "Capture project issue-writing conventions."
+    provides: ["story-conventions"]
+    requires: ["issue-tracker"]
+    recommends: []
+    unlocked_by: ["itr"]
+    position: { x: 45, y: 42 }
+  sprint:
+    path: "skills/sprint"
+    group: "planning"
+    tier: 2
+    icon: "SPN"
+    theme: "aether"
+    title: "Sprint Planning"
+    summary: "Turn specs or plans into groomed sprint backlogs."
+    provides: ["sprint-planning"]
+    requires: ["issue-tracker", "code-graph"]
+    recommends: ["story-conventions", "product-roadmap"]
+    unlocked_by: ["itr", "kgr"]
+    position: { x: 57, y: 54 }
+  roadmap:
+    path: "skills/roadmap"
+    group: "planning"
+    tier: 2
+    icon: "MAP"
+    theme: "earth"
+    title: "Roadmap"
+    summary: "Bridge locked specs to live backlog and sprint trajectory."
+    provides: ["product-roadmap"]
+    requires: ["issue-tracker", "story-conventions"]
+    recommends: ["code-graph"]
+    unlocked_by: ["story-style"]
+    position: { x: 57, y: 32 }
+  blitz:
+    path: "skills/blitz"
+    group: "execution"
+    tier: 3
+    icon: "BLZ"
+    theme: "fire"
+    title: "Blitz"
+    summary: "Run conflict-free parallel backlog execution waves."
+    provides: ["backlog-execution"]
+    requires: ["sprint-planning"]
+    recommends: ["code-graph"]
+    unlocked_by: ["sprint"]
+    position: { x: 76, y: 44 }
+  sprint-review:
+    path: "skills/sprint-review"
+    group: "execution"
+    tier: 3
+    icon: "REV"
+    theme: "water"
+    title: "Sprint Review"
+    summary: "Review completed sprint work and file follow-ups."
+    provides: ["sprint-review"]
+    requires: ["sprint-planning"]
+    recommends: ["story-conventions"]
+    unlocked_by: ["sprint"]
+    position: { x: 76, y: 64 }
+  overdrive:
+    path: "skills/overdrive"
+    group: "autonomy"
+    tier: 4
+    icon: "OD"
+    theme: "plasma"
+    title: "Overdrive"
+    summary: "Autonomous plan, execute, and review loop."
+    provides: ["autonomous-orchestration"]
+    requires:
+      - "issue-tracker"
+      - "code-graph"
+      - "sprint-planning"
+      - "backlog-execution"
+      - "sprint-review"
+    recommends: ["product-roadmap", "story-conventions"]
+    unlocked_by: ["blitz", "sprint-review"]
+    position: { x: 92, y: 54 }

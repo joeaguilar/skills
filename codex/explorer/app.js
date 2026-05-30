@@ -2,6 +2,7 @@ const STORAGE_KEY = "codex.skill-tree.enabled.v1";
 const GLOBAL_STORAGE_KEY = "codex.primitive-tree.enabled.global.v1";
 const PROVIDERS_STORAGE_KEY = "codex.primitive-tree.providers.local.v1";
 const GLOBAL_PROVIDERS_STORAGE_KEY = "codex.primitive-tree.providers.global.v1";
+const PLATFORM_KEY = "codex.primitive-tree.platform.v1";
 const SCOPE_KEY = "codex.primitive-tree.scope.v1";
 const TYPE_FILTER_KEY = "codex.primitive-tree.type-filter.v1";
 const ZOOM_KEY = "codex.skill-tree.zoom.v1";
@@ -47,6 +48,7 @@ const els = {
   togglePrimitive: document.getElementById("togglePrimitive"),
   manifestPreview: document.getElementById("manifestPreview"),
   manifestState: document.getElementById("manifestState"),
+  platformButtons: Array.from(document.querySelectorAll("[data-platform]")),
   scopeButtons: Array.from(document.querySelectorAll("[data-scope]")),
   selectProject: document.getElementById("selectProject"),
   detectPrimitives: document.getElementById("detectPrimitives"),
@@ -61,6 +63,7 @@ const els = {
 };
 
 let registry = null;
+let activePlatform = loadPlatform();
 let activeScope = loadScope();
 let activeType = loadActiveType();
 let enabled = new Set(loadEnabledForScope(activeScope));
@@ -94,6 +97,11 @@ const TYPE_LABELS = {
   command: { singular: "Command", plural: "Commands" }
 };
 
+const PLATFORM_LABELS = {
+  claude: "Claude",
+  codex: "Codex"
+};
+
 const THEMES = {
   fire: { a: "#ffcf55", b: "#ff5a1f", c: "#7a1b0c", label: "Roaring Fire" },
   water: { a: "#9ff8ff", b: "#2f9dff", c: "#103f66", label: "Tidal Water" },
@@ -107,6 +115,10 @@ const THEMES = {
   plasma: { a: "#ffd1ff", b: "#ff5fef", c: "#6d35ff", label: "Plasma Crown" }
 };
 
+function loadPlatform() {
+  return localStorage.getItem(PLATFORM_KEY) === "claude" ? "claude" : "codex";
+}
+
 function loadScope() {
   return localStorage.getItem(SCOPE_KEY) === "global" ? "global" : "local";
 }
@@ -115,12 +127,18 @@ function loadActiveType() {
   return localStorage.getItem(TYPE_FILTER_KEY) || "all";
 }
 
-function storageKeyForScope(scope) {
-  return scope === "global" ? GLOBAL_STORAGE_KEY : STORAGE_KEY;
+function platformLabel(platform = activePlatform) {
+  return PLATFORM_LABELS[platform] || platform;
 }
 
-function providerStorageKeyForScope(scope) {
-  return scope === "global" ? GLOBAL_PROVIDERS_STORAGE_KEY : PROVIDERS_STORAGE_KEY;
+function storageKeyForScope(scope, platform = activePlatform) {
+  if (platform === "codex") return scope === "global" ? GLOBAL_STORAGE_KEY : STORAGE_KEY;
+  return `${platform}.primitive-tree.enabled.${scope}.v1`;
+}
+
+function providerStorageKeyForScope(scope, platform = activePlatform) {
+  if (platform === "codex") return scope === "global" ? GLOBAL_PROVIDERS_STORAGE_KEY : PROVIDERS_STORAGE_KEY;
+  return `${platform}.primitive-tree.providers.${scope}.v1`;
 }
 
 function loadEnabledForScope(scope) {
@@ -154,6 +172,7 @@ function saveEnabled() {
   const effectiveProviders = providers();
   localStorage.setItem(storageKeyForScope(activeScope), JSON.stringify(Array.from(enabled).sort()));
   localStorage.setItem(providerStorageKeyForScope(activeScope), JSON.stringify(effectiveProviders));
+  localStorage.setItem(PLATFORM_KEY, activePlatform);
   localStorage.setItem(SCOPE_KEY, activeScope);
   selectedProviders = effectiveProviders;
   if (projectHandle && activeScope === "local") void persistProjectManifest();
@@ -343,20 +362,38 @@ function supportsScope(primitive) {
   return scopes.length === 0 || scopes.includes(activeScope);
 }
 
-function primitivePathLabel(primitive) {
-  if (primitive.path) return primitive.path;
+function platformPrimitivePath(primitive, platform = activePlatform) {
+  if (!primitive) return "";
   if (primitive.platforms && typeof primitive.platforms === "object" && !Array.isArray(primitive.platforms)) {
-    const parts = Object.entries(primitive.platforms)
-      .map(([platform, config]) => `${platform}: ${config?.path || "(registered)"}`);
-    return parts.join(" | ");
+    return primitive.platforms[platform]?.path || "";
+  }
+  if (platform !== "codex" && String(primitive.path || "").startsWith("skills/.system/")) return "";
+  return primitive.path || "";
+}
+
+function platformSourcePath(filePath, platform = activePlatform) {
+  const normalized = normalizePath(filePath);
+  if (!normalized) return "";
+  return normalized.startsWith(`${platform}/`) ? normalized : `${platform}/${normalized}`;
+}
+
+function primitivePathLabel(primitive) {
+  const platformPath = platformPrimitivePath(primitive);
+  if (platformPath) return platformSourcePath(platformPath);
+  if (primitive.platforms && typeof primitive.platforms === "object" && !Array.isArray(primitive.platforms)) {
+    return `${platformLabel()}: (no registered path)`;
   }
   return "";
 }
 
-function registryMarkdownPath(primitive) {
+function registryMarkdownPath(primitive, platform = activePlatform) {
   if (!primitive) return "";
-  const platformPath = primitive.platforms?.codex?.path || primitive.path;
+  const platformPath = platformPrimitivePath(primitive, platform);
   return markdownFileForPrimitivePath(primitive.type, platformPath);
+}
+
+function registryMarkdownLabel(primitive, platform = activePlatform) {
+  return platformSourcePath(registryMarkdownPath(primitive, platform), platform);
 }
 
 function registryPathCandidates(id, primitive) {
@@ -371,7 +408,7 @@ function registryPathCandidates(id, primitive) {
     }
   };
 
-  add(registryMarkdownPath(primitive), "codex");
+  add(registryMarkdownPath(primitive, "codex"), "codex");
   if (primitive.path) {
     add(markdownFileForPrimitivePath(primitive.type, primitive.path), "claude");
   }
@@ -478,7 +515,7 @@ function stateFor(id, provided = providers()) {
 function manifest() {
   return {
     version: 1,
-    platform: "codex",
+    platform: activePlatform,
     scope: activeScope,
     project: activeScope === "local" && projectHandle ? projectName : undefined,
     enabled: Array.from(enabled).sort(),
@@ -495,16 +532,20 @@ function setProjectStatus(text) {
   els.manifestState.textContent = text;
 }
 
+function manifestStateLabel() {
+  return `${activePlatform}/${activeScope}`;
+}
+
 function updateProjectLabel() {
   const manifestPath = manifestPathForScope("local");
   if (projectHandle) {
-    els.projectPath.textContent = `Project: ${projectName}/${manifestPath}`;
+    els.projectPath.textContent = `${platformLabel()} project: ${projectName}/${manifestPath}`;
     els.selectProject.classList.remove("unsupported");
     els.selectProject.querySelector("small").textContent = "Selected";
     els.selectProject.title = `Selected project: ${projectName}`;
   } else {
     const scopePath = activeScope === "global" ? manifestPathForScope("global") : manifestPath;
-    els.projectPath.textContent = `${activeScope === "global" ? "Global" : "Project"} primitives: ${scopePath}`;
+    els.projectPath.textContent = `${platformLabel()} ${activeScope === "global" ? "global" : "project"} primitives: ${scopePath}`;
     els.selectProject.querySelector("small").textContent = "Project";
     els.selectProject.title = supportsFolderPicker()
       ? "Select project folder"
@@ -516,15 +557,23 @@ function supportsFolderPicker() {
   return typeof window.showDirectoryPicker === "function";
 }
 
-function manifestPathForScope(scope) {
+function manifestPathForScope(scope, platform = activePlatform) {
   const paths = registry?.manifestPaths || registry?.manifest_paths || {};
-  return paths.codex?.[scope] || registry?.manifestPath || registry?.manifest_path || ".codex/project-skills.json";
+  const platformPaths = paths[platform] || {};
+  if (platformPaths[scope]) return platformPaths[scope];
+  if (platform === "codex") return registry?.manifestPath || registry?.manifest_path || ".codex/project-skills.json";
+  return `.${platform}/project-primitives.json`;
 }
 
-function registryMarkdownUrl(primitive) {
-  const markdownPath = registryMarkdownPath(primitive);
+function registryMarkdownUrl(primitive, platform = activePlatform) {
+  const markdownPath = registryMarkdownPath(primitive, platform);
   if (!markdownPath) return "";
-  return `../${markdownPath.split("/").map((part) => encodeURIComponent(part)).join("/")}`;
+  const normalized = normalizePath(markdownPath);
+  const rootRelativePath = platform === "codex" && normalized.startsWith("codex/")
+    ? normalized.slice("codex/".length)
+    : platform === "codex" ? normalized : platformSourcePath(normalized, platform);
+  const prefix = platform === "codex" ? "../" : "../../";
+  return `${prefix}${rootRelativePath.split("/").map((part) => encodeURIComponent(part)).join("/")}`;
 }
 
 function splitManifestPath(manifestPath) {
@@ -544,20 +593,25 @@ async function getManifestFileHandle(handle, manifestPath, options = {}) {
   return dir.getFileHandle(file, { create: Boolean(options.create) });
 }
 
-async function readProjectManifest(handle) {
+function legacyManifestPathForPlatform(platform = activePlatform) {
+  if (platform === "codex") return registry?.manifestPath || registry?.manifest_path || ".codex/project-skills.json";
+  return `.${platform}/project-skills.json`;
+}
+
+async function readProjectManifest(handle, platform = activePlatform) {
   try {
-    const fileHandle = await getManifestFileHandle(handle, manifestPathForScope("local"), { create: false });
+    const fileHandle = await getManifestFileHandle(handle, manifestPathForScope("local", platform), { create: false });
     const file = await fileHandle.getFile();
     return JSON.parse(await file.text());
   } catch (error) {
     if (error && (error.name === "NotFoundError" || error.name === "TypeMismatchError")) {
       try {
-        const legacyHandle = await getManifestFileHandle(handle, registry?.manifestPath || ".codex/project-skills.json", { create: false });
+        const legacyHandle = await getManifestFileHandle(handle, legacyManifestPathForPlatform(platform), { create: false });
         const legacyFile = await legacyHandle.getFile();
         return JSON.parse(await legacyFile.text());
       } catch (legacyError) {
         if (legacyError && (legacyError.name === "NotFoundError" || legacyError.name === "TypeMismatchError")) {
-          return { version: 1, platform: "codex", scope: "local", enabled: [], providers: {} };
+          return { version: 1, platform, scope: "local", enabled: [], providers: {} };
         }
         throw legacyError;
       }
@@ -601,7 +655,7 @@ async function selectProjectFolder() {
       }
     }
 
-    const projectManifest = await readProjectManifest(handle);
+    const projectManifest = await readProjectManifest(handle, activePlatform);
     projectHandle = handle;
     projectName = handle.name || "selected project";
     detectedPrimitives = [];
@@ -610,8 +664,9 @@ async function selectProjectFolder() {
     activeScope = "local";
     enabled = new Set((projectManifest.enabled || []).filter((id) => registry.primitives[id] && supportsScope(registry.primitives[id])));
     selectedProviders = normalizeProviderMap(projectManifest.providers || {});
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(Array.from(enabled).sort()));
-    localStorage.setItem(PROVIDERS_STORAGE_KEY, JSON.stringify(selectedProviders));
+    localStorage.setItem(storageKeyForScope(activeScope), JSON.stringify(Array.from(enabled).sort()));
+    localStorage.setItem(providerStorageKeyForScope(activeScope), JSON.stringify(selectedProviders));
+    localStorage.setItem(PLATFORM_KEY, activePlatform);
     localStorage.setItem(SCOPE_KEY, activeScope);
     updateProjectLabel();
     updateScopeButtons();
@@ -835,12 +890,34 @@ function renderTypeTabs() {
   }
 }
 
+function updatePlatformButtons() {
+  for (const button of els.platformButtons) {
+    const platform = button.dataset.platform;
+    button.classList.toggle("active", platform === activePlatform);
+    button.setAttribute("aria-pressed", platform === activePlatform ? "true" : "false");
+  }
+}
+
 function updateScopeButtons() {
   for (const button of els.scopeButtons) {
     const scope = button.dataset.scope;
     button.classList.toggle("active", scope === activeScope);
     button.setAttribute("aria-pressed", scope === activeScope ? "true" : "false");
   }
+}
+
+function setPlatform(platform) {
+  if (!["claude", "codex"].includes(platform) || platform === activePlatform) return;
+  activePlatform = platform;
+  enabled = new Set(loadEnabledForScope(activeScope).filter((id) => registry.primitives[id] && supportsScope(registry.primitives[id])));
+  selectedProviders = loadProvidersForScope(activeScope);
+  localStorage.setItem(PLATFORM_KEY, activePlatform);
+  selectedId = null;
+  selectedDetectedKey = "";
+  activeMarkdownKey = "";
+  updateProjectLabel();
+  updatePlatformButtons();
+  render();
 }
 
 function setScope(scope) {
@@ -937,6 +1014,7 @@ function renderInspector() {
     els.providerSelectionBlock.hidden = true;
     renderDetectedList();
     renderMarkdownExplorer(null);
+    els.manifestState.textContent = manifestStateLabel();
     els.manifestPreview.textContent = JSON.stringify(cleanManifest(manifest()), null, 2);
     return;
   }
@@ -978,7 +1056,7 @@ function renderInspector() {
     els.togglePrimitive.disabled = true;
   }
 
-  els.manifestState.textContent = activeScope;
+  els.manifestState.textContent = manifestStateLabel();
   els.manifestPreview.textContent = JSON.stringify(cleanManifest(manifest()), null, 2);
 }
 
@@ -1019,6 +1097,7 @@ function appendMetaChip(text, className = "") {
 function renderMeta(primitive) {
   els.selectedMeta.innerHTML = "";
   appendMetaChip(typeLabel(primitive.type));
+  appendMetaChip(activePlatform);
   appendMetaChip(activeScope);
   if ((primitive.scopes || []).length) appendMetaChip(`scopes: ${(primitive.scopes || []).join(", ")}`);
   const platforms = primitive.platforms && typeof primitive.platforms === "object" && !Array.isArray(primitive.platforms)
@@ -1161,12 +1240,12 @@ function renderMarkdownExplorer(primitive) {
   }
 
   void loadMarkdown(
-    `registry:${selectedId}:${url}`,
+    `registry:${activePlatform}:${selectedId}:${url}`,
     `${primitive.title || selectedId} Markdown`,
-    registryMarkdownPath(primitive),
+    registryMarkdownLabel(primitive),
     async () => {
       const response = await fetch(url, { cache: "no-store" });
-      if (!response.ok) throw new Error(`Unable to load ${registryMarkdownPath(primitive)} (${response.status})`);
+      if (!response.ok) throw new Error(`Unable to load ${registryMarkdownLabel(primitive)} (${response.status})`);
       return response.text();
     }
   );
@@ -1344,7 +1423,7 @@ async function copyManifest() {
     els.manifestState.textContent = "copy unavailable";
   }
   window.setTimeout(() => {
-    els.manifestState.textContent = activeScope;
+    els.manifestState.textContent = manifestStateLabel();
   }, 1200);
 }
 
@@ -1358,6 +1437,7 @@ function resetTree() {
 
 function render() {
   renderTypeTabs();
+  updatePlatformButtons();
   updateScopeButtons();
   updateProjectLabel();
   renderTree();
@@ -1387,6 +1467,9 @@ async function init() {
   renderGroups();
   render();
   els.togglePrimitive.addEventListener("click", toggleSelected);
+  for (const button of els.platformButtons) {
+    button.addEventListener("click", () => setPlatform(button.dataset.platform));
+  }
   for (const button of els.scopeButtons) {
     button.addEventListener("click", () => setScope(button.dataset.scope));
   }

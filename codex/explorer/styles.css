@@ -76,7 +76,7 @@ button {
 
 .topbar {
   display: grid;
-  grid-template-columns: minmax(260px, 1fr) auto auto auto;
+  grid-template-columns: minmax(260px, 1fr) auto auto auto auto;
   align-items: center;
   gap: 16px;
   min-height: 82px;
@@ -166,6 +166,7 @@ h1 {
   gap: 8px;
 }
 
+.platform-control,
 .scope-control {
   display: inline-flex;
   gap: 4px;
@@ -175,6 +176,7 @@ h1 {
   background: rgba(0, 0, 0, 0.2);
 }
 
+.platform-control button,
 .scope-control button {
   min-width: 68px;
   height: 32px;
@@ -189,6 +191,7 @@ h1 {
   cursor: pointer;
 }
 
+.platform-control button.active,
 .scope-control button.active {
   color: #10120f;
   background: var(--warn);

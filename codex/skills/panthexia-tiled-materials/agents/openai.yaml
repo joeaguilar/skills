@@ -1,0 +1,4 @@
+interface:
+  display_name: "Panthexia Tiled Materials"
+  short_description: "Tileable environment materials for Panthexia"
+  default_prompt: "Use $panthexia-tiled-materials to create tileable Panthexia floor, wall, water, or sky assets."

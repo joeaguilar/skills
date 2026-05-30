@@ -2,10 +2,12 @@
 # After re-porting a skill to codex, refresh its line:  git hash-object claude/skills/<skill>/SKILL.md
 alignment	f9defe4f2769a63c08f2bb3d8dd597f5b0fa406d
 blitz	c3b759eb334c71b8fb087b6d8966f73206a05d31
+code-roast	e08dd6ce28e9d368bb0bb303ac72acb148bafe01
 itr	aef061f04f2748bc7817e98cfd9dbfd3c44f22e3
 kgr	b758d205b543ff72cf69a0cc163ca79b0f5d96f5
 roadmap	9d32e997b282673dc2cf9958f21216310bf2e34b
 shell-prompt	6e2ef5f33614920a266d6f358689536d9feec2a5
+spicy-code-roast	44424d38cdae52644ef962ebeac8723f94649177
 sprint	8d49692951562c95cdd2b7d800d4052331a31916
 sprint-review	e51d3173d3a906445de157f26a8b8b0275e073ef
 story-style	01768e848636c3df0ec8950a4278becc161bce37

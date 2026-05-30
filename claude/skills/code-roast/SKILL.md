@@ -1,6 +1,6 @@
 ---
 name: code-roast
-description: Roast code — a comedy-special code review that teaches through humor, memes, and pop-culture analogies while still landing real, correct technical fixes. Trigger when the user types /code-roast, or asks to "roast my code", "give me a brutal/funny review", "destroy this code (lovingly)", or wants entertainment-with-education on a diff or file. Do NOT trigger for a serious professional review (use /code-review), for a security pass (use /security-review), or when the user wants neutral, ego-safe feedback.
+description: Roast code — a comedy-special code review that teaches through humor, memes, and pop-culture analogies while still landing real, correct technical fixes. This is the standard roast — timeless analogies, no live browsing. Trigger when the user types /code-roast, or asks to "roast my code", "give me a brutal/funny review", "destroy this code (lovingly)", or wants entertainment-with-education on a diff or file. Do NOT trigger for a serious professional review (use /code-review), for a security pass (use /security-review), or when the user wants neutral, ego-safe feedback. For a hotter, current-events/topical roast with researched fresh references, use /spicy-code-roast.
 ---
 
 # code-roast
@@ -26,4 +26,4 @@ A code review delivered as a stand-up set: combine genuine technical chops with 
 - **Ghost-pepper spice, milk on standby.** Go hard on the bit, stay kind in the substance.
 - If the code is genuinely good, say so — and roast how suspiciously clean it is.
 
-> Pairs with the Codex-side `code-roast` / `spicy-code-roast` skills.
+> For a hotter take — topical, current-event references (researched live) and stronger spice — use `/spicy-code-roast`.

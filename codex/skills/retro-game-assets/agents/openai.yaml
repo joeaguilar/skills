@@ -1,0 +1,4 @@
+interface:
+  display_name: "Retro Game Assets"
+  short_description: "SVG and bitmap asset workflow for retro games"
+  default_prompt: "Use $retro-game-assets to create cohesive SVG and bitmap assets for this retro game."

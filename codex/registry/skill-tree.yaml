@@ -76,6 +76,19 @@ skills:
     recommends: []
     unlocked_by: []
     position: { x: 8, y: 46 }
+  retro-game-assets:
+    path: "skills/retro-game-assets"
+    group: "foundations"
+    tier: 1
+    icon: "RGA"
+    theme: "prism"
+    title: "Retro Game Assets"
+    summary: "Create cohesive SVG and bitmap art assets for retro games."
+    provides: ["game-assets"]
+    requires: ["image-generation"]
+    recommends: []
+    unlocked_by: ["imagegen"]
+    position: { x: 25, y: 4 }
   skill-creator:
     path: "skills/.system/skill-creator"
     group: "forge"

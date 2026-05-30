@@ -1,6 +1,25 @@
 {
   "version": 1,
   "manifestPath": ".codex/project-skills.json",
+  "manifestPaths": {
+    "claude": {
+      "global": "~/.claude/primitives.json",
+      "local": ".claude/project-primitives.json"
+    },
+    "codex": {
+      "global": "~/.codex/primitives.json",
+      "local": ".codex/project-primitives.json"
+    }
+  },
+  "primitiveTypes": {
+    "skill": { "label": "Skills", "root": "skills" },
+    "agent": { "label": "Agents", "root": "agents" },
+    "command": { "label": "Slash Commands", "root": "commands" }
+  },
+  "scopes": {
+    "global": { "label": "Global", "summary": "Installed into the user agent home." },
+    "local": { "label": "Local", "summary": "Installed or enabled inside a target project." }
+  },
   "groups": {
     "core": {
       "label": "Core Relics",
@@ -48,7 +67,9 @@
     "openai-docs": { "label": "OpenAI Docs" },
     "plugin-authoring": { "label": "Plugin Authoring" },
     "skill-authoring": { "label": "Skill Authoring" },
-    "skill-installation": { "label": "Skill Installation" }
+    "skill-installation": { "label": "Skill Installation" },
+    "primitive-architecture": { "label": "Primitive Architecture" },
+    "primitive-audit": { "label": "Primitive Audit" }
   },
   "skills": {
     "openai-docs": {
@@ -260,6 +281,65 @@
       "recommends": ["product-roadmap", "story-conventions"],
       "unlockedBy": ["blitz", "sprint-review"],
       "position": { "x": 92, "y": 54 }
+    }
+  },
+  "primitives": {
+    "primitive-architect-agent": {
+      "type": "agent",
+      "platforms": {
+        "claude": { "path": "agents/primitive-architect.md" },
+        "codex": { "path": "agents/primitive-architect.md" }
+      },
+      "scopes": ["global", "local"],
+      "group": "forge",
+      "tier": 1,
+      "icon": "AGT",
+      "theme": "ink",
+      "title": "Primitive Architect",
+      "summary": "Reviews cross-platform primitive layout, install scopes, and dependency contracts.",
+      "provides": ["primitive-architecture"],
+      "requires": ["skill-authoring"],
+      "recommends": ["code-graph"],
+      "unlockedBy": ["skill-creator"],
+      "position": { "x": 40, "y": 82 }
+    },
+    "primitive-audit-command": {
+      "type": "command",
+      "platforms": {
+        "claude": { "path": "commands/primitive-audit.md" },
+        "codex": { "path": "commands/primitive-audit.md" }
+      },
+      "scopes": ["global", "local"],
+      "group": "forge",
+      "tier": 2,
+      "icon": "CMD",
+      "theme": "electric",
+      "title": "Primitive Audit Command",
+      "summary": "Slash command for checking primitive paths, install scopes, and graph integrity.",
+      "provides": ["primitive-audit"],
+      "requires": ["primitive-architecture"],
+      "recommends": ["skill-installation"],
+      "unlockedBy": ["primitive-architect-agent"],
+      "position": { "x": 55, "y": 84 }
+    },
+    "primitive-audit-summary-command": {
+      "type": "command",
+      "platforms": {
+        "claude": { "path": "commands/primitive-audit-summary.md" },
+        "codex": { "path": "commands/primitive-audit-summary.md" }
+      },
+      "scopes": ["global", "local"],
+      "group": "forge",
+      "tier": 2,
+      "icon": "SUM",
+      "theme": "wind",
+      "title": "Primitive Audit Summary",
+      "summary": "Slash command for summarizing provider choices, install scopes, and graph health.",
+      "provides": ["primitive-audit"],
+      "requires": ["primitive-architecture"],
+      "recommends": ["skill-installation"],
+      "unlockedBy": ["primitive-architect-agent"],
+      "position": { "x": 66, "y": 84 }
     }
   }
 }

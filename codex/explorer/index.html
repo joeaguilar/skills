@@ -3,7 +3,7 @@
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Codex Skill Tree</title>
+    <title>Codex Primitive Tree</title>
     <link rel="stylesheet" href="./styles.css">
   </head>
   <body>
@@ -14,27 +14,33 @@
         <div class="brand-block">
           <div class="brand-mark"><img src="./assets/codex-sigil.svg" alt="" aria-hidden="true"></div>
           <div>
-            <h1>Codex Skill Tree</h1>
-            <p id="projectPath">Project manifest: .codex/project-skills.json</p>
+            <h1>Codex Primitive Tree</h1>
+            <p id="projectPath">Project primitives: .codex/project-primitives.json</p>
           </div>
         </div>
-        <div class="status-strip" aria-label="Skill tree status">
+        <div class="status-strip" aria-label="Primitive tree status">
           <div><strong id="enabledCount">0</strong><span>Enabled</span></div>
           <div><strong id="availableCount">0</strong><span>Available</span></div>
           <div><strong id="capabilityCount">0</strong><span>Capabilities</span></div>
+        </div>
+        <div id="scopeControl" class="scope-control" role="group" aria-label="Manifest scope">
+          <button type="button" data-scope="local">Local</button>
+          <button type="button" data-scope="global">Global</button>
         </div>
         <div class="top-actions">
           <button id="selectProject" class="project-button" type="button" title="Select project folder" aria-label="Select project folder">
             <span>DIR</span>
             <small>Project</small>
           </button>
-          <button id="copyManifest" class="icon-button" type="button" title="Copy manifest" aria-label="Copy manifest">CP</button>
-          <button id="resetTree" class="icon-button danger" type="button" title="Reset tree" aria-label="Reset tree">RS</button>
+          <button id="detectPrimitives" class="icon-button" type="button" title="Scan selected folder for primitives" aria-label="Scan selected folder for primitives">SC</button>
+          <button id="copyManifest" class="icon-button" type="button" title="Copy primitive manifest" aria-label="Copy primitive manifest">CP</button>
+          <button id="resetTree" class="icon-button danger" type="button" title="Reset primitives" aria-label="Reset primitives">RS</button>
         </div>
       </header>
 
       <main class="main-grid">
-        <section class="tree-panel" aria-label="Skill tree">
+        <section class="tree-panel" aria-label="Primitive tree">
+          <div id="typeTabs" class="primitive-tabs" role="tablist" aria-label="Primitive type filter"></div>
           <div id="groupRail" class="group-rail"></div>
           <div class="zoom-bar" aria-label="Tree zoom controls">
             <button id="zoomOut" class="zoom-button" type="button" aria-label="Zoom out">-</button>
@@ -54,16 +60,17 @@
           </div>
         </section>
 
-        <aside class="inspector" aria-label="Skill details">
+        <aside class="inspector" aria-label="Primitive details">
           <div class="inspector-top">
             <div id="selectedIcon" class="detail-icon">CX</div>
             <div>
               <div id="selectedState" class="state-pill">Ready</div>
-              <h2 id="selectedTitle">Select a skill</h2>
+              <h2 id="selectedTitle">Select a primitive</h2>
             </div>
           </div>
           <p id="selectedSummary" class="summary"></p>
-          <div id="selectedPath" class="skill-path"></div>
+          <div id="selectedPath" class="primitive-path"></div>
+          <div id="selectedMeta" class="meta-row" aria-label="Primitive metadata"></div>
           <div class="detail-block">
             <h3>Provides</h3>
             <div id="providesList" class="chip-list"></div>
@@ -76,11 +83,31 @@
             <h3>Recommends</h3>
             <div id="recommendsList" class="chip-list"></div>
           </div>
-          <button id="toggleSkill" class="primary-action" type="button">Enable Skill</button>
+          <div id="providerSelectionBlock" class="detail-block provider-selection-block" hidden>
+            <h3>Provider Routing</h3>
+            <div id="providerChoices" class="provider-choices"></div>
+          </div>
+          <button id="togglePrimitive" class="primary-action" type="button">Enable Primitive</button>
+
+          <div class="detail-block detector-block">
+            <div class="detail-heading">
+              <h3>Detected Primitives</h3>
+              <span id="detectedState">select folder</span>
+            </div>
+            <div id="detectedList" class="detected-list"></div>
+          </div>
+
+          <div class="markdown-panel">
+            <div class="panel-heading">
+              <h3 id="markdownTitle">Markdown Explorer</h3>
+              <span id="markdownState">idle</span>
+            </div>
+            <div id="markdownBody" class="markdown-body"></div>
+          </div>
 
           <div class="manifest-panel">
             <div class="panel-heading">
-              <h3>Project Manifest</h3>
+              <h3>Primitive Manifest</h3>
               <span id="manifestState">local</span>
             </div>
             <pre id="manifestPreview"></pre>

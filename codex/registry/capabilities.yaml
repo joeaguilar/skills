@@ -44,3 +44,9 @@ capabilities:
   skill-installation:
     label: "Skill Installation"
     description: "Install Codex skills from curated or external sources."
+  primitive-architecture:
+    label: "Primitive Architecture"
+    description: "Design and review cross-platform primitive layout and dependency rules."
+  primitive-audit:
+    label: "Primitive Audit"
+    description: "Audit primitive install scope, provider state, drift, and graph integrity."

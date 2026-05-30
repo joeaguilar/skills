@@ -2,9 +2,9 @@
 
 ## What this is
 
-The **canonical source for two parallel skill distributions**: the **Claude** skills under `claude/skills/` and the **Codex** ports under `codex/skills/`. A root `install.sh` symlinks each tree into its agent home (`~/.claude/skills → claude/skills`, `~/.codex/skills → codex/skills`).
+The **canonical source for two parallel installable primitive distributions**: Claude payloads under `claude/` and Codex payloads under `codex/`. Skills remain the main primitive type, with `agents/` and `commands/` now managed as first-class roots. A root `install.sh` symlinks selected roots into global agent homes or local project folders.
 
-Author **Claude** skills in `claude/skills/<skill>/`; don't hand-edit the installed copies under `~/.claude` (that path is just a symlink back here). The Codex tree is a **separate, intentionally reworded port** — same skills, Codex phrasing (see "Two ports" below), not a byte copy.
+Author **Claude** primitives in `claude/<primitive>/`; don't hand-edit installed copies under `~/.claude` or a target project's `.claude` directory. The Codex tree is a **separate, intentionally reworded port** — same intent, Codex phrasing (see "Two ports" below), not a byte copy.
 
 ## Layout
 
@@ -13,15 +13,20 @@ skills/                         (repo root)
 ├── install.sh                  unified installer: ./install.sh <claude|codex|both> [--apply]
 ├── validate-skills.sh          cross-tree parity + drift check
 ├── claude/skills/<skill>/SKILL.md     the Claude skill sources (10 skills)
+├── claude/agents/  claude/commands/   optional Claude primitive roots
+│                                      (commands/ also holds imported legacy commands)
+├── claude/settings.json               canonical ~/.claude/settings.json (config primitive)
+├── PLATFORM_ONLY.tsv                   intentional one-tree-only primitives (parity exemptions)
 ├── codex/
 │   ├── skills/<skill>/SKILL.md + agents/openai.yaml   Codex ports
+│   ├── agents/  commands/             optional Codex primitive roots
 │   ├── skills/.system/                Codex system skills (Codex-only)
 │   ├── PARITY.tsv                      per-skill reconcile baseline (drift check)
 │   ├── registry/  explorer/  scripts/  backups/
 ├── CLAUDE.md  AGENTS.md  COMPRESSION.md  statusline.sh  .gitignore
 ```
 
-`~/.claude/skills` and `~/.codex/skills` are symlinks created by `install.sh`. Skills produce artifacts **in target repos** (`itr` backlog, `sprint/{folder}/plan.md`, `STORY_STYLE.md`, `docs/ROADMAP.md`), never here.
+Global installs link roots such as `~/.claude/skills`, `~/.claude/agents`, `~/.codex/skills`, and `~/.codex/commands`. Local installs link the same roots into a target project's `.claude/` or `.codex/` directory. Skills produce artifacts **in target repos** (`itr` backlog, `sprint/{folder}/plan.md`, `STORY_STYLE.md`, `docs/ROADMAP.md`), never here.
 
 ## The skills
 
@@ -38,16 +43,35 @@ skills/                         (repo root)
 
 **Claude vs Codex (per-platform wording).** Codex ports are reworded for Codex (no `AskUserQuestion`, "Codex subagent", `AGENTS.md`/`CODEX.md` instead of `CLAUDE.md`). That difference is intentional — `validate-skills.sh` checks *set parity and drift*, not content equality. Edit Claude skills in `claude/skills/`; when a change needs to reach Codex, port it in `codex/skills/` (Codex wording) and refresh that skill's line in `codex/PARITY.tsv`.
 
+**The porting contract** (enforced by `codex/scripts/validate-codex-skills.sh`): every non-`.system` Codex skill needs an `agents/openai.yaml` alongside its `SKILL.md`, and the validator flags these Claude-isms as non-Codex references — `.claude/skills`, `AskUserQuestion`, `subagent_type`, `run_in_background`, `SendMessage`. Replace them with Codex-native user-input / subagent / background-session wording when porting.
+
+**Intentional divergence (`PLATFORM_ONLY.tsv`).** Parity is the default, but the two trees may legitimately diverge in **both** directions — Claude carries legacy/native commands not yet ported, and Codex carries skills Claude can't run (e.g. image generation). Declare any such one-tree-only primitive in the repo-root `PLATFORM_ONLY.tsv` (`platform  root  name`) and `validate-skills.sh` exempts it from the parity check (agents/commands payloads listed there also skip the frontmatter lint, since they're imported as-is). To **graduate** a primitive to parity, add its peer in the other tree and delete its line from `PLATFORM_ONLY.tsv` — the validator then enforces parity for it again.
+
 **Verbose vs caveman (per-skill density) — pick deliberately:**
 - **Verbose** for coached, step-by-step skills (`sprint`, `blitz`, `sprint-review`, `roadmap`, `story-style`). The prose *is* the product. Don't compress.
 - **Caveman-compressed** for autonomous skills loaded every run (`overdrive`). Compress prose; preserve commands/thresholds/tables/guardrails byte-for-byte. Method: **`COMPRESSION.md`**.
 
 ## Working here
 
-- **Install/relink:** `./install.sh claude` (or `codex`/`both`). Dry-run by default; `--apply` to act; `--restore` to roll back.
-- **Validate after any skill change:** `./validate-skills.sh` — flags a skill present in one tree but not the other, and any Codex port whose Claude source drifted past its `PARITY.tsv` baseline. (`overdrive`'s Codex port is currently flagged stale — pending re-port to the caveman rewrite.)
+- **Install/relink:** `./install.sh claude` (or `codex`/`both`). Dry-run by default; `--apply` to act; `--restore` to roll back. Use `--all-primitives` for `skills`, `agents`, and `commands`; use `--local /path/to/project` for project-scoped installs. The opt-in `config` primitive (`--primitive config` or `--primitives …,config`) links individual home files instead of a directory root — for Claude, `settings.json` + `statusline.sh` into `~/.claude/`; for Codex it is a no-op. It is **not** part of `--all-primitives`.
+- **Validate after any skill change:** `./validate-skills.sh` — flags a skill present in one tree but not the other, and any Codex port whose Claude source drifted past its `PARITY.tsv` baseline. Intentional one-tree-only primitives are exempted via `PLATFORM_ONLY.tsv` (see "Two ports").
 - Author Claude skills in `claude/skills/`; let `install.sh` link them — never author under `~/.claude`.
 
-## codex/
+## Primitive tree (capability-first)
 
-A Codex-compatible export with its own tooling: `codex/skills/` (ports + `.system`), `codex/registry/` (`skill-tree.{json,yaml}`, `capabilities.yaml`), `codex/explorer/` (web UI), `codex/scripts/` (`link-codex-skills.sh` legacy installer, `skill-tree.js`, `validate-codex-skills.sh`), `codex/PARITY.tsv`. Edit the Claude source first, then re-port into `codex/skills/` and update `PARITY.tsv` + the registry. See `AGENTS.md` for the Codex-side workflow.
+The primitives form a dependency graph keyed on **capabilities**, not skill names — so a future Linear/Jira skill could satisfy `issue-tracker` the way `itr` does today. Cross-type dependencies are allowed: agents can require skills, skills can require agents or commands, and commands can require skills. `itr` provides `issue-tracker`; `kgr` provides `code-graph`; `sprint` requires both and provides `sprint-planning`; `primitive-architect-agent` requires `skill-authoring`; both primitive audit commands require `primitive-architecture` and provide `primitive-audit`, so provider selection is exercised. This graph is encoded in `codex/registry/` — `capabilities.yaml` and `skill-tree.{json,yaml}` (legacy filename, primitive-aware schema), which **must be kept in sync with each other**. `codex/explorer/` is a static web UI that renders the tree with tabs for skills, agents, commands, and future types, can scan selected folders for managed/unmanaged primitive payloads, and renders selected markdown sources.
+
+## codex/ tooling
+
+A Codex-compatible export: `codex/skills/` (ports + `.system`), optional `codex/agents/` and `codex/commands/`, `codex/registry/`, `codex/explorer/`, `codex/scripts/` (`skill-tree.js` primitive registry CLI, `validate-codex-skills.sh` deep checks, `link-codex-skills.sh` legacy skills installer), `codex/PARITY.tsv`. Edit the Claude source first, then re-port into the matching Codex primitive root (Codex wording) and update `PARITY.tsv` + the registry when a skill changes. See `AGENTS.md` for the full Codex-side workflow.
+
+```bash
+node codex/scripts/skill-tree.js validate        # registry consistency
+node codex/scripts/skill-tree.js status --project /path   # a project's enabled primitives
+node codex/scripts/skill-tree.js provider primitive-audit primitive-audit-summary-command --project /path
+node codex/scripts/skill-tree.js status --scope global    # global Codex primitive state
+node --check codex/explorer/app.js && node --check codex/scripts/skill-tree.js   # after JS edits
+cd codex && python3 -m http.server 8765          # serve explorer at /explorer/
+```
+
+Per-project primitive enablement lives in `.codex/project-primitives.json` inside the **target** project, never in canonical roots. Legacy `.codex/project-skills.json` is still read for compatibility.

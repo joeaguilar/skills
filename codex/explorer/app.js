@@ -334,6 +334,7 @@ function primitiveEntries() {
 function visiblePrimitiveEntries() {
   const entries = primitiveEntries();
   return entries.filter(([, primitive]) => {
+    if (!supportsPlatform(primitive)) return false;
     if (!supportsScope(primitive)) return false;
     return activeType === "all" || primitive.type === activeType;
   });
@@ -360,6 +361,16 @@ function themeFor(primitive) {
 function supportsScope(primitive) {
   const scopes = primitive.scopes || ["global", "local"];
   return scopes.length === 0 || scopes.includes(activeScope);
+}
+
+function supportsPlatform(primitive, platform = activePlatform) {
+  if (!primitive) return false;
+  if (primitive.platforms && typeof primitive.platforms === "object" && !Array.isArray(primitive.platforms)) {
+    return Boolean(primitive.platforms[platform]);
+  }
+  if (!primitive.path) return false;
+  if (platform === "claude" && String(primitive.path).startsWith("skills/.system/")) return false;
+  return platform === "codex" || platform === "claude";
 }
 
 function platformPrimitivePath(primitive, platform = activePlatform) {
@@ -461,7 +472,7 @@ function isStalePort(primitive) {
 
 function allProviderCandidates(capability) {
   return primitiveEntries()
-    .filter(([, primitive]) => (primitive.provides || []).includes(capability))
+    .filter(([, primitive]) => supportsPlatform(primitive) && (primitive.provides || []).includes(capability))
     .map(([id, primitive]) => ({ id, primitive }));
 }
 
@@ -483,7 +494,7 @@ function providers() {
   const provided = {};
   for (const id of enabled) {
     const primitive = registry.primitives[id];
-    if (!primitive || !supportsScope(primitive)) continue;
+    if (!primitive || !supportsPlatform(primitive) || !supportsScope(primitive)) continue;
     for (const capability of primitive.provides || []) {
       const selectedProvider = selectedProviders[capability];
       if (selectedProvider === id || !provided[capability]) provided[capability] = id;
@@ -503,9 +514,14 @@ function missingRecommended(primitive, provided = providers()) {
 function stateFor(id, provided = providers()) {
   const primitive = registry.primitives[id];
   if (!primitive) return "hidden";
+  if (!supportsPlatform(primitive)) return "hidden";
   if (!supportsScope(primitive)) return "hidden";
   if (enabled.has(id)) return "enabled";
-  if ((primitive.unlockedBy || []).some((parentId) => !enabled.has(parentId))) return "locked";
+  const lockedByVisibleParent = (primitive.unlockedBy || []).some((parentId) => {
+    const parent = registry.primitives[parentId];
+    return parent && supportsPlatform(parent) && supportsScope(parent) && !enabled.has(parentId);
+  });
+  if (lockedByVisibleParent) return "locked";
   const missing = missingRequired(primitive, provided);
   if (missing.some((capability) => !hasProviderCandidate(capability))) return "missing-provider";
   if (missing.length) return "locked";
@@ -620,6 +636,25 @@ async function readProjectManifest(handle, platform = activePlatform) {
   }
 }
 
+function applyManifestState(projectManifest) {
+  enabled = new Set(
+    (projectManifest.enabled || []).filter((id) => {
+      const primitive = registry.primitives[id];
+      return primitive && supportsPlatform(primitive) && supportsScope(primitive);
+    })
+  );
+  selectedProviders = normalizeProviderMap(projectManifest.providers || {});
+  localStorage.setItem(storageKeyForScope(activeScope), JSON.stringify(Array.from(enabled).sort()));
+  localStorage.setItem(providerStorageKeyForScope(activeScope), JSON.stringify(selectedProviders));
+}
+
+async function loadSelectedProjectManifest() {
+  if (!projectHandle || activeScope !== "local") return false;
+  const projectManifest = await readProjectManifest(projectHandle, activePlatform);
+  applyManifestState(projectManifest);
+  return true;
+}
+
 async function persistProjectManifest() {
   if (!projectHandle) return;
   try {
@@ -662,10 +697,7 @@ async function selectProjectFolder() {
     selectedDetectedKey = "";
     markdownCache.clear();
     activeScope = "local";
-    enabled = new Set((projectManifest.enabled || []).filter((id) => registry.primitives[id] && supportsScope(registry.primitives[id])));
-    selectedProviders = normalizeProviderMap(projectManifest.providers || {});
-    localStorage.setItem(storageKeyForScope(activeScope), JSON.stringify(Array.from(enabled).sort()));
-    localStorage.setItem(providerStorageKeyForScope(activeScope), JSON.stringify(selectedProviders));
+    applyManifestState(projectManifest);
     localStorage.setItem(PLATFORM_KEY, activePlatform);
     localStorage.setItem(SCOPE_KEY, activeScope);
     updateProjectLabel();
@@ -697,7 +729,7 @@ async function getDirectoryByPath(handle, parts) {
   return dir;
 }
 
-async function scanSkillRoot(dir, rootPath, limitState, output, relParts = [], depth = 0) {
+async function scanSkillRoot(dir, rootPath, platform, limitState, output, relParts = [], depth = 0) {
   if (output.length >= DETECTION_LIMIT || depth > DETECTION_DEPTH) return;
   for await (const entry of dir.values()) {
     if (output.length >= DETECTION_LIMIT) {
@@ -717,17 +749,18 @@ async function scanSkillRoot(dir, rootPath, limitState, output, relParts = [], d
         primitivePath: joinPath(rootPath, ...primitiveParts),
         rootRelativePath: joinPath("skills", ...primitiveParts, "SKILL.md"),
         rootRelativePrimitivePath: joinPath("skills", ...primitiveParts),
+        platform,
         fileHandle: entry
       };
       item.managedId = managedIdForDetected(item);
       output.push(item);
     } else if (entry.kind === "directory") {
-      await scanSkillRoot(entry, rootPath, limitState, output, [...relParts, entry.name], depth + 1);
+      await scanSkillRoot(entry, rootPath, platform, limitState, output, [...relParts, entry.name], depth + 1);
     }
   }
 }
 
-async function scanMarkdownRoot(dir, type, rootPath, limitState, output, relParts = [], depth = 0) {
+async function scanMarkdownRoot(dir, type, rootPath, platform, limitState, output, relParts = [], depth = 0) {
   if (output.length >= DETECTION_LIMIT || depth > DETECTION_DEPTH) return;
   for await (const entry of dir.values()) {
     if (output.length >= DETECTION_LIMIT) {
@@ -748,18 +781,25 @@ async function scanMarkdownRoot(dir, type, rootPath, limitState, output, relPart
         primitivePath: sourcePath,
         rootRelativePath: joinPath(root, ...fileParts),
         rootRelativePrimitivePath: joinPath(root, ...fileParts),
+        platform,
         fileHandle: entry
       };
       item.managedId = managedIdForDetected(item);
       output.push(item);
     } else if (entry.kind === "directory") {
-      await scanMarkdownRoot(entry, type, rootPath, limitState, output, [...relParts, entry.name], depth + 1);
+      await scanMarkdownRoot(entry, type, rootPath, platform, limitState, output, [...relParts, entry.name], depth + 1);
     }
   }
 }
 
 function detectionPrefixes() {
   return ["", "codex", "claude", ".codex", ".claude", ".agents"];
+}
+
+function platformForDetectionPrefix(prefix) {
+  if (prefix === "claude" || prefix === ".claude") return "claude";
+  if (prefix === "codex" || prefix === ".codex" || prefix === ".agents") return "codex";
+  return activePlatform;
 }
 
 async function scanPrimitiveRoots(handle) {
@@ -773,14 +813,15 @@ async function scanPrimitiveRoots(handle) {
       const root = primitiveRootForType(type);
       const rootParts = [prefix, root].filter(Boolean);
       const rootPath = joinPath(rootParts);
+      const rootPlatform = platformForDetectionPrefix(prefix);
       if (!rootPath || seenRoots.has(`${type}:${rootPath}`)) continue;
       seenRoots.add(`${type}:${rootPath}`);
       const dir = await getDirectoryByPath(handle, rootParts);
       if (!dir) continue;
       if (type === "skill") {
-        await scanSkillRoot(dir, rootPath, limitState, output);
+        await scanSkillRoot(dir, rootPath, rootPlatform, limitState, output);
       } else {
-        await scanMarkdownRoot(dir, type, rootPath, limitState, output);
+        await scanMarkdownRoot(dir, type, rootPath, rootPlatform, limitState, output);
       }
       if (limitState.hit) break;
     }
@@ -866,6 +907,7 @@ function renderTypeTabs() {
   els.typeTabs.innerHTML = "";
   const counts = {};
   for (const [, primitive] of primitiveEntries()) {
+    if (!supportsPlatform(primitive)) continue;
     if (!supportsScope(primitive)) continue;
     counts[primitive.type] = (counts[primitive.type] || 0) + 1;
   }
@@ -906,25 +948,49 @@ function updateScopeButtons() {
   }
 }
 
-function setPlatform(platform) {
+async function setPlatform(platform, options = {}) {
   if (!["claude", "codex"].includes(platform) || platform === activePlatform) return;
   activePlatform = platform;
-  enabled = new Set(loadEnabledForScope(activeScope).filter((id) => registry.primitives[id] && supportsScope(registry.primitives[id])));
-  selectedProviders = loadProvidersForScope(activeScope);
+  try {
+    if (!(await loadSelectedProjectManifest())) {
+      enabled = new Set(loadEnabledForScope(activeScope).filter((id) => {
+        const primitive = registry.primitives[id];
+        return primitive && supportsPlatform(primitive) && supportsScope(primitive);
+      }));
+      selectedProviders = loadProvidersForScope(activeScope);
+    }
+  } catch (error) {
+    enabled = new Set();
+    selectedProviders = {};
+    setProjectStatus("project load failed");
+    console.error(error);
+  }
   localStorage.setItem(PLATFORM_KEY, activePlatform);
-  selectedId = null;
-  selectedDetectedKey = "";
+  selectedId = options.selectedId || null;
+  selectedDetectedKey = options.detectedKey || "";
   activeMarkdownKey = "";
   updateProjectLabel();
   updatePlatformButtons();
   render();
 }
 
-function setScope(scope) {
+async function setScope(scope) {
   if (!["local", "global"].includes(scope) || scope === activeScope) return;
   activeScope = scope;
-  enabled = new Set(loadEnabledForScope(activeScope).filter((id) => registry.primitives[id] && supportsScope(registry.primitives[id])));
-  selectedProviders = loadProvidersForScope(activeScope);
+  try {
+    if (!(await loadSelectedProjectManifest())) {
+      enabled = new Set(loadEnabledForScope(activeScope).filter((id) => {
+        const primitive = registry.primitives[id];
+        return primitive && supportsPlatform(primitive) && supportsScope(primitive);
+      }));
+      selectedProviders = loadProvidersForScope(activeScope);
+    }
+  } catch (error) {
+    enabled = new Set();
+    selectedProviders = {};
+    setProjectStatus("project load failed");
+    console.error(error);
+  }
   localStorage.setItem(SCOPE_KEY, activeScope);
   selectedId = null;
   updateProjectLabel();
@@ -1193,6 +1259,7 @@ function renderDetectedList() {
         <small>${escapeHtml(item.sourcePath)}</small>
       </span>
       <span class="detected-tags">
+        <span>${escapeHtml(platformLabel(item.platform || activePlatform))}</span>
         <span>${escapeHtml(typeLabel(item.type))}</span>
         <span>${managed ? "managed" : "unmanaged"}</span>
         ${isEnabled ? "<span>enabled</span>" : ""}
@@ -1201,7 +1268,11 @@ function renderDetectedList() {
     row.addEventListener("click", () => {
       selectedDetectedKey = item.key;
       if (item.managedId) selectedId = item.managedId;
-      render();
+      if (item.platform && item.platform !== activePlatform) {
+        void setPlatform(item.platform, { selectedId: item.managedId || null, detectedKey: item.key });
+      } else {
+        render();
+      }
     });
     els.detectedList.appendChild(row);
   }
@@ -1468,10 +1539,10 @@ async function init() {
   render();
   els.togglePrimitive.addEventListener("click", toggleSelected);
   for (const button of els.platformButtons) {
-    button.addEventListener("click", () => setPlatform(button.dataset.platform));
+    button.addEventListener("click", () => void setPlatform(button.dataset.platform));
   }
   for (const button of els.scopeButtons) {
-    button.addEventListener("click", () => setScope(button.dataset.scope));
+    button.addEventListener("click", () => void setScope(button.dataset.scope));
   }
   els.selectProject.addEventListener("click", selectProjectFolder);
   els.detectPrimitives.addEventListener("click", detectPrimitives);

@@ -25,6 +25,8 @@ Snapshot: 2026-05-30, current working tree under `codex/`.
 - The explorer supports stale port metadata from `stale`, `stalePort`, `stale_port`, `portState`, or `port_state`.
 - The explorer detector scans registry primitive type roots and shows both managed and unmanaged payloads for skills, agents, commands, and future markdown-file primitive types.
 - The explorer Markdown Explorer renders registry `SKILL.md` files and detected markdown payloads from the selected folder.
+- The browser installer is served from the repository root so the Claude and
+  Codex platform switches can both load their payload markdown.
 - Current search found no `~/.claude/skills`, `AskUserQuestion`, or Claude-only tool API names in `codex/skills`. Remaining `CLAUDE.md` mentions are project-instruction-file fallbacks, not Claude skill paths or tool calls.
 - Claude legacy commands remain platform-specific unless they are deliberately
   ported as Codex-native commands with managed frontmatter and registry entries.

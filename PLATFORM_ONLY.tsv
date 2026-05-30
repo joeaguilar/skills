@@ -29,6 +29,7 @@ codex	skills	spicy-code-roast
 
 # --- Codex-only agents (drift: Claude converted these imports to skills; Codex keeps the agent form) ---
 codex	agents	api-contract-designer.md
+codex	agents	backend-security-auditor.md
 codex	agents	changelog-curator.md
 codex	agents	tdd-workflow-coach.md
 
@@ -43,26 +44,28 @@ claude	skills	code-wizard
 claude	skills	css
 claude	skills	emoji-translator
 claude	skills	tdd-coach
+# Tier-3 reviewers: native /code-review, /simplify, /security-review now do the review act, so
+# these keep their encoded standards / whole-codebase scope as skills (the asset) rather than
+# duplicating a review engine as an agent. (backend-security-auditor drift peer noted above.)
+claude	skills	code-audit
+claude	skills	cpp-review
+claude	skills	react-review
+claude	skills	security-audit
 
 # --- Claude-only agents (imported from ~/.claude/agents; awaiting Codex ports) ---
-claude	agents	cpp-code-reviewer.md
-claude	agents	efficiency-code-auditor.md
 claude	agents	feature-implementation-orchestrator.md
 claude	agents	feature-request-processor.md
 claude	agents	microservice-decomposer.md
 claude	agents	ml-integration-specialist.md
 claude	agents	strict-feat-orchestrator.md
-claude	agents	strict-react-reviewer.md
 claude	agents	workflow-architect-analyst.md
 
 # --- Claude-only legacy commands (imported from ~/.claude/commands; awaiting Codex ports) ---
 claude	commands	agent_spawner.md
-claude	commands	app_pip.md
 claude	commands	claudes_context_primer.md
 claude	commands	claudes_create_documents.md
 claude	commands	claudes_feature_request.md
 claude	commands	claudes_implment_feature.md
-claude	commands	code_reviewer.md
 claude	commands	context_prime.md
 claude	commands	context_prime_with_lead.md
 claude	commands	create_documents.md

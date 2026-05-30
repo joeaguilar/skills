@@ -443,7 +443,6 @@
     "backend-security-auditor-agent": {
       "type": "agent",
       "platforms": {
-        "claude": { "path": "agents/backend-security-auditor.md" },
         "codex": { "path": "agents/backend-security-auditor.md" }
       },
       "scopes": ["global", "local"],
@@ -481,7 +480,6 @@
     "api-contract-designer-agent": {
       "type": "agent",
       "platforms": {
-        "claude": { "path": "agents/api-contract-designer.md" },
         "codex": { "path": "agents/api-contract-designer.md" }
       },
       "scopes": ["global", "local"],
@@ -500,7 +498,6 @@
     "database-schema-architect-agent": {
       "type": "agent",
       "platforms": {
-        "claude": { "path": "agents/database-schema-architect.md" },
         "codex": { "path": "agents/database-schema-architect.md" }
       },
       "scopes": ["global", "local"],
@@ -519,7 +516,6 @@
     "docker-compose-architect-agent": {
       "type": "agent",
       "platforms": {
-        "claude": { "path": "agents/docker-compose-architect.md" },
         "codex": { "path": "agents/docker-compose-architect.md" }
       },
       "scopes": ["global", "local"],
@@ -538,7 +534,6 @@
     "cicd-pipeline-architect-agent": {
       "type": "agent",
       "platforms": {
-        "claude": { "path": "agents/cicd-pipeline-architect.md" },
         "codex": { "path": "agents/cicd-pipeline-architect.md" }
       },
       "scopes": ["global", "local"],
@@ -576,7 +571,6 @@
     "analytics-event-architect-agent": {
       "type": "agent",
       "platforms": {
-        "claude": { "path": "agents/analytics-event-architect.md" },
         "codex": { "path": "agents/analytics-event-architect.md" }
       },
       "scopes": ["global", "local"],
@@ -595,7 +589,6 @@
     "data-pipeline-architect-agent": {
       "type": "agent",
       "platforms": {
-        "claude": { "path": "agents/data-pipeline-architect.md" },
         "codex": { "path": "agents/data-pipeline-architect.md" }
       },
       "scopes": ["global", "local"],
@@ -614,7 +607,6 @@
     "changelog-curator-agent": {
       "type": "agent",
       "platforms": {
-        "claude": { "path": "agents/changelog-curator.md" },
         "codex": { "path": "agents/changelog-curator.md" }
       },
       "scopes": ["global", "local"],
@@ -671,7 +663,6 @@
     "tdd-workflow-coach-agent": {
       "type": "agent",
       "platforms": {
-        "claude": { "path": "agents/tdd-workflow-coach.md" },
         "codex": { "path": "agents/tdd-workflow-coach.md" }
       },
       "scopes": ["global", "local"],
@@ -690,7 +681,6 @@
     "prd-task-generator-agent": {
       "type": "agent",
       "platforms": {
-        "claude": { "path": "agents/prd-task-generator.md" },
         "codex": { "path": "agents/prd-task-generator.md" }
       },
       "scopes": ["global", "local"],

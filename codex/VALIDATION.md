@@ -6,9 +6,12 @@ Snapshot: 2026-05-30, current working tree under `codex/`.
 
 - Current system skills from `~/.codex/skills/.system` are present under `codex/skills/.system`:
   `imagegen`, `openai-docs`, `plugin-creator`, `skill-creator`, `skill-installer`.
-- `diff -qr` reports no differences between each current system skill source and its `codex/skills/.system/<name>` copy.
+- System skill drift was audited against `~/.codex/skills/.system`. The repo
+  keeps its enhanced `plugin-creator` copy instead of replacing it with the
+  installed older copy; other system skill payloads match.
 - Repo-root skills with `SKILL.md` are all represented under `codex/skills`:
-  `alignment`, `blitz`, `itr`, `kgr`, `overdrive`, `roadmap`, `shell-prompt`, `sprint`, `sprint-review`, `story-style`.
+  `alignment`, `blitz`, `itr`, `kgr`, `overdrive`, `retro-game-assets`,
+  `roadmap`, `shell-prompt`, `sprint`, `sprint-review`, `story-style`.
 - `~/.agents/skills` is linked to the non-system Codex skills above via
   `codex/scripts/link-agent-skills.sh`; stale real directories were backed up
   under `codex/backups/agents-skill-*-before-link-20260530-004149`.
@@ -19,7 +22,7 @@ Snapshot: 2026-05-30, current working tree under `codex/`.
   frontmatter; this covers the previous `sprint` and `sprint-review` load
   errors from stale installed copies.
 - Optional primitive roots are present for `codex/agents` and `codex/commands`.
-- Current registry validates 18 primitives: 15 skills, 1 agent, and 2 commands.
+- Current registry validates 19 primitives: 16 skills, 1 agent, and 2 commands.
 - The two primitive audit commands both provide `primitive-audit`, so provider routing is covered by a real registry path.
 - Registry validation rejects required capabilities with no provider unless the capability is explicitly marked external.
 - The explorer supports stale port metadata from `stale`, `stalePort`, `stale_port`, `portState`, or `port_state`.

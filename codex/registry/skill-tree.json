@@ -64,6 +64,7 @@
     "autonomous-orchestration": { "label": "Autonomous Orchestration" },
     "shell-customization": { "label": "Shell Customization" },
     "image-generation": { "label": "Image Generation" },
+    "game-assets": { "label": "Game Assets" },
     "openai-docs": { "label": "OpenAI Docs" },
     "plugin-authoring": { "label": "Plugin Authoring" },
     "skill-authoring": { "label": "Skill Authoring" },
@@ -99,6 +100,20 @@
       "recommends": [],
       "unlockedBy": [],
       "position": { "x": 8, "y": 46 }
+    },
+    "retro-game-assets": {
+      "path": "skills/retro-game-assets",
+      "group": "foundations",
+      "tier": 1,
+      "icon": "RGA",
+      "theme": "prism",
+      "title": "Retro Game Assets",
+      "summary": "Create cohesive SVG and bitmap art assets for retro games.",
+      "provides": ["game-assets"],
+      "requires": ["image-generation"],
+      "recommends": [],
+      "unlockedBy": ["imagegen"],
+      "position": { "x": 25, "y": 4 }
     },
     "skill-creator": {
       "path": "skills/.system/skill-creator",

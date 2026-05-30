@@ -91,10 +91,14 @@ back up existing installed directories.
 Codex currently uses two skill roots in this setup:
 
 - `~/.codex/skills/.system` for bundled/system skills.
+- `~/.codex/skills/<skill>` for direct-root user skills installed by current
+  Codex builds.
 - `~/.agents/skills` for local custom skills.
 
-Use the Codex helper when the custom skills under `~/.agents/skills` need to be
-refreshed from this repo:
+This repo imports portable direct-root user skills into `codex/skills/` so the
+global installer can manage them with the rest of the Codex tree. Use the Codex
+helper when the custom skills under `~/.agents/skills` need to be refreshed from
+this repo:
 
 ```bash
 codex/scripts/link-agent-skills.sh

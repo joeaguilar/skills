@@ -32,6 +32,9 @@ capabilities:
   image-generation:
     label: "Image Generation"
     description: "Create or edit bitmap images and visual assets."
+  game-assets:
+    label: "Game Assets"
+    description: "Create production-ready art assets for games."
   openai-docs:
     label: "OpenAI Docs"
     description: "Use current official OpenAI product and API documentation."

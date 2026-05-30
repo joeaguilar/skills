@@ -1,13 +1,13 @@
 ---
 name: spicy-code-roast
-description: Explicit opt-in spicy version of code-roast. Use when the user asks for a spicy roast, current-event roast, topical joke-researched roast, harsher comedic review, or a code review with fresh pop-culture/current-event references. Requires quick joke research before using any current references.
+description: A spicier, opt-in code roast with topical, current-event, or fresh pop-culture references. Use when the user asks for a spicy roast, current-event roast, topical joke-researched roast, harsher comedic review, or a code review with fresh pop-culture/current-event references. Requires quick joke research before using any current references.
 ---
 
 # Spicy Code Roast
 
-Use this skill only when the user explicitly opts into the spicy/current-events
-variant. This mode allows stronger comedic framing and topical references, but
-the technical review remains evidence-first.
+Use this skill only when the user explicitly asks for a spicy/current-events
+roast. This mode allows stronger comedic framing and topical references, but the
+technical review remains evidence-first.
 
 ## Required Joke Research
 

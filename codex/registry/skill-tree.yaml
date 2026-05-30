@@ -254,8 +254,8 @@ primitives:
   primitive-architect-agent:
     type: "agent"
     platforms:
-      claude: { path: "agents/primitive-architect.md" }
-      codex: { path: "agents/primitive-architect.md" }
+      claude: { path: "agents/primitive-architect.md", requires: [] }
+      codex: { path: "agents/primitive-architect.md", requires: ["skill-authoring"] }
     scopes: ["global", "local"]
     group: "forge"
     tier: 1

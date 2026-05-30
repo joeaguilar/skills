@@ -27,22 +27,30 @@ codex	skills	retro-game-assets
 codex	skills	code-roast
 codex	skills	spicy-code-roast
 
-# --- Claude-only skills (imported from ~/.claude; awaiting Codex ports) ---
+# --- Codex-only agents (drift: Claude converted these imports to skills; Codex keeps the agent form) ---
+codex	agents	api-contract-designer.md
+codex	agents	changelog-curator.md
+codex	agents	tdd-workflow-coach.md
+
+# --- Claude-only skills (awaiting Codex ports) ---
 claude	skills	proof-campaign
+# Converted from imported agents — Claude chose skill over agent (interactive / on-demand / style
+# capabilities fit a skill better than an isolated subagent). Codex drift peers noted above.
+claude	skills	api-contract-designer
+claude	skills	changelog
+claude	skills	code-roast
+claude	skills	code-wizard
+claude	skills	css
+claude	skills	emoji-translator
+claude	skills	tdd-coach
 
 # --- Claude-only agents (imported from ~/.claude/agents; awaiting Codex ports) ---
-claude	agents	comedy-code-roaster.md
 claude	agents	cpp-code-reviewer.md
-claude	agents	css-animation-maestro.md
-claude	agents	css-mastery-expert.md
 claude	agents	efficiency-code-auditor.md
-claude	agents	emoji-translator-pro.md
 claude	agents	feature-implementation-orchestrator.md
 claude	agents	feature-request-processor.md
 claude	agents	microservice-decomposer.md
 claude	agents	ml-integration-specialist.md
-claude	agents	open-api-contract-designer.md
-claude	agents	pragmatic-code-wizard.md
 claude	agents	strict-feat-orchestrator.md
 claude	agents	strict-react-reviewer.md
 claude	agents	workflow-architect-analyst.md

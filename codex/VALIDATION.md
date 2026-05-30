@@ -5,7 +5,7 @@ Snapshot: 2026-05-29, current working tree under `codex/`.
 ## Checks
 
 - `git status --short codex` reports `?? codex/`; this tree is untracked in the local worktree, not git-staged.
-- Current system skills from `/Users/goldboy/.codex/skills/.system` are present under `codex/skills/.system`:
+- Current system skills from `~/.codex/skills/.system` are present under `codex/skills/.system`:
   `imagegen`, `openai-docs`, `plugin-creator`, `skill-creator`, `skill-installer`.
 - `diff -qr` reports no differences between each current system skill source and its `codex/skills/.system/<name>` copy.
 - Repo-root skills with `SKILL.md` are all represented under `codex/skills`:

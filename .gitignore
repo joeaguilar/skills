@@ -7,3 +7,10 @@
 
 # Skill-install backups (install.sh)
 backups/
+
+# Local agent/tool state
+.codex/
+.itr.db
+.itr.db-*
+.kgr-cache.json
+claude/settings.json

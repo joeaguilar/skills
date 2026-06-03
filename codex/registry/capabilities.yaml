@@ -26,6 +26,9 @@ capabilities:
   autonomous-orchestration:
     label: "Autonomous Orchestration"
     description: "Plan, execute, review, and quarantine in one continuous loop."
+  maximum-autonomy:
+    label: "Maximum Autonomy"
+    description: "Persist through scouting, swarming, verification, and repair until completion is proven."
   shell-customization:
     label: "Shell Customization"
     description: "Install lightweight shell workflow improvements."

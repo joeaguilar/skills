@@ -1,0 +1,4 @@
+interface:
+  display_name: "Shadow Duel"
+  short_description: "Red-team claims, plans, and fixes"
+  default_prompt: "Use $shadow-duel to adversarially verify this plan before we rely on it."

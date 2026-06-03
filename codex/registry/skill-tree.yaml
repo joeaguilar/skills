@@ -33,6 +33,10 @@ groups:
     label: "Foundations"
     accent: "#f0c866"
     description: "Base project capabilities that unlock serious workflows."
+  protocols:
+    label: "Focused Protocols"
+    accent: "#5da9ff"
+    description: "Single-task protocols for scouting, polishing, adversarial checks, and risk inversion."
   planning:
     label: "Planning"
     accent: "#78d878"
@@ -206,6 +210,58 @@ skills:
     recommends: []
     unlocked_by: []
     position: { x: 38, y: 66 }
+  scout-strike:
+    path: "skills/scout-strike"
+    group: "protocols"
+    tier: 1
+    icon: "SCT"
+    theme: "water"
+    title: "Scout Strike"
+    summary: "Map unfamiliar code or system terrain before a focused change."
+    provides: ["code-reconnaissance"]
+    requires: []
+    recommends: ["code-graph"]
+    unlocked_by: []
+    position: { x: 45, y: 10 }
+  shadow-duel:
+    path: "skills/shadow-duel"
+    group: "protocols"
+    tier: 1
+    icon: "DUEL"
+    theme: "ink"
+    title: "Shadow Duel"
+    summary: "Red-team a claim, plan, design, or fix before trusting it."
+    provides: ["adversarial-verification"]
+    requires: []
+    recommends: []
+    unlocked_by: []
+    position: { x: 45, y: 22 }
+  whetstone:
+    path: "skills/whetstone"
+    group: "protocols"
+    tier: 1
+    icon: "WHT"
+    theme: "earth"
+    title: "Whetstone"
+    summary: "Polish one artifact through critique and revision passes."
+    provides: ["artifact-refinement"]
+    requires: []
+    recommends: []
+    unlocked_by: []
+    position: { x: 45, y: 34 }
+  pre-mortem:
+    path: "skills/pre-mortem"
+    group: "protocols"
+    tier: 1
+    icon: "RISK"
+    theme: "fire"
+    title: "Pre-Mortem"
+    summary: "Assume a risky plan failed and derive ranked guardrails."
+    provides: ["premortem-risk"]
+    requires: []
+    recommends: ["agent-alignment"]
+    unlocked_by: []
+    position: { x: 58, y: 16 }
   story-style:
     path: "skills/story-style"
     group: "planning"

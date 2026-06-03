@@ -46,15 +46,11 @@ claude	skills	proof-campaign
 # these first; graduate each to parity as its codex/skills/<blade> port lands.
 claude	skills	fan-of-agents
 claude	skills	hundred-blades
-claude	skills	shadow-duel
 claude	skills	first-blood
 claude	skills	splitting-blade
 claude	skills	the-clan
 claude	skills	relay
-claude	skills	whetstone
-claude	skills	scout-strike
 claude	skills	drawn-steel
-claude	skills	pre-mortem
 # Converted from imported agents — Claude chose skill over agent (interactive / on-demand / style
 # capabilities fit a skill better than an isolated subagent). Codex drift peers noted above.
 claude	skills	api-contract-designer

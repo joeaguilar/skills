@@ -1,0 +1,4 @@
+interface:
+  display_name: "Pre-Mortem"
+  short_description: "Find how a risky plan could fail"
+  default_prompt: "Use $pre-mortem to assume this plan failed and identify the guardrails we need."

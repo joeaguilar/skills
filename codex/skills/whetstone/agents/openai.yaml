@@ -1,0 +1,4 @@
+interface:
+  display_name: "Whetstone"
+  short_description: "Polish one artifact over revision passes"
+  default_prompt: "Use $whetstone to critique and revise this draft until it meets the bar."

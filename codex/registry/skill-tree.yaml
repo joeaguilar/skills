@@ -289,6 +289,19 @@ skills:
     recommends: ["product-roadmap", "story-conventions"]
     unlocked_by: ["blitz", "sprint-review"]
     position: { x: 92, y: 54 }
+  run-the-rivers-dry:
+    path: "skills/run-the-rivers-dry"
+    group: "autonomy"
+    tier: 5
+    icon: "DRY"
+    theme: "plasma"
+    title: "Run the Rivers Dry"
+    summary: "Chronicle-voiced maximum-autonomy loop that scouts, swarms, verifies, repairs, and persists."
+    provides: ["maximum-autonomy"]
+    requires: ["autonomous-orchestration"]
+    recommends: ["issue-tracker", "code-graph", "product-roadmap", "story-conventions"]
+    unlocked_by: ["overdrive"]
+    position: { x: 92, y: 78 }
 primitives:
   primitive-architect-agent:
     type: "agent"

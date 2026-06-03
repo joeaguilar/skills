@@ -62,6 +62,7 @@
     "backlog-execution": { "label": "Backlog Execution" },
     "sprint-review": { "label": "Sprint Review" },
     "autonomous-orchestration": { "label": "Autonomous Orchestration" },
+    "maximum-autonomy": { "label": "Maximum Autonomy" },
     "shell-customization": { "label": "Shell Customization" },
     "image-generation": { "label": "Image Generation" },
     "game-assets": { "label": "Game Assets" },
@@ -342,6 +343,20 @@
       "recommends": ["product-roadmap", "story-conventions"],
       "unlockedBy": ["blitz", "sprint-review"],
       "position": { "x": 92, "y": 54 }
+    },
+    "run-the-rivers-dry": {
+      "path": "skills/run-the-rivers-dry",
+      "group": "autonomy",
+      "tier": 5,
+      "icon": "DRY",
+      "theme": "plasma",
+      "title": "Run the Rivers Dry",
+      "summary": "Chronicle-voiced maximum-autonomy loop that scouts, swarms, verifies, repairs, and persists.",
+      "provides": ["maximum-autonomy"],
+      "requires": ["autonomous-orchestration"],
+      "recommends": ["issue-tracker", "code-graph", "product-roadmap", "story-conventions"],
+      "unlockedBy": ["overdrive"],
+      "position": { "x": 92, "y": 78 }
     }
   },
   "primitives": {

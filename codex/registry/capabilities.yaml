@@ -20,6 +20,9 @@ capabilities:
   backlog-execution:
     label: "Backlog Execution"
     description: "Run conflict-free parallel work waves."
+  dual-blitz-orchestration:
+    label: "Dual Blitz Orchestration"
+    description: "Split execution into two isolated main-agent blitz lanes."
   sprint-review:
     label: "Sprint Review"
     description: "Review shipped work, triage follow-ups, and close sprint artifacts."

@@ -241,6 +241,7 @@ Execution:
 
 - `blitz` unlocks after `sprint` and provides `backlog-execution`.
 - `sprint-review` unlocks after `sprint` and provides `sprint-review`.
+- `dual-blitz` unlocks after `blitz` and provides `dual-blitz-orchestration`.
 
 Autonomy:
 

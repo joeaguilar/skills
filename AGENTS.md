@@ -135,6 +135,7 @@ Important progression:
 - `kgr` provides `code-graph`.
 - `sprint` requires both and provides `sprint-planning`.
 - `blitz` and `sprint-review` require `sprint-planning`.
+- `dual-blitz` requires `backlog-execution`.
 - `overdrive` requires the planning, execution, review, issue-tracker, and code-graph capabilities.
 
 The explorer shows primitives as a full tree with tabs for each primitive type. Missing prerequisites render as sealed silhouettes. Satisfied prerequisites render as ready silhouettes. Enabled primitives render as colored activated nodes. The platform switch separates Claude state from Codex state, and the scope switch separates `global` user-home state from `local` project state.
@@ -162,7 +163,7 @@ node --check codex/scripts/skill-tree.js
 For UI changes, run a local server and verify the explorer in a browser. Check that:
 
 - The installer launches from the repo root at `http://127.0.0.1:8765/`.
-- Codex shows 37 current primitives: 18 skills, 17 agents, and 2 slash commands.
+- Codex shows 38 current primitives: 19 skills, 17 agents, and 2 slash commands.
 - Claude platform mode hides Codex-only `.system` skills and loads Claude payload markdown.
 - Claude platform mode includes Claude-only slash commands declared in `PLATFORM_ONLY.tsv`.
 - Each primitive type has its own tab.
@@ -174,6 +175,7 @@ For UI changes, run a local server and verify the explorer in a browser. Check t
 - Enabling `primitive-architect-agent` makes both primitive audit commands available.
 - Enabling both primitive audit commands exposes provider routing for `primitive-audit`.
 - Enabling `sprint` makes `blitz` and `sprint-review` available.
+- Enabling `blitz` makes `dual-blitz` available.
 - `overdrive` remains visible and sealed until its required capabilities are enabled.
 - The folder picker can load and save `.claude/project-primitives.json` and `.codex/project-primitives.json` when supported.
 - The scan control displays managed and unmanaged detected skills, agents, and commands.

@@ -8,6 +8,9 @@ capabilities:
   code-graph:
     label: "Code Graph"
     description: "Navigate symbols, imports, dependencies, and architecture."
+  rust-engineering:
+    label: "Rust Engineering"
+    description: "Apply idiomatic Rust ownership, API, async, testing, and tooling standards."
   story-conventions:
     label: "Story Conventions"
     description: "Project-specific issue and acceptance criteria style."

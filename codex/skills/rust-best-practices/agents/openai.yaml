@@ -1,0 +1,4 @@
+interface:
+  display_name: "Rust Best Practices"
+  short_description: "Apply idiomatic Rust engineering standards"
+  default_prompt: "Use $rust-best-practices to review this Rust crate for ownership, error handling, async, testing, and CI issues."

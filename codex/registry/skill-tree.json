@@ -70,6 +70,7 @@
     "product-roadmap": { "label": "Product Roadmap" },
     "sprint-planning": { "label": "Sprint Planning" },
     "backlog-execution": { "label": "Backlog Execution" },
+    "dual-blitz-orchestration": { "label": "Dual Blitz Orchestration" },
     "sprint-review": { "label": "Sprint Review" },
     "autonomous-orchestration": { "label": "Autonomous Orchestration" },
     "maximum-autonomy": { "label": "Maximum Autonomy" },
@@ -395,6 +396,20 @@
       "recommends": ["code-graph"],
       "unlockedBy": ["sprint"],
       "position": { "x": 76, "y": 44 }
+    },
+    "dual-blitz": {
+      "path": "skills/dual-blitz",
+      "group": "execution",
+      "tier": 4,
+      "icon": "D2",
+      "theme": "electric",
+      "title": "Dual Blitz",
+      "summary": "Split backlog execution into two isolated main-agent lanes.",
+      "provides": ["dual-blitz-orchestration"],
+      "requires": ["backlog-execution"],
+      "recommends": ["code-graph", "sprint-review"],
+      "unlockedBy": ["blitz"],
+      "position": { "x": 88, "y": 36 }
     },
     "sprint-review": {
       "path": "skills/sprint-review",

@@ -61,6 +61,7 @@
     "agent-alignment": { "label": "Agent Alignment" },
     "issue-tracker": { "label": "Issue Tracker" },
     "code-graph": { "label": "Code Graph" },
+    "rust-engineering": { "label": "Rust Engineering" },
     "code-reconnaissance": { "label": "Code Reconnaissance" },
     "adversarial-verification": { "label": "Adversarial Verification" },
     "artifact-refinement": { "label": "Artifact Refinement" },
@@ -268,6 +269,20 @@
       "recommends": [],
       "unlockedBy": [],
       "position": { "x": 38, "y": 66 }
+    },
+    "rust-best-practices": {
+      "path": "skills/rust-best-practices",
+      "group": "foundations",
+      "tier": 0,
+      "icon": "RS",
+      "theme": "forge",
+      "title": "Rust Best Practices",
+      "summary": "Apply idiomatic Rust ownership, API, async, testing, and tooling standards.",
+      "provides": ["rust-engineering"],
+      "requires": [],
+      "recommends": ["code-graph"],
+      "unlockedBy": [],
+      "position": { "x": 38, "y": 50 }
     },
     "scout-strike": {
       "path": "skills/scout-strike",

@@ -33,6 +33,7 @@ Global installs link roots such as `~/.claude/skills`, `~/.claude/agents`, `~/.c
 **Sprint suite — coached, human-in-the-loop (verbose by design):** `sprint` (plan), `blitz` (parallel-wave execution), `sprint-review` (review/triage), `roadmap` (`docs/ROADMAP.md`), `story-style` (`STORY_STYLE.md`).
 **Autonomous:** `overdrive` — condenses sprint+blitz+sprint-review into one hands-off loop (**caveman-compressed**, see below).
 **Standalone:** `itr` (file issues), `kgr` (codebase graph), `alignment` (stress-test a plan), `shell-prompt` (zsh prompt).
+**The Dojo — orchestration-primitive family (autonomous, ninja-voiced, caveman register):** `fan-of-agents`, `hundred-blades`, `shadow-duel`, `first-blood`, `splitting-blade`, `the-clan`, `relay`, `whetstone`, `scout-strike`, `drawn-steel`, `pre-mortem` — each a self-contained "blade" that slices a problem a different way. **`claude/DOJO.md` is the rack (catalog + composition) and the forge (authoring contract); composition lives there, never in a blade's body.**
 
 ## SKILL.md conventions
 

@@ -1,0 +1,4 @@
+interface:
+  display_name: "Scout Strike"
+  short_description: "Map unfamiliar code before changing it"
+  default_prompt: "Use $scout-strike to map this unfamiliar code path before making the change."

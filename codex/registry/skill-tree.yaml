@@ -33,6 +33,10 @@ groups:
     label: "Foundations"
     accent: "#f0c866"
     description: "Base project capabilities that unlock serious workflows."
+  protocols:
+    label: "Focused Protocols"
+    accent: "#5da9ff"
+    description: "Single-task protocols for scouting, polishing, adversarial checks, and risk inversion."
   planning:
     label: "Planning"
     accent: "#78d878"
@@ -206,6 +210,71 @@ skills:
     recommends: []
     unlocked_by: []
     position: { x: 38, y: 66 }
+  rust-best-practices:
+    path: "skills/rust-best-practices"
+    group: "foundations"
+    tier: 0
+    icon: "RS"
+    theme: "forge"
+    title: "Rust Best Practices"
+    summary: "Apply idiomatic Rust ownership, API, async, testing, and tooling standards."
+    provides: ["rust-engineering"]
+    requires: []
+    recommends: ["code-graph"]
+    unlocked_by: []
+    position: { x: 38, y: 50 }
+  scout-strike:
+    path: "skills/scout-strike"
+    group: "protocols"
+    tier: 1
+    icon: "SCT"
+    theme: "water"
+    title: "Scout Strike"
+    summary: "Map unfamiliar code or system terrain before a focused change."
+    provides: ["code-reconnaissance"]
+    requires: []
+    recommends: ["code-graph"]
+    unlocked_by: []
+    position: { x: 45, y: 10 }
+  shadow-duel:
+    path: "skills/shadow-duel"
+    group: "protocols"
+    tier: 1
+    icon: "DUEL"
+    theme: "ink"
+    title: "Shadow Duel"
+    summary: "Red-team a claim, plan, design, or fix before trusting it."
+    provides: ["adversarial-verification"]
+    requires: []
+    recommends: []
+    unlocked_by: []
+    position: { x: 45, y: 22 }
+  whetstone:
+    path: "skills/whetstone"
+    group: "protocols"
+    tier: 1
+    icon: "WHT"
+    theme: "earth"
+    title: "Whetstone"
+    summary: "Polish one artifact through critique and revision passes."
+    provides: ["artifact-refinement"]
+    requires: []
+    recommends: []
+    unlocked_by: []
+    position: { x: 45, y: 34 }
+  pre-mortem:
+    path: "skills/pre-mortem"
+    group: "protocols"
+    tier: 1
+    icon: "RISK"
+    theme: "fire"
+    title: "Pre-Mortem"
+    summary: "Assume a risky plan failed and derive ranked guardrails."
+    provides: ["premortem-risk"]
+    requires: []
+    recommends: ["agent-alignment"]
+    unlocked_by: []
+    position: { x: 58, y: 16 }
   story-style:
     path: "skills/story-style"
     group: "planning"
@@ -302,6 +371,19 @@ skills:
     recommends: ["product-roadmap", "story-conventions"]
     unlocked_by: ["blitz", "sprint-review"]
     position: { x: 92, y: 54 }
+  run-the-rivers-dry:
+    path: "skills/run-the-rivers-dry"
+    group: "autonomy"
+    tier: 5
+    icon: "DRY"
+    theme: "plasma"
+    title: "Run the Rivers Dry"
+    summary: "Chronicle-voiced maximum-autonomy loop that scouts, swarms, verifies, repairs, and persists."
+    provides: ["maximum-autonomy"]
+    requires: ["autonomous-orchestration"]
+    recommends: ["issue-tracker", "code-graph", "product-roadmap", "story-conventions"]
+    unlocked_by: ["overdrive"]
+    position: { x: 92, y: 78 }
 primitives:
   primitive-architect-agent:
     type: "agent"

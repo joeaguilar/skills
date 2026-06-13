@@ -22,3 +22,6 @@ Implement M4 from `codex/ROADMAP.md`: read-only platform switching in the existi
 
 - Phase 0: clean git baseline at `ebc5c27`; verify gate green.
 - Phase 1: filed sprint epic `itr#2` and story `itr#3`.
+- Phase 6: wave 1 verify gate green; committed checkpoint `37c09fb`.
+- Phase 7: Product Owner accepted wave 1.
+- Phase 8: finalized sprint with 1/1 accepted stories and no quarantines.

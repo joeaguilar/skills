@@ -23,6 +23,7 @@
 # will start enforcing parity for it normally.
 
 # --- Codex-only skills ---
+codex	skills	dual-blitz
 codex	skills	retro-game-assets
 codex	skills	panthexia-tiled-materials
 codex	skills	run-the-rivers-dry

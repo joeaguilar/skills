@@ -35,6 +35,9 @@ capabilities:
   maximum-autonomy:
     label: "Maximum Autonomy"
     description: "Persist through scouting, swarming, verification, and repair until completion is proven."
+  orchestration-selection:
+    label: "Orchestration Selection"
+    description: "Choose the safest fast multi-agent workflow for a project."
   shell-customization:
     label: "Shell Customization"
     description: "Install lightweight shell workflow improvements."

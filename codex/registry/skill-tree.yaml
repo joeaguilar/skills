@@ -353,6 +353,29 @@ skills:
     recommends: ["story-conventions"]
     unlocked_by: ["sprint"]
     position: { x: 76, y: 64 }
+  fastlane:
+    path: "skills/fastlane"
+    group: "autonomy"
+    tier: 3
+    icon: "FST"
+    theme: "electric"
+    title: "Fastlane"
+    summary: "Choose the safest fast multi-agent workflow for a project."
+    provides: ["orchestration-selection"]
+    requires: []
+    recommends:
+      - "issue-tracker"
+      - "code-graph"
+      - "sprint-planning"
+      - "backlog-execution"
+      - "dual-blitz-orchestration"
+      - "sprint-review"
+      - "autonomous-orchestration"
+      - "maximum-autonomy"
+      - "product-roadmap"
+      - "story-conventions"
+    unlocked_by: []
+    position: { x: 76, y: 78 }
   overdrive:
     path: "skills/overdrive"
     group: "autonomy"

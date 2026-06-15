@@ -128,17 +128,22 @@ Use this default routing after applying the rubric:
 Print a compact recommendation before handing off:
 
 ```text
-fastlane recommendation
-  pick: $<workflow> <suggested flags>
-  confidence: high | medium | low
+🏁🏎️🔥 fastlane recommendation
+  pick: ⚡ $<workflow> <suggested flags>
+  confidence: 🟢 high | 🟡 medium | 🔴 low
   reason: <one sentence>
-  speed: <why this is fast enough>
-  safety: <key guardrail>
-  scope: <approved boundary>
-  drift: <roadmap/backlog/git risk>
-  avoid: <workflow> because <specific risk>
-  next: use $<workflow> and follow its gates
+  speed: ⚡ <why this is fast enough>
+  safety: 🛡️ <key guardrail>
+  scope: 🎯 <approved boundary>
+  drift: 🧭 <roadmap/backlog/git risk>
+  avoid: 🚧 <workflow> because <specific risk>
+  next: ▶ use $<workflow> and follow its gates
 ```
+
+Use the same visual language in scanner output and chat recommendations:
+`🟢` means safe/high confidence, `🟡` means caution/medium confidence, and
+`🔴` means blocked/low confidence. Use `🧪` for verify gates, `🧠` for code
+graph signals, `🛡️` for risk, `🏁` for scores, and `⚡` for the final pick.
 
 If confidence is low, ask one concise question or recommend a dry run. Do not
 launch multiple orchestration workflows against the same backlog or sprint.

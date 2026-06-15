@@ -389,43 +389,59 @@ for candidate in dual-blitz overdrive proof-campaign run-the-rivers-dry; do
 done
 
 case "$best" in
-  blitz) best_command='$blitz' ;;
-  dual-blitz) best_command='$dual-blitz' ;;
-  overdrive) best_command='$overdrive --backlog' ;;
-  proof-campaign) best_command='$proof-campaign' ;;
-  run-the-rivers-dry) best_command='$run-the-rivers-dry --mortal' ;;
+  blitz) best_command='⚡ $blitz' ;;
+  dual-blitz) best_command='🛣️ $dual-blitz' ;;
+  overdrive) best_command='🚀 $overdrive --backlog' ;;
+  proof-campaign) best_command='🧾 $proof-campaign' ;;
+  run-the-rivers-dry) best_command='🌊 $run-the-rivers-dry --mortal' ;;
 esac
 
-printf 'fastlane scan\n'
-printf '  root: %s\n' "$ROOT"
-printf '  git: %s branch=%s dirty=%s risky_dirty=%s commits=%s top_dirs=%s\n' "$git_state" "$git_branch" "$git_dirty" "$git_risky_dirty" "$git_has_commits" "$git_top_dirs"
-printf '  tracker: %s (%s) open=%s\n' "$tracker" "$tracker_detail" "$open_count"
-printf '  roadmap: %s\n' "$roadmap"
-printf '  sprint: CURRENT=%s valid=%s\n' "$sprint_current" "$sprint_valid"
-printf '  campaign: CURRENT=%s valid=%s\n' "$campaign_current" "$campaign_valid"
-printf '  graph: kgr=%s\n' "$kgr_state"
-printf '  verify: %s\n' "$verify_gate"
-printf '  risk: security_markers=%s shared_artifacts=%s\n' "$security_markers" "$shared_artifacts"
-printf '  skills:\n'
+if [ "$best_score" -ge 45 ]; then
+  confidence_icon="🟢"
+  confidence_text="high"
+elif [ "$best_score" -ge 20 ]; then
+  confidence_icon="🟡"
+  confidence_text="medium"
+else
+  confidence_icon="🔴"
+  confidence_text="low"
+fi
+
+if [ "$verify_gate" = "missing" ]; then
+  verify_icon="🔴"
+else
+  verify_icon="🟢"
+fi
+
+if [ "$security_markers" -gt 0 ] || [ "$shared_artifacts" -gt 0 ]; then
+  risk_icon="🟡"
+else
+  risk_icon="🟢"
+fi
+
+printf '🏁🏎️🔥 fastlane scan\n'
+printf '  ⚙️ root: %s\n' "$ROOT"
+printf '  ⚙️ git: %s branch=%s dirty=%s risky_dirty=%s commits=%s top_dirs=%s\n' "$git_state" "$git_branch" "$git_dirty" "$git_risky_dirty" "$git_has_commits" "$git_top_dirs"
+printf '  ⚙️ tracker: %s (%s) open=%s\n' "$tracker" "$tracker_detail" "$open_count"
+printf '  🧭 roadmap: %s\n' "$roadmap"
+printf '  🧭 sprint: CURRENT=%s valid=%s\n' "$sprint_current" "$sprint_valid"
+printf '  🧭 campaign: CURRENT=%s valid=%s\n' "$campaign_current" "$campaign_valid"
+printf '  🧠 graph: kgr=%s\n' "$kgr_state"
+printf '  🧪 verify: %s %s\n' "$verify_icon" "$verify_gate"
+printf '  🛡️ risk: %s security_markers=%s shared_artifacts=%s\n' "$risk_icon" "$security_markers" "$shared_artifacts"
+printf '  🧰 skills:\n'
 printf '    proof-campaign: %s\n' "$(availability proof-campaign)"
 printf '    blitz: %s\n' "$(availability blitz)"
 printf '    dual-blitz: %s\n' "$(availability dual-blitz)"
 printf '    overdrive: %s\n' "$(availability overdrive)"
 printf '    run-the-rivers-dry: %s\n' "$(availability run-the-rivers-dry)"
-printf '  scores:\n'
+printf '  🏁 scores:\n'
 printf '    proof-campaign: %s (%s)\n' "$score_proof" "${reason_proof:-no strong signal}"
 printf '    blitz: %s (%s)\n' "$score_blitz" "${reason_blitz:-no strong signal}"
 printf '    dual-blitz: %s (%s)\n' "$score_dual" "${reason_dual:-no strong signal}"
 printf '    overdrive: %s (%s)\n' "$score_overdrive" "${reason_overdrive:-no strong signal}"
 printf '    run-the-rivers-dry: %s (%s)\n' "$score_rivers" "${reason_rivers:-no strong signal}"
-printf '  recommendation:\n'
+printf '  ⚡ recommendation:\n'
 printf '    pick: %s\n' "$best_command"
-printf '    confidence: '
-if [ "$best_score" -ge 45 ]; then
-  printf 'high\n'
-elif [ "$best_score" -ge 20 ]; then
-  printf 'medium\n'
-else
-  printf 'low\n'
-fi
+printf '    confidence: %s %s\n' "$confidence_icon" "$confidence_text"
 printf '    note: read the selected skill and apply human safety judgment before execution\n'

@@ -23,11 +23,10 @@
 # will start enforcing parity for it normally.
 
 # --- Codex-only skills ---
-codex	skills	dual-blitz
-codex	skills	fastlane
+# (dual-blitz, fastlane, run-the-rivers-dry graduated to parity — Claude peers now live in
+#  claude/skills/; Codex refreshes codex/PARITY.tsv on its side to clear the staleness warning.)
 codex	skills	retro-game-assets
 codex	skills	panthexia-tiled-materials
-codex	skills	run-the-rivers-dry
 
 # --- Codex-only agents (drift: Claude converted these imports to skills; Codex keeps the agent form) ---
 codex	agents	analytics-event-architect.md

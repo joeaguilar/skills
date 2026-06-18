@@ -1,0 +1,4 @@
+interface:
+  display_name: "Ponytail"
+  short_description: "Use the smallest safe solution"
+  default_prompt: "Use $ponytail to solve this with the shortest safe path and avoid over-engineering."

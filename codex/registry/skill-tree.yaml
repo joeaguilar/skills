@@ -236,6 +236,19 @@ skills:
     recommends: ["code-graph"]
     unlocked_by: []
     position: { x: 38, y: 50 }
+  ponytail:
+    path: "skills/ponytail"
+    group: "protocols"
+    tier: 1
+    icon: "MIN"
+    theme: "ink"
+    title: "Ponytail"
+    summary: "Lazy senior developer mode for the smallest safe solution."
+    provides: ["minimal-engineering"]
+    requires: []
+    recommends: []
+    unlocked_by: []
+    position: { x: 45, y: 4 }
   scout-strike:
     path: "skills/scout-strike"
     group: "protocols"

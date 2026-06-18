@@ -11,6 +11,9 @@ capabilities:
   rust-engineering:
     label: "Rust Engineering"
     description: "Apply idiomatic Rust ownership, API, async, testing, and tooling standards."
+  minimal-engineering:
+    label: "Minimal Engineering"
+    description: "Prefer the shortest safe implementation, standard tools, and YAGNI decisions."
   story-conventions:
     label: "Story Conventions"
     description: "Project-specific issue and acceptance criteria style."

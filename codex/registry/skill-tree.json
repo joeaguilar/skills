@@ -62,6 +62,7 @@
     "issue-tracker": { "label": "Issue Tracker" },
     "code-graph": { "label": "Code Graph" },
     "rust-engineering": { "label": "Rust Engineering" },
+    "minimal-engineering": { "label": "Minimal Engineering" },
     "code-reconnaissance": { "label": "Code Reconnaissance" },
     "adversarial-verification": { "label": "Adversarial Verification" },
     "artifact-refinement": { "label": "Artifact Refinement" },
@@ -300,6 +301,20 @@
       "recommends": ["code-graph"],
       "unlockedBy": [],
       "position": { "x": 38, "y": 50 }
+    },
+    "ponytail": {
+      "path": "skills/ponytail",
+      "group": "protocols",
+      "tier": 1,
+      "icon": "MIN",
+      "theme": "ink",
+      "title": "Ponytail",
+      "summary": "Lazy senior developer mode for the smallest safe solution.",
+      "provides": ["minimal-engineering"],
+      "requires": [],
+      "recommends": [],
+      "unlockedBy": [],
+      "position": { "x": 45, "y": 4 }
     },
     "scout-strike": {
       "path": "skills/scout-strike",

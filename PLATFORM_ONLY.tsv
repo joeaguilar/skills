@@ -23,7 +23,8 @@
 # will start enforcing parity for it normally.
 
 # --- Codex-only skills ---
-codex	skills	dual-blitz
+# (dual-blitz, fastlane, run-the-rivers-dry graduated to parity — Claude peers now live in
+#  claude/skills/; Codex refreshes codex/PARITY.tsv on its side to clear the staleness warning.)
 codex	skills	retro-game-assets
 codex	skills	panthexia-tiled-materials
 
@@ -41,6 +42,16 @@ codex	agents	tdd-workflow-coach.md
 
 # --- Claude-only skills (intentional unless a Codex feature gap appears) ---
 claude	skills	proof-campaign
+# The Dojo — orchestration-primitive family (see claude/DOJO.md = the rack + forge).
+# Each is a self-contained "blade" that slices a problem a different way. Claude forged
+# these first; graduate each to parity as its codex/skills/<blade> port lands.
+claude	skills	fan-of-agents
+claude	skills	hundred-blades
+claude	skills	first-blood
+claude	skills	splitting-blade
+claude	skills	the-clan
+claude	skills	relay
+claude	skills	drawn-steel
 # Converted from imported agents — Claude chose skill over agent (interactive / on-demand / style
 # capabilities fit a skill better than an isolated subagent). Codex drift peers noted above.
 claude	skills	api-contract-designer

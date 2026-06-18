@@ -31,6 +31,11 @@
       "accent": "#f0c866",
       "description": "Base project capabilities that unlock serious workflows."
     },
+    "protocols": {
+      "label": "Focused Protocols",
+      "accent": "#5da9ff",
+      "description": "Single-task protocols for scouting, polishing, adversarial checks, and risk inversion."
+    },
     "planning": {
       "label": "Planning",
       "accent": "#78d878",
@@ -56,6 +61,11 @@
     "agent-alignment": { "label": "Agent Alignment" },
     "issue-tracker": { "label": "Issue Tracker" },
     "code-graph": { "label": "Code Graph" },
+    "rust-engineering": { "label": "Rust Engineering" },
+    "code-reconnaissance": { "label": "Code Reconnaissance" },
+    "adversarial-verification": { "label": "Adversarial Verification" },
+    "artifact-refinement": { "label": "Artifact Refinement" },
+    "premortem-risk": { "label": "Pre-Mortem Risk" },
     "story-conventions": { "label": "Story Conventions" },
     "product-roadmap": { "label": "Product Roadmap" },
     "sprint-planning": { "label": "Sprint Planning" },
@@ -63,6 +73,8 @@
     "dual-blitz-orchestration": { "label": "Dual Blitz Orchestration" },
     "sprint-review": { "label": "Sprint Review" },
     "autonomous-orchestration": { "label": "Autonomous Orchestration" },
+    "maximum-autonomy": { "label": "Maximum Autonomy" },
+    "orchestration-selection": { "label": "Orchestration Selection" },
     "shell-customization": { "label": "Shell Customization" },
     "image-generation": { "label": "Image Generation" },
     "game-assets": { "label": "Game Assets" },
@@ -260,6 +272,76 @@
       "unlockedBy": [],
       "position": { "x": 38, "y": 66 }
     },
+    "rust-best-practices": {
+      "path": "skills/rust-best-practices",
+      "group": "foundations",
+      "tier": 0,
+      "icon": "RS",
+      "theme": "forge",
+      "title": "Rust Best Practices",
+      "summary": "Apply idiomatic Rust ownership, API, async, testing, and tooling standards.",
+      "provides": ["rust-engineering"],
+      "requires": [],
+      "recommends": ["code-graph"],
+      "unlockedBy": [],
+      "position": { "x": 38, "y": 50 }
+    },
+    "scout-strike": {
+      "path": "skills/scout-strike",
+      "group": "protocols",
+      "tier": 1,
+      "icon": "SCT",
+      "theme": "water",
+      "title": "Scout Strike",
+      "summary": "Map unfamiliar code or system terrain before a focused change.",
+      "provides": ["code-reconnaissance"],
+      "requires": [],
+      "recommends": ["code-graph"],
+      "unlockedBy": [],
+      "position": { "x": 45, "y": 10 }
+    },
+    "shadow-duel": {
+      "path": "skills/shadow-duel",
+      "group": "protocols",
+      "tier": 1,
+      "icon": "DUEL",
+      "theme": "ink",
+      "title": "Shadow Duel",
+      "summary": "Red-team a claim, plan, design, or fix before trusting it.",
+      "provides": ["adversarial-verification"],
+      "requires": [],
+      "recommends": [],
+      "unlockedBy": [],
+      "position": { "x": 45, "y": 22 }
+    },
+    "whetstone": {
+      "path": "skills/whetstone",
+      "group": "protocols",
+      "tier": 1,
+      "icon": "WHT",
+      "theme": "earth",
+      "title": "Whetstone",
+      "summary": "Polish one artifact through critique and revision passes.",
+      "provides": ["artifact-refinement"],
+      "requires": [],
+      "recommends": [],
+      "unlockedBy": [],
+      "position": { "x": 45, "y": 34 }
+    },
+    "pre-mortem": {
+      "path": "skills/pre-mortem",
+      "group": "protocols",
+      "tier": 1,
+      "icon": "RISK",
+      "theme": "fire",
+      "title": "Pre-Mortem",
+      "summary": "Assume a risky plan failed and derive ranked guardrails.",
+      "provides": ["premortem-risk"],
+      "requires": [],
+      "recommends": ["agent-alignment"],
+      "unlockedBy": [],
+      "position": { "x": 58, "y": 16 }
+    },
     "story-style": {
       "path": "skills/story-style",
       "group": "planning",
@@ -344,6 +426,20 @@
       "unlockedBy": ["sprint"],
       "position": { "x": 76, "y": 64 }
     },
+    "fastlane": {
+      "path": "skills/fastlane",
+      "group": "autonomy",
+      "tier": 3,
+      "icon": "FST",
+      "theme": "electric",
+      "title": "Fastlane",
+      "summary": "Choose the safest fast multi-agent workflow for a project.",
+      "provides": ["orchestration-selection"],
+      "requires": [],
+      "recommends": ["issue-tracker", "code-graph", "sprint-planning", "backlog-execution", "dual-blitz-orchestration", "sprint-review", "autonomous-orchestration", "maximum-autonomy", "product-roadmap", "story-conventions"],
+      "unlockedBy": [],
+      "position": { "x": 76, "y": 78 }
+    },
     "overdrive": {
       "path": "skills/overdrive",
       "group": "autonomy",
@@ -357,6 +453,20 @@
       "recommends": ["product-roadmap", "story-conventions"],
       "unlockedBy": ["blitz", "sprint-review"],
       "position": { "x": 92, "y": 54 }
+    },
+    "run-the-rivers-dry": {
+      "path": "skills/run-the-rivers-dry",
+      "group": "autonomy",
+      "tier": 5,
+      "icon": "DRY",
+      "theme": "plasma",
+      "title": "Run the Rivers Dry",
+      "summary": "Chronicle-voiced maximum-autonomy loop that scouts, swarms, verifies, repairs, and persists.",
+      "provides": ["maximum-autonomy"],
+      "requires": ["autonomous-orchestration"],
+      "recommends": ["issue-tracker", "code-graph", "product-roadmap", "story-conventions"],
+      "unlockedBy": ["overdrive"],
+      "position": { "x": 92, "y": 78 }
     }
   },
   "primitives": {

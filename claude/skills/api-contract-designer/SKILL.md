@@ -1,6 +1,6 @@
 ---
 name: api-contract-designer
-description: Design API contracts from business requirements — OpenAPI 3.1 (Swagger), GraphQL schemas, gRPC/Protocol Buffers, or AsyncAPI — with resources, request/response models, auth schemes (OAuth2/JWT/API-key/RBAC), error structures, pagination/filtering/sorting, versioning, and worked examples. Interactive by design: asks clarifying questions about the domain before producing the spec. Trigger when the user types /api-contract-designer, or asks to "design an API for…", "write an OpenAPI/Swagger spec", "create a GraphQL schema for…", "define the API contract", or "model these endpoints". Do NOT trigger for implementing/wiring the endpoints in code, for documenting an already-built API (that is docs generation), or for client SDK work.
+description: "Design API contracts from business requirements — OpenAPI 3.1 (Swagger), GraphQL schemas, gRPC/Protocol Buffers, or AsyncAPI — with resources, request/response models, auth schemes (OAuth2/JWT/API-key/RBAC), error structures, pagination/filtering/sorting, versioning, and worked examples. Interactive by design: asks clarifying questions about the domain before producing the spec. Trigger when the user types /api-contract-designer, or asks to \"design an API for…\", \"write an OpenAPI/Swagger spec\", \"create a GraphQL schema for…\", \"define the API contract\", or \"model these endpoints\". Do NOT trigger for implementing/wiring the endpoints in code, for documenting an already-built API (that is docs generation), or for client SDK work."
 ---
 
 # api-contract-designer

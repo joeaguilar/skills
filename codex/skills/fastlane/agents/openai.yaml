@@ -1,0 +1,4 @@
+interface:
+  display_name: "Fastlane"
+  short_description: "Choose multi-agent workflow"
+  default_prompt: "Use $fastlane to choose the safest fast multi-agent workflow for this project."

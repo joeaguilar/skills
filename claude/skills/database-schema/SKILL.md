@@ -1,6 +1,6 @@
 ---
 name: database-schema
-description: Design, review, or optimize a database schema from requirements — normalization (1NF–BCNF) and strategic denormalization, SQL vs NoSQL choice (PostgreSQL/MySQL/MongoDB/Redis/Elasticsearch/Cassandra), indexing & partitioning, constraints, migrations — producing DDL + an ERD with rationale. Interactive: asks about data volume, access/query patterns, and performance needs first. Trigger when the user types /database-schema, or asks to "design a database schema", "model these entities", "should this be SQL or NoSQL", "optimize this schema/indexes", or "plan a migration". Do NOT trigger for ETL/data-processing pipelines (use /data-pipeline), for API request/response contracts (use /api-contract-designer), or for writing application code.
+description: "Design, review, or optimize a database schema from requirements — normalization (1NF–BCNF) and strategic denormalization, SQL vs NoSQL choice (PostgreSQL/MySQL/MongoDB/Redis/Elasticsearch/Cassandra), indexing & partitioning, constraints, migrations — producing DDL + an ERD with rationale. Interactive: asks about data volume, access/query patterns, and performance needs first. Trigger when the user types /database-schema, or asks to \"design a database schema\", \"model these entities\", \"should this be SQL or NoSQL\", \"optimize this schema/indexes\", or \"plan a migration\". Do NOT trigger for ETL/data-processing pipelines (use /data-pipeline), for API request/response contracts (use /api-contract-designer), or for writing application code."
 ---
 
 # database-schema

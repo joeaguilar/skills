@@ -1,6 +1,6 @@
 # Codex Primitive Validation
 
-Snapshot: 2026-05-30, current working tree under `codex/`.
+Snapshot: 2026-06-03, current working tree under `codex/`.
 
 ## Checks
 
@@ -11,8 +11,8 @@ Snapshot: 2026-05-30, current working tree under `codex/`.
   installed older copy; other system skill payloads match.
 - Repo-root skills with `SKILL.md` are all represented under `codex/skills`:
   `alignment`, `blitz`, `code-roast`, `itr`, `kgr`, `overdrive`,
-  `retro-game-assets`, `roadmap`, `shell-prompt`, `spicy-code-roast`, `sprint`,
-  `sprint-review`, `story-style`.
+  `retro-game-assets`, `roadmap`, `run-the-rivers-dry`, `shell-prompt`,
+  `spicy-code-roast`, `sprint`, `sprint-review`, `story-style`.
 - `~/.agents/skills` is linked to the non-system Codex skills above via
   `codex/scripts/link-agent-skills.sh`; stale real directories were backed up
   under `codex/backups/agents-skill-*-before-link-20260530-004149`.
@@ -23,7 +23,7 @@ Snapshot: 2026-05-30, current working tree under `codex/`.
   frontmatter; this covers the previous `sprint` and `sprint-review` load
   errors from stale installed copies.
 - Optional primitive roots are present for `codex/agents` and `codex/commands`.
-- Current registry validates 37 primitives: 18 skills, 17 agents, and 2 commands.
+- Current registry validates 38 primitives: 19 skills, 17 agents, and 2 commands.
 - The two primitive audit commands both provide `primitive-audit`, so provider routing is covered by a real registry path.
 - Registry validation rejects required capabilities with no provider unless the capability is explicitly marked external.
 - The explorer supports stale port metadata from `stale`, `stalePort`, `stale_port`, `portState`, or `port_state`.

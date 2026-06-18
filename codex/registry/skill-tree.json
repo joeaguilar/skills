@@ -82,6 +82,7 @@
     "plugin-authoring": { "label": "Plugin Authoring" },
     "skill-authoring": { "label": "Skill Authoring" },
     "skill-installation": { "label": "Skill Installation" },
+    "project-memory-bootstrap": { "label": "Project Memory Bootstrap" },
     "primitive-architecture": { "label": "Primitive Architecture" },
     "primitive-audit": { "label": "Primitive Audit" },
     "accessibility-audit": { "label": "Accessibility Audit" },
@@ -215,6 +216,20 @@
       "recommends": [],
       "unlockedBy": ["skill-creator"],
       "position": { "x": 25, "y": 82 }
+    },
+    "bootstrap-project-docs": {
+      "path": "skills/bootstrap-project-docs",
+      "group": "foundations",
+      "tier": 0,
+      "icon": "DOCS",
+      "theme": "ink",
+      "title": "Bootstrap Project Docs",
+      "summary": "Create the standard project-memory documentation scaffold.",
+      "provides": ["project-memory-bootstrap"],
+      "requires": [],
+      "recommends": [],
+      "unlockedBy": [],
+      "position": { "x": 25, "y": 26 }
     },
     "alignment": {
       "path": "skills/alignment",

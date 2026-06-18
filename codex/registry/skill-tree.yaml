@@ -158,6 +158,19 @@ skills:
     recommends: []
     unlocked_by: ["skill-creator"]
     position: { x: 25, y: 82 }
+  bootstrap-project-docs:
+    path: "skills/bootstrap-project-docs"
+    group: "foundations"
+    tier: 0
+    icon: "DOCS"
+    theme: "ink"
+    title: "Bootstrap Project Docs"
+    summary: "Create the standard project-memory documentation scaffold."
+    provides: ["project-memory-bootstrap"]
+    requires: []
+    recommends: []
+    unlocked_by: []
+    position: { x: 25, y: 26 }
   alignment:
     path: "skills/alignment"
     group: "foundations"

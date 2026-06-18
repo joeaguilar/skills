@@ -27,6 +27,7 @@
 #  claude/skills/; Codex refreshes codex/PARITY.tsv on its side to clear the staleness warning.)
 codex	skills	retro-game-assets
 codex	skills	panthexia-tiled-materials
+codex	skills	bootstrap-project-docs
 
 # --- Codex-only agents (drift: Claude converted these imports to skills; Codex keeps the agent form) ---
 codex	agents	analytics-event-architect.md

@@ -59,6 +59,9 @@ capabilities:
   skill-installation:
     label: "Skill Installation"
     description: "Install Codex skills from curated or external sources."
+  project-memory-bootstrap:
+    label: "Project Memory Bootstrap"
+    description: "Create the standard AGENTS/SOUL/GOSPEL/APOSTLE project documentation scaffold."
   primitive-architecture:
     label: "Primitive Architecture"
     description: "Design and review cross-platform primitive layout and dependency rules."

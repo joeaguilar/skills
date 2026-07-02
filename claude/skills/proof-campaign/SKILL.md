@@ -265,6 +265,7 @@ Between waves:
 - If green, mark wave `verified`.
 - If red, assign a repair agent or repair locally when small.
 - If still red, quarantine the culprit and continue only if unrelated waves remain safe.
+- If several workers fail identically at once (API 429/overloaded, workers returning without structured output), treat it as a rate-limit cascade, not bundle failures: pause ~60s, halve concurrency, respawn only the failed workers, and do not count the attempt against any bundle.
 - Update token-work estimate. If cap pressure is high, stop after current wave and draft next campaign.
 
 ## Phase 4 - Scout Loop
@@ -417,6 +418,13 @@ proof-campaign complete
   PO next: run smoke-test.html async
 ```
 
+## If a run is orchestrated via the Workflow tool
+
+Waves here are Agent-tool spawns, but when a campaign runs through a Workflow-tool script instead, two failure classes recur:
+
+- Workflow scripts are plain JS — no TypeScript syntax. `node --check` a scratch copy before launching a large run; on a mid-run script error, edit the persisted script and relaunch with `{scriptPath, resumeFromRunId}` instead of restarting from zero.
+- Schema-returning subagents: omit `model` so they inherit the session model — never pin a haiku-class model for structured output — and keep the schema's payload small (paths, IDs, verdicts; not bulk file content). Oversized returns fail StructuredOutput validation and surface as "completed without calling StructuredOutput".
+
 ## Principles
 
 - One approval starts the autonomous campaign.
@@ -425,6 +433,7 @@ proof-campaign complete
 - Scouts expand the backlog while workers execute, but only with traceable, agent-verifiable work.
 - Campaign state lives in compact JSON; HTML comes from the renderer.
 - File ownership controls parallelism.
+- Synthesis, review, and retro read worker reports, not the tree — unavoidable bulk re-reads go to a single delegate agent.
 - Full verify gate controls wave advancement.
 - Automatic retro happens every run, but stays small.
 - Roadmap defines total campaign scope; the campaign pushes back when scope exceeds cap.

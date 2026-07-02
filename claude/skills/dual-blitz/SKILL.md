@@ -204,6 +204,7 @@ Use this artifact shape:
 - Never edit Forbidden Files.
 - Never run write-mode formatters or code generators that can touch files outside Owned Files.
 - If required work crosses into Forbidden Files, quarantine the task and continue with unrelated work.
+- The API sees both lanes at once — effective fan-out is 2 × concurrency-per-agent. On a rate-limit cascade (workers in both lanes failing identically at the same time), halve inner concurrency before respawning only the failed tasks.
 - Do not commit, push, or rewrite history.
 
 ## Owned Files

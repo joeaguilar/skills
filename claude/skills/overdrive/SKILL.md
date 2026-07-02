@@ -212,6 +212,7 @@ Event-driven, no polling. Mid-edit LSP noise ignored until an arm reports.
   - New file set within already-owned files (no new conflict) → respawn fresh arm **in the same wave window**.
   - Needs a neighbor's file → **defer to next cycle** (re-pack) → stays conflict-free.
 - **One attempt counter/ticket.** Every re-plan retry *and* every collision-defer (Phase 4.2) increments it — no uncounted path → no unbounded loop.
+- **Rate-limit cascade exception.** Several arms failing identically at the same moment (API 429/overloaded, arms "completed without calling StructuredOutput") = infrastructure, not the tickets — do **not** increment attempt counters. Pause ~60s, halve `--concurrency`, respawn only the failed arms.
 - **Quarantine-and-continue.** Counter > `max-retries` (default 2) → **quarantine**: leave `open` in `itr`, add tag `quarantined-sprint-N` (Phase 3/4 exclude it), record durable context — `itr update <id>` body with `Quarantine (sprint-N, wave-M): K attempts. Last error:\n<last ~50 lines>\nRoot cause: <one-line diagnosis>` (field per `agent-info`) + line in `wave-N.md` → `Quarantine`. **Wave + loop continue.** Never re-enters; surfaces Phase 8. This is the termination guarantee.
 
 ---
@@ -425,6 +426,15 @@ Coached trio → approve goal/backlog/each story, or run one phase. Overdrive �
 
 ---
 
+## If a run is orchestrated via the Workflow tool
+
+Arms here are Agent-tool spawns, but when a cycle runs through a Workflow-tool script instead, two failure classes recur:
+
+- Workflow scripts are plain JS — no TypeScript syntax. `node --check` a scratch copy before launching a large run; on a mid-run script error, edit the persisted script and relaunch with `{scriptPath, resumeFromRunId}` instead of restarting from zero.
+- Schema-returning subagents: omit `model` so they inherit the session model — never pin a haiku-class model for structured output — and keep the schema's payload small (paths, IDs, verdicts; not bulk file content). Oversized returns fail StructuredOutput validation and surface as "completed without calling StructuredOutput".
+
+---
+
 ## Principles
 
 - **One human gate.** Visual smoke = the only human ask in the loop. Plan, file assignment, execution, verify, quarantine, review all autonomous.
@@ -447,7 +457,8 @@ Coached trio → approve goal/backlog/each story, or run one phase. Overdrive �
 - Don't retry a ticket forever — K re-plans, then quarantine + continue.
 - Don't block the loop on a quarantine; surface it Phase 8.
 - Don't count quarantined as accepted; don't close the epic on goal-critical quarantined work without carryover.
-- Don't run >5 arms/wave.
+- Don't run >5 arms/wave — monitoring degrades and wide file-reading fan-outs trip API rate-limit cascades.
+- Don't fan out fresh readers to review a finished wave — synthesize from arm reports; delegate unavoidable bulk re-reads to one subagent.
 - Don't roll back `itr` history on reject — reopen the tickets (work happened; result rejected).
 - Don't push/PR/start-next-sprint automatically.
 - Don't run overdrive + manual `/blitz`/`/sprint-review` on the same sprint folder — overdrive owns the cycle.

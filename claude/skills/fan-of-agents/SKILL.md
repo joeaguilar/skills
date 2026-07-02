@@ -156,6 +156,7 @@ Event-driven. Collect each portion as it lands — capture verbatim + its Confid
 
 - **Returned** → it's a hit. Keep it.
 - **Failed, errored, denied, or stalled** → a miss. **No retry, no resume, no respawn.** One-line note, move on. (The fan's whole premise: misses are expected and cheap.)
+- **Whole fan misses identically at once** (API 429/overloaded cascade) → that's infrastructure, not the cut. Re-fan once at half width before calling a Whiff.
 - **Straggler** → don't block the synthesis on it. Synthesize once the bulk has landed; a late return folds in only if it arrives before you finish, else it's a miss.
 - **Overran its slice** (touched a sibling's scope/files) → keep the in-scope part, drop the rest.
 

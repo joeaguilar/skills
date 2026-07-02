@@ -232,6 +232,7 @@ Event-driven only — no polling. React to background-agent completion notificat
 - **Verify-gate failure on completion**: auto-retry once. Spawn a fresh background agent with the same prompt plus a `Previous attempt failed with:\n{tail of output}` block. Don't block the wave on this — other agents keep running. Log the retry in `Interventions`.
 - **Retry succeeds**: task closed, normal flow.
 - **Retry fails**: mark the task as **quarantined** in `Outcomes` and defer to Phase 7. The wave continues.
+- **Identical simultaneous failures across the wave** (API 429/overloaded errors, or several agents "completed without calling StructuredOutput" at once): a rate-limit cascade — infrastructure, not the tasks. Don't spend per-task retries and don't quarantine. Pause ~60s, halve the wave width, re-spawn only the failed tasks, and keep `concurrency` at the halved width for the rest of the run.
 
 ---
 
@@ -284,6 +285,15 @@ Do **not** commit. Do **not** push. Do **not** open PRs unless the user asks.
 
 ---
 
+## If a run is orchestrated via the Workflow tool
+
+Waves here are Agent-tool spawns, but when a backlog is cleared through a Workflow-tool script instead, two failure classes recur:
+
+- Workflow scripts are plain JS — no TypeScript syntax. `node --check` a scratch copy before launching a large run; on a mid-run script error, edit the persisted script and relaunch with `{scriptPath, resumeFromRunId}` instead of restarting from zero.
+- Schema-returning subagents: omit `model` so they inherit the session model — never pin a haiku-class model for structured output — and keep the schema's payload small (paths, IDs, verdicts; not bulk file content). Oversized returns fail StructuredOutput validation and surface as "completed without calling StructuredOutput".
+
+---
+
 ## Principles
 
 - **File ownership is the unit of parallelism, not the task.** Two tasks editing the same file must be serialized.
@@ -299,4 +309,5 @@ Do **not** commit. Do **not** push. Do **not** open PRs unless the user asks.
 - Don't spawn agents in worktrees — the shared tree is what powers self-healing.
 - Don't skip the wave gate, even if every agent reported green.
 - Don't silently drop a quarantined task. Every task must end with an `Outcomes` entry.
-- Don't run more agents per wave than `concurrency` — orchestrator monitoring quality degrades past ~5.
+- Don't run more agents per wave than `concurrency` — orchestrator monitoring quality degrades past ~5, and wider fan-outs of file-reading agents trip API rate-limit cascades.
+- Don't fan out fresh file-reading agents to synthesize or review a finished wave — work from the agents' returned reports; if bulk re-reading is unavoidable, delegate it to one subagent.

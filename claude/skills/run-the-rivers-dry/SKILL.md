@@ -186,6 +186,7 @@ If no gate is detectable, construct a practical proof from targeted commands, st
 - On dependency or tool failure: distinguish missing setup from product failure. Request approval for network or privileged installs when required.
 - On merge or ownership conflict: stop the conflicting wave, reassign ownership, and continue with non-conflicting work.
 - On flaky verification: rerun once, then record flake evidence and choose the conservative path.
+- On simultaneous identical failures across a wave (API 429/overloaded): treat it as a rate-limit cascade, not slice failures. Pause ~60s, halve concurrency, and respawn only the failed workers without charging their retry budget.
 - On budget pressure: finish the active safe checkpoint, record state, and report the next action.
 
 ## Final response

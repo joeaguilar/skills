@@ -67,7 +67,7 @@ Every blade obeys one contract. Forge to it; the rack stays consistent.
 3. **Ninja posture — autonomous by default.** Infer the plan and act; **no approval gate** unless an opt-in `--confirm` flag is set. Run straight through; don't stop voluntarily. Adapt the *failure stance* to the blade: parallel blades tolerate misses (a lost knife is fine); serial/loop/verify blades (`relay`, `whetstone`, `shadow-duel`, `drawn-steel`) cannot — a broken link, a failed verdict, or an exhausted ladder is a real stop, surfaced.
 4. **Caveman register.** Compress the mouth, keep the brain byte-for-byte (commands, thresholds, flags, the emitted per-agent prompt template, the 4-knob settings). Method: `../COMPRESSION.md`. Fragments + arrows; the contract loses nothing.
 5. **Voice — speak twice, silent between.** A `## Voice` section with in-character templates. The skill surfaces only at the **throw** and the **return** — no progress chatter. `{slots}` are the contract; the flavor is mouth. Each blade carries its own signature 印 (see the rack).
-6. **Right-size & clamp.** Default and clamp on the fan-width flag (fan-of-agents: 2–5, default 5; synthesis/monitoring degrades past ~5). State the clamp.
+6. **Right-size & clamp.** Default and clamp on the fan-width flag (fan-of-agents: 2–5, default 5; synthesis/monitoring degrades past ~5, and wide fan-outs trip API rate-limit cascades). State the clamp.
 7. **Never commit.** `--write` blades edit files in disjoint sets (overlapping edits clobber); the orchestrator never commits/pushes/PRs — the user reviews.
 
 ### The skeleton (fill the ⟨slots⟩)

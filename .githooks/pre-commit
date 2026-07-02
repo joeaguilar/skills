@@ -1,0 +1,10 @@
+#!/usr/bin/env bash
+# Repo-local pre-commit gate, invoked by the global core.hooksPath pre-commit
+# (section 8). Blocks commits on broken frontmatter in any primitive tree —
+# the failure class that shipped 28 broken skills. Parity/staleness/deep checks
+# stay out of the gate (legitimate mid-port states); run ./validate-skills.sh
+# with no args for the full validation.
+set -uo pipefail
+
+REPO_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd -P)"
+exec "$REPO_DIR/validate-skills.sh" --frontmatter-only

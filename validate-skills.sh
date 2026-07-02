@@ -16,6 +16,14 @@ set -uo pipefail
 #                     expected frontmatter.
 # Then it calls codex/scripts/validate-codex-skills.sh for the codex tree's
 # deeper checks (agents/openai.yaml presence, primitive registry, Claude-ism lint).
+#
+# --frontmatter-only: run only the frontmatter checks (3 + the payload lint of
+# 3b), skipping parity/staleness/deep checks. This is the pre-commit gate mode:
+# broken frontmatter ships broken primitives, so it must block a commit, while
+# parity gaps are legitimate mid-port states that shouldn't.
+
+FRONTMATTER_ONLY=0
+[ "${1:-}" = "--frontmatter-only" ] && FRONTMATTER_ONLY=1
 
 REPO_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd -P)"
 CLAUDE_SKILLS="$REPO_DIR/claude/skills"
@@ -47,6 +55,7 @@ list_skills() { # tree -> skill dir names that contain a SKILL.md, excluding .sy
   done | sort
 }
 
+if [ "$FRONTMATTER_ONLY" -eq 0 ]; then
 echo "== 1. Set parity (claude/skills <-> codex/skills, .system excluded) =="
 claude_list="$(list_skills "$CLAUDE_SKILLS")"
 codex_list="$(list_skills "$CODEX_SKILLS")"
@@ -97,6 +106,7 @@ else
   done <<< "$shared"
   [ "$warns" -eq 0 ] && echo "  OK: every codex port is reconciled against the current claude source"
 fi
+fi # FRONTMATTER_ONLY
 
 echo
 echo "== 3. Frontmatter (name: + description: in each SKILL.md) =="
@@ -108,6 +118,7 @@ echo "  checked $(find "$CLAUDE_SKILLS" "$CODEX_SKILLS" -mindepth 2 -maxdepth 4 
 
 echo
 echo "== 4. Optional primitive roots (agents/ + commands/) =="
+if [ "$FRONTMATTER_ONLY" -eq 0 ]; then
 for root in agents commands; do
   claude_root="$REPO_DIR/claude/$root"
   codex_root="$REPO_DIR/codex/$root"
@@ -147,6 +158,7 @@ for root in agents commands; do
     echo "  OK: $root roots absent in both platform trees"
   fi
 done
+fi # FRONTMATTER_ONLY
 
 while IFS= read -r md; do
   rel="${md#$REPO_DIR/}"
@@ -160,6 +172,7 @@ while IFS= read -r md; do
   head -40 "$md" | grep -q '^description:' || { echo "  ERROR: $rel missing 'description:'"; errors=$((errors+1)); }
 done < <(find "$REPO_DIR/claude/agents" "$REPO_DIR/claude/commands" "$REPO_DIR/codex/agents" "$REPO_DIR/codex/commands" -type f -name '*.md' 2>/dev/null | sort)
 
+if [ "$FRONTMATTER_ONLY" -eq 0 ]; then
 echo
 echo "== 5. Codex tree deep checks (delegated) =="
 if [ -x "$REPO_DIR/codex/scripts/validate-codex-skills.sh" ]; then
@@ -167,6 +180,7 @@ if [ -x "$REPO_DIR/codex/scripts/validate-codex-skills.sh" ]; then
 else
   echo "  SKIP: codex/scripts/validate-codex-skills.sh not executable"
 fi
+fi # FRONTMATTER_ONLY
 
 echo
 echo "== Summary: $errors error(s), $warns staleness warning(s) =="

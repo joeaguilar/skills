@@ -87,7 +87,9 @@ An item is `agent-verified` only when all apply:
 - Owned-file diff matches the ticket or bundle scope.
 - Full repo verify gate exits zero after the wave.
 - Targeted tests were added or updated for changed behavior when practical.
-- UI/user-visible changes have screenshot or e2e evidence.
+- UI-touching or user-visible/behavioral changes require **runtime evidence** — drive the actual flow end-to-end and/or capture a Playwright screenshot (use `/verify` plus the playwright plugin). A green verify gate or successful build is NOT sufficient for these: a written value is not a wired feature.
+- For a "wrote a value" change, prove the **read site** consumes it — exercise the path that reads the value, not just the write.
+- Runtime evidence is scoped to UI/behavioral diffs only. Pure non-UI work (refactors, backend-only logic, docs, config with no user-visible surface) is exempt — the verify gate is its done gate; don't stall it hunting for a screenshot.
 - Docs/config/migrations are verified when touched.
 - No known red tests, lint, type errors, missing screenshots, or untracked manual-only checks remain.
 - Evidence is recorded in the loop artifact.

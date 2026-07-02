@@ -200,7 +200,20 @@ Run it in the FOREGROUND and wait for it to finish in THIS SAME TURN — do NOT 
 
 It MUST exit zero. The full-repo gate is intentional — if another wave agent left a temporary error in code outside your owned files, attempt to fix it; your verify run is also their safety net. If after best effort the gate is still red on something clearly outside your scope, stop and report.
 
-Only after the gate is fully green:
+Runtime-evidence gate — UI-touching / user-visible / behavioral diffs ONLY:
+  A green verify gate is NOT enough to close a change a user can see or feel — a
+  written value is not a wired feature, and green unit tests or a successful build
+  do not prove the flow works. If your diff touches UI or any user-visible/behavioral
+  surface, you MUST capture runtime evidence before closing: drive the actual flow
+  end-to-end and/or take a Playwright screenshot (use `/verify` plus the playwright
+  plugin). If your change "wrote a value", exercise the READ site and prove it
+  consumes the value — don't stop at confirming the write.
+
+  Pure non-UI work — refactors, backend-only logic, docs, config with no user-visible
+  surface — is EXEMPT: the verify gate is its close gate. Do not stall a non-UI task
+  hunting for a screenshot.
+
+Only after the gate is fully green (and, for UI/behavioral diffs, runtime evidence is captured):
   - Close this task in the tracker: {close command}
   - Report a one-paragraph summary of what you changed and the verify-gate output (last 10 lines).
 

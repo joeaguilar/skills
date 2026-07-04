@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Bootstrap the AGENTS/SOUL/GOSPEL/APOSTLE project documentation scaffold."""
+"""Bootstrap the AGENTS/CODEX/SOUL/GOSPEL/APOSTLE project documentation scaffold."""
 
 from __future__ import annotations
 
@@ -36,6 +36,7 @@ def docs(project_name: str) -> dict[str, str]:
             - [SOUL.md](SOUL.md): agent behavior, communication style, uncertainty handling, and context preservation.
             - [CONTRIBUTING.md](CONTRIBUTING.md): coding style, test expectations, formatting, review standards, and contribution mechanics.
             - [README.md](README.md): project overview, setup, run, and test instructions.
+            - [CODEX.md](CODEX.md): thin pointer to this file so Codex-specific tools land on the canonical entrypoint.
 
             ## Documentation Growth Rule
 
@@ -66,6 +67,15 @@ def docs(project_name: str) -> dict[str, str]:
             The project has not been defined yet. This repository currently contains the collaboration and documentation workflow scaffold.
             """
         ),
+        "CODEX.md": clean(
+            """
+            # CODEX.md
+
+            The required agent entrypoint for this repository is [AGENTS.md](AGENTS.md). Read it first.
+
+            This file exists only as a thin pointer so Codex-specific tools land on the canonical entrypoint. Do not store project memory here — keep durable knowledge in `AGENTS.md` and the documents it links.
+            """
+        ),
         "GOSPEL.md": clean(
             """
             # GOSPEL.md
@@ -91,6 +101,7 @@ def docs(project_name: str) -> dict[str, str]:
             - `GOSPEL.md`: the rules.
             - `APOSTLE.md`: the user.
             - `AGENTS.md`: everything an agent needs to know first.
+            - `CODEX.md`: thin pointer to `AGENTS.md` for Codex-specific tools.
             - `CONTRIBUTING.md`: coding style and contribution mechanics.
             - `README.md`: project overview and setup.
 
@@ -186,6 +197,7 @@ def docs(project_name: str) -> dict[str, str]:
             ## Documentation
 
             - [AGENTS.md](AGENTS.md): required starting point for agents.
+            - [CODEX.md](CODEX.md): thin pointer to `AGENTS.md` for Codex-specific tools.
             - [GOSPEL.md](GOSPEL.md): project rules and documentation workflow.
             - [APOSTLE.md](APOSTLE.md): user preferences and product-owner expectations.
             - [SOUL.md](SOUL.md): agent operating identity.

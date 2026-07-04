@@ -1,0 +1,4 @@
+interface:
+  display_name: "plr"
+  short_description: "Manage reusable prompts with plr"
+  default_prompt: "Use $plr to find or save this reusable prompt."

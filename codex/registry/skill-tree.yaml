@@ -93,6 +93,19 @@ skills:
     recommends: []
     unlocked_by: ["imagegen"]
     position: { x: 25, y: 4 }
+  panthexia-sprites:
+    path: "skills/panthexia-sprites"
+    group: "foundations"
+    tier: 1
+    icon: "SPR"
+    theme: "prism"
+    title: "Panthexia Sprites"
+    summary: "Create Panthexia runtime sprite assets and manifest entries."
+    provides: ["panthexia-sprites"]
+    requires: ["image-generation"]
+    recommends: ["game-assets"]
+    unlocked_by: ["imagegen"]
+    position: { x: 38, y: 4 }
   code-roast:
     path: "skills/code-roast"
     group: "foundations"
@@ -223,6 +236,45 @@ skills:
     recommends: []
     unlocked_by: []
     position: { x: 38, y: 66 }
+  gatr:
+    path: "skills/gatr"
+    group: "foundations"
+    tier: 0
+    icon: "GATE"
+    theme: "forge"
+    title: "gatr"
+    summary: "Run verification gates with durable logs and compact summaries."
+    provides: ["gate-runner"]
+    requires: []
+    recommends: []
+    unlocked_by: []
+    position: { x: 38, y: 42 }
+  git-identity-check:
+    path: "skills/git-identity-check"
+    group: "foundations"
+    tier: 0
+    icon: "ID"
+    theme: "ink"
+    title: "Git Identity Check"
+    summary: "Audit git author identity across local repositories."
+    provides: ["git-identity-audit"]
+    requires: []
+    recommends: []
+    unlocked_by: []
+    position: { x: 25, y: 42 }
+  plr:
+    path: "skills/plr"
+    group: "foundations"
+    tier: 0
+    icon: "PLR"
+    theme: "aether"
+    title: "plr"
+    summary: "Store, retrieve, and organize reusable prompts."
+    provides: ["prompt-library"]
+    requires: []
+    recommends: []
+    unlocked_by: []
+    position: { x: 38, y: 34 }
   rust-best-practices:
     path: "skills/rust-best-practices"
     group: "foundations"

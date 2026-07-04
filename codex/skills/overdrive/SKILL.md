@@ -221,6 +221,7 @@ Event-driven, no polling. Mid-edit LSP noise ignored until an arm reports.
   - New file set within already-owned files (no new conflict) → respawn fresh arm **in the same wave window**.
   - Needs a neighbor's file → **defer to next cycle** (re-pack) → stays conflict-free.
 - **One attempt counter/ticket.** Every re-plan retry *and* every collision-defer (Phase 4.2) increments it — no uncounted path → no unbounded loop.
+- **Rate-limit cascade exception.** Several arms failing identically at the same moment (API 429/overloaded, or arms completing without the expected structured result) is infrastructure, not the tickets. Do **not** increment attempt counters. Pause about 60 seconds, halve `--concurrency`, and respawn only the failed arms.
 - **Quarantine-and-continue.** Counter > `max-retries` (default 2) → **quarantine**: leave `open` in `itr`, add tag `quarantined-sprint-N` (Phase 3/4 exclude it), record durable context — `itr update <id>` body with `Quarantine (sprint-N, wave-M): K attempts. Last error:\n<last ~50 lines>\nRoot cause: <one-line diagnosis>` (field per `agent-info`) + line in `wave-N.md` → `Quarantine`. **Wave + loop continue.** Never re-enters; surfaces Phase 8. This is the termination guarantee.
 
 ---
@@ -436,6 +437,15 @@ Use the **coached trio** when you want to approve the goal, the backlog, or each
 
 ---
 
+## If a run is orchestrated through a workflow script
+
+Arms here are Codex subagent/background-session spawns, but when a cycle runs through a generated workflow script instead, two failure classes recur:
+
+- Workflow scripts are plain JavaScript. Run `node --check` against a scratch copy before launching a large run. On a mid-run script error, edit the persisted script and relaunch with its resume mechanism instead of restarting from zero.
+- Schema-returning subagents should inherit the session model unless the environment explicitly requires otherwise. Keep structured payloads small: paths, IDs, verdicts, and concise evidence, not bulk file content. Oversized returns can fail structured-output validation and surface as "completed without calling StructuredOutput".
+
+---
+
 ## Principles
 
 - **One human gate.** The visual smoke test is the only thing a human is asked for inside the loop. Planning, file assignment, execution, verify, quarantine, and review are autonomous. That's the whole point.
@@ -458,7 +468,8 @@ Use the **coached trio** when you want to approve the goal, the backlog, or each
 - Don't retry a failed ticket forever — K re-plans, then quarantine and continue.
 - Don't block the loop on a quarantine; surface it in Phase 8.
 - Don't count quarantined tickets as accepted, and don't close the epic on goal-critical quarantined work without recording carryover.
-- Don't run more than 5 arms per wave — monitoring quality degrades.
+- Don't run more than 5 arms per wave — monitoring quality degrades and wide file-reading fan-outs can trip API rate-limit cascades.
+- Don't fan out fresh readers to review a finished wave — synthesize from arm reports; delegate unavoidable bulk re-reads to one subagent.
 - Don't roll back `itr` history on reject — reopen the tickets instead (the work happened; the result was rejected).
 - Don't push, open a PR, or start the next sprint automatically.
 - Don't run overdrive *and* manual `/blitz`/`/sprint-review` against the same sprint folder — overdrive owns the whole cycle.

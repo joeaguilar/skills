@@ -1,0 +1,4 @@
+interface:
+  display_name: "gatr"
+  short_description: "Run gates with compact logged summaries"
+  default_prompt: "Use $gatr to run the project verify gate and summarize the result."

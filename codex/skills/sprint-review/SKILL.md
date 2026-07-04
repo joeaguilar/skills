@@ -168,6 +168,8 @@ Announce: `Phase 3 — Demo`.
 
 Coach: *"Demo is per-story so the PO actually looks at each one. Skipping this is how 'incomplete' sprints sneak through."*
 
+**Requirement-coverage check (do this first).** Re-read the PO's original request text — the conversation, spec, or brief that seeded this sprint — not the agent's or plan's summary of it. Confirm every explicit user request maps to an `itr` issue in scope, and verify each story against that original wording. A request that never became an issue is a silently-dropped requirement; a story that satisfies the summary but not the original ask is drift. Flag either for triage at Gate 2. Summaries paraphrase away detail — the original text is the source of truth.
+
 For each closed (or quarantined) story, in priority order:
 
 1. **Print the story card:**
@@ -256,7 +258,7 @@ Walk the four content blocks:
 
 3. **Process improvement candidates.** Skill proposes 1–3 specific, actionable changes informed by the friction log. Examples: *"Declare `--files` more precisely on stories touching shared modules"*, *"Add a 'verify gate green for 60s' rule before closing stories"*. PO accepts, edits, or rejects each. Survivors become Retro action items in Phase 6.
 
-4. **Codex-agent learnings.** Patterns that apply to future `/sprint` runs: planning gaps (e.g. "AC was too vague on story #103, Codex agents disagreed on done"), file-ownership misses (e.g. "shared util needed by 2 worker agents wasn't declared in either"), AC clarity issues. These don't necessarily become tasks; they become notes in the `retro-{date}.md` file.
+4. **Codex-agent learnings.** Patterns that apply to future `/sprint` runs: planning gaps (e.g. "AC was too vague on story #103, Codex agents disagreed on done"), file-ownership misses (e.g. "shared util needed by 2 worker agents wasn't declared in either"), AC clarity issues. These don't necessarily become tasks; they become notes in the `retro-{date}.md` file. If any learning is a durable, cross-project rule rather than sprint-specific, ask the PO whether it should be promoted to project or global agent instructions such as `AGENTS.md` or `CODEX.md`.
 
 Hold all four content blocks in memory. They land in the `Retro` section of `sprint/{folder}/plan.md` AND in the standalone `sprint/{folder}/retro-{date}.md`. (Schema for the standalone file is below.)
 

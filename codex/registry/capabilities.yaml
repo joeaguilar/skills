@@ -8,6 +8,15 @@ capabilities:
   code-graph:
     label: "Code Graph"
     description: "Navigate symbols, imports, dependencies, and architecture."
+  gate-runner:
+    label: "Gate Runner"
+    description: "Run verification gates with durable logs and compact summaries."
+  git-identity-audit:
+    label: "Git Identity Audit"
+    description: "Audit git author configuration and historical commit identities."
+  prompt-library:
+    label: "Prompt Library"
+    description: "Store, retrieve, and organize reusable prompt templates."
   rust-engineering:
     label: "Rust Engineering"
     description: "Apply idiomatic Rust ownership, API, async, testing, and tooling standards."
@@ -50,6 +59,9 @@ capabilities:
   game-assets:
     label: "Game Assets"
     description: "Create production-ready art assets for games."
+  panthexia-sprites:
+    label: "Panthexia Sprites"
+    description: "Create Panthexia runtime sprite assets and manifest entries."
   openai-docs:
     label: "OpenAI Docs"
     description: "Use current official OpenAI product and API documentation."

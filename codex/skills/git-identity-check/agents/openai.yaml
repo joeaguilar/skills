@@ -1,0 +1,4 @@
+interface:
+  display_name: "Git Identity Check"
+  short_description: "Audit git author identity across repos"
+  default_prompt: "Use $git-identity-check to audit git author identity in these repos."

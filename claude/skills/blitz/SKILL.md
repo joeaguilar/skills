@@ -213,7 +213,22 @@ Runtime-evidence gate — UI-touching / user-visible / behavioral diffs ONLY:
   surface — is EXEMPT: the verify gate is its close gate. Do not stall a non-UI task
   hunting for a screenshot.
 
-Only after the gate is fully green (and, for UI/behavioral diffs, runtime evidence is captured):
+Visual Gate PO-smoke gate — stories whose AC contains a Visual Gate block ONLY:
+  If this task's AC contains the `LOOK AT / IGNORE / EXPECTED / CONFOUNDERS` Visual Gate
+  block (itr #203 makes /sprint require it for visual-scope stories), you MUST NOT
+  self-close on green gate + your own screenshot alone. Instead:
+    1. Capture your runtime evidence as above (drive the flow / screenshot).
+    2. Report your work as CLOSE-PENDING, not closed: describe the visual change in
+       observational terms keyed to the AC's LOOK AT / EXPECTED lines, and explicitly
+       ask the PO to confirm via `cargo native` (the exact action + what to look for).
+    3. Do NOT run the close command yet. Wait for PO confirmation within the wave window.
+    4. If the PO confirms: run the close command.
+    5. If the PO is unavailable within the wave window: QUARANTINE the task (leave it
+       open, report `awaiting PO visual smoke`). Do NOT self-close. The orchestrator's
+       Phase 7 treats this as a soft quarantine — the wave still proceeds and the story
+       resolves at /sprint-review under PO eyes.
+
+Only after the gate is fully green (and, for UI/behavioral diffs, runtime evidence is captured; and, for Visual-Gate stories, the PO has confirmed the smoke):
   - Close this task in the tracker: {close command}
   - Report a one-paragraph summary of what you changed and the verify-gate output (last 10 lines).
 
@@ -248,7 +263,9 @@ Once every wave agent (including retries) has reached a terminal state — close
 
 ## Phase 7 — Quarantine triage (BLOCKING — must complete before next wave)
 
-For each quarantined task:
+**Soft quarantine — `awaiting PO visual smoke` (itr #204).** Before the normal triage below, separate out any task an agent quarantined solely because it was a Visual-Gate story awaiting PO `cargo native` confirmation (not a gate failure). These are NOT blocking: the code passed the verify gate and the agent captured runtime evidence — only the PO's own eyes are pending. Do **not** stop-and-ask or re-run these. Leave them open, note `awaiting PO visual smoke` in `Outcomes`, let the wave proceed, and let them resolve at `/sprint-review` where the PO does the smoke and closes (or files follow-ups). They do not count against the "every quarantined task must reach a terminal state before the next wave" rule below — a soft quarantine is a deferred close, not a failure.
+
+For each remaining (hard) quarantined task:
 
 1. **Stop and ask the user** for unblock context — what's missing, what assumption was wrong, what the agent didn't see. Append the response to `Quarantine triage notes` in the plan.
 2. **Try again** with the user's context spliced into the agent prompt.
@@ -257,7 +274,7 @@ For each quarantined task:
    - **Foundational** (other tasks depend on it, or it's load-bearing): **block the blitz**. Stop, surface a diagnostic, and resume only after the user fixes the underlying issue.
    - **Trivial / nice-to-have**: ask "skip this and continue?" If yes, mark `failed-skipped` in `Outcomes` and proceed. If no, block.
 
-Every quarantined task must reach a terminal state — `closed`, `failed-skipped`, or `blitz-blocked` — before the next wave launches.
+Every *hard*-quarantined task must reach a terminal state — `closed`, `failed-skipped`, or `blitz-blocked` — before the next wave launches. Soft quarantines (`awaiting PO visual smoke`, above) are the sole exception: they stay open across waves by design and resolve at `/sprint-review`.
 
 ---
 

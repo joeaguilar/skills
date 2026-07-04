@@ -28,6 +28,7 @@
 #  staleness warning.)
 codex	skills	retro-game-assets
 codex	skills	panthexia-tiled-materials
+codex	skills	panthexia-sprites
 
 # --- Codex-only agents (drift: Claude converted these imports to skills; Codex keeps the agent form) ---
 codex	agents	analytics-event-architect.md
@@ -42,6 +43,7 @@ codex	agents	prd-task-generator.md
 codex	agents	tdd-workflow-coach.md
 
 # --- Claude-only skills (intentional unless a Codex feature gap appears) ---
+claude	skills	ccq
 claude	skills	proof-campaign
 # crossfire-review orchestrates the Codex-plugin reviewer + an Opus subagent from inside
 # Claude Code — the harness itself is the dependency, so no Codex port is possible.

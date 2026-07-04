@@ -1,0 +1,6 @@
+interface:
+  display_name: "Panthexia Sprites"
+  short_description: "Generate Panthexia runtime sprites."
+  default_prompt: "Use $panthexia-sprites to generate or validate Panthexia runtime sprite assets."
+policy:
+  allow_implicit_invocation: true

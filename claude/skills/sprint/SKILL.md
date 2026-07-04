@@ -277,6 +277,42 @@ Run this step **before** any of the four alignment topic clusters below. It exis
 
 5. **Do not proceed to the four alignment topic clusters below until every in-sprint story has non-empty `acceptance`.** This is BLOCKING; the Phase 4 Gate 2 sanity check will refuse to proceed if any in-sprint story still has empty AC, so resolving it here is the cheaper path.
 
+### Step 0b — Visual Gate AC detection (BLOCKING)
+
+Run this immediately after Step 0, before the alignment clusters. It exists because visual/rendering stories that ship without a Visual Gate block have repeatedly caused regressions (the project has shipped multiple iso visual regressions when "cargo test green" was treated as sufficient closure). The project convention (`CLAUDE.md` → *"Visual features need visual gates"*) requires a structured `LOOK AT / IGNORE / EXPECTED / CONFOUNDERS` block in the AC of any visual-scope story; this step enforces it at planning time so an un-gated visual story can't reach `/blitz`.
+
+1. **Flag every visual-scope story.** A story is visual-scope if it is tagged `visual`, `ui`, or `render`, **or** its declared `files` touch rendering-related paths (e.g. `src/screens/**`, `src/render/**`, `src/ui/**`, `src/app/scaling.rs`, shader/`post_process`/`view`/`draw` files). Use the ticket data already in memory — do **not** refetch.
+
+2. **Inspect each flagged story's `acceptance` for the Visual Gate block.** It must contain all four labels: `LOOK AT`, `IGNORE`, `EXPECTED`, `CONFOUNDERS`. A story with visual scope but no such block fails the check.
+
+3. **Surface each failing story to the PO**, one at a time:
+
+   ```
+   Story #N is visual but AC doesn't use the LOOK AT / IGNORE / EXPECTED / CONFOUNDERS block. Draft now or defer.
+   ```
+
+4. **If the PO drafts the Visual Gate inline:** capture it verbatim using the canonical format from `CLAUDE.md`:
+
+   ```
+   Visual gate:
+     LOOK AT:    <specific element, location, observable behavior>
+     IGNORE:     <known-deferred items + their ticket #s>
+     EXPECTED:   <success criteria in observational terms>
+     CONFOUNDERS: <bugs in adjacent systems that may surface but are out of scope>
+   ```
+
+   Confirm by reprinting, then **write it into the story's AC** with the canonical flag (append to, or merge with, existing AC bullets):
+
+   ```
+   itr update <id> --acceptance "<full AC including the Visual gate block>"
+   ```
+
+   Use `--acceptance` directly (same canonical surface as Step 0) — not `--context` or any body-field workaround.
+
+5. **If the PO defers:** move the story to spillover (tag `product-backlog,needs-sprint`) and drop it from the in-memory Sprint Backlog, noting it in the Open Assumptions log.
+
+6. **Do not proceed to the alignment clusters until every visual-scope in-sprint story has a Visual Gate block.** BLOCKING; the Phase 4 Gate 2 check re-verifies this, so resolving it here is cheaper.
+
 ### Alignment topic clusters
 
 Invoke the `/alignment` interview pattern (`AskUserQuestion` for simple choices, freeform for nuanced ones) on these four topic clusters, in order. For each, present your recommendation alongside the question.
@@ -305,7 +341,13 @@ Announce: `Phase 4 — Final review before filing`.
 Story #N has no AC. Return to Phase 3 to draft or defer.
 ```
 
-Phase 4 cannot proceed past this check. Resume the draft once the PO has either drafted AC (Phase 3 Step 0 path: `itr update <id> --acceptance "..."`) or moved the story to spillover.
+**Sanity check — every visual-scope story has a Visual Gate block.** In the same re-scan, for any story flagged visual-scope by Phase 3 Step 0b (tagged `visual`/`ui`/`render` or touching rendering paths), confirm its `acceptance` contains all four Visual Gate labels (`LOOK AT`, `IGNORE`, `EXPECTED`, `CONFOUNDERS`). If any visual-scope story still lacks the block (slipped past Step 0b), **refuse Gate 2** with a one-line block:
+
+```
+Story #N is visual but has no Visual Gate block. Return to Phase 3 Step 0b to draft or defer.
+```
+
+Phase 4 cannot proceed past either check. Resume the draft once the PO has drafted AC / the Visual Gate (Phase 3 path: `itr update <id> --acceptance "..."`) or moved the story to spillover.
 
 Once the sanity check passes, print the full draft so the PO can see exactly what will hit `itr`:
 

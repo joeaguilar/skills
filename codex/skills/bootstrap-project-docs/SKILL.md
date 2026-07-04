@@ -1,6 +1,6 @@
 ---
 name: bootstrap-project-docs
-description: Create the AGENTS.md, SOUL.md, GOSPEL.md, APOSTLE.md, CONTRIBUTING.md, and README.md documentation scaffold for a new repo. Use when a user wants to bootstrap the project memory workflow, install the AGENTS/SOUL/GOSPEL/APOSTLE setup, preserve collaboration rules in repo docs, or make a low-powered model create the standard documentation foundation.
+description: Create the AGENTS.md, CODEX.md, SOUL.md, GOSPEL.md, APOSTLE.md, CONTRIBUTING.md, and README.md documentation scaffold for a new repo. AGENTS.md is the canonical agent entrypoint; CODEX.md is a thin pointer to it so Codex-specific tools land there. Use when a user wants to bootstrap the project memory workflow, install the AGENTS/SOUL/GOSPEL/APOSTLE setup, preserve collaboration rules in repo docs, or make a low-powered model create the standard documentation foundation.
 ---
 
 # Bootstrap Project Docs
@@ -20,7 +20,7 @@ Use this skill to create the standard project-memory documentation scaffold in a
 Run from the skill directory or pass the absolute script path:
 
 ```bash
-python scripts/bootstrap_project_docs.py /path/to/repo
+python3 scripts/bootstrap_project_docs.py /path/to/repo
 ```
 
 Options:
@@ -31,6 +31,7 @@ Options:
 The script creates:
 
 - `AGENTS.md`: required agent entrypoint, read order, knowledge map, and documentation growth rule.
+- `CODEX.md`: thin pointer to `AGENTS.md` so Codex-specific tools land on the canonical entrypoint.
 - `GOSPEL.md`: hard rules, hierarchy, and documentation workflow.
 - `SOUL.md`: agent operating identity.
 - `APOSTLE.md`: user preferences and product-owner expectations.
@@ -39,7 +40,7 @@ The script creates:
 
 ## Rules To Preserve
 
-- `AGENTS.md` is the required starting point for every future agent session.
+- `AGENTS.md` is the required starting point for every future agent session; `CODEX.md` only redirects there, so durable knowledge never lives in `CODEX.md`.
 - Important project knowledge must be saved in the appropriate repo document.
 - Use this precedence when knowledge could fit more than one place:
   1. `GOSPEL.md` for hard rules, constraints, workflows, and always/never behavior.
@@ -49,4 +50,3 @@ The script creates:
 - Core memory files should stay under 5000 lines.
 - When a core file gets too large, move a coherent section into a focused document, leave a cliffnote summary in the original file, and link to the new document.
 - Supporting docs such as `docs/ARCHITECTURE.md`, `docs/DECISIONS.md`, `docs/ROADMAP.md`, `docs/RUNBOOK.md`, `docs/GLOSSARY.md`, `docs/RESEARCH.md`, and `docs/ASSETS.md` should be created only when they have real content.
-

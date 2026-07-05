@@ -1,0 +1,4 @@
+interface:
+  display_name: "whats-next"
+  short_description: "Reconciled what-is-next report; --start claims and begins"
+  default_prompt: "Use $whats-next to report what is next for this project. Report only unless --start is given."

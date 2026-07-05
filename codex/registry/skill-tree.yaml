@@ -392,6 +392,19 @@ skills:
     recommends: ["code-graph"]
     unlocked_by: ["story-style"]
     position: { x: 57, y: 32 }
+  whats-next:
+    path: "skills/whats-next"
+    group: "planning"
+    tier: 1
+    icon: "NXT"
+    theme: "water"
+    title: "What's Next"
+    summary: "Reconcile tracker, roadmap, sprint, and git into one what-is-next report."
+    provides: ["next-work-report"]
+    requires: ["issue-tracker"]
+    recommends: ["product-roadmap"]
+    unlocked_by: ["itr"]
+    position: { x: 45, y: 52 }
   blitz:
     path: "skills/blitz"
     group: "execution"

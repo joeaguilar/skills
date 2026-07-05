@@ -26,6 +26,9 @@ capabilities:
   story-conventions:
     label: "Story Conventions"
     description: "Project-specific issue and acceptance criteria style."
+  next-work-report:
+    label: "Next-Work Report"
+    description: "Reconciled what-is-next state of play across tracker, roadmap, and git."
   product-roadmap:
     label: "Product Roadmap"
     description: "Cross-sprint product map from spec to backlog."

@@ -1,6 +1,6 @@
 ---
 name: alignment
-description: Drive a focused alignment interview about a plan, design, or user-agent workflow until assumptions, decisions, and expectations are explicit. Use when the user asks to stress-test a plan, get grilled on a design, align on agent behavior, resolve decision branches, or says "we need alignment".
+description: "Alignment interview: stress-test plan/design/agent workflow, resolve assumptions, decision branches, user-agent expectations."
 ---
 
 # Alignment

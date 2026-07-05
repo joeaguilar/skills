@@ -1,7 +1,6 @@
 ---
 name: roadmap
-description: >-
-  Use when the user types `/roadmap` or asks Codex to create, update, or audit a cross-sprint product roadmap such as `docs/ROADMAP.md` from a locked spec, sprint history, and the live `itr` backlog. Guides the user/Product Owner section-by-section to confirm status, effort sizing, dependencies, release boundary, optional trajectory, and roadmap-stub filing. Do not use for one-off backlog lookup, single-sprint planning, or closed-sprint status reports.
+description: "Roadmap docs: /roadmap, create/update/audit docs/ROADMAP.md from spec, sprint history, itr backlog, sizing, dependencies."
 ---
 
 # /roadmap — the bridge from spec to sprint backlog

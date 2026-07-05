@@ -1,6 +1,6 @@
 ---
 name: plr
-description: Use the `plr` CLI (Prompt Library in Rust) to store, retrieve, and organize reusable prompts kept as markdown files on disk. Trigger any time the user wants to save, reuse, look up, or manage a prompt/system-prompt/instruction-template — even if they don't say "plr". Phrases that should fire this skill include "save this as a prompt", "reuse my X prompt", "what prompts do I have", "get my code-review prompt", "add this to my prompt library", "list my prompts", "find a prompt about Y", "promote this prompt to my global/profile library", and similar. Also fire when the user wants to feed a stored prompt into an LLM or copy one to the clipboard. Do not fire for authoring brand-new prose the user just wants written once (not saved), or for editing arbitrary markdown files that aren't prompts.
+description: "Prompt library plr: save, get, list, find, reuse, copy, promote, or feed stored prompts/system prompts/instruction templates."
 ---
 
 # plr — prompt library

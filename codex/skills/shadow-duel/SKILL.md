@@ -1,11 +1,6 @@
 ---
 name: shadow-duel
-description: >-
-  Adversarially verify or harden one claim, plan, design, fix, or artifact by
-  having challengers try to break it and a judge keep only what survives. Use
-  when the user asks to red-team, stress-test, try to break, adversarially verify,
-  find holes, prove wrong, or have agents argue a technical position. Do not use
-  for normal code review, cooperative polishing, or human interview alignment.
+description: "Adversarial verification: red-team claim/plan/design/fix/artifact, challengers and judge, stress-test holes."
 metadata:
   short-description: Red-team an artifact before trusting it
 ---

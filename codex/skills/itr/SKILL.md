@@ -1,6 +1,6 @@
 ---
 name: itr
-description: Use the itr CLI to file issues in the project's agent-first issue tracker. Trigger when Codex is asked to file, log, open, create, or track an issue, bug, ticket, task, backlog item, or multiple issues from a list, even when the user does not mention itr. Do not trigger for claiming, starting, updating, closing, or otherwise working existing issues unless the user is creating a new issue.
+description: "File itr issues: create/log/open/track bug, ticket, task, backlog item, or bulk issue list; not claim/update/close work."
 ---
 
 # itr - File Issues

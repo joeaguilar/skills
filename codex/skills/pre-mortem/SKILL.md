@@ -1,12 +1,6 @@
 ---
 name: pre-mortem
-description: >-
-  Assume one risky plan already failed, then work backward across distinct
-  failure axes to rank likely causes and derive guardrails. Use when the user
-  asks for a pre-mortem, asks what could kill a plan, wants failure modes before
-  committing, says to assume it failed, or needs launch, migration, rollout, or
-  architecture risk surfaced. Do not use for ordinary forward planning, backlog
-  grooming, adversarial verification of one claim, or human alignment interviews.
+description: "Pre-mortem: assume plan failed, rank failure modes, launch/migration/rollout risks, guardrails; not ordinary planning."
 metadata:
   short-description: Rank failure modes before committing
 ---

@@ -1,6 +1,6 @@
 ---
 name: spicy-code-roast
-description: A spicier, opt-in code roast with topical, current-event, or fresh pop-culture references. Use when the user asks for a spicy roast, current-event roast, topical joke-researched roast, harsher comedic review, or a code review with fresh pop-culture/current-event references. Requires quick joke research before using any current references.
+description: "Spicy/topical code roast: harsher funny review with current-event or pop-culture references; quick joke research required."
 ---
 
 # Spicy Code Roast

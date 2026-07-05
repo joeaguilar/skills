@@ -1,11 +1,6 @@
 ---
 name: fastlane
-description: >-
-  Choose the best multi-agent Codex workflow for a project before execution.
-  Use when the user asks to "fastlane" work, pick an agent workflow, choose
-  between proof-campaign, blitz, dual-blitz, run-the-rivers-dry, overdrive, or
-  other multi-agent modes, or optimize for speed while controlling security,
-  project safety, scope creep, drift, verification, and autonomy risk.
+description: "Choose multi-agent workflow: fastlane, proof-campaign, blitz, dual-blitz, overdrive, run-the-rivers-dry; speed vs safety."
 ---
 
 # Fastlane

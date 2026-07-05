@@ -1,6 +1,6 @@
 ---
 name: rust-best-practices
-description: Apply idiomatic Rust engineering standards when Codex is implementing, reviewing, or refactoring Rust code or Cargo projects. Covers ownership, borrowing, lifetimes, anyhow/thiserror error handling, public API and trait design, async/Tokio concurrency, performance and allocation choices, testing strategy, Clippy lint setup, CI quality gates, and unsafe review. Routes to a detailed standards reference. Use when the user invokes $rust-best-practices, asks to "review this Rust", "make this Rust idiomatic", "check my Cargo project against best practices", "help with this borrow-checker/lifetime error", or wants Rust ownership, async, or error-handling guidance. Do not use for non-Rust code, C++ standards, or generic cross-language review unless Rust engineering choices are central.
+description: "Rust best practices: idiomatic Rust/Cargo review/refactor, ownership, lifetimes, errors, traits, async Tokio, Clippy, unsafe."
 ---
 
 # Rust Best Practices

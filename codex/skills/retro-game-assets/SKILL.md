@@ -1,6 +1,6 @@
 ---
 name: retro-game-assets
-description: Create cohesive SVG and bitmap art assets for retro game projects, including sprites, tiles, backgrounds, HUD icons, logos, badges, particle sheets, menu art, CRT overlays, thumbnails, and polish passes. Use when Codex needs game-ready SVG/vector assets, generated raster/bitmap assets via $imagegen, or an art direction/style guide for arcade, 8-bit, 16-bit, pixel-art, neon, cabinet, or handheld retro game visuals.
+description: "Retro game art assets: SVG/bitmap sprites, tiles, backgrounds, HUD, logos, CRT overlays, 8-bit/16-bit/pixel/neon style."
 ---
 
 # Retro Game Assets

@@ -1,6 +1,6 @@
 ---
 name: overdrive
-description: Autonomous plan→execute→review loop. Condenses `/sprint`, `/blitz`, and `/sprint-review` into one hands-off swarm. Pre-plans an implementation plus exact owned-file set for every ticket (the arm model), runs conflict-free waves of parallel Codex agents on the same branch, and commits once per wave so any wave rolls back cleanly. The only human touch is a per-wave visual smoke test; planning, file assignment, execution, verify gates, quarantine triage, and review are autonomous. Use when the user asks for `/overdrive`, an autonomous sprint, a hands-off backlog swarm, or to clear the backlog end to end until every ticket is closed or quarantined. `--auto`/`--trust` collapses per-wave gates to one end-of-run review. Do not use for coached planning, execution-only backlog work, review-only work, or one-off issue filing.
+description: "Autonomous sprint swarm: /overdrive plan-execute-review, backlog clearing, conflict-free waves, commits, gates, quarantine."
 metadata:
   short-description: Autonomous sprint swarm
 ---

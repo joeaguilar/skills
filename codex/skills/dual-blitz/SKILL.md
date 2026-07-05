@@ -1,6 +1,6 @@
 ---
 name: dual-blitz
-description: Plan and run a two-sided Codex blitz by splitting backlog work into two isolated lane artifacts, one for each main agent, so each agent can run its own inner blitz without communicating or editing the same files. Use when the user invokes /dual-blitz, /dual blitz, "dual blitz agent 1", "dual blitz agent 2", asks to split a sprint or backlog between two simultaneous agents, or wants clustered blitz execution with stricter file-ownership boundaries than /blitz. Do not use for ordinary single-agent backlog execution; use /blitz instead. Do not use for planning-only sprint grooming; use /sprint instead.
+description: "Dual blitz: split backlog/sprint into two isolated agent lanes for simultaneous inner blitzes with strict file ownership."
 ---
 
 # /dual-blitz - two isolated blitz lanes

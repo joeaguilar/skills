@@ -1,6 +1,6 @@
 ---
 name: gatr
-description: Use gatr (gate runner CLI) to run build/test/lint verification commands instead of hand-rolling shell redirection, tail, grep, temp-log, or marker pipelines. Trigger this skill any time Codex is about to run a verification gate (cargo build/test/clippy, just ci, pytest, tsc, jest, eslint, npm test, make check) and cares about the errors or the exit code. Also trigger when the user asks "was the gate/build green", "what were the errors from the last build", "rerun the summary without rebuilding", "where's the full build log", or when Codex needs a past gate result after context loss. Prefer `gatr run -- command` over piping build output through tail/grep, and `gatr last`/`gatr errors`/`gatr log` over rerunning a gate just to see its output again. Do not trigger for interactive/TTY commands, long-running servers/watch modes, or commands whose full output genuinely needs to be inline.
+description: "Verification gates with gatr: cargo/npm/pytest/tsc/jest/eslint/make; capture exit status, errors, logs; avoid tail/grep pipelines."
 ---
 
 # gatr — gate runner skill

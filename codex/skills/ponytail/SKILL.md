@@ -1,6 +1,6 @@
 ---
 name: ponytail
-description: 'Lazy senior developer mode for Codex. Use when the user says "minimal solution", "YAGNI", "do less", "shortest path", "lazy senior dev", "ponytail", or complains about over-engineering, bloat, boilerplate, over-building, too many files, or unnecessary dependencies. Always pick the shortest, simplest solution that works: question whether the task needs to exist, prefer stdlib and native platform features, avoid new dependencies, and ship the smallest safe diff.'
+description: "Minimal solution mode: ponytail, YAGNI, do less, shortest path, bloat/boilerplate complaints; smallest safe diff, stdlib first."
 ---
 
 # Ponytail

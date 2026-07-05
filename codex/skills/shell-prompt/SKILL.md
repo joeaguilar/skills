@@ -1,6 +1,6 @@
 ---
 name: shell-prompt
-description: Install a lightweight, framework-free zsh prompt into ~/.zshrc using zsh vcs_info for path, git branch, dirty markers, and an exit-status-colored prompt character. Use when the user types /shell-prompt or asks Codex to install, add, set up, or customize a lightweight git-aware zsh prompt without oh-my-zsh, powerlevel10k, or starship. Do not use for agent statusline or settings.json statusline tasks.
+description: "Install/customize lightweight zsh git prompt with vcs_info in ~/.zshrc; no oh-my-zsh, powerlevel10k, starship."
 ---
 
 # Shell Prompt

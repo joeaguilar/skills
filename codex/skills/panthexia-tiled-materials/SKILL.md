@@ -1,6 +1,6 @@
 ---
 name: panthexia-tiled-materials
-description: Create or evaluate Panthexia-specific tileable environment material assets for Epic #226 and related iso/HD-2D work, including seamless floor tiles, flat-front wall textures, water tile animation frames, sky/parallax backgrounds, material palettes, 3x3 seam previews, and visual-gate notes. Use for Panthexia floor/wall/water/sky/environment texture requests; do not use for player, NPC, mob/enemy, portrait, item, UI, or battle VFX sprite production.
+description: "Panthexia environment tiles: floor/wall/water/sky materials, seamless repeats, palettes, 3x3 previews; not character sprites."
 ---
 
 # Panthexia Tiled Materials

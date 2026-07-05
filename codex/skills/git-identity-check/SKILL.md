@@ -1,6 +1,6 @@
 ---
 name: git-identity-check
-description: Audit git author identity (user.name / user.email) across one or more local repos — find local config overrides that shadow the global identity, and list past commits authored under a different email/alias. Trigger when the user asks to "check git identity/email across repos", "did I set my git email everywhere", "which repos still use the old email", "audit git config", "do these repos need the same email fix", or after changing the global git email/name and wanting to confirm it took effect elsewhere. Do not trigger for a one-off `git config user.email` on a single already-open repo — just run that directly. Do not trigger to rewrite commit history — that's a separate, explicit, destructive request (force-push, filter-branch) and should never be inferred from an audit ask.
+description: "Audit git identity across repos: user.name/email overrides, old commit authors, global config drift; no history rewrite."
 ---
 
 # git-identity-check

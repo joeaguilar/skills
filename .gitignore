@@ -1,6 +1,11 @@
 # macOS junk
 .DS_Store
 
+# Python bytecode cache (skill scripts regenerate it on every run,
+# e.g. render_leg_report.py importing the proof-campaign engine)
+__pycache__/
+*.pyc
+
 # Local backups created by the sync process
 *.bak
 *.bak-*

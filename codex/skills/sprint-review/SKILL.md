@@ -1,7 +1,6 @@
 ---
 name: sprint-review
-description: >-
-  Review a completed or in-flight Sprint as Scrum Master: fill Outcomes, Demo, and Retro stubs in sprint plan artifacts, walk the Product Owner through per-story acceptance, file triage follow-ups into itr, write a retro artifact when needed, close the sprint epic, and update sprint/CURRENT. Use when Codex should handle /sprint-review, review the sprint, do sprint review, demo the sprint, close out the sprint, or triage what shipped. Use Adaptive Retro: skip smooth sprints, require retro when friction signals fire. Review one sprint per invocation. Do not use for backlog execution, sprint planning, or one-off issue triage.
+description: "Sprint review: /sprint-review, demo/acceptance/retro, triage follow-ups, close sprint epic, update sprint/CURRENT."
 ---
 
 # /sprint-review — review the sprint as Scrum Master

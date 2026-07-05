@@ -1,12 +1,6 @@
 ---
 name: scout-strike
-description: >-
-  Map unfamiliar local code or system terrain before making a focused change.
-  Use when the user asks to scout, recon, survey, map before touching, inspect a
-  strange codebase and then fix something, or when an edit target is broad enough
-  that acting blind would be risky. Do not use for routine familiar edits, pure
-  read-only research with no follow-on action, backlog execution, or speculative
-  parallel attempts at the whole task.
+description: "Scout first: map unfamiliar code/system before focused fix; recon, survey, inspect strange repo; not routine edits."
 metadata:
   short-description: Scout unfamiliar code before acting
 ---

@@ -1,6 +1,6 @@
 ---
 name: code-roast
-description: Turn technical review findings into memorable, humorous teaching moments while preserving Codex review rigor. Use when the user asks to roast code, make a review funny, add comedic explanations to findings, or explain code problems with jokes. Keep findings accurate, actionable, file/line grounded, and respectful.
+description: "Funny code review: roast code with accurate findings, respectful jokes, teaching moments, file/line-grounded bug explanations."
 ---
 
 # Code Roast

@@ -1,14 +1,6 @@
 ---
 name: blitz
-description: >-
-  Use this skill to orchestrate a parallel Codex subagent blitz that clears a
-  task backlog by spawning conflict-free waves of subagents. Trigger when the
-  user types `/blitz`, asks to "blitz the backlog", "execute a parallel agent
-  blitz", "fan out the queue", "clear the open issues in parallel", "groom and
-  sprint through the backlog", or similar phrasing. Language-agnostic: auto-detect
-  the verify gate (Cargo, npm, pytest, Go, Make) and use the configured tracker
-  (default `itr`). Do not trigger for serial single-task work or when the user
-  only wants a plan without execution.
+description: "Parallel backlog blitz: /blitz, fan out itr/open issues into conflict-free subagent waves with verify gate; execution, not planning-only."
 metadata:
   short-description: Run parallel subagent backlog blitzes
 ---

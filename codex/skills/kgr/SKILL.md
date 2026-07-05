@@ -1,6 +1,6 @@
 ---
 name: kgr
-description: Use kgr, the polyglot source dependency knowledge graph CLI, when Codex needs to find symbol references or callers, definitions, dead or unused code, import dependents, dependency paths, cycles, orphans, architecture rule violations, or get oriented in an unfamiliar codebase. Prefer kgr before ad hoc rg plus file-read loops when a structural graph subcommand fits. Do not use it for string literal, comment, log, config-value, or unsupported-language searches.
+description: "Source graph with kgr: refs, callers, definitions, imports, dead code, cycles, orphans, dependency paths, architecture checks."
 ---
 
 # kgr - Codebase Navigation

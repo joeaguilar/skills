@@ -1,7 +1,6 @@
 ---
 name: sprint
-description: >-
-  Plan a Sprint from a Codex plan, markdown spec, recent conversation, or inline brief, then file a groomed Sprint backlog in itr with one Sprint Goal, prioritized stories, file ownership, and a Definition of Done. Use when Codex should handle /sprint, plan a sprint, do sprint planning, groom a spec into a sprint, turn a spec into a sprint, plan the work, or build a sprint backlog. Act as Scrum Master: the user is Product Owner, Codex worker agents and /blitz are Developers. Planning only; hand off to /blitz for execution. Do not use for one-off issue creation, backlog execution, or sprint review.
+description: "Sprint planning: /sprint from plan/spec/conversation into itr backlog, Sprint Goal, stories, file ownership, Definition of Done."
 ---
 
 # /sprint — sprint planning as Scrum Master

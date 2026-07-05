@@ -1,6 +1,6 @@
 ---
 name: panthexia-sprites
-description: Generate or evaluate Panthexia-specific player, NPC, enemy, object/prop, UI, and battle VFX sprite assets for the runtime sprite manifest. Use for transparent PNG sprites, sprite sheets, registry ID naming, manifest entries, contact sheets, imagegen prompts, and visual-gate notes. Do not use for tileable floors, flat-front walls, water, sky/parallax, or environment materials; use panthexia-tiled-materials for those.
+description: "Panthexia sprites: player/NPC/enemy/prop/item/UI/battle VFX, transparent PNG/sheets, manifest IDs, contact sheets, visual gates."
 ---
 
 # Panthexia Sprites

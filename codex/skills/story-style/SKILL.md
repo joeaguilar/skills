@@ -1,7 +1,6 @@
 ---
 name: story-style
-description: >-
-  Use when the user types `/story-style` or asks Codex to create or update `STORY_STYLE.md`, set up issue or story conventions, capture a team's ticket style, document title/body/acceptance criteria/tag/priority conventions, or teach sprint planning how this repo writes issues. Guides the user through examples from `itr` or `gh`, pasted samples, or pure interview, then confirms and writes the convention file. Do not use to file issues, plan sprints, or define a sprint Definition of Done.
+description: "Story style: /story-style, create/update STORY_STYLE.md issue conventions from itr/gh/examples/interview; not filing issues."
 ---
 
 # /story-style — capture project issue conventions

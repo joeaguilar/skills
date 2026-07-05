@@ -1,17 +1,6 @@
 ---
 name: run-the-rivers-dry
-description: >-
-  Maximum-autonomy Codex completion mode with a default grand, biblical chronicle
-  voice. Use when the user invokes `$run-the-rivers-dry`, asks Codex to go
-  all-in, spawn agents, think deeply, work quickly, persist through failures,
-  clear a hard problem end to end, or continue until the problem is proven
-  complete. Orchestrates scout agents, execution workers, conflict-free work
-  waves, verification, repair, retry, quarantine, and final proof. Use `--god`
-  for the highest-effort orchestration profile: automatic scout fanout, stronger
-  proof, harder retry discipline, and maximum chronicle narration. Use normal
-  Codex prose when invoked with `--mortal` or when the user asks to disable the
-  grandiose style. Do not use for casual questions, planning-only work,
-  review-only work, or tasks where the user wants step-by-step approval.
+description: "Maximum-autonomy completion: $run-the-rivers-dry, go all-in, spawn agents, persist through failures, prove task complete."
 ---
 
 # Run the Rivers Dry

@@ -1,6 +1,6 @@
 ---
 name: bootstrap-project-docs
-description: Create the AGENTS.md, CODEX.md, SOUL.md, GOSPEL.md, APOSTLE.md, CONTRIBUTING.md, and README.md documentation scaffold for a new repo. AGENTS.md is the canonical agent entrypoint; CODEX.md is a thin pointer to it so Codex-specific tools land there. Use when a user wants to bootstrap the project memory workflow, install the AGENTS/SOUL/GOSPEL/APOSTLE setup, preserve collaboration rules in repo docs, or make a low-powered model create the standard documentation foundation.
+description: "Bootstrap repo docs: AGENTS.md, CODEX.md, SOUL.md, GOSPEL.md, APOSTLE.md, CONTRIBUTING.md, README.md memory scaffold."
 ---
 
 # Bootstrap Project Docs

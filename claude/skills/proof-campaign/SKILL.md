@@ -1,6 +1,6 @@
 ---
 name: proof-campaign
-description: Run a roadmap-bounded autonomous agent campaign where agents only close work they can prove with tests, evidence, screenshots, and full verify gates. Uses `campaign/{N}-...` artifacts, compact status, a 200k-token work-cap window, large wave execution, scout discovery, automatic review/retro, and script-rendered PO HTML reports. Trigger when the user types `/proof-campaign`, `/campaign`, `/auto-blitz`, asks to "run a proof campaign", "auto-agent-blitz the roadmap", "run a campaign from the roadmap", "autonomously clear and expand the backlog", or similar. Use when the user wants more work than `/sprint` with less ceremony and hard verification evidence. Do NOT trigger for planning only (use `/sprint` or `/roadmap`), execution only (use `/blitz`), traditional PO-gated sprint review (use `/sprint-review`), or one-off issue creation (use `itr`).
+description: Run a roadmap-bounded autonomous agent campaign where agents only close work they can prove with tests, evidence, screenshots, and full verify gates. Uses `campaign/{N}-...` artifacts, compact status, a 200k-token work-cap window, large wave execution, scout discovery, automatic review/retro, and script-rendered PO HTML reports. Trigger when the user types `/proof-campaign`, `/campaign`, `/auto-blitz`, asks to "run a proof campaign", "auto-agent-blitz the roadmap", "run a campaign from the roadmap", "autonomously clear and expand the backlog", or similar. Use when the user wants more work than `/sprint` with less ceremony and hard verification evidence. Do NOT trigger for planning only (use `/sprint` or `/roadmap`), execution only (use `/blitz`), traditional PO-gated sprint review (use `/sprint-review`), one-off issue creation (use `itr`), or chaining MULTIPLE campaigns back-to-back across cleared contexts / "keep running campaigns until the roadmap is done" (use `/rolling-campaign`).
 ---
 
 # /proof-campaign - roadmap-bounded proof work
@@ -27,6 +27,7 @@ Defaults:
 - `verify`: auto-detect like `/blitz`.
 - `roadmap-update`: off; default is an update packet, not direct `docs/ROADMAP.md` edits.
 - `auto-next-campaign`: off; planner may draft the next campaign, but not execute it without this flag or explicit approval.
+- `dry-run`: off. Run Phase 0 intake + the Phase 1 plan, print the plan block, stop. No approval prompt, no `campaign/` artifacts, no `itr` writes, no agents. Preview an autonomous run.
 
 ## Quick-Start Questionnaire (no-flag invocation)
 
@@ -214,6 +215,8 @@ proof-campaign plan
 
 Approve campaign? (yes / amend / split / abort)        # skip if questionnaire ran
 ```
+
+`--dry-run` stops here: print the plan block, then exit — skip the approval question, write nothing, launch no agents.
 
 After `yes`, the PO has authorized:
 

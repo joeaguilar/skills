@@ -45,6 +45,9 @@ codex	agents	tdd-workflow-coach.md
 # --- Claude-only skills (intentional unless a Codex feature gap appears) ---
 claude	skills	ccq
 claude	skills	proof-campaign
+# rolling-campaign chains proof campaigns across FRESH contexts via an external
+# headless driver (scripts/chain.sh) — same Claude-only lineage as proof-campaign.
+claude	skills	rolling-campaign
 # crossfire-review orchestrates the Codex-plugin reviewer + an Opus subagent from inside
 # Claude Code — the harness itself is the dependency, so no Codex port is possible.
 claude	skills	crossfire-review

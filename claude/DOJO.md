@@ -39,6 +39,17 @@ fan-of-agents = `aspect · parallel · synthesize · ≥1-lands`. Every other bl
 | `drawn-steel` | 抜 | by-cost · serial-escalate · first-tier-passes · ladder | cost-aware — cheapest hand first, draw steel only on failure |
 | `pre-mortem` | 死 | by-failure-mode · parallel · ranked-guardrails · space-covered | before a risky plan — work backward from "it failed" |
 
+### The quiet kin — off-rack blades
+
+Not every blade in the dojo is a four-knob orchestration cut. These follow the full forge contract (frontmatter routing, ninja posture, Voice, 印, caveman register) but live outside the grammar — cataloged here so the family stays whole:
+
+| Blade | 印 | Nature | Draw it when |
+|---|---|---|---|
+| `tsugi` | 次 | quiet pointer — one stone, three lines, read-only, never begins work | "next?" deserves a breath, not a report |
+| `ninja-clan` | 静 | stealth campaign — choose targets (or take `--sprint`) → model-routed cross-reviewed waves → last look → whisper review | the whole backlog gamut, run in silence end-to-end |
+
+They compose the obvious way: tsugi names the stone; ninja-clan sends the clan at it.
+
 ### Composition — blades wrap blades
 
 Composition is the whole reason these are primitives. A few canonical chains (run one blade, feed its output to the next — you, the orchestrator, hold the seam; the bodies stay ignorant of each other):

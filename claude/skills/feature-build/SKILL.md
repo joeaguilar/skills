@@ -1,6 +1,6 @@
 ---
 name: feature-build
-description: Coached, non-sprint workflow to build one feature (or a small related set) end-to-end — Understand → Plan (impl + explicit file touch-list) → Implement → Verify — with an optional --strict mode that discovers codebase patterns, generates project-specific standards, and iterates via graded review until the change is A-grade. For more than a task but less than a sprint's worth — no epic, goal, DoD, or review ceremony. Trigger when the user types /feature-build, or asks to "build this feature", "implement X", "add Y end-to-end", or "do this properly with tests". For parallelizable mid-size work it can file the plan as itr issues and hand off to /blitz. Do NOT trigger for a sprint's worth of stories (use /sprint → /blitz → /sprint-review), for executing an existing backlog (use /blitz), for autonomous large runs (use /overdrive or /proof-campaign), or for shaping requirements first (use /spec-writer).
+description: "Coached workflow to build one feature end-to-end — Understand → Plan (with file touch-list) → Implement → Verify — with optional `--strict` graded-review iteration until A-grade. More than a task, less than a sprint: no epic, goal, or ceremony. Trigger: `/feature-build`, \"build this feature\", \"implement X end-to-end with tests\". NOT for a sprint's worth of stories (use /sprint) or an existing backlog (use /blitz)."
 ---
 
 # feature-build

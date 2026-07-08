@@ -1,6 +1,6 @@
 ---
 name: crossfire-review
-description: "Fire TWO independent adversarial code reviews at the same diff — the Codex adversarial reviewer (via the codex plugin runtime) and a Claude Opus review agent — then synthesize both into one deduplicated, prioritized findings list (P0–P3) with a summary and a ship/hold recommendation, and offer to file the surviving findings into the project issue tracker (`itr`). Trigger when the user types /crossfire-review, or asks for a \"crossfire review\", \"dual review\", \"two adversarial reviews\", \"codex and opus review\", \"second-opinion review from two models\", \"cross-model review\", or \"have Codex and Claude both review this\". Do NOT trigger for a single-source review of the diff (use /code-review), for running only the Codex reviewer (the user runs /codex:review themselves), for red-teaming one claim or design agent-vs-agent (use /shadow-duel), for a whole-repo tech-debt audit (use /code-audit), or for a security-focused pass (use /security-review)."
+description: "Fire TWO independent adversarial reviews at the same diff — the Codex reviewer and a Claude Opus agent — then synthesize one deduplicated P0–P3 findings list with a ship/hold call, offering to file survivors into `itr`. Trigger: `/crossfire-review`, \"dual review\", \"have Codex and Claude both review this\". NOT for a single-source review (use /code-review)."
 ---
 
 # /crossfire-review — two reviewers, one verdict

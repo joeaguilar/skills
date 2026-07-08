@@ -67,6 +67,8 @@ claude	skills	ninja-clan
 claude	skills	fan-of-agents
 # tsugi is the quiet dojo-voiced pointer (one stone, three lines) — kin of whats-next.
 claude	skills	tsugi
+# masamune is the quiet-kin legend blade — one agent on Fable, one cut, total silence.
+claude	skills	masamune
 claude	skills	hundred-blades
 claude	skills	first-blood
 claude	skills	splitting-blade

@@ -1,6 +1,6 @@
 ---
 name: gatr
-description: Use gatr (gate runner CLI) to run build/test/lint verification commands instead of hand-rolling `cmd 2>&1 | tail -N`, `| grep -E '^error'`, `>/tmp/x.log 2>&1; echo EXIT=$?`, or `GATE_EXIT` marker pipelines. Trigger this skill ANY time you are about to run a verification gate (cargo build/test/clippy, just ci, pytest, tsc, jest, eslint, npm test, make check) and care about the errors or the exit code — even if the user doesn't say "gatr". Also trigger when the user asks "was the gate/build green", "what were the errors from the last build", "rerun the summary without rebuilding", "where's the full build log", or when you need a past gate result after context loss. Prefer `gatr run -- <cmd>` over piping build output through tail/grep, and `gatr last`/`gatr errors`/`gatr log` over rerunning a gate just to see its output again. Do NOT trigger for interactive/TTY commands, long-running servers/watch modes, or commands whose full output you genuinely need inline.
+description: "Run build/test/lint gates through `gatr run --tag <name> -- <cmd>` instead of piping output through tail/grep or /tmp logs — the full log lands on disk, and `gatr last`/`gatr errors`/`gatr log` answer \"was the gate green\" after context loss. Trigger: ANY verification gate (cargo, pytest, tsc, npm test, make check) where errors or the exit code matter, even unprompted. NOT for interactive/TTY commands or watch modes."
 ---
 
 # gatr — gate runner skill

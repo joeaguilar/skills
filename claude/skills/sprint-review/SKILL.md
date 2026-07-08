@@ -1,6 +1,6 @@
 ---
 name: sprint-review
-description: "Review a completed (or in-flight) Sprint as Scrum Master — fills the Outcomes / Demo / Retro stubs in `sprint/{folder}/plan.md`, walks the PO through per-story acceptance, files triage follow-ups (bugs, carryover, demo feedback, retro action items) into `itr`, writes a standalone `sprint/{folder}/retro-{date}.md` when retro fires, closes the sprint epic, and updates `sprint/CURRENT`. Adaptive Retro — skipped on smooth sprints, required when friction signals fire (quarantines, interventions, carryover, bugs, <80% completion). Trigger when the user types `/sprint-review`, or asks to \"review the sprint\", \"do sprint review\", \"demo the sprint\", \"close out the sprint\", \"triage what shipped\", or similar phrasing. Acts as Scrum Master: the user is Product Owner, the closed sprint is the Increment under review. Reviews ONE sprint per invocation. Do NOT trigger for executing/clearing a backlog (use `/blitz`), for planning a new sprint (use `/sprint`), or for one-off issue triage (use the `itr` skill)."
+description: "Review ONE sprint as Scrum Master: fill Outcomes/Demo/Retro in `sprint/{folder}/plan.md`, walk the PO through per-story acceptance, file triage follow-ups into `itr`, write the retro file when friction signals fire, close the epic, update `sprint/CURRENT`. Trigger: `/sprint-review`, \"review the sprint\", \"close out the sprint\". NOT for planning (use /sprint) or execution (use /blitz)."
 ---
 
 # /sprint-review — review the sprint as Scrum Master

@@ -1,6 +1,6 @@
 ---
 name: ccq
-description: Use the `ccq` CLI (Claude Code Query) to answer questions about past Claude Code sessions instead of hand-rolling find/jq/python pipelines over ~/.claude/projects. Trigger ANY time the user asks about session history, transcript mining, or agent forensics — even if they don't say "ccq". Phrases that should fire this skill include "what commands did we run", "what did I ask in that session", "which skills get used", "what errored recently", "what did that subagent return", "why did that workflow come back empty", "find the session that touched <file>", "how big is my transcript corpus", "mine the transcripts", "reflect on past sessions", and similar. Also fire when YOU need transcript evidence (recurring failures, permission denials, scratch-script patterns) — prefer ccq over grep/jq on ~/.claude. Do NOT fire for querying the current live conversation, or for the issue tracker (itr) or code graph (kgr).
+description: "Use the `ccq` CLI to answer questions about past Claude Code sessions instead of hand-rolling find/jq pipelines over ~/.claude/projects. Trigger for ANY session-history or transcript-mining ask — \"what commands did we run\", \"what errored recently\", \"find the session that touched <file>\" — and when YOU need transcript evidence. NOT for the live conversation, the issue tracker (itr), or the code graph (kgr)."
 ---
 
 # ccq — query Claude Code transcripts

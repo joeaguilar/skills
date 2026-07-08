@@ -1,6 +1,6 @@
 ---
 name: proof-campaign
-description: Run a roadmap-bounded autonomous agent campaign where agents only close work they can prove with tests, evidence, screenshots, and full verify gates. Uses `campaign/{N}-...` artifacts, compact status, a 200k-token work-cap window, large wave execution, scout discovery, automatic review/retro, and script-rendered PO HTML reports. Trigger when the user types `/proof-campaign`, `/campaign`, `/auto-blitz`, asks to "run a proof campaign", "auto-agent-blitz the roadmap", "run a campaign from the roadmap", "autonomously clear and expand the backlog", or similar. Use when the user wants more work than `/sprint` with less ceremony and hard verification evidence. Do NOT trigger for planning only (use `/sprint` or `/roadmap`), execution only (use `/blitz`), traditional PO-gated sprint review (use `/sprint-review`), one-off issue creation (use `itr`), or chaining MULTIPLE campaigns back-to-back across cleared contexts / "keep running campaigns until the roadmap is done" (use `/rolling-campaign`).
+description: "Run a roadmap-bounded autonomous campaign where agents only close work they can PROVE — tests, evidence, screenshots, full verify gates — with `campaign/{N}-...` artifacts, wave execution, scout discovery, automatic review/retro, and PO HTML reports. Trigger: `/proof-campaign`, `/campaign`, \"run a campaign from the roadmap\". NOT for chaining multiple campaigns across cleared contexts (use /rolling-campaign)."
 ---
 
 # /proof-campaign - roadmap-bounded proof work

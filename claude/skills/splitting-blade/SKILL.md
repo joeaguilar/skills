@@ -1,6 +1,6 @@
 ---
 name: splitting-blade
-description: "Take ONE task too big to slice in a single pass, split it into pieces, and recurse — if a piece is still too big, split THAT piece again, down to small base-case leaves; solve every leaf with one agent; fuse the leaves up into their parents, parent into parent, to the root. Autonomous: infers the split, recurses under hard depth/fanout clamps, fuses up without a gate. Trigger when the user types `/splitting-blade`, or asks to \"recursively decompose this\", \"divide and conquer this big thing\", \"break this down then break the parts down\", \"split this hierarchically\", \"tree out this task and solve the leaves\", \"recurse on this until the pieces are small\", or \"fuse the sub-results back up\". Works for research, large designs/specs, audits, and big refactors (`--write`). Do NOT trigger for a one-level / single-pass cut into aspects struck once and synthesized flat (that is a flat decomposition fan, not a recursion — no piece gets re-split), or for a fixed linear pipeline of named stages where each feeds the next (that is a relay)."
+description: "Recursively decompose ONE oversized task — split, re-split pieces still too big down to small leaves, solve each leaf with one agent, fuse results back up to the root under hard depth/fanout clamps (`--write`). Trigger: `/splitting-blade`, \"recursively decompose this\", \"divide and conquer, then split the parts again\". NOT for a one-level flat cut (use /fan-of-agents)."
 ---
 
 # /splitting-blade — cut the cut, and cut again

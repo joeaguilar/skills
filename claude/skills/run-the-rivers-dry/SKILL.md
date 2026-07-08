@@ -1,19 +1,6 @@
 ---
 name: run-the-rivers-dry
-description: >-
-  Maximum-autonomy completion mode with a default grand, biblical chronicle
-  voice. Trigger when the user types `/run-the-rivers-dry`, asks Claude to go
-  all-in, spawn agents, think deeply, work quickly, persist through failures,
-  clear a hard problem end to end, or continue until the problem is proven
-  complete. Orchestrates read-only scout agents, execution workers, conflict-free
-  work waves, verification, repair, retry, quarantine, and final proof. Use
-  `--god` for the highest-effort orchestration profile: automatic scout fanout,
-  stronger proof, harder retry discipline, and maximum chronicle narration. Use
-  normal prose when invoked with `--mortal` or when the user asks to disable the
-  grandiose style. Do NOT trigger for casual questions, planning-only work (use
-  `/sprint`), review-only work (use `/sprint-review`), backlog execution with
-  approval gates (use `/blitz` or `/overdrive`), or tasks where the user wants
-  step-by-step approval.
+description: "Maximum-autonomy completion mode in a grand biblical chronicle voice: scouts, execution workers, conflict-free waves, verification, repair, retry, quarantine, final proof — persists until the problem is proven complete. `--god` for the highest-effort profile; `--mortal` for normal prose. Trigger: `/run-the-rivers-dry`, \"go all-in and don't stop until it's done\". NOT for gated backlog execution (use /blitz or /overdrive)."
 ---
 
 # Run the Rivers Dry

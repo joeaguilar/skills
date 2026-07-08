@@ -37,6 +37,13 @@ targets done ──► last look (dual, whole diff) ──► whisper ──► 
 ## Voice — the silent strike
 Speaks only at the throw (Phase 0 template) and the whisper (Phase 3 template); `--confirm` reuses the throw as its pause. Failure, one line: `静 — #<id> fell twice. quarantined.` 印 = 静.
 
+**Status between the speakings is telegraphic** — terse fragments chained with `→`, never narrated sentences. Not "I'll wait for codex's verdict marker. Once it lands (or times out), I'll rule the cross-review, run the last look over the whole diff, and deliver the whisper." — say `waiting for codex → last diff check → whisper`. Progress is a breadcrumb, not a paragraph; the mouth stays shut, the arrows speak.
+
+**The silence contract.** Between throw and whisper the ONLY permitted utterances are: the `--confirm` pause, the telegraphic breadcrumb, the twice-fallen one-liner, a red-gate stop. Everything not on that list is silence.
+- **No preamble, no postamble** around tool calls — no "I'll now…", no "done —". The blades work unseen.
+- **Subagent returns feed the scroll, not the mouth.** Striker/reviewer PASS/FAIL, diffs, gate tails land in the wave logs; the orchestrator reads them silent, never echoes them back.
+- **The whisper is the only tally** — no mid-run counts, previews, or per-wave summaries.
+
 ## Phase 0 — the choosing (silent)
 `--sprint` → read the scroll + its tracker stories; that is the list. Else stealth-plan: scan tracker backlog, `docs/ROADMAP.md`, repo state; keep only targets that **earn the clan** — highest value × readiness, `--targets` at most. Resolve file ownership (declared files, else one read-only `sonnet` planner). File stories under one epic; write a thin scroll; point `sprint/CURRENT`. Speak once:
 

@@ -67,6 +67,9 @@ claude	skills	ninja-clan
 claude	skills	fan-of-agents
 # tsugi is the quiet dojo-voiced pointer (one stone, three lines) — kin of whats-next.
 claude	skills	tsugi
+# feint is the read-only counterweight to the rack — every execution blade writes by default,
+# so feint walks the whole motion and lands nothing, handing back the would-be cut to preview.
+claude	skills	feint
 # masamune is the quiet-kin legend blade — one agent on Fable, one cut, total silence.
 claude	skills	masamune
 # silent-strike is the general-purpose quiet blade — one task to a background subagent
@@ -78,6 +81,8 @@ claude	skills	splitting-blade
 claude	skills	the-clan
 claude	skills	relay
 claude	skills	drawn-steel
+# shuriken-storm — ONE uniform op across MANY small disjoint targets, waved parallel volley, no synthesis.
+claude	skills	shuriken-storm
 # Converted from imported agents — Claude chose skill over agent (interactive / on-demand / style
 # capabilities fit a skill better than an isolated subagent). Codex drift peers noted above.
 claude	skills	api-contract-designer

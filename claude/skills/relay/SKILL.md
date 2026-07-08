@@ -1,6 +1,6 @@
 ---
 name: relay
-description: "Run ONE task as an ordered chain of specialist stages — research → design → build → test — each stage's output feeding the next toward a final deliverable (`--write` for build stages). Trigger: `/relay`, \"run this as a pipeline\", \"one stage feeds the next\". NOT for parallel facets synthesized at once (use /fan-of-agents)."
+description: "Run ONE task as an ordered chain of specialist stages — research → design → build → test — each stage's output feeding the next toward a final deliverable — build/code stages land their edits on disk. Trigger: `/relay`, \"run this as a pipeline\", \"one stage feeds the next\". NOT for parallel facets synthesized at once (use /fan-of-agents)."
 ---
 
 # /relay — pass the scroll, hand to hand, each seal a stage
@@ -23,14 +23,13 @@ Deliver .... baton's journey (each stage ✓ + what it added) + final deliverabl
 ## Slash invocation
 
 ```
-/relay <task> [--stages="research,design,build,test"] [--write] [--out=path] [--confirm]
+/relay <task> [--stages="research,design,build,test"] [--out=path] [--confirm]
 ```
 
 | Arg | Default | Meaning |
 |---|---|---|
 | `<task>` | — | The single task to chain. Inline prose, a spec path, or "the thing we just discussed". |
 | `--stages="a,b,c"` | inferred | The ordered chain — comma-separated specialist stages. Unset → orchestrator infers the stages from the task. |
-| `--write` | off | The build/code stages may **edit files**. Off → read-only, every stage returns a scroll only (no disk edits). Never commits. |
 | `--out=path` | conversation | Persist the final deliverable to `path`. Default → deliver inline. |
 | `--confirm` | off | The **only** gate — print the chain and wait before the first stage. Default runs without asking. |
 
@@ -51,7 +50,7 @@ Speak twice: when the scroll is thrown, when it reaches the end (or when the bat
 **Throw** (Phase 0, on starting the chain):
 ```
 伝  the scroll begins · {K} stages, hand to hand
-    {S1} → {S2} → … → {SK}                                 [read │ write→out=path]
+    {S1} → {S2} → … → {SK}                                 [→ out=path]
     last seal is the deliverable.
 ```
 
@@ -83,7 +82,7 @@ Speak twice: when the scroll is thrown, when it reaches the end (or when the bat
 
 ## Phase 0 — Frame (no gate)
 
-Resolve `--stages`, `--write`, `--out`, `--confirm`. Read the task once.
+Resolve `--stages`, `--out`, `--confirm`. Read the task once.
 
 **Lay the chain** — order the work as a dependent sequence where each stage needs the prior stage's result:
 
@@ -129,10 +128,12 @@ PRODUCE — what stage {n+1} ({next stage role}) needs as ITS input:
  │ "a test report: what passed, what failed, evidence"}
 {if n == K: "You are the last runner — your output IS the final deliverable."}
 
-{--write, build/code stages only:}
-You MAY edit files to do your stage's work. Edit only what your stage needs; leave
-the rest clean. Do NOT commit, push, branch, or PR — the user reviews. Note every
-path you touched so the next stage can verify it.
+{if this stage builds/codes — has a disk surface:}
+You edit files to do your stage's work — that IS your deliverable. Edit only what
+your stage needs; leave the rest clean. Do NOT commit, push, branch, or PR — the
+user reviews. Note every path you touched so the next stage can verify it.
+{if this stage researches/designs — no disk surface: your scroll of words IS the
+deliverable; nothing to land.}
 
 Close with:
   - Status: complete | failed (+ why) — be honest; a false "complete" poisons every
@@ -165,8 +166,8 @@ After each stage returns, the orchestrator inspects the scroll **before passing 
 Terse. Emit, in order:
 
 - **Return** template (chain complete) — the per-stage `✓` journey, ending at the last stage whose output **is** the deliverable. (Or, if the chain broke, the **Dropped baton** template — and stop here.)
-- **The final deliverable** — the last stage's output (to `--out` if set, else inline; on disk if `--write`).
-- **`--write` next step** — review and commit (the skill never commits).
+- **The final deliverable** — the last stage's output (to `--out` if set, else inline; a build/code final stage's edits already landed on disk, a research/design final stage's scroll is the deliverable).
+- **Next step** — review and commit (the skill never commits).
 
 The deliverable is the scroll that survived the whole chain — not a synthesis of stages, not a vote. Each stage already transformed it; the end is the product.
 
@@ -178,6 +179,7 @@ The deliverable is the scroll that survived the whole chain — not a synthesis 
 - **Transform-through, not synthesize.** The scroll is carried forward and reshaped at each stage; the last stage's output IS the deliverable. No merge step — the chain itself is the merge.
 - **The hand-off is the brain.** Stage N's output is stage N+1's input, verbatim. The orchestrator owns that seam and keeps each stage blind to all but its input + required output.
 - **A broken link is a real stop.** This blade does not tolerate misses. A failed stage breaks the chain; never feed garbage downstream. One retry, then halt.
+- **No disk surface, nothing to land.** A chain whose final stage has no disk surface (research, a design in words) has nothing to land — the final scroll is the deliverable, not a miss.
 - **Fire without a gate; run to chain-complete or a dropped baton.** `--confirm` is the only pause; otherwise run straight through the stages.
 
 ## Don't
@@ -188,4 +190,4 @@ The deliverable is the scroll that survived the whole chain — not a synthesis 
 - Don't fabricate, skip, or paper over a failed stage — one retry, then stop and surface the dropped baton.
 - Don't let a stage solve the whole task — each does only its one transform on the carried work.
 - Don't add stages the task doesn't need, and don't chain work that isn't actually dependent.
-- Don't commit, push, or PR in `--write` mode — the user reviews and commits.
+- Don't commit, push, or PR — the user reviews and commits.

@@ -38,6 +38,7 @@ fan-of-agents = `aspect · parallel · synthesize · ≥1-lands`. Every other bl
 | `scout-strike` | 偵 | by-phase · recon→exploit · strike-output · strike-done | unfamiliar terrain — map cheap, then one focused strike |
 | `drawn-steel` | 抜 | by-cost · serial-escalate · first-tier-passes · ladder | cost-aware — cheapest hand first, draw steel only on failure |
 | `pre-mortem` | 死 | by-failure-mode · parallel · ranked-guardrails · space-covered | before a risky plan — work backward from "it failed" |
+| `shuriken-storm` | 嵐 | target-per-shuriken · waved-volley · independent-land · all-thrown | ONE uniform op across MANY small disjoint targets — no synthesis, misses re-throw |
 
 ### The quiet kin — off-rack blades
 
@@ -46,11 +47,12 @@ Not every blade in the dojo is a four-knob orchestration cut. These follow the f
 | Blade | 印 | Nature | Draw it when |
 |---|---|---|---|
 | `tsugi` | 次 | quiet pointer — one stone, three lines, read-only, never begins work | "next?" deserves a breath, not a report |
+| `feint` | 虚 | the empty attack — walk the whole motion read-only, draft the would-be change in full, land nothing | you want to see the cut without making it — the one read-only blade |
 | `ninja-clan` | 静 | stealth campaign — choose targets (or take `--sprint`) → model-routed cross-reviewed waves → last look → whisper review | the whole backlog gamut, run in silence end-to-end |
 | `masamune` | 正 | the legend — ONE agent on the finest steel (Fable), whole task, one cut, no retry, silence between draw and cut | the task deserves the best blade, not many blades |
 | `silent-strike` | 黙 | general-purpose quiet blade — whole task thrown to ONE background subagent, model-routed (sonnet default), total silence, one line back | the task should just be done quietly, on the cheapest blade that clears the bar |
 
-They compose the obvious way: tsugi names the stone; ninja-clan sends the clan at it; masamune is what you draw when the stone deserves one perfect cut. silent-strike is what you throw when it just needs doing quietly, on cheap steel.
+They compose the obvious way: tsugi names the stone; ninja-clan sends the clan at it; masamune is what you draw when the stone deserves one perfect cut. silent-strike is what you throw when it just needs doing quietly, on cheap steel. **feint is the read-only counterweight to the whole rack** — every execution blade now writes by default, so feint is how you preview the cut without landing it.
 
 ### Composition — blades wrap blades
 
@@ -81,7 +83,7 @@ Every blade obeys one contract. Forge to it; the rack stays consistent.
 4. **Caveman register.** Compress the mouth, keep the brain byte-for-byte (commands, thresholds, flags, the emitted per-agent prompt template, the 4-knob settings). Method: `../COMPRESSION.md`. Fragments + arrows; the contract loses nothing.
 5. **Voice — speak twice, silent between.** A `## Voice` section with in-character templates. The skill surfaces only at the **throw** and the **return** — no progress chatter. `{slots}` are the contract; the flavor is mouth. Each blade carries its own signature 印 (see the rack).
 6. **Right-size & clamp.** Default and clamp on the fan-width flag (fan-of-agents: 2–5, default 5; synthesis/monitoring degrades past ~5, and wide fan-outs trip API rate-limit cascades). State the clamp.
-7. **Never commit.** `--write` blades edit files in disjoint sets (overlapping edits clobber); the orchestrator never commits/pushes/PRs — the user reviews.
+7. **Write by default, never commit.** Execution blades edit files in disjoint sets (overlapping edits clobber) simply by being invoked — no flag gates the write; the orchestrator never commits/pushes/PRs — the user reviews. Read-only is **not** a mode of an execution blade — it is its own blade (`feint` 虚, the empty attack). Pure-analysis blades (`pre-mortem`, `tsugi`, and read phases like `scout-strike`'s scouts) touch nothing by nature.
 
 ### The skeleton (fill the ⟨slots⟩)
 
@@ -110,9 +112,10 @@ description: ⟨one-line what-it-does⟩. ⟨ninja posture line⟩. Trigger when
 |---|---|---|
 | `<task>` | — | … |
 | `--⟨width⟩=N` | ⟨default⟩ | ⟨clamp⟩ |
-| `--write` | off | edits files (disjoint sets) · off → read-only |
 | `--out=path` | conversation | persist deliverable |
 | `--confirm` | off | the ONLY gate — print plan, wait |
+
+**No `--write` flag.** Execution blades write by default — invoking the blade lands the change on disk (disjoint file sets; never commits). There is no read-only mode on an execution blade; read-only is its own blade (`feint` 虚). A blade whose task has no disk surface (a pure question, an analysis) simply returns its answer — nothing to land is not a miss.
 
 ## Roles & artifacts
 - **You** — throw the task. No live decisions unless `--confirm`.

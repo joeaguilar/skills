@@ -1,6 +1,6 @@
 ---
 name: first-blood
-description: "Race N rival strategies (default 3, `--runners=N`) at ONE whole task in parallel — first to clear the bar wins, the rest are abandoned; `--write` lands the winner. Trigger: `/first-blood`, \"race a few approaches\", \"take the first that works\". NOT to wait for all attempts and vote (use /hundred-blades) or to escalate serially by cost (use /drawn-steel)."
+description: "Race N rival strategies (default 3, `--runners=N`) at ONE whole task in parallel — first to clear the bar wins, the rest are abandoned; the winner's change lands on disk. Trigger: `/first-blood`, \"race a few approaches\", \"take the first that works\". NOT to wait for all attempts and vote (use /hundred-blades) or to escalate serially by cost (use /drawn-steel)."
 ---
 
 # /first-blood — loose the rivals, take whoever draws first blood
@@ -24,7 +24,7 @@ Deliver .... first blood — winner + the bar it cleared + how many abandoned
 ## Slash invocation
 
 ```
-/first-blood <task> [--runners=N] [--bar="..."] [--first|--best] [--write] [--out=path] [--confirm]
+/first-blood <task> [--runners=N] [--bar="..."] [--first|--best] [--out=path] [--confirm]
 ```
 
 | Arg | Default | Meaning |
@@ -34,7 +34,6 @@ Deliver .... first blood — winner + the bar it cleared + how many abandoned
 | `--bar="..."` | inferred | What "winning" means — the acceptance criterion / test the winner must clear. Absent → infer the strictest reasonable bar and **say so** in the Throw. |
 | `--first` | on | First runner past the bar wins — **cancel the rest** the instant it lands. |
 | `--best` | off | Let all runners finish to a soft deadline, then take the **best** that cleared the bar (overrides `--first`). |
-| `--write` | off | The winner's change lands on disk (disjoint file set). Off → winner returns its artifact, no edits. |
 | `--out=path` | conversation | Persist the winner + race map. Default → deliver inline. |
 | `--confirm` | off | The only gate — print the race plan and wait before loosing. Default fires without asking. |
 
@@ -56,7 +55,7 @@ Speak twice: when the runners are loosed, when first blood is drawn. Silent thro
 ```
 韋  {N} runners loosed · race to the bar · take {first │ best}
     bar: {the acceptance criterion}                        [{inferred │ given}]
-    paths: {S1 strategy} · {S2 strategy} · … · {SN strategy}   [{answer │ write}]
+    paths: {S1 strategy} · {S2 strategy} · … · {SN strategy}   [write]
 ```
 
 **The pause** (only `--confirm`):
@@ -84,13 +83,13 @@ Speak twice: when the runners are loosed, when first blood is drawn. Silent thro
 
 ## Phase 0 — Frame (no gate)
 
-Resolve `--runners` (clamp 2–5), `--bar`, `--first`/`--best` (`--best` overrides), `--write`, `--out`, `--confirm`. Read the task once.
+Resolve `--runners` (clamp 2–5), `--bar`, `--first`/`--best` (`--best` overrides), `--out`, `--confirm`. Read the task once.
 
 **Set the bar** — what does "winning" mean? The concrete acceptance criterion every runner self-checks against: the test that must pass, the property that must hold, the requirement that must be met. A race with no bar can't name a winner. `--bar` set → use it verbatim. Absent → infer the **strictest reasonable** bar from the task and **say so** in the Throw (don't pause — `--confirm` is the only pause).
 
 **Pick the rival strategies** — `--runners` *distinct approaches to the WHOLE task* (not slices of it). Each path should be a genuinely different bet — different algorithm, different library/tool, different framing, different data path, different design stance — so that if one approach is a dead end the others aren't. Don't manufacture near-duplicate paths; fewer real rivals beats N look-alikes. Name each path in one phrase.
 
-**`--write`** → assign each runner a **disjoint** file set, since rivals will race over the same change; the winner's set is what lands, the losers' edits are discarded. Files that can't be split cleanly → keep runners read-only and apply the winner's diff yourself at the end.
+**Disjoint file sets** → runners write by default, so assign each runner a **disjoint** file set unconditionally, since rivals race over the same change; the winner's set is what stays on disk, the losers' edits are discarded. Disjoint sets are mandatory always — every runner writes. Files that can't be split cleanly → the runners can't safely share; fold overlapping runners together or reduce the field until each has its own set.
 
 Emit the **Throw** template, then loose. `--confirm` → emit **The pause** and wait.
 
@@ -128,21 +127,20 @@ Before you report success, verify your result actually clears this bar — run t
 test, check the property, walk the requirement. A confident-but-unchecked claim is
 worse than an honest miss.
 
-{--write mode only:}
 Files you OWN (edit only these): {owned file set}
 Do NOT edit/move/reformat anything outside this set — a rival is racing in nearby
 files and a stray edit clobbers the eventual winner. Do NOT commit, push, branch, or PR.
 
 Report AS SOON AS you have a verdict — don't sit on a clearing result:
   - Cleared: YES → you cleared the bar | NO → you could not.
-  - Result: your answer / artifact {in the form the task asks; or the on-disk change + path under --write}.
+  - Result: the on-disk change + path {in the form the task asks}.
   - Bar-check: the concrete evidence you cleared it (test output, the property shown to hold), or
     — if NO — exactly what the bar you fell short of, and how far.
   - Confidence: high | medium | low.
 Your final message IS your result — data, not chat. Be self-contained.
 ```
 
-`--write` → file sets disjoint. Orchestrator never commits — user reviews and commits.
+File sets disjoint — every runner writes. Orchestrator never commits — user reviews and commits.
 
 ---
 
@@ -164,8 +162,8 @@ Event-driven. Watch the runners as they report.
 Terse. Emit, in order:
 
 - **First blood** template (see Voice) — the winning strategy, the bar it cleared, how many were abandoned, the runner-up.
-- **The winner** — its result/artifact (to `--out` if set; on disk if `--write`). One deliverable — the winner's, not a blend of rivals.
-- **`--write` next step** — review and commit (the skill never commits). The losers' edits, if any, were discarded; only the winner's set landed.
+- **The winner** — its result/artifact (to `--out` if set; on disk). One deliverable — the winner's, not a blend of rivals.
+- **Next step** — review and commit (the skill never commits). The losers' edits were discarded; only the winner's set landed.
 
 Report the bar honestly — "cleared the bar" means *this bar, this race*, not "best possible". If the win was marginal or the bar was inferred, say so.
 
@@ -176,6 +174,7 @@ Report the bar honestly — "cleared the bar" means *this bar, this race*, not "
 - **Rival strategies, not slices.** Every runner gets the whole task by a *different* approach — the bet is on which path lands, so make the paths genuinely distinct.
 - **The race is parallel; the win is first.** All rivals run at once; the first to clear the bar wins and the rest are cut. (`--best` trades a little latency for picking the strongest crosser.)
 - **The bar names the winner.** No bar, no race — set it concrete, self-check against it, never crown an unchecked claim.
+- **Nothing to land is not a miss.** A task with no disk surface (a pure question, an analysis) has nothing to land — the winner's answer is the deliverable, not a miss.
 - **Losers are abandoned, not mourned.** A fallen or cancelled runner is the cost of speculation — wasted work bought certainty and latency. No retry, no respawn.
 - **Fire without a gate; run to first blood.** `--confirm` is the only pause. Only hard stop: zero runners cleared the bar.
 - **Right-size the field.** Default 3, clamp 2–5 — more rivals cover more angles but throw away more work.
@@ -188,6 +187,6 @@ Report the bar honestly — "cleared the bar" means *this bar, this race*, not "
 - Don't slice the task across runners — every runner gets the whole task, by a different approach.
 - Don't crown a runner that didn't show it cleared the bar — an unchecked "done" is not first blood.
 - Don't retry, resume, or respawn a fallen runner — it just lost the race.
-- Don't give two `--write` runners a shared file — overlapping edits clobber the eventual winner.
-- Don't commit, push, or PR in `--write` mode — only the winner's set lands; the user reviews and commits.
+- Don't give two runners a shared file — overlapping edits clobber the eventual winner.
+- Don't commit, push, or PR — the user reviews and commits.
 - Don't exceed 5 runners — past that the wasted work outweighs the extra angle.

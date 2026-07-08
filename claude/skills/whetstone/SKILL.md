@@ -1,6 +1,6 @@
 ---
 name: whetstone
-description: "Grind ONE artifact sharp over passes — draft → critique → revise — until it meets the bar or stops improving; cooperative critic, keeps the best version each pass (`--write`). Trigger: `/whetstone`, \"polish this\", \"iterate on this draft\", \"keep improving until it's good\". NOT for adversarial break-it verification (use /shadow-duel)."
+description: "Grind ONE artifact sharp over passes — draft → critique → revise — until it meets the bar or stops improving; cooperative critic, keeps the best version each pass. When the artifact is a file, the sharpened version lands on disk by default. Trigger: `/whetstone`, \"polish this\", \"iterate on this draft\", \"keep improving until it's good\". NOT for adversarial break-it verification (use /shadow-duel)."
 ---
 
 # /whetstone — one blade, ground sharp pass after pass
@@ -24,7 +24,7 @@ Deliver .... the artifact + what each pass improved + bar met? (or the gap left)
 ## Slash invocation
 
 ```
-/whetstone <artifact> [--passes=N] [--bar="..."] [--critic] [--write] [--out=path] [--confirm]
+/whetstone <artifact> [--passes=N] [--bar="..."] [--critic] [--out=path] [--confirm]
 ```
 
 | Arg | Default | Meaning |
@@ -33,7 +33,6 @@ Deliver .... the artifact + what each pass improved + bar met? (or the gap left)
 | `--passes=N` | `3` | Max grind passes. **Clamp 1–6** (`>6` → clamp 6 + warn: diminishing returns; `<1` → bump 1). Loop stops early on bar-met or convergence. |
 | `--bar="..."` | inferred | The criteria the artifact must meet — what "sharp enough" means. Absent → infer reasonable quality criteria for the artifact type and **state them** in the Throw. |
 | `--critic` | separate critic | Spawn a **separate** critic agent each pass for independent eyes (default — independence makes the critique honest). Turn the flag *off* only to have the orchestrator self-critique. |
-| `--write` | off | The artifact is a file; revisions land on disk. Off → revised versions returned inline only. |
 | `--out=path` | conversation | Persist the converged artifact. |
 | `--confirm` | off | The only gate — print the grind plan and wait before the first pass. |
 
@@ -56,7 +55,7 @@ Speak twice: when the blade meets the stone, when the edge is set. Silent throug
 ```
 砥  one blade to the stone · up to {passes} passes
     grinding: {one-line artifact}
-    sharp = {the bar}                                      [polish │ write]
+    sharp = {the bar}                                      [write]
 ```
 
 **The pause** (only `--confirm`):
@@ -84,7 +83,7 @@ Speak twice: when the blade meets the stone, when the edge is set. Silent throug
 
 ## Phase 0 — Frame (no gate)
 
-Resolve `--passes` (clamp 1–6), `--bar`, `--critic` (default: separate critic), `--write`, `--out`, `--confirm`. Read the artifact once; this is the **prior best** going into pass 1.
+Resolve `--passes` (clamp 1–6), `--bar`, `--critic` (default: separate critic), `--out`, `--confirm`. Read the artifact once; this is the **prior best** going into pass 1.
 
 **Set the bar** — the concrete criteria the artifact must meet for "sharp enough": the properties it must have, the standard it's judged against, what a sharp version looks like vs a dull one. `--bar` set → use it verbatim. Absent → infer reasonable criteria for the artifact type (prose: clear · tight · correct · well-ordered; a function: correct · readable · handles edges · no waste; a spec: complete · unambiguous · testable) and **state them** in the Throw. A loop with no bar can't tell sharp from spinning.
 
@@ -134,7 +133,7 @@ Artifact (current version): {current best}
 Critique to apply: {improvements + keep list}
 Bar: {bar}
 Return the revised artifact in full + a 1-line note on what this pass changed.
-{--write: apply the revision to its file(s) — same file, no commit/push.}
+When the artifact is a file, apply the revision to its file(s) — same file, no commit/push.
 ```
 
 **c. Keep the better.** Compare the revised version to the prior best **against the bar**.
@@ -143,7 +142,7 @@ Return the revised artifact in full + a 1-line note on what this pass changed.
 
 **Stop** when: the best version **meets the bar** (→ done, stop early) · a pass yields **no meaningful gain** over the prior best (converged — grinding a dull stone; stop) · `--passes` **exhausted** (→ deliver best; if it still misses the bar, that's the **No edge** case). Two regressions in a row also = converged — stop.
 
-`--write` → only the best version stays on disk; if a pass regresses, restore the prior best to the file. Orchestrator never commits.
+When the artifact is a file, only the best version stays on disk by default; if a pass regresses, restore the prior best to the file. When the artifact has no file on disk — pure prose, a spec, a design in words — the sharpened text is returned inline; that is the deliverable's natural form, not a miss. Orchestrator never commits.
 
 ---
 
@@ -160,8 +159,8 @@ Honesty on the bar: if the best version meets it, say met; if passes ran out sho
 Terse. Emit, in order:
 
 - **Return** template (or **No edge** if passes spent and the bar's unmet) — `{used}/{passes}`, bar met?, what each pass sharpened, which pass was best.
-- **The converged artifact** — the single best version (to `--out` if set; on disk if `--write`).
-- **`--write` next step** — review and commit (the skill never commits).
+- **The converged artifact** — the single best version (to `--out` if set; on disk when the artifact is a file; returned inline when it has no file).
+- **Next step** — review and commit (the skill never commits).
 
 ---
 
@@ -170,6 +169,7 @@ Terse. Emit, in order:
 - **One blade, many passes.** The split is by iteration — same artifact, ground again and again — not by aspect or by redundant attempts. The loop is the asset.
 - **The critic helps, it does not kill.** Every pass looks for concrete fixes that make the next version sharper. A critic trying to refute the artifact is the wrong tool.
 - **Never ship a regression.** Keep the best version every pass; a worse revision is discarded, not delivered.
+- **No file, no miss.** An artifact with no file on disk (prose, a spec, a design in words) has nothing to land — the sharpened text returned is the deliverable, not a miss.
 - **Stop when it stops sharpening.** Bar met, or no meaningful gain — quit. Don't spin a dull stone for the remaining passes.
 - **Independence sharpens.** A separate critic each pass sees what the reviser can't; default to it.
 - **Right-size the grind.** Default 3, clamp 1–6 — past 6 the stone takes off more than it sets.
@@ -183,5 +183,5 @@ Terse. Emit, in order:
 - Don't keep grinding once the bar is met or a pass adds nothing — stop on convergence.
 - Don't over-revise: a pass changes what the critique calls out and preserves the rest.
 - Don't slice the artifact across agents or run independent attempts — this is one artifact, one loop.
-- Don't commit, push, or PR in `--write` mode — the user reviews and commits.
+- Don't commit, push, or PR — the user reviews and commits.
 - Don't exceed 6 passes — diminishing returns, and the stone starts grinding away what was good.

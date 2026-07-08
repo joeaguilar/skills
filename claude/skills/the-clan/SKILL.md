@@ -1,6 +1,6 @@
 ---
 name: the-clan
-description: "Route the parts of ONE mixed-discipline task to specialists by type — the SQL part to a SQL hand, the CSS part to a frontend hand — in parallel, then assemble the outputs (`--write`). Trigger: `/the-clan`, \"send each part to the right specialist\", \"mixture of experts\". NOT to cut a task into uniform aspects for identical generalists (use /fan-of-agents)."
+description: "Route the parts of ONE mixed-discipline task to specialists by type — the SQL part to a SQL hand, the CSS part to a frontend hand — in parallel, each editing files on disk by default, then assemble the outputs. Trigger: `/the-clan`, \"send each part to the right specialist\", \"mixture of experts\". NOT to cut a task into uniform aspects for identical generalists (use /fan-of-agents)."
 ---
 
 # /the-clan — each task to the shinobi whose art fits
@@ -23,7 +23,7 @@ Deliver .... the assembled whole + 1-line which-art-handled-which-part map
 ## Slash invocation
 
 ```
-/the-clan <task> [--specialists="a,b,c"] [--router] [--write] [--out=path] [--confirm]
+/the-clan <task> [--specialists="a,b,c"] [--router] [--out=path] [--confirm]
 ```
 
 | Arg | Default | Meaning |
@@ -31,7 +31,6 @@ Deliver .... the assembled whole + 1-line which-art-handled-which-part map
 | `<task>` | — | The one heterogeneous task. Inline prose, a spec path, or "the thing we just discussed". |
 | `--specialists="a,b,c"` | router proposes | The roster of specialist roles. Unset → the router **infers** the roster from the parts it finds (one art per part type). Set → route only into these arts; a part that fits none is unhandled. |
 | `--router` | orchestrator classifies | Spawn a **separate** classifier agent to do the routing (independence over speed). Default → the orchestrator reads and routes itself. |
-| `--write` | off | Specialists may **edit files** — **disjoint file sets**, one art per set. Off → read-only, specialists return reports/artifacts only. |
 | `--out=path` | conversation | Persist the assembled whole to `path`. Default → deliver inline. |
 | `--confirm` | off | The **only** gate — print the routing plan and wait before dispatch. Default fires without asking. |
 
@@ -51,7 +50,7 @@ Speak twice: when the gate opens and the shinobi go, when the parts return assem
 
 **Throw** (Phase 0, on dispatch — the roster + what routes where):
 ```
-門  the gate opens · {K} arts to {K} parts                  [read │ write→out=path]
+門  the gate opens · {K} arts to {K} parts                  [write→out=path]
     {part-1} → {art-1}   ·   {part-2} → {art-2}   ·   …   ·   {part-K} → {art-K}
 ```
 
@@ -81,7 +80,7 @@ Speak twice: when the gate opens and the shinobi go, when the parts return assem
 
 ## Phase 0 — Frame (no gate)
 
-Resolve `--specialists`, `--router`, `--write`, `--out`, `--confirm`. Read the task once.
+Resolve `--specialists`, `--router`, `--out`, `--confirm`. Read the task once.
 
 **Classify by type** — the distinguishing brain. Walk the task and find its **parts**, each a piece that needs a *genuinely different* art:
 
@@ -144,7 +143,6 @@ YOUR PART — {part title}, routed to you because it needs {art}:
 OTHER PARTS (other arts own these — don't touch them):
 {the other part→art rows — what is NOT yours}
 
-{--write mode only:}
 Files you OWN (edit only these): {owned file set for this art}
 Do NOT edit/move/reformat anything outside this set — a sibling art is in it now and a
 stray edit or project-wide formatter clobbers their work. Need a change in another art's
@@ -163,7 +161,7 @@ Close with:
 Your final message IS your handled part — return data, not chat. Be self-contained.
 ```
 
-`--write` → file sets disjoint, one art per set. Orchestrator never commits — user reviews and commits.
+File sets disjoint, one art per set — always. Orchestrator never commits — user reviews and commits.
 
 ---
 
@@ -190,7 +188,7 @@ Orchestrator's own work — not a hand-off. Fit the handled parts into the one w
 3. **Route each cross-part need** to the art that owns it (or note it as a seam if no art covered it).
 4. **Unhandled parts** — note any post left unmanned (missed specialist or no fitting art). Fill only if trivial and cheap; otherwise list it open. Don't re-dispatch — that's babysitting.
 
-`--write` → edits are already on disk; assembly = the seam-reconciliation pass + a unified change summary.
+Edits are already on disk; assembly = the seam-reconciliation pass + a unified change summary.
 
 ---
 
@@ -200,7 +198,7 @@ Terse. Emit, in order:
 
 - **Return** template (see Voice) — the `{handled}/{K}` part→art map, including any unmanned posts and `seams:`.
 - **The assembled whole** — the fitted result (to `--out` if set, else inline).
-- **`--write` next step** — review and commit (the skill never commits).
+- **Next step** — review and commit (the skill never commits).
 
 ---
 
@@ -209,6 +207,8 @@ Terse. Emit, in order:
 - **Split by type, not by aspect.** Each part needs a *different* art — that's the cut. Same-art pieces are one part; uniform identical agents are a different blade.
 - **Classify, then dispatch.** Read the whole, route each part to the art that fits, fire one specialist per matched part.
 - **Each part to the hand that fits it.** The SQL part to a SQL hand, the CSS part to a frontend hand — expertise matched, not generalists multiplied.
+- **Specialists write by default — disjoint file sets, one art per set.** Every hand lands its part on disk; the sets never overlap. Two arts in one file is the one edit that clobbers a sibling's work — keep them apart, always.
+- **Nothing to land is not a miss.** A part with no disk surface (a pure question, an analysis) has nothing to land — its answer is the deliverable, not a miss.
 - **Tolerate the empty post.** A missed specialist or an unroutable part leaves its part unhandled — noted, never healed. Assemble from what was handled.
 - **Assembly, not concatenation.** The deliverable fits the routed parts into one whole; K stapled parts is a failure.
 - **Right-size the clan.** Route only parts that truly need different arts. All one art → one specialist, not a manufactured clan.
@@ -222,6 +222,6 @@ Terse. Emit, in order:
 - Don't retry, resume, or respawn a missed specialist — its post stays unmanned, the part unhandled.
 - Don't block the assembly waiting on a straggler.
 - Don't let a specialist handle a part outside its art — each stays in its routed part.
-- Don't give two `--write` specialists a shared file.
+- Don't give two specialists a shared file.
 - Don't hand back K raw parts — always assemble into the whole.
-- Don't commit, push, or PR in `--write` mode — the user reviews and commits.
+- Don't commit, push, or PR — the user reviews and commits.

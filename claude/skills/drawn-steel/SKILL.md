@@ -1,6 +1,6 @@
 ---
 name: drawn-steel
-description: "Solve ONE task by climbing a cost ladder — cheapest approach first, escalate to a costlier rung only when the current rung fails the bar, stop the instant one passes (`--write` for code). Trigger: `/drawn-steel`, \"try cheap first then escalate\", \"use the least effort that works\". NOT to race approaches in parallel (use /first-blood) — drawn-steel is serial."
+description: "Solve ONE task by climbing a cost ladder — cheapest approach first, escalate to a costlier rung only when the current rung fails the bar, stop the instant one passes; the passing rung's change lands on disk. Trigger: `/drawn-steel`, \"try cheap first then escalate\", \"use the least effort that works\". NOT to race approaches in parallel (use /first-blood) — drawn-steel is serial."
 ---
 
 # /drawn-steel — soft hand first, draw the blade only when it fails
@@ -24,7 +24,7 @@ Deliver .... which rung drew blood + rungs climbed + the bar it cleared
 ## Slash invocation
 
 ```
-/drawn-steel <task> [--ladder="cheap,mid,expensive"] [--bar="acceptance test"] [--write] [--out=path] [--confirm]
+/drawn-steel <task> [--ladder="cheap,mid,expensive"] [--bar="acceptance test"] [--out=path] [--confirm]
 ```
 
 | Arg | Default | Meaning |
@@ -32,7 +32,6 @@ Deliver .... which rung drew blood + rungs climbed + the bar it cleared
 | `<task>` | — | The single task. Inline prose, a spec path, or "the thing we just hit". |
 | `--ladder="r1,r2,…"` | auto | The rungs cheapest→costliest. Absent → orchestrator proposes a ladder of increasing cost/care: one quick single agent → one careful focused agent → a multi-agent consensus/verify rung. **Clamp 2–4 rungs** (`<2` → not a ladder, bump 2; `>4` → clamp 4 + warn: too tall wastes the cheapness). |
 | `--bar="…"` | inferred | What "passes" means at every rung — the acceptance test/criteria. Absent → infer the strictest reasonable bar and **say so** (a ladder with no bar can't check between rungs — it's theater). |
-| `--write` | off | A passing rung's change lands on disk. Off → read-only, the rung returns a report/artifact only. |
 | `--out=path` | conversation | Persist the deliverable. |
 | `--confirm` | off | The ONLY gate — print the ladder + bar and wait before the first rung. Default fires without asking. |
 
@@ -53,7 +52,7 @@ Speak twice: when the ladder is set, when a rung draws blood (or the ladder runs
 **Throw** (Phase 0):
 ```
 抜  soft hand first — climb on failure · bar: {the bar}
-    rungs: {r1 cheap} → {r2 careful} → {r3 heavy}        [read │ write→out=path]
+    rungs: {r1 cheap} → {r2 careful} → {r3 heavy}        [write→out=path]
 ```
 
 **The pause** (only `--confirm`):
@@ -67,7 +66,7 @@ Speak twice: when the ladder is set, when a rung draws blood (or the ladder runs
 ```
 抜  drew blood at rung {k}/{total}: {rung name} cleared the bar.
     climbed: {r1 ✗ why → … → rk ✓}     ({k} of {total} rungs spent)
-    bar cleared: {the bar}                                  [read │ written→path]
+    bar cleared: {the bar}                                  [written→path]
 ```
 
 **Ladder exhausted** (every rung failed the bar — real failure):
@@ -81,7 +80,7 @@ Speak twice: when the ladder is set, when a rung draws blood (or the ladder runs
 
 ## Phase 0 — Frame (no gate)
 
-Resolve `--ladder`, `--bar`, `--write`, `--out`, `--confirm`. Read the task once.
+Resolve `--ladder`, `--bar`, `--out`, `--confirm`. Read the task once.
 
 **Set the bar** — the acceptance test every rung must clear (concrete: the property, cases, or criteria a passing answer satisfies). `--bar` set → use it. Absent → infer the strictest reasonable bar and **say so** in the Throw line. No bar = no between-rung check = not this blade.
 
@@ -119,7 +118,6 @@ What the cheaper rung(s) missed: {prior failure reasons, or "you are rung 1"}
 
 Do the task at your effort level, then SELF-CHECK against the bar before answering.
 
-{--write mode only:}
 If you PASS, apply your change to its file(s) — note the path, edits disjoint.
 Do NOT commit, push, branch, or PR. If you FAIL, return the attempt as a report only.
 
@@ -145,7 +143,7 @@ Your final message IS your rung — return data, not chat. Report pass/fail plai
 
 The merge is trivial by design: **the deliverable is the first rung that cleared the bar.** No vote, no synthesis across rungs — earlier rungs that failed are discarded (note only why they failed, for the climb map). If the ladder exhausted with none passing, the "merge" is the **best** rung (closest to the bar) plus what's still missing — surfaced as a failure, not laundered into a pass.
 
-`--write` → the passing rung's change is already on disk; merge = confirm it's the only applied change.
+The passing rung's change is already on disk; merge = confirm it's the only applied change.
 
 ---
 
@@ -154,8 +152,8 @@ The merge is trivial by design: **the deliverable is the first rung that cleared
 Terse. Emit, in order:
 
 - **Return** template (rung that drew blood + rungs climbed + bar cleared) — or **Ladder exhausted** if no rung passed.
-- **The deliverable** — the passing rung's result (to `--out` if set; on disk if `--write`). On exhaustion, the best rung's result + the explicit gap.
-- **`--write` next step** — review and commit (the skill never commits).
+- **The deliverable** — the passing rung's result (to `--out` if set; on disk). On exhaustion, the best rung's result + the explicit gap.
+- **Next step** — review and commit (the skill never commits).
 
 A pass means *this rung cleared this bar* — report which rung and how many you spent, so the cost is visible. Don't inflate a cheap-rung pass into more certainty than the bar earned.
 
@@ -169,6 +167,7 @@ A pass means *this rung cleared this bar* — report which rung and how many you
 - **Stop the instant a rung passes.** The first rung to clear the bar is the deliverable — do not keep climbing. Cost-awareness is the whole point.
 - **Spend effort only where the cheap path breaks.** Don't burn a heavy multi-agent rung on what one quick agent solves; don't under-power a hard task either — climb until it clears.
 - **Right-size the ladder.** Default the proposed rungs, clamp 2–4; a trivial task gets a short ladder, often one rung.
+- **Nothing to land is not a miss.** A task with no disk surface (a pure question, an analysis) has nothing to land — the passing rung's answer is the deliverable, not a miss.
 - **Fire without a gate; run to a pass or an exhausted ladder.** `--confirm` is the only pause.
 
 ## Don't
@@ -179,4 +178,4 @@ A pass means *this rung cleared this bar* — report which rung and how many you
 - Don't keep climbing after a rung passes — stop and deliver the cheapest rung that cleared the bar.
 - Don't build a tall ladder for a trivial task — clamp 2–4 rungs; fewer is fine.
 - Don't launder an exhausted ladder into a pass — surface the best rung + what's still missing as a real failure.
-- Don't commit, push, or PR in `--write` mode — the user reviews and commits.
+- Don't commit, push, or PR — the user reviews and commits.

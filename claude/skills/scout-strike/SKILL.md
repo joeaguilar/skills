@@ -1,6 +1,6 @@
 ---
 name: scout-strike
-description: "Two-phase attack on unfamiliar terrain: 2–5 read-only scouts (`--scouts=N`) map the ground, findings fuse into one terrain map, then a focused strike does the work (`--write`). Stops if the scouts map nothing usable. Trigger: `/scout-strike`, \"recon this codebase then fix X\", \"map it before you touch it\". NOT when the terrain is already known (use /fan-of-agents) or for research with no follow-on action."
+description: "Two-phase attack on unfamiliar terrain: 2–5 read-only scouts (`--scouts=N`) map the ground, findings fuse into one terrain map, then a focused strike does the work. Stops if the scouts map nothing usable. Trigger: `/scout-strike`, \"recon this codebase then fix X\", \"map it before you touch it\". NOT when the terrain is already known (use /fan-of-agents) or for research with no follow-on action."
 ---
 
 # /scout-strike — scout the dark, then one flash of steel
@@ -16,14 +16,14 @@ Frame ...... split recon vs execute, pick the scout slices            [silent �
 Scout ...... N scouts (parallel, READ-ONLY) map slices of the terrain, touch nothing
 Map ........ fuse scout reports into ONE terrain map
               usable map → strike │ nothing usable → report the fog, stop (no blind strike)
-Strike ..... focused striker(s), HANDED THE MAP, do the real work (--write may edit)
+Strike ..... focused striker(s), HANDED THE MAP, do the real work (edits disk by default)
 Deliver .... the strike output + what the map revealed
 ```
 
 ## Slash invocation
 
 ```
-/scout-strike <task> [--scouts=N] [--strikers=N] [--write] [--out=path] [--confirm]
+/scout-strike <task> [--scouts=N] [--strikers=N] [--out=path] [--confirm]
 ```
 
 | Arg | Default | Meaning |
@@ -31,7 +31,6 @@ Deliver .... the strike output + what the map revealed
 | `<task>` | — | The task on unfamiliar ground. Inline prose, a spec path, or "the thing we just discussed". |
 | `--scouts=N` | `3` | Read-only scouts mapping the terrain. **Clamp 2–5** (`>5` → clamp 5 + warn: map fusion degrades past ~5; `<2` → bump 2). |
 | `--strikers=N` | `1` | Focused strikers exploiting the map. Default `1` (one committed strike). Raise to **fan the strike** across disjoint mapped targets. |
-| `--write` | off | The **strike** may edit files (disjoint sets). Scouts are **always** read-only. Off → strike returns artifacts only. |
 | `--out=path` | conversation | Persist the strike output (+ map). Default → deliver inline. |
 | `--confirm` | off | The **only** gate — shown **after the map, before the strike**. Print the strike plan and wait. Default fires without asking. |
 
@@ -42,7 +41,7 @@ Unsupplied flags resolved in Phase 0. Output is terse — the strike output is t
 - **You** — throw the task. No live decisions unless `--confirm` (the gate sits between map and strike).
 - **Orchestrator** — splits recon from execute, looses scouts, **fuses the map**, drives the strike. Sole author of the deliverable.
 - **Scouts** — `--scouts` agents, parallel, **read-only**, each mapping a slice of the terrain; return findings, touch nothing.
-- **Striker(s)** — `--strikers` agents (default 1), **handed the fused map**, do the committed work; `--write` lets them edit disjoint files.
+- **Striker(s)** — `--strikers` agents (default 1), **handed the fused map**, do the committed work; they edit disjoint files by default.
 
 No tracker/graph/sprint deps — stands alone.
 
@@ -58,7 +57,7 @@ Speak twice: when the scouts are loosed, when the strike lands. Between them, **
 
 **Return** (Phase 4, the strike landed — precedes the strike output):
 ```
-偵  the map drawn, the strike landed                                  [report │ write→out=path]
+偵  the map drawn, the strike landed                                  [→ out=path]
     terrain revealed: {1–2 lines — what the scouts found that mattered}
     strike: {what the striker(s) did, exploiting the map}
     ─ open: {what the map left dark / unstruck, or omit}
@@ -68,7 +67,7 @@ Speak twice: when the scouts are loosed, when the strike lands. Between them, **
 ```
 偵  the map is drawn — before the strike flies:
     terrain: {what the scouts revealed, in brief}
-    strike will: {the planned committed act}            [{N} striker(s) · {read │ write}]
+    strike will: {the planned committed act}            [{N} striker(s) · writes disk]
     speak, and the steel falls.
 ```
 
@@ -82,7 +81,7 @@ Speak twice: when the scouts are loosed, when the strike lands. Between them, **
 
 ## Phase 0 — Frame (no gate)
 
-Resolve `--scouts` (clamp 2–5), `--strikers` (default 1), `--write`, `--out`, `--confirm`. Read the task once.
+Resolve `--scouts` (clamp 2–5), `--strikers` (default 1), `--out`, `--confirm`. Read the task once.
 
 **Split recon from execute** — name the unknowns the scouts must resolve before a strike is safe, then cut the terrain into `--scouts` read-only slices that cover those unknowns:
 
@@ -157,7 +156,7 @@ Orchestrator's own work. Collect each scout's map as it lands and fuse the slice
 
 ## Phase 3 — Strike (exploit the map)
 
-Spawn `--strikers` agent(s) — default **1** (a single focused strike). With `--strikers>1`, fan the strike across **disjoint** mapped targets the map identified (under `--write`, disjoint file sets are mandatory — two strikers on one file clobber).
+Spawn `--strikers` agent(s) — default **1** (a single focused strike). With `--strikers>1`, fan the strike across **disjoint** mapped targets the map identified (disjoint file sets are mandatory — two strikers on one file clobber).
 
 - `subagent_type: general-purpose` (a specialized type only if one squarely fits).
 - `run_in_background: true`.
@@ -184,7 +183,6 @@ KNOWN DARK SPOTS (map left these unresolved — treat as live risk, verify befor
 You are striker {i} of {N}. Your target: {this striker's disjoint slice of the map}.
 Siblings strike the other targets — stay in yours; do NOT touch theirs.
 
-{--write mode only:}
 Files you OWN (edit only these): {owned file set}
 Do NOT edit/move/reformat anything outside this set — a sibling or unrelated code is
 in it, and a stray edit or project-wide formatter clobbers it. Do NOT commit, push,
@@ -201,7 +199,7 @@ Close with:
 Your final message IS your strike — data, not chat. Be self-contained.
 ```
 
-`--write` → striker file sets disjoint. Orchestrator never commits — the user reviews and commits.
+Striker file sets are disjoint. Orchestrator never commits — the user reviews and commits.
 
 ---
 
@@ -210,18 +208,19 @@ Your final message IS your strike — data, not chat. Be self-contained.
 Terse. Emit, in order:
 
 - **Return** template (see Voice) — terrain revealed + what the strike did, including any `open:` dark spots.
-- **The strike output** — the deliverable (to `--out` if set; on disk if `--write`).
-- **`--write` next step** — review and commit (the skill never commits).
+- **The strike output** — the deliverable (to `--out` if set; on disk).
+- **Next step** — review and commit (the skill never commits).
 
 ---
 
 ## Principles
 
 - **Explore, then exploit.** Two phases, one direction: scouts map, the strike commits where the map points. Discovery feeds exploitation — never the reverse.
-- **Scouts are read-only, always.** They map the terrain and touch nothing — `--write` only ever arms the strike. A scout that edits has broken the split.
+- **Scouts are read-only, always.** They map the terrain and touch nothing — only the strike ever writes. A scout that edits has broken the split.
 - **The scout pass is cheap and tolerant.** A lost scout is a thinner map, noted and moved past — no retry, no respawn.
 - **Never strike blind.** The strike is the committed act; if the map is empty, surface the fog and stop. Striking into the dark wastes the very effort the recon was meant to save.
 - **Hand the striker the map.** The strike's whole advantage is the recon — the striker prompt carries the fused findings, so the work lands informed.
+- **A strike may land on nothing.** A strike whose target has no disk surface (a pure question, an analysis) has nothing to land — its answer is the deliverable, not a miss.
 - **Fire without a gate.** `--confirm` is the only pause, and it sits at the natural seam — after the map, before the strike.
 - **Right-size the recon.** Scouts default 3, clamp 2–5; strikers default 1, raised only to fan across disjoint mapped targets.
 
@@ -232,6 +231,6 @@ Terse. Emit, in order:
 - Don't retry, resume, or respawn a missed scout — a thinner map is fine.
 - Don't strike when the scouts mapped nothing usable — emit the fog and stop instead of committing blind.
 - Don't make the striker re-explore from scratch — hand it the fused map and let it exploit it.
-- Don't give two `--write` strikers a shared file.
-- Don't commit, push, or PR in `--write` mode — the user reviews and commits.
+- Don't give two strikers a shared file.
+- Don't commit, push, or PR — the user reviews and commits.
 - Don't exceed 5 scouts — map fusion degrades past what one orchestrator stitches well.

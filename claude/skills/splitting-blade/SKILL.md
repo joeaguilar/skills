@@ -1,6 +1,6 @@
 ---
 name: splitting-blade
-description: "Recursively decompose ONE oversized task — split, re-split pieces still too big down to small leaves, solve each leaf with one agent, fuse results back up to the root under hard depth/fanout clamps (`--write`). Trigger: `/splitting-blade`, \"recursively decompose this\", \"divide and conquer, then split the parts again\". NOT for a one-level flat cut (use /fan-of-agents)."
+description: "Recursively decompose ONE oversized task — split, re-split pieces still too big down to small leaves, solve each leaf with one agent, fuse results back up to the root under hard depth/fanout clamps. Trigger: `/splitting-blade`, \"recursively decompose this\", \"divide and conquer, then split the parts again\". NOT for a one-level flat cut (use /fan-of-agents)."
 ---
 
 # /splitting-blade — cut the cut, and cut again
@@ -24,7 +24,7 @@ Deliver .... the assembled root + the tree (depth reached · leaves solved/misse
 ## Slash invocation
 
 ```
-/splitting-blade <task> [--max-depth=N] [--fanout=N] [--base="condition"] [--write] [--out=path] [--confirm]
+/splitting-blade <task> [--max-depth=N] [--fanout=N] [--base="condition"] [--out=path] [--confirm]
 ```
 
 | Arg | Default | Meaning |
@@ -33,7 +33,6 @@ Deliver .... the assembled root + the tree (depth reached · leaves solved/misse
 | `--max-depth=N` | `3` | Hard recursion floor. **Clamp 1–4** (`>4` → clamp 4 + warn; `<1` → bump 1). Guard against runaway recursion: at max depth, **stop splitting** and solve the piece as-is. |
 | `--fanout=N` | `3` | Children per split. **Clamp 2–5** (`>5` → clamp 5 + warn: a node's fuse degrades past ~5 children; `<2` → bump 2). |
 | `--base="condition"` | small enough that ONE agent finishes it in a single pass — single concern, bounded files | What makes a piece a leaf. Override to tune where recursion bottoms out. |
-| `--write` | off | Leaves may **edit files** — disjoint sets across the WHOLE tree. Off → read-only, leaves return reports/artifacts. |
 | `--out=path` | conversation | Persist the assembled root + tree. Default → inline. |
 | `--confirm` | off | The **only** gate — print the planned split + clamps and wait before the first cut. |
 
@@ -55,7 +54,7 @@ Speak twice: when the first cut is thrown, when the tree is fused. Silent throug
 **Throw** (Phase 0, on the first cut):
 ```
 分  the cut splits the cut · max-depth {D} · fanout {F}
-    root: {one-line task}                                  [read │ write→out=path]
+    root: {one-line task}                                  [write→out=path]
     base: {base condition}
 ```
 
@@ -83,11 +82,11 @@ Speak twice: when the first cut is thrown, when the tree is fused. Silent throug
 
 ## Phase 0 — Frame (no gate)
 
-Resolve `--max-depth` (clamp 1–4), `--fanout` (clamp 2–5), `--base`, `--write`, `--out`, `--confirm`. Read the task once.
+Resolve `--max-depth` (clamp 1–4), `--fanout` (clamp 2–5), `--base`, `--out`, `--confirm`. Read the task once.
 
 **Set the base condition** — what makes a piece a leaf (no further split). Default: small enough that one agent finishes it in a single pass — one concern, bounded files. A bad base condition is the difference between a clean tree and runaway recursion; if the task implies a natural leaf size, state it.
 
-**The split rule** — for any node, pick the cut that yields disjoint children that together cover the node (sub-areas, sub-questions, sub-modules, sub-sections). Children must not overlap; in `--write` mode their **file sets are disjoint across the entire tree**, not just among siblings.
+**The split rule** — for any node, pick the cut that yields disjoint children that together cover the node (sub-areas, sub-questions, sub-modules, sub-sections). Children must not overlap; leaves write by default, so their **file sets are disjoint across the entire tree**, not just among siblings — always, unconditionally.
 
 Emit the **Throw** template, then cut. `--confirm` → emit **The pause** and wait. That flag is the only pause.
 
@@ -119,13 +118,13 @@ Node to split (depth {depth} of max {D}):
 
 Cut it into AT MOST {fanout} children. Each child must be a self-contained
 sub-piece; together they must cover this node with NO overlap and NO gap.
-{--write: each child must own a DISJOINT file set — name the files per child.}
+Each child must own a DISJOINT file set — name the files per child.
 
 Return EXACTLY, per child:
   - Title: short name of the child.
   - Scope: concrete boundary of what this child covers.
   - Base?: is this child small enough to be a leaf (one agent, one pass)? yes | no.
-  {--write: Files: the disjoint file set this child owns.}
+  - Files: the disjoint file set this child owns.
 Then: Coverage check — confirm the children cover the node with no overlap/gap.
 Your final message IS the cut — data, not chat.
 ```
@@ -153,7 +152,6 @@ YOUR LEAF — {leaf title} (path: {root → … → this leaf}):
 OUT OF SCOPE (siblings/other branches own these — don't cover them):
 {boundary notes}
 
-{--write mode only:}
 Files you OWN (edit only these): {owned disjoint file set}
 Do NOT edit/move/reformat anything outside this set — a sibling elsewhere in the
 tree is in it now and a stray edit clobbers their work. Need a change in another
@@ -171,7 +169,7 @@ Close with:
 Your final message IS your leaf result — return data, not chat. Be self-contained.
 ```
 
-`--write` → leaf file sets disjoint across the whole tree. Orchestrator never commits — user reviews and commits.
+Leaf file sets are disjoint across the whole tree. Orchestrator never commits — user reviews and commits.
 
 ---
 
@@ -184,7 +182,7 @@ Bottom-up, the orchestrator's own work — not a hand-off:
 - **Recurse the fuse upward** — a fused parent becomes a child of ITS parent; fuse again, level by level, until the root is assembled.
 - **Depth-wall nodes** fuse like any leaf, but carry the coarseness note up so the root knows where finer recursion was clamped off.
 
-**Stop** when: every leaf has returned or been marked a gap, and the root is assembled. (Base case reached at every leaf, root fused.) `--write` → edits are already on disk; the fuse is the reconciliation pass + a unified change summary.
+**Stop** when: every leaf has returned or been marked a gap, and the root is assembled. (Base case reached at every leaf, root fused.) Edits are already on disk; the fuse is the reconciliation pass + a unified change summary.
 
 ---
 
@@ -194,7 +192,7 @@ Terse. Emit, in order:
 
 - **Return** template (see Voice) — depth reached, `{leaves_solved}/{leaves_total}`, the tree sketch, gaps. Add a **Depth wall** line for each node clamped at max depth.
 - **The assembled root** — the fused-up deliverable (to `--out` if set, else inline).
-- **`--write` next step** — review and commit (the skill never commits).
+- **Next step** — review and commit (the skill never commits).
 
 ---
 
@@ -206,6 +204,7 @@ Terse. Emit, in order:
 - **Stop at the base case, every leaf.** Done = every branch bottomed out (or hit the depth wall) and the root is whole.
 - **Clamp the recursion — hard.** Depth defaults 3, clamps 1–4; fanout defaults 3, clamps 2–5. At max depth, stop splitting and solve coarse. The clamps are guardrails, not suggestions.
 - **Right-size the leaf.** A good base condition keeps leaves one-pass-sized; too coarse wastes the tree, too fine explodes it.
+- **Nothing to land is not a miss.** A leaf whose slice has no disk surface (a pure question, an analysis) has nothing to land — its answer is the deliverable, not a miss.
 - **Fire without a gate; run to a fused root.** `--confirm` is the only pause.
 
 ## Don't
@@ -215,6 +214,6 @@ Terse. Emit, in order:
 - Don't keep splitting at the depth wall — solve the piece as-is and note its coarseness.
 - Don't retry, resume, or respawn a missed leaf — a miss is a gap in its parent's fuse.
 - Don't let a leaf solve its parent or the whole task — each stays in its leaf.
-- Don't give two leaves anywhere in the tree a shared `--write` file — sets are disjoint across the entire tree.
+- Don't give two leaves anywhere in the tree a shared file — sets are disjoint across the entire tree.
 - Don't hand back the raw leaves — always fuse up into one assembled root.
-- Don't commit, push, or PR in `--write` mode — the user reviews and commits.
+- Don't commit, push, or PR — the user reviews and commits.

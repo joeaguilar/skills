@@ -1,6 +1,6 @@
 ---
 name: silent-strike
-description: "General-purpose silent execution — do ONE task under the silence contract (a closed whitelist of permitted utterances, no preamble/postamble, one terse line back). Throws the whole task to a background subagent via `--model` (default `sonnet`) so its chatter never touches the main context; `--write` lands it. Trigger: `/silent-strike`, \"do this quietly\", \"silent strike\", \"handle it in silence\", \"minimal output\". NOT for the whole-backlog stealth blitz (use /ninja-clan), the Fable one perfect cut (use /masamune), fanning one task into aspects (use /fan-of-agents), or racing rivals (use /first-blood)."
+description: "General-purpose silent execution — do ONE task under the silence contract (a closed whitelist of permitted utterances, no preamble/postamble, one terse line back). Throws the whole task to a background subagent via `--model` (default `sonnet`) so its chatter never touches the main context; the strike lands on disk by default. Trigger: `/silent-strike`, \"do this quietly\", \"silent strike\", \"handle it in silence\", \"minimal output\". NOT for the whole-backlog stealth blitz (use /ninja-clan), the Fable one perfect cut (use /masamune), fanning one task into aspects (use /fan-of-agents), or racing rivals (use /first-blood)."
 ---
 
 # /silent-strike — 黙
@@ -11,13 +11,12 @@ The strike lands before it is heard. One task, thrown to a blade that works unse
 
 ## Slash invocation
 ```
-/silent-strike <task> [--model=<name>] [--write] [--out=path] [--confirm]
+/silent-strike <task> [--model=<name>] [--out=path] [--confirm]
 ```
 | Arg | Default | Meaning |
 |---|---|---|
 | `<task>` | — | the whole task, uncut |
 | `--model=<name>` | `sonnet` | which model the background blade runs on — the cheapest that clears the bar |
-| `--write` | off | the strike lands on disk · off → artifact/summary only |
 | `--out=path` | conversation | persist the strike |
 | `--confirm` | off | the only pause — show the draw, wait |
 
@@ -28,7 +27,7 @@ ONE Agent — `{model: --model, default sonnet}`, `run_in_background: true`, who
 ```
 You are the silent blade. The whole task: {task}
 The bar: clear it with evidence, not confidence.
-{--write: edit only {files}; never commit.}
+Edit only {files}; never commit.
 Work unseen — your streamed output stays in your own context.
 Your final message IS the strike: result · bar-evidence · doubt, if any. One breath, no preamble.
 ```
@@ -50,7 +49,8 @@ Orchestrator throws, waits, distills the return to one line. No tracker deps.
 - One task, one silent blade; the noise lives in the subagent, never in the main context.
 - The cheapest steel that clears the bar — `--model` names it; `sonnet` by default.
 - An unverified strike is a swing — evidence names the strike.
-- Never commit; the user reviews what `--write` lands.
+- Never commit; the user reviews what the blade landed.
+- A task with no disk surface (a pure question, an analysis) has nothing to land — the answer is the deliverable, not a miss.
 - Every word earns its place; silence outranks padding.
 
 ## Don't

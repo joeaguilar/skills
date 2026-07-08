@@ -1,6 +1,6 @@
 ---
 name: fan-of-agents
-description: "Cut ONE task into aspects and fire 2–5 subagents (`--agents=N`), each owning a different aspect, then synthesize what lands into one deliverable; tolerates misses (`--write` for implementation). Trigger: `/fan-of-agents`, \"fan out agents on this\", \"have N agents each take an aspect\". NOT to clear a multi-task backlog in parallel (use /blitz)."
+description: "Cut ONE task into aspects and fire 2–5 subagents (`--agents=N`), each owning a different aspect editing files on disk by default, then synthesize what lands into one deliverable; tolerates misses. Trigger: `/fan-of-agents`, \"fan out agents on this\", \"have N agents each take an aspect\". NOT to clear a multi-task backlog in parallel (use /blitz)."
 ---
 
 # /fan-of-agents — cut one task, throw the fan, keep what lands
@@ -23,7 +23,7 @@ Deliver ..... result + 1-line hit/miss map
 ## Slash invocation
 
 ```
-/fan-of-agents <task> [--agents=N] [--strategy=...] [--write] [--out=path] [--confirm]
+/fan-of-agents <task> [--agents=N] [--strategy=...] [--out=path] [--confirm]
 ```
 
 | Arg | Default | Meaning |
@@ -31,7 +31,6 @@ Deliver ..... result + 1-line hit/miss map
 | `<task>` | — | The single task. Inline prose, a spec path, or "the thing we just discussed". |
 | `--agents=N` | `5` | Knives thrown. **Clamp 2–5** (`>5` → clamp 5 + warn: synthesis degrades past ~5; `<2` → bump 2). |
 | `--strategy=...` | auto | Force the cut: `component`, `dimension`, `perspective`, `subquestion`, `layer` (Phase 0 menu). |
-| `--write` | off | Agents may **edit files**. Off → **read-only**, agents return reports/artifacts only. |
 | `--out=path` | conversation | Persist the synthesis to `path`. Default → deliver inline. |
 | `--confirm` | off | The **only** way to add a gate — print the strike plan and wait before throwing. Default fires without asking. |
 
@@ -52,7 +51,7 @@ Stay in character and stay quiet. The skill surfaces **only twice**: once when t
 **Throw** (Phase 0, on firing):
 ```
 忍  {N} blades to the wind · {strategy}
-    {A1 aspect} · {A2 aspect} · … · {AN aspect}            [{read │ write→out=path}]
+    {A1 aspect} · {A2 aspect} · … · {AN aspect}            [→ out=path]
 ```
 
 **The pause** (only when `--confirm`):
@@ -81,7 +80,7 @@ Stay in character and stay quiet. The skill surfaces **only twice**: once when t
 
 ## Phase 0 — Frame (no gate)
 
-Resolve `--agents` (clamp 2–5), `--strategy`, `--write`, `--out`, `--confirm`. Read the task once.
+Resolve `--agents` (clamp 2–5), `--strategy`, `--out`, `--confirm`. Read the task once.
 
 **Pick the cut** — the partition that puts each knife on a different vital point:
 
@@ -95,9 +94,7 @@ Resolve `--agents` (clamp 2–5), `--strategy`, `--write`, `--out`, `--confirm`.
 
 `--strategy` set → use it. Fewer clean aspects than `N` → throw fewer (don't manufacture filler slices). Blend strategies when one cut won't cover.
 
-**Orthogonality — mode-dependent:**
-- **read-only (default):** aim each knife at a distinct point, but overlap is cheap insurance, not a bug — redundant coverage = more knives land. Don't obsess over a perfect cut.
-- **`--write`:** disjoint **file sets** are mandatory — two agents editing one file clobber each other. Files that can't be split cleanly → fold into one agent's slice or drop a knife. This is the one hard rule.
+**Orthogonality — disjoint file sets, always:** agents edit files, so disjoint **file sets** are mandatory — two agents editing one file clobber each other. Aim each knife at a distinct point; files that can't be split cleanly → fold into one agent's slice or drop a knife. This is the one hard rule, always in force.
 
 **Strike line** — emit the **Throw** template (see Voice), then throw immediately. `--confirm` → emit **The pause** template instead and **wait** for go. That flag is the only pause.
 
@@ -127,7 +124,6 @@ YOUR ASPECT — {aspect title}:
 OUT OF SCOPE (siblings own these — don't cover them):
 {boundary notes — sibling aspects}
 
-{--write mode only:}
 Files you OWN (edit only these): {owned file set}
 Do NOT edit/move/reformat anything outside this set — a sibling is in it now and a
 project-wide formatter or stray edit clobbers their work. Need a change in a sibling's
@@ -146,7 +142,7 @@ Close with:
 Your final message IS your portion — return data, not chat. Be self-contained.
 ```
 
-`--write` → file sets disjoint. Orchestrator never commits — user reviews and commits.
+File sets stay disjoint. Orchestrator never commits — user reviews and commits.
 
 ---
 
@@ -174,7 +170,7 @@ Orchestrator's own work — not a hand-off. Integrate the hits into the one deli
 4. **Route** each cross-slice need to the hit that owns it.
 5. **Gaps** — note any aspect that missed or fell between slices. Fill only if trivial and cheap; otherwise list it as open. Don't re-throw the fan — that's babysitting.
 
-`--write` → edits are already on disk; synthesis = the reconciliation pass + a unified change summary.
+Edits are already on disk; synthesis = the reconciliation pass + a unified change summary.
 
 ---
 
@@ -184,7 +180,7 @@ Terse. Emit, in order:
 
 - **Return** template (see Voice) — the `{hits}/{N}` map, including any `open:` clashes/gaps.
 - **The synthesis** — integrated result (to `--out` if set, else inline).
-- **`--write` next step** — review and commit (the skill never commits).
+- **Next step** — review and commit (the skill never commits).
 
 ---
 
@@ -193,7 +189,8 @@ Terse. Emit, in order:
 - **Failure-tolerant by design.** Not every knife hits; one or two is enough. Misses are noted, never healed.
 - **Fire without a gate.** Infer the cut and throw. `--confirm` is the only pause; default never asks.
 - **Run straight through.** Frame → throw → land → synthesize → deliver, no voluntary stop. Only hard stop: zero hits.
-- **Each knife, a different vital point.** The cut aims agents at distinct facets; in read mode overlap is cheap insurance, in `--write` mode disjoint files are mandatory.
+- **Each knife, a different vital point.** The cut aims agents at distinct facets; agents edit files, so disjoint file sets are always mandatory — two knives in one file clobber each other.
+- **A task with no disk surface** (a pure question, an analysis) has nothing to land — the synthesized answer is the deliverable, not a miss.
 - **Synthesis, not concatenation.** The deliverable integrates the hits; N stapled portions is a failure.
 - **Say less.** One strike line, one deliverable, one map. The synthesis is the product, not the narration.
 - **Right-size the fan.** Default 5, clamp 2–5; fewer aspects → fewer knives.
@@ -204,7 +201,7 @@ Terse. Emit, in order:
 - Don't retry, resume, or respawn a missed agent — a miss is a miss.
 - Don't block the synthesis waiting on a straggler.
 - Don't let an agent solve the whole task — each stays in its slice.
-- Don't give two `--write` agents a shared file.
+- Don't give two agents a shared file.
 - Don't hand back N raw portions — always synthesize.
-- Don't commit, push, or PR in `--write` mode — the user reviews and commits.
+- Don't commit, push, or PR — the user reviews and commits.
 - Don't exceed 5 agents — synthesis quality degrades past what one orchestrator integrates well.

@@ -69,6 +69,9 @@ claude	skills	fan-of-agents
 claude	skills	tsugi
 # masamune is the quiet-kin legend blade — one agent on Fable, one cut, total silence.
 claude	skills	masamune
+# silent-strike is the general-purpose quiet blade — one task to a background subagent
+# (model-routed, sonnet default), total silence, one line back. Graduate on its Codex port.
+claude	skills	silent-strike
 claude	skills	hundred-blades
 claude	skills	first-blood
 claude	skills	splitting-blade

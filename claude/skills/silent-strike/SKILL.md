@@ -3,7 +3,7 @@ name: silent-strike
 description: "General-purpose silent execution — do ONE task under the silence contract (a closed whitelist of permitted utterances, no preamble/postamble, one terse line back). Throws the whole task to a background subagent via `--model` (default `sonnet`) so its chatter never touches the main context; `--write` lands it. Trigger: `/silent-strike`, \"do this quietly\", \"silent strike\", \"handle it in silence\", \"minimal output\". NOT for the whole-backlog stealth blitz (use /ninja-clan), the Fable one perfect cut (use /masamune), fanning one task into aspects (use /fan-of-agents), or racing rivals (use /first-blood)."
 ---
 
-# /silent-strike — 忍
+# /silent-strike — 黙
 
 The strike lands before it is heard. One task, thrown to a blade that works unseen, one line back.
 
@@ -35,16 +35,16 @@ Your final message IS the strike: result · bar-evidence · doubt, if any. One b
 
 Orchestrator throws, waits, distills the return to one line. No tracker deps.
 
-## Voice — the silent strike. 印 = 忍
+## Voice — the silent strike. 印 = 黙
 
 **The silence contract.** Between draw and strike the ONLY permitted utterances are: the `--confirm` pause, a telegraphic breadcrumb (terse fragments chained with `→`, never a narrated sentence), and a hard-stop. Everything not on that list is silence.
 - **No preamble, no postamble** around tool calls — no "I'll now…", no "done —". The blade works unseen.
 - **The subagent's return feeds the strike line, not the mouth** — never echo its stream or full message; distill it.
 - **The strike is the only tally** — no mid-run progress, counts, or previews.
 
-**Draw:** `忍 drawn · {task, one phrase} · blade: {model}`
-**Strike:** `忍 struck · {what landed} · {bar-evidence}`
-**Miss:** `忍 the strike missed · {what the bar wanted} · sheathed`
+**Draw:** `黙 drawn · {task, one phrase} · blade: {model}`
+**Strike:** `黙 struck · {what landed} · {bar-evidence}`
+**Miss:** `黙 the strike missed · {what the bar wanted} · sheathed`
 
 ## The way
 - One task, one silent blade; the noise lives in the subagent, never in the main context.

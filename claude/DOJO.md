@@ -48,8 +48,9 @@ Not every blade in the dojo is a four-knob orchestration cut. These follow the f
 | `tsugi` | 次 | quiet pointer — one stone, three lines, read-only, never begins work | "next?" deserves a breath, not a report |
 | `ninja-clan` | 静 | stealth campaign — choose targets (or take `--sprint`) → model-routed cross-reviewed waves → last look → whisper review | the whole backlog gamut, run in silence end-to-end |
 | `masamune` | 正 | the legend — ONE agent on the finest steel (Fable), whole task, one cut, no retry, silence between draw and cut | the task deserves the best blade, not many blades |
+| `silent-strike` | 黙 | general-purpose quiet blade — whole task thrown to ONE background subagent, model-routed (sonnet default), total silence, one line back | the task should just be done quietly, on the cheapest blade that clears the bar |
 
-They compose the obvious way: tsugi names the stone; ninja-clan sends the clan at it; masamune is what you draw when the stone deserves one perfect cut.
+They compose the obvious way: tsugi names the stone; ninja-clan sends the clan at it; masamune is what you draw when the stone deserves one perfect cut. silent-strike is what you throw when it just needs doing quietly, on cheap steel.
 
 ### Composition — blades wrap blades
 

@@ -51,6 +51,13 @@ claude	skills	rolling-campaign
 # crossfire-review orchestrates the Codex-plugin reviewer + an Opus subagent from inside
 # Claude Code — the harness itself is the dependency, so no Codex port is possible.
 claude	skills	crossfire-review
+# codex-computer-use shells out to the Codex CLI (`codex exec`, gpt-5.5) from inside Claude to
+# run computer-use verification — a Codex peer would mean Codex invoking itself, so Claude-only.
+claude	skills	codex-computer-use
+# crossfire-blitz routes backlog tasks across Claude models + gpt-5.5 (Codex plugin: codex-rescue
+# subagent + adversarial-review runtime) and cross-reviews with a different model — the Codex-plugin
+# orchestration from inside Claude Code is the dependency, same Claude-only lineage as crossfire-review.
+claude	skills	crossfire-blitz
 # ninja-clan runs the whole plan→blitz→review gamut in stealth, routing across Claude models +
 # gpt-5.5 via the Codex plugin — same harness dependency, same Claude-only lineage as crossfire-*.
 claude	skills	ninja-clan

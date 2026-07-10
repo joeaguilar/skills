@@ -16,6 +16,8 @@ skills/                         (repo root)
 ├── claude/agents/  claude/commands/   optional Claude primitive roots
 │                                      (commands/ also holds imported legacy commands)
 ├── claude/settings.json               canonical ~/.claude/settings.json (config primitive)
+├── claude/MODELS.md                    source of truth for the cost/intelligence/taste table + role bindings
+├── claude/scripts/models.sh           `table` (inject the live table) + `check` (drift gate, wired into validate-skills.sh §6)
 ├── PLATFORM_ONLY.tsv                   intentional one-tree-only primitives (parity exemptions)
 ├── codex/
 │   ├── skills/<skill>/SKILL.md + agents/openai.yaml   Codex ports
@@ -57,7 +59,8 @@ Global installs link roots such as `~/.claude/skills`, `~/.claude/agents`, `~/.c
 ## Working here
 
 - **Install/relink:** `./install.sh claude` (or `codex`/`both`). Dry-run by default; `--apply` to act; `--restore` to roll back. Use `--all-primitives` for `skills`, `agents`, and `commands`; use `--local /path/to/project` for project-scoped installs. The opt-in `config` primitive (`--primitive config` or `--primitives …,config`) links individual home files instead of a directory root — for Claude, `settings.json` + `statusline.sh` into `~/.claude/`; for Codex it is a no-op. It is **not** part of `--all-primitives`.
-- **Validate after any skill change:** `./validate-skills.sh` — flags a skill present in one tree but not the other, and any Codex port whose Claude source drifted past its `PARITY.tsv` baseline. Intentional one-tree-only primitives are exempted via `PLATFORM_ONLY.tsv` (see "Two ports").
+- **Validate after any skill change:** `./validate-skills.sh` — flags a skill present in one tree but not the other, any Codex port whose Claude source drifted past its `PARITY.tsv` baseline, and (§6) any skill whose inline model table drifted from `claude/MODELS.md`. Intentional one-tree-only primitives are exempted via `PLATFORM_ONLY.tsv` (see "Two ports").
+- **Model values:** `claude/MODELS.md` is the single source of truth for the cost/intelligence/taste scores and the role→model bindings skills route by (bulk/generalist/taste/floor/…). Edit it, then `./validate-skills.sh` §6 names every skill table that now disagrees. Skills route by **role**, so a model swap is usually a one-line binding edit. A skill can inject the live table into its own context with `` !`claude/scripts/models.sh table` `` (dynamic context injection — re-reads MODELS.md each run, so it can't drift).
 - Author Claude skills in `claude/skills/`; let `install.sh` link them — never author under `~/.claude`.
 
 ## Primitive tree (capability-first)

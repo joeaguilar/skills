@@ -16,6 +16,10 @@ set -uo pipefail
 #                     expected frontmatter.
 # Then it calls codex/scripts/validate-codex-skills.sh for the codex tree's
 # deeper checks (agents/openai.yaml presence, primitive registry, Claude-ism lint).
+#   6. Model table — every inline cost/intelligence/taste table in claude/skills
+#                     matches claude/MODELS.md (the source of truth), via
+#                     claude/scripts/models.sh check. Runs in every mode: a drifted
+#                     scores table ships wrong routing, so it blocks a commit.
 #
 # --frontmatter-only: run only the frontmatter checks (3 + the payload lint of
 # 3b), skipping parity/staleness/deep checks. This is the pre-commit gate mode:
@@ -190,6 +194,22 @@ else
   echo "  SKIP: codex/scripts/validate-codex-skills.sh not executable"
 fi
 fi # FRONTMATTER_ONLY
+
+echo
+echo "== 6. Model table drift (claude/skills tables vs claude/MODELS.md) =="
+# Runs in every mode (incl. --frontmatter-only pre-commit gate): a drifted scores
+# table ships wrong routing, so it must block a commit like broken frontmatter does.
+if [ -x "$REPO_DIR/claude/scripts/models.sh" ]; then
+  if drift="$("$REPO_DIR/claude/scripts/models.sh" check)"; then
+    echo "  OK: every inline model table matches claude/MODELS.md"
+  else
+    printf '%s\n' "$drift"
+    echo "  -> edit the skill table to match claude/MODELS.md (the source of truth), or update MODELS.md"
+    errors=$((errors+1))
+  fi
+else
+  echo "  SKIP: claude/scripts/models.sh not executable"
+fi
 
 echo
 echo "== Summary: $errors error(s), $warns staleness warning(s) =="

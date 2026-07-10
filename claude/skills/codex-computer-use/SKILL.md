@@ -1,11 +1,11 @@
 ---
 name: codex-computer-use
-description: "Ask Codex CLI (gpt-5.5) to verify a local app with real computer use — GUI/browser automation, simulators, desktop-app launching, screenshots — as an independent runtime inspection. Trigger: \"have Codex/gpt-5.5 test this flow\", \"get Codex to verify the UI at runtime\". NOT for checks Claude can run itself, for driving the app with Claude's own tools (use /run or /verify), or for handing Codex a coding task (use /codex:rescue)."
+description: "Ask Codex CLI (gpt-5.6-terra) to verify a local app with real computer use — GUI/browser automation, simulators, desktop-app launching, screenshots — as an independent runtime inspection. Trigger: \"have Codex/gpt-5.6-terra test this flow\", \"get Codex to verify the UI at runtime\". NOT for checks Claude can run itself, for driving the app with Claude's own tools (use /run or /verify), or for handing Codex a coding task (use /codex:rescue)."
 ---
 
 # Codex Computer Use
 
-Use Codex as a separate local verification agent when the task needs real UI interaction, screenshots, simulator/browser/device state, or an independent runtime check outside Claude's current context. Codex (gpt-5.5) drives the machine through shell — launching apps, `xcrun simctl`, browsers, `screencapture` — and can read back the screenshots it captures.
+Use Codex as a separate local verification agent when the task needs real UI interaction, screenshots, simulator/browser/device state, or an independent runtime check outside Claude's current context. Codex (gpt-5.6-terra) drives the machine through shell — launching apps, `xcrun simctl`, browsers, `screencapture` — and can read back the screenshots it captures.
 
 Do **not** use this for ordinary code reading, typechecking, linting, or tests Claude can run directly. Launching apps, simulators, or browsers to verify the requested work is fine without asking; ask first only if the run could disrupt the user's environment beyond that (closing their apps, changing system settings, acting on real accounts or data).
 
@@ -35,7 +35,7 @@ PROMPT="$ARTIFACT_DIR/prompt.md"
 
 codex exec \
   -C "$PWD" \
-  -m gpt-5.5 \
+  -m gpt-5.6-terra \
   --add-dir "$ARTIFACT_DIR" \
   -s danger-full-access \
   -o "$REPORT" \

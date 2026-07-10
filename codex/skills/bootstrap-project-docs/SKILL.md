@@ -1,6 +1,6 @@
 ---
 name: bootstrap-project-docs
-description: "Bootstrap repo docs: AGENTS.md, CODEX.md, SOUL.md, GOSPEL.md, APOSTLE.md, CONTRIBUTING.md, README.md memory scaffold."
+description: "Use only when the user asks to bootstrap the repository's full AGENTS.md, CODEX.md, SOUL.md, GOSPEL.md, APOSTLE.md, CONTRIBUTING.md, and README.md memory scaffold. Do not use for ordinary documentation edits, a single missing file, or updates to an existing scaffold unless requested."
 ---
 
 # Bootstrap Project Docs

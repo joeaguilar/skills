@@ -1,30 +1,30 @@
 ---
 name: sprint-review
-description: "Sprint review: /sprint-review, demo/acceptance/retro, triage follow-ups, close sprint epic, update sprint/CURRENT."
+description: "Use only when the user explicitly invokes $sprint-review or asks to review and close one completed or in-flight sprint through outcomes, per-story demo acceptance, adaptive retro, follow-up triage, epic closure, and sprint/CURRENT updates. Do not use for sprint planning or backlog execution."
 ---
 
-# /sprint-review — review the sprint as Scrum Master
+# $sprint-review — review the sprint as Scrum Master
 
-Review a Sprint after `/blitz` (or whatever executor) finished the work. Fills the empty `Outcomes / Demo / Retro` sections of `sprint/{folder}/plan.md`, walks the Product Owner through per-story acceptance, files triage follow-ups into `itr`, optionally writes a standalone `sprint/{folder}/retro-{date}.md`, closes the sprint epic, and updates `sprint/CURRENT` to point at the next-highest open sprint (or removes it).
+Review a Sprint after `$blitz` (or whatever executor) finished the work. Fills the empty `Outcomes / Demo / Retro` sections of `sprint/{folder}/plan.md`, walks the Product Owner through per-story acceptance, files triage follow-ups into `itr`, optionally writes a standalone `sprint/{folder}/retro-{date}.md`, closes the sprint epic, and updates `sprint/CURRENT` to point at the next-highest open sprint (or removes it).
 
 This skill collapses **Sprint Review** (demo + acceptance) and **Sprint Retrospective** (process learning) into one ceremony, with adaptive depth — Retro is skipped when the sprint went clean and required when any friction signal fired. That's deliberately less ceremonial than strict Scrum, because Codex-agent execution moves faster than human sprint cadence and most sprints don't need a 30-minute retro.
 
 The orchestrator plays **Scrum Master** again:
 - The **user** is the Product Owner — accepts, rejects, or conditionally accepts each story; owns triage decisions.
 - The **closed sprint** is the Increment under review.
-- **Codex worker agents / `/blitz`** are the Developers being reviewed.
+- **Codex worker agents / `$blitz`** are the Developers being reviewed.
 
-Verbose, structured, phase-announced output — same principle as `/sprint`. Coach the *why* of each ceremony as you reach it.
+Verbose, structured, phase-announced output — same principle as `$sprint`. Coach the *why* of each ceremony as you reach it.
 
-## Slash invocation
+## Invocation
 
 ```
-/sprint-review [--epic <id> | --sprint <N>] [--retro | --no-retro] [--dry-run]
+$sprint-review [--epic <id> | --sprint <N>] [--retro | --no-retro] [--dry-run]
 ```
 
 | Form | Meaning |
 |---|---|
-| `/sprint-review` | Auto-detect newest open sprint epic via `itr` query. |
+| `$sprint-review` | Auto-detect newest open sprint epic via `itr` query. |
 | `--epic <id>` | Review a specific epic by itr ID. Useful when stacked sprints make auto-detection ambiguous. |
 | `--sprint <N>` | Review the epic tagged `sprint-N`. |
 | `--retro` | Force Retro to run even if no friction signals fired. |
@@ -225,7 +225,7 @@ Check the four required-Retro signals against the data gathered:
 | Signal | Source |
 |---|---|
 | Any `quarantined` or `failed-skipped` story | itr state |
-| Any `/blitz` intervention recorded | `sprint/{folder}/blitz/wave-*.md` `Interventions` section |
+| Any `$blitz` intervention recorded | `sprint/{folder}/blitz/wave-*.md` `Interventions` section |
 | Any carryover (rejected story this run) OR any bug filed during demo | Phase 3 captures |
 | Sprint completion rate <80% | Phase 2 counts |
 
@@ -257,7 +257,7 @@ Walk the four content blocks:
 
 3. **Process improvement candidates.** Skill proposes 1–3 specific, actionable changes informed by the friction log. Examples: *"Declare `--files` more precisely on stories touching shared modules"*, *"Add a 'verify gate green for 60s' rule before closing stories"*. PO accepts, edits, or rejects each. Survivors become Retro action items in Phase 6.
 
-4. **Codex-agent learnings.** Patterns that apply to future `/sprint` runs: planning gaps (e.g. "AC was too vague on story #103, Codex agents disagreed on done"), file-ownership misses (e.g. "shared util needed by 2 worker agents wasn't declared in either"), AC clarity issues. These don't necessarily become tasks; they become notes in the `retro-{date}.md` file. If any learning is a durable, cross-project rule rather than sprint-specific, ask the PO whether it should be promoted to project or global agent instructions such as `AGENTS.md` or `CODEX.md`.
+4. **Codex-agent learnings.** Patterns that apply to future `$sprint` runs: planning gaps (e.g. "AC was too vague on story #103, Codex agents disagreed on done"), file-ownership misses (e.g. "shared util needed by 2 worker agents wasn't declared in either"), AC clarity issues. These don't necessarily become tasks; they become notes in the `retro-{date}.md` file. If any learning is a durable, cross-project rule rather than sprint-specific, ask the PO whether it should be promoted to project or global agent instructions such as `AGENTS.md` or `CODEX.md`.
 
 Hold all four content blocks in memory. They land in the `Retro` section of `sprint/{folder}/plan.md` AND in the standalone `sprint/{folder}/retro-{date}.md`. (Schema for the standalone file is below.)
 
@@ -314,7 +314,7 @@ Will write:
   3. Write sprint/{folder}/retro-<date>.md (if Retro ran; -2/-3 suffix on same-day repeats)
   4. Close sprint epic itr#<id> as <accepted | partially-accepted | rejected>
   5. Update sprint/CURRENT — repoint to next-highest open sprint or remove if none remain
-  6. Update docs/ROADMAP.md via /roadmap --update (non-blocking; skipped if absent)
+  6. Update docs/ROADMAP.md via $roadmap --update (non-blocking; skipped if absent)
 
 Approve, amend, or abort?
 ```
@@ -329,7 +329,7 @@ Announce: `Phase 8 — Applying changes`.
 
 Order matters — file new issues first so the artifact can reference real IDs:
 
-1. **File the triage issues.** Defer to the `itr` skill (`itr add` per item, or `itr batch add` if more than ~3). Capture every new ID. On partial failure: retry once per item; if retry fails, surface the failed payloads to the user and resume from where it stopped (no rollback) — same pattern as `/sprint` Phase 5.
+1. **File the triage issues.** Defer to the `itr` skill (`itr add` per item, or `itr batch add` if more than ~3). Capture every new ID. On partial failure: retry once per item; if retry fails, surface the failed payloads to the user and resume from where it stopped (no rollback) — same pattern as `$sprint` Phase 5.
 
 2. **Update `sprint/{folder}/plan.md` in-place.** Fill the empty Outcomes / Demo / Retro sections with the data from Phases 2, 3, and 5. Preserve everything else in the file. Schema for these sections is below.
 
@@ -339,20 +339,20 @@ Order matters — file new issues first so the artifact can reference real IDs:
 
 5. **Update `sprint/CURRENT`.** Query `itr` for any remaining open `sprint-N` epics:
    - If at least one open: rewrite `CURRENT` with the highest-numbered open sprint's folder name.
-   - If none open: delete `sprint/CURRENT`. Future `/blitz` runs without `--sprint` will fall back to `sprint/_unscoped/`.
+   - If none open: delete `sprint/CURRENT`. Future `$blitz` runs without `--sprint` will fall back to `sprint/_unscoped/`.
 
-6. **Update the roadmap (non-blocking).** If `docs/ROADMAP.md` (or `./ROADMAP.md`) exists, invoke `/roadmap --update` as a sub-skill so the cross-sprint map reflects the just-closed sprint:
+6. **Update the roadmap (non-blocking).** If `docs/ROADMAP.md` (or `./ROADMAP.md`) exists, invoke `$roadmap --update` as a sub-skill so the cross-sprint map reflects the just-closed sprint:
    - Sections fully closed in this sprint flip to ✅.
    - Sections partially closed update notes / linked itr cells.
    - New triage-filed `itr` issues (carryover, follow-ups) get linked to their roadmap rows.
    - Trajectory entries naming this sprint are marked done; subsequent entries shift up by one.
 
-   **Pass any roadmap-divergence note from the sprint's Open Assumptions log into the update.** If `/sprint` Phase 1 recorded a divergence (PO picked a Sprint Goal that didn't match the roadmap soft-suggest), parse the assumption line out of `sprint/{folder}/plan.md` and forward it to `/roadmap --update` so the affected roadmap row's notes capture the divergence reason. This closes the feedback loop — next-cycle `/sprint` Phase 0 sees the divergence context.
+   **Pass any roadmap-divergence note from the sprint's Open Assumptions log into the update.** If `$sprint` Phase 1 recorded a divergence (PO picked a Sprint Goal that didn't match the roadmap soft-suggest), parse the assumption line out of `sprint/{folder}/plan.md` and forward it to `$roadmap --update` so the affected roadmap row's notes capture the divergence reason. This closes the feedback loop — next-cycle `$sprint` Phase 0 sees the divergence context.
 
-   **Failure handling:** if `/roadmap --update` errors (file shape unexpected, spec moved, sub-skill unavailable), log the error and proceed. The roadmap can always be refreshed manually with a direct `/roadmap` invocation — this hook is convenience, not load-bearing.
+   **Failure handling:** if `$roadmap --update` errors (file shape unexpected, spec moved, sub-skill unavailable), log the error and proceed. The roadmap can always be refreshed manually with a direct `$roadmap` invocation — this hook is convenience, not load-bearing.
 
    **Skip the hook entirely if:**
-   - No `docs/ROADMAP.md` (or `./ROADMAP.md`) exists. Note `Roadmap: absent — run /roadmap to map cross-sprint scope.` in the Phase 9 final report.
+   - No `docs/ROADMAP.md` (or `./ROADMAP.md`) exists. Note `Roadmap: absent — run $roadmap to map cross-sprint scope.` in the Phase 9 final report.
    - `--dry-run` is set (Phase 7 Gate 2 stops before any writes).
 
 ---
@@ -374,7 +374,7 @@ Sprint-N reviewed and closed.
   Plan:                sprint/{folder}/plan.md (updated)
   Retro:               sprint/{folder}/retro-<date>.md (or "Retro skipped — clean sprint")
   CURRENT:             → sprint-{N+M}-... (next open) | removed (no sprints in flight)
-  Roadmap:             docs/ROADMAP.md (updated: N sections flipped ✅, M trajectory entries shifted) | absent — run /roadmap | update failed (see log; refresh manually)
+  Roadmap:             docs/ROADMAP.md (updated: N sections flipped ✅, M trajectory entries shifted) | absent — run $roadmap | update failed (see log; refresh manually)
 
 New issues filed:
   Bugs (<N>):          itr#.., itr#..
@@ -386,130 +386,20 @@ Process changes for next sprint:
   - <retro action item>
   - <retro action item>
 
-Next: run `/sprint` to plan the next sprint with carryover and product-backlog items in scope.
+Next: run `$sprint` to plan the next sprint with carryover and product-backlog items in scope.
 ```
 
 Stop.
 
 ---
 
-## Outcomes / Demo / Retro section schemas (for `sprint/{folder}/plan.md`)
+## Artifact schema reference
 
-When filling the in-place stubs, use these structures:
-
-### Outcomes (Phase 2 data)
-
-```markdown
-## Outcomes
-
-**Goal achievement:** yes | partial | no
-**Reviewed:** YYYY-MM-DD
-**Stories:** <closed>/<total> closed, <quarantined> quarantined, <open> open
-
-| ID | Title | Status | Closed | Notes |
-|----|-------|--------|--------|-------|
-| itr#... | ... | closed | YYYY-MM-DD | ... |
-
-**Untracked changes (in git diff but not in itr):**
-- <file or symbol, brief context> (or "none")
-```
-
-### Demo (Phase 3 data)
-
-```markdown
-## Demo
-
-| ID | Title | PO Decision | Notes |
-|----|-------|-------------|-------|
-| itr#... | ... | accepted | — |
-| itr#... | ... | conditional | follow-up itr#... |
-| itr#... | ... | rejected | carryover itr#... |
-
-**Bugs surfaced during demo:**
-- itr#... — <title>
-```
-
-### Retro (Phase 5 data, only if retro ran)
-
-```markdown
-## Retro
-
-**Triggered by:** <list of signals>
-
-### Plan vs. actual
-- <observation>
-
-### Friction log
-- <event from blitz log> — root cause: <one line>
-
-### Process improvements (filed as retro action items)
-- itr#... — <title>
-
-### Codex-agent learnings
-- <observation>
-```
-
-If retro was skipped, replace this block with:
-
-```markdown
-## Retro
-
-**Skipped — clean sprint** (no quarantines, no interventions, no carryover, no bugs, completion ≥80%).
-```
-
----
-
-## retro-{date}.md schema
-
-Standalone retro artifact, written under `sprint/{folder}/`. One file per retro; same-day repeats append `-2`, `-3`, etc. The user manages cleanup.
-
-```markdown
-# Retro — Sprint-N
-
-**Date:** YYYY-MM-DD
-**Sprint epic:** itr#<id>
-**Sprint goal:** <one sentence>
-**Outcome:** yes | partial | no
-
-## Triggered by
-- <signal>
-
-## Plan vs. actual
-- <observation>
-
-## Friction log
-| Event | Source | Root cause |
-|-------|--------|------------|
-| ... | blitz wave 2 retry on itr#103 | shared file conflict not declared |
-
-## Process improvements (action items)
-- itr#... — <title> — <why>
-
-## Codex-agent learnings
-- <observation>
-
-## Notes for future /sprint runs
-- <free-form, anything that should inform planning>
-```
-
----
-
-## Multi-repo handling
-
-If sprint stories span multiple repos (their bodies contain `Repo: path/to/repo` lines):
-
-- **Phase 0:** collect the unique repo set; print under `Repos:` in preflight.
-- **Phase 2 (Outcomes):** run `git diff --stat` per repo over the sprint window; merge findings into a single `Untracked changes` list with `<repo>:<file>` paths.
-- **Phase 3 (Demo):** for each story, run diff/verify in the story's declared repo. Show repo prefix on file paths in the story card.
-- **Phase 8 (Apply):** file `itr` issues against the project's single `.itr.db` (sprint-level tracker, not per-repo). If a repo has its own `.itr.db`, defer to the user.
-
-Multi-repo is a feature, not a default — most sprints stay in one repo. The skill auto-detects without ceremony when stories declare repos.
-
----
+Before Phase 8 writes review or retro artifacts, read `references/review-artifact-schemas.md` completely. It contains the Outcomes, Demo, Retro, standalone retro, and multi-repo schemas.
 
 ## Coaching style (Scrum Master tone)
 
-- **Announce every phase by name** (`Phase 0 — ...`). Same structured-output principle as `/sprint` and `/blitz`.
+- **Announce every phase by name** (`Phase 0 — ...`). Same structured-output principle as `$sprint` and `$blitz`.
 - **Coach the *why* of each ceremony** in one short line as you reach it. ("Outcomes is the objective record." "Demo is per-story so the PO actually looks." "Friction is information.")
 - **Adaptive Retro is a teaching moment**: when Retro is required, name the signal that triggered it. When skipped, name the signal absence. The PO learns the trigger logic over time.
 - **Per-story PO acceptance is the only non-negotiable interaction.** Everything else is summary + approve. Drilling into stories is where review value lives.
@@ -524,7 +414,7 @@ Multi-repo is a feature, not a default — most sprints stay in one repo. The sk
 - **Adaptive Retro is the right default for Codex-agent workflows.** Strict Scrum runs a Retro every sprint; Codex agents move faster than that ceremony cadence. Trigger Retro on friction signals; otherwise skip without guilt.
 - **Triage flows through `itr`.** Don't reinvent issue creation here; the `itr` skill already reads `STORY_STYLE.md` for project conventions.
 - **The artifact is the durable record.** `sprint/{folder}/plan.md` ends the day with all four sections filled (or Retro marked skipped). `sprint/{folder}/retro-{date}.md` captures the per-retro process learnings; the cross-sprint view comes from listing `sprint/sprint-*/retro-*.md`.
-- **Closing the epic flips the in-flight signal.** Future `/sprint` runs will warn (but not refuse) about stacked sprints; closing makes the next planning session cleaner.
+- **Closing the epic flips the in-flight signal.** Future `$sprint` runs will warn (but not refuse) about stacked sprints; closing makes the next planning session cleaner.
 - **Two BLOCKING gates, no more.** Gate 1 confirms scope; Gate 2 approves the full picture before any writes. PO acceptance per story is inline, not a gate.
 
 ---
@@ -542,4 +432,4 @@ Multi-repo is a feature, not a default — most sprints stay in one repo. The sk
 - Don't roll back partial `itr` failures during Phase 8; retry once, surface, resume.
 - Don't write the retro file if Retro was skipped.
 - Don't leave `sprint/CURRENT` pointing at a closed sprint — repoint or delete it in Phase 8.
-- Don't fail the review if `/roadmap --update` errors — it's a convenience hook. Log the failure, surface it in Phase 9, proceed.
+- Don't fail the review if `$roadmap --update` errors — it's a convenience hook. Log the failure, surface it in Phase 9, proceed.

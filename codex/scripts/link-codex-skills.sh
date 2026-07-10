@@ -7,9 +7,9 @@ Usage:
   link-codex-skills.sh [--apply] [--source PATH] [--codex-home PATH]
   link-codex-skills.sh --restore BACKUP_PATH [--codex-home PATH]
 
-By default this script performs a dry run. Pass --apply to replace
-$CODEX_HOME/skills with a symlink to this repository's codex/skills tree.
-Before replacement, the existing skills path is moved to codex/backups.
+By default this script performs a dry run. Pass --apply to create a real
+$CODEX_HOME/skills overlay: Codex owns `.system`, while each repository-managed
+non-system skill is linked individually. Existing paths are backed up first.
 
 Options:
   --apply             Make changes. Without this flag, print the plan only.
@@ -92,19 +92,14 @@ if [ ! -d "$SOURCE_DIR/.system" ]; then
   exit 1
 fi
 
-if [ -L "$TARGET_DIR" ] && [ "$(readlink "$TARGET_DIR")" = "$SOURCE_DIR" ]; then
-  echo "$TARGET_DIR already points to $SOURCE_DIR"
-  exit 0
-fi
-
-backup_path="$BACKUP_ROOT/codex-skills-before-link-$timestamp"
+backup_path="$BACKUP_ROOT/codex-skills-root-before-overlay-$timestamp"
 
 echo "Link plan:"
 echo "  Source:     $SOURCE_DIR"
 echo "  Codex home: $CODEX_HOME_DIR"
 echo "  Target:     $TARGET_DIR"
-echo "  Backup:     $backup_path"
-echo "  Action:     move existing target to backup, then symlink target to source"
+echo "  Backup:     $backup_path (only when replacing a root symlink)"
+echo "  Action:     preserve a real .system directory; link non-system skills individually"
 
 if [ "$APPLY" -ne 1 ]; then
   echo "Dry run only. Re-run with --apply to make this change."
@@ -113,10 +108,45 @@ fi
 
 mkdir -p "$CODEX_HOME_DIR" "$BACKUP_ROOT"
 
-if [ -e "$TARGET_DIR" ] || [ -L "$TARGET_DIR" ]; then
+if [ -L "$TARGET_DIR" ]; then
   mv "$TARGET_DIR" "$backup_path"
-  echo "Backed up existing skills to $backup_path"
+  mkdir -p "$TARGET_DIR"
+  if [ -d "$backup_path/.system" ]; then
+    cp -R "$backup_path/.system" "$TARGET_DIR/.system"
+  else
+    cp -R "$SOURCE_DIR/.system" "$TARGET_DIR/.system"
+  fi
+  echo "Backed up existing root link to $backup_path"
+elif [ ! -e "$TARGET_DIR" ]; then
+  mkdir -p "$TARGET_DIR"
+  cp -R "$SOURCE_DIR/.system" "$TARGET_DIR/.system"
+elif [ ! -d "$TARGET_DIR" ]; then
+  echo "Target exists but is not a directory or symlink: $TARGET_DIR" >&2
+  exit 1
+elif [ ! -d "$TARGET_DIR/.system" ]; then
+  cp -R "$SOURCE_DIR/.system" "$TARGET_DIR/.system"
 fi
 
-ln -s "$SOURCE_DIR" "$TARGET_DIR"
-echo "Linked $TARGET_DIR -> $SOURCE_DIR"
+while IFS= read -r source_skill; do
+  name="$(basename "$source_skill")"
+  [ "$name" = ".system" ] && continue
+  [ -f "$source_skill/SKILL.md" ] || continue
+  target_skill="$TARGET_DIR/$name"
+  skill_backup="$BACKUP_ROOT/codex-skill-$name-before-link-$timestamp"
+
+  if [ -L "$target_skill" ] && [ "$(readlink "$target_skill")" = "$source_skill" ]; then
+    echo "[$name] already linked: $target_skill -> $source_skill"
+  elif [ -L "$target_skill" ]; then
+    ln -sfn "$source_skill" "$target_skill"
+    echo "[$name] replaced symlink -> $source_skill"
+  elif [ -e "$target_skill" ]; then
+    mv "$target_skill" "$skill_backup"
+    ln -s "$source_skill" "$target_skill"
+    echo "[$name] backed up to $skill_backup, then linked -> $source_skill"
+  else
+    ln -s "$source_skill" "$target_skill"
+    echo "[$name] linked -> $source_skill"
+  fi
+done < <(find "$SOURCE_DIR" -mindepth 1 -maxdepth 1 -type d | sort)
+
+echo "Installed Codex skill overlay at $TARGET_DIR"

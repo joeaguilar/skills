@@ -1,6 +1,6 @@
 ---
 name: gatr
-description: "Verification gates with gatr: cargo/npm/pytest/tsc/jest/eslint/make; capture exit status, errors, logs; avoid tail/grep pipelines."
+description: "Use for non-interactive build, test, lint, typecheck, or verify gates where exit status, durable full logs, compact errors, or prior results matter. Prefer gatr for cargo, npm, pytest, tsc, jest, eslint, make, and similar gates. Do not use for interactive commands, servers, watch modes, or short commands whose full output belongs inline."
 ---
 
 # gatr — gate runner skill

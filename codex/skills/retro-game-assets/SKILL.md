@@ -1,6 +1,6 @@
 ---
 name: retro-game-assets
-description: "Retro game art assets: SVG/bitmap sprites, tiles, backgrounds, HUD, logos, CRT overlays, 8-bit/16-bit/pixel/neon style."
+description: "Use when creating or integrating cohesive retro-game visual assets such as SVG or bitmap sprites, tiles, backgrounds, HUD elements, logos, CRT overlays, and 8-bit, 16-bit, pixel, or neon art. Route bitmap generation through $imagegen; do not use for unrelated general image requests."
 ---
 
 # Retro Game Assets

@@ -106,6 +106,19 @@ skills:
     recommends: ["game-assets"]
     unlocked_by: ["imagegen"]
     position: { x: 38, y: 4 }
+  panthexia-tiled-materials:
+    path: "skills/panthexia-tiled-materials"
+    group: "foundations"
+    tier: 1
+    icon: "TIL"
+    theme: "prism"
+    title: "Panthexia Tiled Materials"
+    summary: "Create projection-aware seamless Panthexia environment materials."
+    provides: ["panthexia-tiled-materials"]
+    requires: ["image-generation"]
+    recommends: ["game-assets"]
+    unlocked_by: ["imagegen"]
+    position: { x: 38, y: 12 }
   code-roast:
     path: "skills/code-roast"
     group: "foundations"
@@ -375,9 +388,9 @@ skills:
     title: "Sprint Planning"
     summary: "Turn specs or plans into groomed sprint backlogs."
     provides: ["sprint-planning"]
-    requires: ["issue-tracker", "code-graph"]
-    recommends: ["story-conventions", "product-roadmap"]
-    unlocked_by: ["itr", "kgr"]
+    requires: ["issue-tracker"]
+    recommends: ["code-graph", "story-conventions", "product-roadmap"]
+    unlocked_by: ["itr"]
     position: { x: 57, y: 54 }
   roadmap:
     path: "skills/roadmap"
@@ -414,9 +427,9 @@ skills:
     title: "Blitz"
     summary: "Run conflict-free parallel backlog execution waves."
     provides: ["backlog-execution"]
-    requires: ["sprint-planning"]
-    recommends: ["code-graph"]
-    unlocked_by: ["sprint"]
+    requires: []
+    recommends: ["issue-tracker", "sprint-planning", "code-graph", "gate-runner"]
+    unlocked_by: []
     position: { x: 76, y: 44 }
   dual-blitz:
     path: "skills/dual-blitz"
@@ -428,7 +441,7 @@ skills:
     summary: "Split backlog execution into two isolated main-agent lanes."
     provides: ["dual-blitz-orchestration"]
     requires: ["backlog-execution"]
-    recommends: ["code-graph", "sprint-review"]
+    recommends: ["code-graph", "gate-runner", "sprint-review"]
     unlocked_by: ["blitz"]
     position: { x: 88, y: 36 }
   sprint-review:
@@ -441,7 +454,7 @@ skills:
     summary: "Review completed sprint work and file follow-ups."
     provides: ["sprint-review"]
     requires: ["sprint-planning"]
-    recommends: ["story-conventions"]
+    recommends: ["story-conventions", "gate-runner"]
     unlocked_by: ["sprint"]
     position: { x: 76, y: 64 }
   fastlane:
@@ -465,6 +478,7 @@ skills:
       - "maximum-autonomy"
       - "product-roadmap"
       - "story-conventions"
+      - "gate-runner"
     unlocked_by: []
     position: { x: 76, y: 78 }
   overdrive:
@@ -476,14 +490,9 @@ skills:
     title: "Overdrive"
     summary: "Autonomous plan, execute, and review loop."
     provides: ["autonomous-orchestration"]
-    requires:
-      - "issue-tracker"
-      - "code-graph"
-      - "sprint-planning"
-      - "backlog-execution"
-      - "sprint-review"
-    recommends: ["product-roadmap", "story-conventions"]
-    unlocked_by: ["blitz", "sprint-review"]
+    requires: []
+    recommends: ["issue-tracker", "code-graph", "gate-runner", "sprint-planning", "backlog-execution", "sprint-review", "product-roadmap", "story-conventions"]
+    unlocked_by: []
     position: { x: 92, y: 54 }
   run-the-rivers-dry:
     path: "skills/run-the-rivers-dry"
@@ -494,9 +503,9 @@ skills:
     title: "Run the Rivers Dry"
     summary: "Chronicle-voiced maximum-autonomy loop that scouts, swarms, verifies, repairs, and persists."
     provides: ["maximum-autonomy"]
-    requires: ["autonomous-orchestration"]
-    recommends: ["issue-tracker", "code-graph", "product-roadmap", "story-conventions"]
-    unlocked_by: ["overdrive"]
+    requires: []
+    recommends: ["autonomous-orchestration", "issue-tracker", "code-graph", "gate-runner", "product-roadmap", "story-conventions"]
+    unlocked_by: []
     position: { x: 92, y: 78 }
 primitives:
   primitive-architect-agent:

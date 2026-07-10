@@ -2,3 +2,5 @@ interface:
   display_name: "Dual Blitz"
   short_description: "Split backlog execution into two isolated blitz lanes"
   default_prompt: "Use $dual-blitz to split a backlog into two safe lane artifacts for simultaneous blitz execution."
+policy:
+  allow_implicit_invocation: false

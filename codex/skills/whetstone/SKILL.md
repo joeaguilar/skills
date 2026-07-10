@@ -1,6 +1,6 @@
 ---
 name: whetstone
-description: "Polish one artifact: critique/revise draft, spec, prompt, design, doc, or small code artifact until quality bar/pass budget."
+description: "Use when the user asks to cooperatively polish, tighten, or iteratively critique and revise one draft, spec, prompt, design, document, or small code artifact against a quality bar. Do not use for adversarial break-it verification, independent parallel attempts, or broad multi-artifact refactoring."
 metadata:
   short-description: Polish one artifact through revision passes
 ---

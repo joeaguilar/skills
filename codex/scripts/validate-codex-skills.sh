@@ -3,6 +3,7 @@ set -euo pipefail
 
 ROOT="${1:-$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd -P)/skills}"
 status=0
+CODEX_ROOT="$(cd "$ROOT/.." && pwd -P)"
 
 validate_yaml_frontmatter() {
   local file="$1" rel="$2" tmp err
@@ -61,6 +62,20 @@ while IFS= read -r skill_md; do
     status=1
   fi
 
+  if [[ "$rel" != .system/* ]] && ! sed -n '2,8p' "$skill_md" | grep -Eq '^description:.*(Use|Trigger|Answer)'; then
+    echo "ERROR: $rel/SKILL.md description must state when to use or trigger the skill"
+    status=1
+  fi
+
+  case "$rel" in
+    blitz|bootstrap-project-docs|dual-blitz|itr|overdrive|roadmap|run-the-rivers-dry|shell-prompt|sprint|sprint-review|story-style)
+      if ! grep -Eq '^[[:space:]]+allow_implicit_invocation:[[:space:]]+false[[:space:]]*$' "$skill_dir/agents/openai.yaml"; then
+        echo "ERROR: $rel must disable implicit invocation because it performs durable or high-autonomy writes"
+        status=1
+      fi
+      ;;
+  esac
+
   if grep -RIn --exclude-dir=.git --exclude='*.bak' -E '\.claude/skills|AskUserQuestion|subagent_type|run_in_background|SendMessage' "$skill_dir" >/tmp/codex-skill-validate.$$ 2>/dev/null; then
     echo "WARN: $rel contains possible non-Codex references:"
     sed 's/^/  /' /tmp/codex-skill-validate.$$
@@ -68,7 +83,29 @@ while IFS= read -r skill_md; do
   rm -f /tmp/codex-skill-validate.$$
 done < <(find "$ROOT" -mindepth 2 -maxdepth 4 -name SKILL.md | sort)
 
-CODEX_ROOT="$(cd "$ROOT/.." && pwd -P)"
+REGISTRY_JSON="$CODEX_ROOT/registry/skill-tree.json"
+if [ -f "$REGISTRY_JSON" ] && command -v node >/dev/null 2>&1; then
+  actual="${TMPDIR:-/tmp}/codex-skill-payloads.$$"
+  declared="${TMPDIR:-/tmp}/codex-skill-registry.$$"
+  while IFS= read -r skill_md; do
+    rel_dir="${skill_md#$ROOT/}"
+    rel_dir="${rel_dir%/SKILL.md}"
+    printf 'skills/%s\n' "$rel_dir"
+  done < <(find "$ROOT" -mindepth 2 -maxdepth 4 -name SKILL.md | sort) | sort > "$actual"
+  node -e 'const r=require(process.argv[1]); for (const item of Object.values(r.skills || {})) console.log(item.path)' "$REGISTRY_JSON" | sort > "$declared"
+
+  while IFS= read -r missing; do
+    [ -z "$missing" ] && continue
+    echo "ERROR: skill payload is missing from registry: $missing"
+    status=1
+  done < <(comm -23 "$actual" "$declared")
+  while IFS= read -r missing; do
+    [ -z "$missing" ] && continue
+    echo "ERROR: registry skill path has no payload: $missing"
+    status=1
+  done < <(comm -13 "$actual" "$declared")
+  rm -f "$actual" "$declared"
+fi
 
 check_markdown_frontmatter() {
   local file="$1" rel="$2" require_name="$3"
@@ -117,6 +154,10 @@ fi
 
 if [ -f "$(dirname "${BASH_SOURCE[0]}")/skill-tree.js" ]; then
   "$(dirname "${BASH_SOURCE[0]}")/skill-tree.js" validate
+fi
+
+if [ "${CODEX_VALIDATE_INSTALLED:-0}" -eq 1 ] && [ -x "$CODEX_ROOT/scripts/audit-installed-skills.sh" ]; then
+  "$CODEX_ROOT/scripts/audit-installed-skills.sh" || status=1
 fi
 
 exit "$status"

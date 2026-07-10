@@ -1,29 +1,29 @@
 ---
 name: story-style
-description: "Story style: /story-style, create/update STORY_STYLE.md issue conventions from itr/gh/examples/interview; not filing issues."
+description: "Use only when the user explicitly invokes $story-style or asks to create or update STORY_STYLE.md from tracker examples, pasted tickets, or an interview about issue-writing conventions. Do not file issues, define sprint scope, or create a project-wide Definition of Done."
 ---
 
-# /story-style — capture project issue conventions
+# $story-style — capture project issue conventions
 
-Produce `STORY_STYLE.md`, the file `/sprint` Phase 0 reads to mirror how this team writes issues. Walks the user through ingestion (real examples or pure interview), surfaces observed patterns, lets the user refine linearly or in free-form chat, then writes the file behind a single approval gate.
+Produce `STORY_STYLE.md`, the file `$sprint` Phase 0 reads to mirror how this team writes issues. Walks the user through ingestion (real examples or pure interview), surfaces observed patterns, lets the user refine linearly or in free-form chat, then writes the file behind a single approval gate.
 
 This is a setup wizard — it runs rarely, ideally once per project, and updates over time as conventions evolve.
 
 **Out of scope:**
 - Filing issues (use the `itr` skill).
-- Planning sprints or producing backlogs (use `/sprint`).
-- Defining Definition of Done. STORY_STYLE.md is **style only** — title shape, body template, AC format, tags, voice. DoD stays in `/sprint` because it's sprint-scoped, not project-scoped.
+- Planning sprints or producing backlogs (use `$sprint`).
+- Defining Definition of Done. STORY_STYLE.md is **style only** — title shape, body template, AC format, tags, voice. DoD stays in `$sprint` because it's sprint-scoped, not project-scoped.
 
-## Slash invocation
+## Invocation
 
 ```
-/story-style [--path <dir>]
+$story-style [--path <dir>]
 ```
 
 | Form | Meaning |
 |---|---|
-| `/story-style` | Default — write/update `./STORY_STYLE.md` at repo root. |
-| `/story-style --path <dir>` | Write to `<dir>/STORY_STYLE.md` instead. Override for monorepos where a sub-package needs its own style; one style file per repo is the strong default. |
+| `$story-style` | Default — write/update `./STORY_STYLE.md` at repo root. |
+| `$story-style --path <dir>` | Write to `<dir>/STORY_STYLE.md` instead. Override for monorepos where a sub-package needs its own style; one style file per repo is the strong default. |
 
 ---
 
@@ -31,7 +31,7 @@ This is a setup wizard — it runs rarely, ideally once per project, and updates
 
 - **User** = author of project conventions. Picks ingestion mode, picks refinement mode, owns final approval.
 - **Skill** = coach + drafter. Surfaces base defaults, infers patterns from real examples, teaches *why* each section exists, drafts the file.
-- **Artifact** = `STORY_STYLE.md`. Read by `/sprint` Phase 0 and (eventually) by any other skill that creates issues. One file per repo.
+- **Artifact** = `STORY_STYLE.md`. Read by `$sprint` Phase 0 and (eventually) by any other skill that creates issues. One file per repo.
 
 ---
 
@@ -226,92 +226,20 @@ Example story (rendered in this style):
   <title>
   <one short body block + AC bullets>
 
-/sprint will auto-detect this file in Phase 0 and mirror its conventions when drafting backlogs.
+$sprint will auto-detect this file in Phase 0 and mirror its conventions when drafting backlogs.
 ```
 
 Stop.
 
 ---
 
-## STORY_STYLE.md schema (the rendered file)
+## Artifact schema reference
 
-```markdown
-# Story Style — <project name>
-
-_Last updated: YYYY-MM-DD_
-
-> How this project writes issues, tickets, and stories. Read by `/sprint` Phase 0 and Codex or any user agent that creates issues for this repo.
-
-## Title & Body
-
-**Title shape:** <imperative | declarative | mixed> — <one-line rule>
-**Title length:** <cap or "no cap">
-**Title prefix:** <none | convention>
-
-**Body template:**
-```
-<rendered body skeleton with section headings>
-```
-
-**Required sections:** <list>
-**Optional sections:** <list>
-
-## Acceptance Criteria
-
-**Format:** <bulleted observable | Gherkin | numbered>
-**Observability rule:** <one-line rule>
-**DoD reference:** <how DoD is referenced or appended — e.g. "appended by /sprint per sprint">
-
-## Tags & Priority
-
-**Tag taxonomy:** <flat | prefixed conventions>
-**Common tag prefixes:** <list with one-line meanings>
-**Priority scheme:** <scheme + values>
-**Epic linking:** <convention>
-
-## Language & Voice
-
-**Terminology:** prefer "<noun>" (not "<alternates>")
-**Voice:** <terse-technical | friendly-explanatory | formal | ...>
-**Banned phrases / anti-patterns:**
-- <bullet>
-
-**Domain glossary:**
-- **<term>** — <one-line definition>
-
-**Other project-specific notes:**
-- <bullet>
-
-## Worked Examples
-
-### Example 1 — <kind, e.g. feature>
-
-<rendered title>
-
-<rendered body>
-
-**Acceptance criteria:**
-- <bullet>
-- <bullet>
-
-### Example 2 — <kind, e.g. bug>
-
-<rendered title>
-
-<rendered body>
-
-**Acceptance criteria:**
-- <bullet>
-- <bullet>
-```
-
-If a section ends up empty (e.g. no banned phrases declared), omit it rather than leaving a placeholder.
-
----
+Before Phase 6 presents the draft or Phase 7 writes it, read `references/story-style-schema.md` completely. It contains the required STORY_STYLE.md structure and worked examples.
 
 ## Coaching style (Scrum-Master-adjacent tone)
 
-- **Announce every phase by name.** Same structured-output principle as `/sprint` and `/blitz` — the user always knows where they are.
+- **Announce every phase by name.** Same structured-output principle as `$sprint` and `$blitz` — the user always knows where they are.
 - **Teach the *why* of each schema section** in one short line as you reach it. Examples:
   - *"Title shape matters because every user agent picking up an issue scans titles first; consistency speeds triage."*
   - *"AC observability is what lets Codex self-verify it's done — vague AC creates handoff failures."*
@@ -323,7 +251,7 @@ If a section ends up empty (e.g. no banned phrases declared), omit it rather tha
 ## Principles
 
 - **One repo, one style file.** `--path` exists for the rare monorepo exception, but the strong default is single-source-of-truth per repo.
-- **Style only, not DoD.** STORY_STYLE.md describes how stories *look*. Definition of Done is sprint-scoped and lives in `/sprint`. Don't blur the boundary.
+- **Style only, not DoD.** STORY_STYLE.md describes how stories *look*. Definition of Done is sprint-scoped and lives in `$sprint`. Don't blur the boundary.
 - **Inference is a starting point, not authority.** Always confirm observed patterns with the user before refinement. Inference errors compound silently otherwise.
 - **One BLOCKING gate, no more.** The interview itself gives the user agency throughout; only the final write needs an explicit confirmation.
 - **Worked examples beat declarative templates.** End the file with 1–2 fully-rendered example stories; that's what the next Codex run reads to understand the style.
@@ -335,7 +263,7 @@ If a section ends up empty (e.g. no banned phrases declared), omit it rather tha
 
 - Don't write the file before Phase 6 approval.
 - Don't silently overwrite an existing `STORY_STYLE.md` — always show the diff first.
-- Don't define a project-wide Definition of Done here; that's `/sprint`'s territory.
+- Don't define a project-wide Definition of Done here; that's `$sprint`'s territory.
 - Don't file or modify any issues; this skill never touches the tracker.
 - Don't add multiple style files per repo unless the user explicitly used `--path` knowing the trade-off.
 - Don't fold inferred patterns into the draft silently — confirm them in Phase 3.

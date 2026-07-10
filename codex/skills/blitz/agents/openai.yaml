@@ -2,3 +2,5 @@ interface:
   display_name: "Blitz"
   short_description: "Orchestrate parallel backlog waves"
   default_prompt: "Use $blitz to plan and run a parallel subagent wave across the open backlog."
+policy:
+  allow_implicit_invocation: false

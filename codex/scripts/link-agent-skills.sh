@@ -6,12 +6,14 @@ usage() {
 Usage:
   link-agent-skills.sh [--apply] [--source PATH] [--agents-home PATH]
 
-Links non-system Codex skills into ~/.agents/skills for Codex skill loading.
-The .system skill tree remains owned by ~/.codex/skills and is intentionally
-not linked here.
+Compatibility-only linker for older Codex builds that load ~/.agents/skills.
+Current Codex builds should use ~/.codex/skills as the single authoritative
+root; enabling these links can expose duplicate skill names.
 
 Options:
   --apply             Make changes. Without this flag, print the plan only.
+  --compat            Acknowledge duplicate-name compatibility mode. Required
+                      with --apply.
   --source PATH       Codex skills directory. Defaults to ../skills.
   --agents-home PATH  Agents home. Defaults to $AGENTS_HOME or ~/.agents.
   -h, --help          Show this help.
@@ -24,17 +26,25 @@ SOURCE_DIR="$CODEX_DIR/skills"
 BACKUP_ROOT="$CODEX_DIR/backups"
 AGENTS_HOME_DIR="${AGENTS_HOME:-$HOME/.agents}"
 APPLY=0
+COMPAT=0
 timestamp="$(date +%Y%m%d-%H%M%S)"
 
 while [ "$#" -gt 0 ]; do
   case "$1" in
     --apply) APPLY=1; shift ;;
+    --compat) COMPAT=1; shift ;;
     --source) SOURCE_DIR="${2:?missing value for --source}"; shift 2 ;;
     --agents-home) AGENTS_HOME_DIR="${2:?missing value for --agents-home}"; shift 2 ;;
     -h|--help) usage; exit 0 ;;
     *) echo "Unknown argument: $1" >&2; usage >&2; exit 2 ;;
   esac
 done
+
+if [ "$APPLY" -eq 1 ] && [ "$COMPAT" -ne 1 ]; then
+  echo "Refusing to create duplicate compatibility links without --compat." >&2
+  echo "Prefer ./install.sh codex --apply for the authoritative ~/.codex/skills overlay." >&2
+  exit 2
+fi
 
 if [ ! -d "$SOURCE_DIR" ]; then
   echo "Source skills directory does not exist: $SOURCE_DIR" >&2
@@ -49,6 +59,7 @@ echo "  Source:      $SOURCE_DIR"
 echo "  Agents home: $AGENTS_HOME_DIR"
 echo "  Target:      $TARGET_DIR"
 echo "  Scope:       non-system skills only"
+echo "  Warning:     compatibility mode can duplicate names already loaded from ~/.codex/skills"
 
 if [ "$APPLY" -eq 1 ]; then
   mkdir -p "$TARGET_DIR" "$BACKUP_ROOT"

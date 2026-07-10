@@ -1,30 +1,30 @@
 ---
 name: sprint
-description: "Sprint planning: /sprint from plan/spec/conversation into itr backlog, Sprint Goal, stories, file ownership, Definition of Done."
+description: "Use only when the user explicitly invokes $sprint or asks to turn a plan, spec, or conversation into one groomed itr sprint backlog with a Sprint Goal, stories, acceptance criteria, file ownership, dependencies, and Definition of Done. Do not execute the backlog or review a completed sprint."
 ---
 
-# /sprint — sprint planning as Scrum Master
+# $sprint — sprint planning as Scrum Master
 
-Take an input (Codex plan, `/plan` block, markdown spec, conversation, or inline brief), and produce a fully-groomed Sprint: one Sprint Goal, a prioritized story backlog filed in `itr`, declared file ownership for `/blitz`, and a baked-in Definition of Done. This skill is **planning only** — it never executes work. Hand-off to `/blitz` happens after the user reviews the filed backlog.
+Take an input (Codex plan, `/plan` block, markdown spec, conversation, or inline brief), and produce a fully-groomed Sprint: one Sprint Goal, a prioritized story backlog filed in `itr`, declared file ownership for `$blitz`, and a baked-in Definition of Done. This skill is **planning only** — it never executes work. Hand-off to `$blitz` happens after the user reviews the filed backlog.
 
 The orchestrator plays **Scrum Master**:
 - The **user** is the Product Owner — owns goal, scope, and prioritization.
-- **Codex worker agents / `/blitz` waves** are Developers — they receive the filed sprint and do the work.
+- **Codex worker agents / `$blitz` waves** are Developers — they receive the filed sprint and do the work.
 - The Scrum Master coaches: each phase is announced by name, each Scrum artifact is explained as it's produced, and Scrum violations are flagged with a one-line *why*.
 
 Verbose, structured output is the point — it's how the user knows where they are in the workflow.
 
-## Slash invocation
+## Invocation
 
 ```
-/sprint [input] [--budget N] [--name slug] [--dry-run]
+$sprint [input] [--budget N] [--name slug] [--dry-run]
 ```
 
 | Form | Meaning |
 |---|---|
-| `/sprint` | No args — use prior conversation; auto-detect a `/plan` block if present; if neither yields a usable spec, **ask the user** for a path or inline brief. |
-| `/sprint path/to/spec.md` | Treat the markdown file as the source of truth. |
-| `/sprint <inline brief>` | Treat the rest of the line as the spec. |
+| `$sprint` | No args — use prior conversation; auto-detect a `/plan` block if present; if neither yields a usable spec, **ask the user** for a path or inline brief. |
+| `$sprint path/to/spec.md` | Treat the markdown file as the source of truth. |
+| `$sprint <inline brief>` | Treat the rest of the line as the spec. |
 | `--budget N` | Override the soft cap on story count (default ~10, auto-fit to spec). |
 | `--name slug` | Override the auto-derived slug used in the sprint folder name. Sanitized to `[a-z0-9-]`, capped at 32 chars. |
 | `--dry-run` | Run all phases including alignment, but skip every `itr` write, the folder/file writes, and the `sprint/CURRENT` update. Print what *would* have been filed. |
@@ -37,7 +37,7 @@ State these once at the top of every run so the user knows the contract:
 
 - **Product Backlog** = all candidate work for this product. Lives in `itr` with tag `product-backlog`. Survives across sprints.
 - **Sprint Backlog** = the subset selected for this Sprint. Lives in `itr` with tag `sprint-N`, parented to the Sprint epic.
-- **Increment** = the "Done" output produced by `/blitz` after this skill hands off. Not produced here.
+- **Increment** = the "Done" output produced by `$blitz` after this skill hands off. Not produced here.
 - **Sprint Goal** = one sentence describing the value this Sprint delivers. Mandatory. Locked at Gate 1.
 - **Definition of Done** = the quality bar every story must clear. Lives at sprint level (in epic body) and is appended to each story's acceptance criteria.
 
@@ -61,12 +61,12 @@ Announce: `Phase 0 — Intake & preflight`.
 4. **Detect kgr.** If `kgr` is on `$PATH`, plan to use it for file inference and dependency edges (`kgr refs`, `kgr query --who-imports`). If absent, note the absence in the Phase 0 summary and proceed without it.
 
 5. **Detect story style.** Look for project conventions in this priority:
-   - `./STORY_STYLE.md` — canonical location (built by `/story-style`).
+   - `./STORY_STYLE.md` — canonical location (built by `$story-style`).
    - `AGENTS.md` / `CLAUDE.md` — scan for sections about story style, issue conventions, or ticket format.
    - Project default (any obvious project-level convention you can infer from existing `itr` issues — title casing, AC format, tag prefixes).
    - **Base default** (used if none of the above): see `Story style — base default` below.
 
-   Note which style won in the Phase 0 summary. If the base default is in use (i.e. no `STORY_STYLE.md`, nothing relevant in `CLAUDE.md` / `AGENTS.md`, and no inferable project default), include a soft-suggest line: `Run /story-style to capture project conventions.` Do not pause — this is a surface, not a gate.
+   Note which style won in the Phase 0 summary. If the base default is in use (i.e. no `STORY_STYLE.md`, nothing relevant in `CLAUDE.md` / `AGENTS.md`, and no inferable project default), include a soft-suggest line: `Run $story-style to capture project conventions.` Do not pause — this is a surface, not a gate.
 
 6. **Determine sprint number.** Prefer filesystem over tracker:
    - If `sprint/` exists, list `sprint/sprint-*` directories, parse the leading `sprint-{N}` from each, take max N + 1.
@@ -75,15 +75,15 @@ Announce: `Phase 0 — Intake & preflight`.
 
 7. **Check for in-flight sprints.** Read `sprint/CURRENT` if it exists — its single line names the most-recent open sprint folder. Cross-reference with `itr` for any open `sprint-N` epics.
 
-   **Detect already-reviewed sprints before flagging as in-flight.** A sprint that has been through `/sprint-review` will have its `plan.md` Outcomes / Demo / Retro sections populated (Phase 6 writes them as empty HTML-comment placeholders; `/sprint-review` Phase 6 replaces them). Without this check, a closed-but-not-yet-incremented sprint will be falsely flagged as in-flight — noise the PO has to mentally filter. This mirrors the sprint-1 stale-tickets pattern (step 8 below): the bookkeeping says open, the reality is closed, and Codex has to read the reality before reporting.
+   **Detect already-reviewed sprints before flagging as in-flight.** A sprint that has been through `$sprint-review` will have its `plan.md` Outcomes / Demo / Retro sections populated (Phase 6 writes them as empty HTML-comment placeholders; `$sprint-review` Phase 6 replaces them). Without this check, a closed-but-not-yet-incremented sprint will be falsely flagged as in-flight — noise the PO has to mentally filter. This mirrors the sprint-1 stale-tickets pattern (step 8 below): the bookkeeping says open, the reality is closed, and Codex has to read the reality before reporting.
 
    1. Read `sprint/CURRENT` for the folder name; resolve `sprint/<folder>/plan.md`.
    2. If the file is missing, treat the sprint as in-flight (no review evidence).
-   3. If the file exists, read its `## Outcomes` section. Treat it as **reviewed** when the section contains substantive content — any non-whitespace line that is **not** the original placeholder `<!-- Populated by /sprint-review after /blitz runs. -->`. (Demo/Retro placeholders are weaker signals; Outcomes is the canonical one.) Optionally cross-check by reading the sprint epic in `itr` — a `closed` epic with a populated Outcomes is fully reviewed.
+   3. If the file exists, read its `## Outcomes` section. Treat it as **reviewed** when the section contains substantive content — any non-whitespace line that is **not** the original placeholder `<!-- Populated by $sprint-review after $blitz runs. -->`. (Demo/Retro placeholders are weaker signals; Outcomes is the canonical one.) Optionally cross-check by reading the sprint epic in `itr` — a `closed` epic with a populated Outcomes is fully reviewed.
    4. **If reviewed:** do not print the in-flight warning. Note it in the Phase 0 summary as `In-flight: none (sprint-K reviewed, awaiting new-sprint increment)`. Proceed.
    5. **If not reviewed (placeholder Outcomes or no plan.md):** surface as today — `Note: sprint-3 epic is still open (sprint/CURRENT points to sprint-3-...). Stacking is allowed but anti-Scrum — finish or close it first if you can.` Do not block.
 
-   **Self-test (manual, for skill authors):** create a scratch `sprint/sprint-9-2026-01-01-test/plan.md` with the canonical Phase 6 template and confirm step 7 reports it as in-flight. Then replace `<!-- Populated by /sprint-review after /blitz runs. -->` with any single line of real outcomes text and re-run — step 7 should now report `reviewed, awaiting new-sprint increment` and skip the stacking warning. A missing `plan.md` should fall back to the in-flight warning path.
+   **Self-test (manual, for skill authors):** create a scratch `sprint/sprint-9-2026-01-01-test/plan.md` with the canonical Phase 6 template and confirm step 7 reports it as in-flight. Then replace `<!-- Populated by $sprint-review after $blitz runs. -->` with any single line of real outcomes text and re-run — step 7 should now report `reviewed, awaiting new-sprint increment` and skip the stacking warning. A missing `plan.md` should fall back to the in-flight warning path.
 
 8. **Detect stale itr tickets (commit-closed but still open in `itr`).** Git commit conventions like `closes #186` don't auto-sync into `.itr.db` — `itr` has no post-merge hook. Without this check, a sprint can over-count scope by planning a story that already shipped (sprint-1 hit this with #186; see retro action item #196).
 
@@ -106,15 +106,15 @@ Announce: `Phase 0 — Intake & preflight`.
 
    4. If any candidates surface, include them in the Phase 0 summary print (step 9 below) under a `Stale tickets:` line, and **pause for PO direction**. Offer exactly three choices:
 
-      - **(a) Close them now.** Run `itr close <id> "Stale closure: shipped in <commit-sha> (<commit-subject>); detected by /sprint preflight on <date>."` for each. Then continue to Phase 1.
+      - **(a) Close them now.** Run `itr close <id> "Stale closure: shipped in <commit-sha> (<commit-subject>); detected by $sprint preflight on <date>."` for each. Then continue to Phase 1.
       - **(b) Include them in the sprint as no-op closures.** File them as Sprint Backlog stories whose AC is "Verify shipped in <commit-sha>; close as no-op." This matches the sprint-1 pattern where a Codex worker agent organically caught and closed the duplicate. Useful when the PO wants the bookkeeping to flow through the normal sprint workflow.
       - **(c) Skip preflight and proceed.** Note the candidates in the artifact's Open Assumptions log and continue without action. Use when the PO knows the commits don't actually close the tickets (e.g. partial fix, wrong ID typo).
 
    5. If no candidates surface, the `Stale tickets:` line in the summary reads `none`. Do not pause.
 
-   **Self-test (manual, for skill authors):** to validate this step end-to-end, create a synthetic stale ticket in a scratch repo — open an `itr` ticket, then commit any file with `closes #<that-id>` in the message, then re-run `/sprint`. The preflight should surface the ticket and offer the three choices. A repo with zero matching commits, or zero open referenced IDs, should produce `Stale tickets: none`. No automated test exists for skill templates; the verify path is re-read of this file + the synthetic-repo exercise above.
+   **Self-test (manual, for skill authors):** to validate this step end-to-end, create a synthetic stale ticket in a scratch repo — open an `itr` ticket, then commit any file with `closes #<that-id>` in the message, then re-run `$sprint`. The preflight should surface the ticket and offer the three choices. A repo with zero matching commits, or zero open referenced IDs, should produce `Stale tickets: none`. No automated test exists for skill templates; the verify path is re-read of this file + the synthetic-repo exercise above.
 
-9. **Detect `docs/ROADMAP.md`** (the cross-sprint product map built by `/roadmap`). Resolution order: `docs/ROADMAP.md` → `./ROADMAP.md` (spec-less projects). If found:
+9. **Detect `docs/ROADMAP.md`** (the cross-sprint product map built by `$roadmap`). Resolution order: `docs/ROADMAP.md` → `./ROADMAP.md` (spec-less projects). If found:
 
    1. Read the file. Parse the per-section tables to extract: section title, status (✅/🟡/❌), size, linked itr issues, and any optional `Trajectory` section.
 
@@ -125,7 +125,7 @@ Announce: `Phase 0 — Intake & preflight`.
 
    3. **Hold candidates in memory for Phase 1 step 1.** They become a soft suggest for Sprint Goal drafting, not a forced choice.
 
-   If `docs/ROADMAP.md` is absent: include the one-line `Roadmap: absent — run /roadmap to map cross-sprint scope.` surface in the Phase 0 summary. Do not pause — this is a surface, not a gate.
+   If `docs/ROADMAP.md` is absent: include the one-line `Roadmap: absent — run $roadmap to map cross-sprint scope.` surface in the Phase 0 summary. Do not pause — this is a surface, not a gate.
 
 10. **Print the Phase 0 summary** so the user can see the resolved context:
 
@@ -135,7 +135,7 @@ Announce: `Phase 0 — Intake & preflight`.
       Tracker:       itr (db: .itr.db)
       kgr:           present | absent — file inference will use grep instead
       Story style:   STORY_STYLE.md | inferred | base default
-      Roadmap:       docs/ROADMAP.md (N sections; next: §A.6 popup, §A.16 WindowPicker [wide dep]) | absent — run /roadmap
+      Roadmap:       docs/ROADMAP.md (N sections; next: §A.6 popup, §A.16 WindowPicker [wide dep]) | absent — run $roadmap
       Sprint number: sprint-N (auto-incremented from sprint/ folders)
       In-flight:     none | sprint-K reviewed, awaiting new-sprint increment | sprint-K still open per sprint/CURRENT (warning, not blocking)
       Stale tickets: none | #<id> (<title>) — closed in <sha> "<subject>"; choose (a) close now / (b) include as no-op / (c) skip
@@ -166,7 +166,7 @@ Coach: *"The Sprint Goal is the single sentence that explains why this Sprint ex
    Drafted Sprint Goal: "Deliver the WindowPicker primitive so that popup, options-page, sibling, and devtools share one window-selection surface."
    ```
 
-   The roadmap is a planning aid, never a forced choice. If the PO's intent diverges from the roadmap candidates (e.g. urgent bug, customer ask, demo deadline), follow the PO and note the divergence in the Open Assumptions log so `/sprint-review` can revisit. If the roadmap is absent, draft from the spec + recent conversation as before.
+   The roadmap is a planning aid, never a forced choice. If the PO's intent diverges from the roadmap candidates (e.g. urgent bug, customer ask, demo deadline), follow the PO and note the divergence in the Open Assumptions log so `$sprint-review` can revisit. If the roadmap is absent, draft from the spec + recent conversation as before.
 
 2. Draft a short **Non-Goals** list (3–6 bullets) capturing what's deliberately out of scope. This is the most common source of mid-sprint friction; surfacing it now is high leverage.
 
@@ -192,7 +192,7 @@ Coach: *"The Sprint Goal is the single sentence that explains why this Sprint ex
 
 Announce: `Phase 2 — Drafting the Sprint Backlog`.
 
-Coach: *"Now I'll decompose the spec into stories sized to be completed by one `/blitz` worker agent. Anything that can't fit that shape gets flagged for spillover into the Product Backlog."*
+Coach: *"Now I'll decompose the spec into stories sized to be completed by one `$blitz` worker agent. Anything that can't fit that shape gets flagged for spillover into the Product Backlog."*
 
 1. **Decompose into stories.** Each story should:
    - Serve the Sprint Goal (or be flagged spillover).
@@ -203,8 +203,8 @@ Coach: *"Now I'll decompose the spec into stories sized to be completed by one `
 2. **Declare file ownership** when confidence is high:
    - If kgr is present, use `kgr refs <symbol>` and `kgr query --who-imports <file>` to identify the file set.
    - Otherwise, grep for entry points referenced in the spec.
-   - Files only go into `--files` when you're confident; ambiguous cases stay blank and `/blitz`'s planner agent will fill them later.
-   - **If a story's acceptance criterion is user-visible** ("user sees X", "surface a warning", "show a notice"), the ownership set must include the UI/surface file that *renders* it — not just the data-layer file that *produces* it. A data-layer change behind an unowned render site ships a dead path and forces the `/blitz` worker agent to skip the AC or reach outside its files. If data and surface naturally belong to different worker agents, split into a data-layer story + a UI-hookup story (`--blocked-by` the data-layer one). *(sprint-4 retro: #407 declared `bg-io` only; its "user sees a warning" AC needed a `bg-app` render site, forcing a `/blitz` orchestrator intervention.)*
+   - Files only go into `--files` when you're confident; ambiguous cases stay blank and `$blitz`'s planner agent will fill them later.
+   - **If a story's acceptance criterion is user-visible** ("user sees X", "surface a warning", "show a notice"), the ownership set must include the UI/surface file that *renders* it — not just the data-layer file that *produces* it. A data-layer change behind an unowned render site ships a dead path and forces the `$blitz` worker agent to skip the AC or reach outside its files. If data and surface naturally belong to different worker agents, split into a data-layer story + a UI-hookup story (`--blocked-by` the data-layer one). *(sprint-4 retro: #407 declared `bg-io` only; its "user sees a warning" AC needed a `bg-app` render site, forcing a `$blitz` orchestrator intervention.)*
 
 3. **Infer dependencies (`--blocked-by`) conservatively:**
    - Only set when there's a concrete signal: a kgr import edge between owned files, or a clear "X must exist before Y" ordering from the spec.
@@ -243,7 +243,7 @@ Announce: `Phase 3 — Alignment` and explain: *"Before we file anything, we str
 
 ### Step 0 — Empty-AC detection (BLOCKING)
 
-Run this step **before** any of the four alignment topic clusters below. It exists because adopting a stale ticket with empty `acceptance` can otherwise slip past alignment and reach `/blitz` un-AC'd. (This mirrors the project-level constraint: `STORY_STYLE.md` says *"AC is required on every ticket. Empty `acceptance` is not acceptable closure-ready state."* — this step extends that rule into `/sprint` enforcement so it can't be bypassed by adopting a stale ticket.)
+Run this step **before** any of the four alignment topic clusters below. It exists because adopting a stale ticket with empty `acceptance` can otherwise slip past alignment and reach `$blitz` un-AC'd. (This mirrors the project-level constraint: `STORY_STYLE.md` says *"AC is required on every ticket. Empty `acceptance` is not acceptable closure-ready state."* — this step extends that rule into `$sprint` enforcement so it can't be bypassed by adopting a stale ticket.)
 
 1. **Scan the candidate Sprint Backlog** for any story whose `acceptance` field is empty or whitespace. Use the ticket data already pulled by Phase 0 (step 8 stashes it explicitly) — do **not** refetch.
 
@@ -273,13 +273,13 @@ Run this step **before** any of the four alignment topic clusters below. It exis
 
    Use the `--acceptance` flag directly. Do **not** route through `itr update --context` or any other body-field workaround — `--acceptance` is the canonical surface and is confirmed available in current `itr` (`itr update --help`).
 
-4. **If the PO defers:** move the story to spillover (tag `product-backlog,needs-sprint`) and drop it from the in-memory Sprint Backlog. Note the deferral in the Open Assumptions log so `/sprint-review` can revisit.
+4. **If the PO defers:** move the story to spillover (tag `product-backlog,needs-sprint`) and drop it from the in-memory Sprint Backlog. Note the deferral in the Open Assumptions log so `$sprint-review` can revisit.
 
 5. **Do not proceed to the four alignment topic clusters below until every in-sprint story has non-empty `acceptance`.** This is BLOCKING; the Phase 4 Gate 2 sanity check will refuse to proceed if any in-sprint story still has empty AC, so resolving it here is the cheaper path.
 
 ### Step 0b — Visual Gate AC detection (BLOCKING)
 
-Run this immediately after Step 0, before the alignment clusters. It exists because visual or rendering stories that ship with only a green verify gate can still regress the actual pixels. When project instructions (`AGENTS.md`, `CODEX.md`, or `CLAUDE.md`) require a structured Visual Gate, enforce it at planning time so an un-gated visual story cannot reach `/blitz`.
+Run this immediately after Step 0, before the alignment clusters. It exists because visual or rendering stories that ship with only a green verify gate can still regress the actual pixels. When project instructions (`AGENTS.md`, `CODEX.md`, or `CLAUDE.md`) require a structured Visual Gate, enforce it at planning time so an un-gated visual story cannot reach `$blitz`.
 
 1. **Flag every visual-scope story.** A story is visual-scope if it is tagged `visual`, `ui`, or `render`, or its declared `files` touch rendering-related paths such as `src/screens/**`, `src/render/**`, `src/ui/**`, shaders, post-processing, view, draw, canvas, layout, or app-scaling files. Use the ticket data already in memory — do **not** refetch.
 
@@ -309,13 +309,13 @@ Run this immediately after Step 0, before the alignment clusters. It exists beca
 
    Use `--acceptance` directly, as in Step 0 — not `--context` or any body-field workaround.
 
-5. **If the PO defers:** move the story to spillover (tag `product-backlog,needs-sprint`) and drop it from the in-memory Sprint Backlog. Note the deferral in the Open Assumptions log so `/sprint-review` can revisit.
+5. **If the PO defers:** move the story to spillover (tag `product-backlog,needs-sprint`) and drop it from the in-memory Sprint Backlog. Note the deferral in the Open Assumptions log so `$sprint-review` can revisit.
 
 6. **Do not proceed to the alignment clusters until every visual-scope in-sprint story has a Visual Gate block.** BLOCKING; the Phase 4 Gate 2 check re-verifies this, so resolving it here is cheaper.
 
 ### Alignment topic clusters
 
-Invoke the `/alignment` interview pattern (`request_user_input` for simple choices when available, freeform user questions for nuanced ones) on these four topic clusters, in order. For each, present your recommendation alongside the question.
+Invoke the `$alignment` interview pattern (`request_user_input` for simple choices when available, freeform user questions for nuanced ones) on these four topic clusters, in order. For each, present your recommendation alongside the question.
 
 1. **Goal + non-goals + scope boundaries.** Re-confirm the goal still holds against the drafted stories. Surface any drafted story that doesn't visibly serve the goal.
 
@@ -325,7 +325,7 @@ Invoke the `/alignment` interview pattern (`request_user_input` for simple choic
 
 4. **Story splits, sizing, and prioritization.** For any oversized story, propose a split. Confirm or override the risk+dep+value ordering. Confirm spillover decisions (any story the PO wants to pull back into the sprint, or push out).
 
-Capture all PO overrides directly into the in-memory draft. Capture all deferrals/assumptions into an **Open Assumptions** list — this lands in the artifact for the future `/sprint-review` to revisit.
+Capture all PO overrides directly into the in-memory draft. Capture all deferrals/assumptions into an **Open Assumptions** list — this lands in the artifact for the future `$sprint-review` to revisit.
 
 If the PO substantially changes the goal during alignment, **return to Phase 1 Gate 1** and re-confirm. Don't fight that — silent goal drift is the biggest planning failure mode.
 
@@ -368,7 +368,7 @@ Spillover → Product Backlog (K items, tagged needs-sprint):
   - <title> (reason: out-of-goal | too-large | needs-planning)
   ...
 
-Open Assumptions (for /sprint-review):
+Open Assumptions (for $sprint-review):
   - <assumption>
   ...
 
@@ -453,16 +453,16 @@ Announce: `Phase 6 — Writing sprint/<folder>/plan.md`.
    - ...
 
    ## Outcomes
-   <!-- Populated by /sprint-review after /blitz runs. -->
+   <!-- Populated by $sprint-review after $blitz runs. -->
 
    ## Demo
-   <!-- Populated by /sprint-review. -->
+   <!-- Populated by $sprint-review. -->
 
    ## Retro
-   <!-- Populated by /sprint-review. -->
+   <!-- Populated by $sprint-review. -->
    ```
 
-3. **Update `sprint/CURRENT`.** Overwrite (or create) the file with a single line containing the new folder name (e.g. `sprint-3-2026-05-09-auth-hardening`). No trailing newline-only — just the name. This is how `/blitz`, `/sprint-review`, and any other sprint-aware skill discover the in-flight sprint.
+3. **Update `sprint/CURRENT`.** Overwrite (or create) the file with a single line containing the new folder name (e.g. `sprint-3-2026-05-09-auth-hardening`). No trailing newline-only — just the name. This is how `$blitz`, `$sprint-review`, and any other sprint-aware skill discover the in-flight sprint.
 
 ---
 
@@ -492,56 +492,16 @@ Spillover (deferred to Product Backlog):
 Open Assumptions:
   - <assumption>
 
-Next: run `/blitz` to execute the Sprint Backlog. Run `/sprint-review` after blitz to triage outcomes.
+Next: run `$blitz` to execute the Sprint Backlog. Run `$sprint-review` after blitz to triage outcomes.
 ```
 
-Stop. Do not invoke `/blitz` automatically.
+Stop. Do not invoke `$blitz` automatically.
 
 ---
 
-## Story style — base default
+## Story template and multi-repo reference
 
-Used when no `STORY_STYLE.md` exists and no project default can be inferred.
-
-**Title:** imperative, specific. `Add streaming to upload API`, not `Streaming upload`.
-
-**Body:**
-```
-**Why:** <one or two sentences on the user-visible value or the constraint driving this>
-**What:** <one paragraph describing the change>
-**Notes:** <optional — gotchas, related code, prior art>
-```
-
-**Acceptance criteria** (the `-a` field) — bulleted observable outcomes, AC-first then DoD-appended:
-```
-- <story-specific outcome 1>
-- <story-specific outcome 2>
-- <story-specific outcome 3>
----
-- All sprint-level DoD items pass (see epic itr#<id>):
-  - Verify gate green
-  - Tests added/updated
-  - Docs updated if user-visible
-```
-
-**Tags:** `sprint-N`, `risk:<tier>`, plus any tags pulled from `STORY_STYLE.md`.
-
-If a project-level `STORY_STYLE.md` exists, it overrides the body shape, AC format, and tag conventions above. Mirror its style; don't fight it.
-
----
-
-## Multi-repo
-
-Sprints are goal-scoped. A goal that genuinely spans repos is fine; it's not the default.
-
-When the spec implies multiple repos:
-- Each story declares its repo path explicitly in the body (`Repo: path/to/repo`).
-- File ownership is `<repo>:<file>` so `/blitz` can route correctly.
-- The sprint epic body lists the repos in scope.
-
-When in single-repo mode (the default), don't add the repo prefix — keep file paths repo-relative as `itr` and `/blitz` already expect.
-
----
+Before Phase 2 drafts stories, read `references/story-template-and-multirepo.md` completely when no project STORY_STYLE.md exists or when the sprint spans multiple repositories. It contains the base issue schema and multi-repo rules.
 
 ## Coaching style (Scrum Master tone)
 
@@ -554,10 +514,10 @@ When in single-repo mode (the default), don't add the repo prefix — keep file 
 
 ## Principles
 
-- **Planning only.** The skill never executes work. The Increment is `/blitz`'s job.
+- **Planning only.** The skill never executes work. The Increment is `$blitz`'s job.
 - **The Sprint Goal is the yardstick.** Every story decision (in-sprint vs spillover, prioritization, cut/keep) is justified against the goal.
 - **Two BLOCKING gates, no more.** Gate 1 locks the goal; Gate 2 confirms the draft before any `itr` write. After that the skill files autonomously.
-- **File ownership is hand-off currency.** Declared `--files` are gifts to `/blitz`'s wave planner. Conservative when uncertain.
+- **File ownership is hand-off currency.** Declared `--files` are gifts to `$blitz`'s wave planner. Conservative when uncertain.
 - **Spillover is a feature.** Surfacing what *won't* fit is as valuable as picking what will. Nothing gets lost — every deferred item lands in `itr`.
 - **Coaching is structured output.** The phase headers and Scrum vocabulary make the workflow legible. Verbose is fine; opaque is not.
 
@@ -568,10 +528,10 @@ When in single-repo mode (the default), don't add the repo prefix — keep file 
 - Don't proceed past Gate 1 without a confirmed Sprint Goal.
 - Don't proceed past Gate 2 without an explicit user approval of the draft.
 - Don't write to `itr` before Gate 2.
-- Don't invoke `/blitz` automatically — the user runs it after reviewing the filed sprint.
+- Don't invoke `$blitz` automatically — the user runs it after reviewing the filed sprint.
 - Don't roll back partially-filed sprints. On `itr` failure, retry once, then surface and resume.
 - Don't refuse stacked sprints. Warn, then proceed.
 - Don't invent priorities, risk tiers, or AC the spec doesn't imply — surface in alignment instead.
-- Don't drop the spillover. Every deferred story is filed with `product-backlog,needs-sprint` so future `/sprint` runs can pick it up.
-- Don't run `/sprint-review` from this skill — that's a separate future skill.
+- Don't drop the spillover. Every deferred story is filed with `product-backlog,needs-sprint` so future `$sprint` runs can pick it up.
+- Don't run `$sprint-review` from this skill — that's a separate future skill.
 - Don't route drafted AC through `itr update --context` or any other body-field workaround — `itr update --acceptance "..."` is the canonical surface. Sprint-1 used the context-body path as a documented exception for #186; that was the workaround, not the path forward. See itr#198.

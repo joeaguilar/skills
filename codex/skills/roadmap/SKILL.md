@@ -1,31 +1,31 @@
 ---
 name: roadmap
-description: "Roadmap docs: /roadmap, create/update/audit docs/ROADMAP.md from spec, sprint history, itr backlog, sizing, dependencies."
+description: "Use only when the user explicitly invokes $roadmap or asks to create, update, or audit docs/ROADMAP.md by reconciling a spec, sprint history, itr backlog, sizing, dependencies, and release boundaries. Do not use for one-sprint planning, execution, or a generic status answer."
 ---
 
-# /roadmap — the bridge from spec to sprint backlog
+# $roadmap — the bridge from spec to sprint backlog
 
-Produce (or update) `docs/ROADMAP.md`, the cross-sprint product map that lives between a locked spec and the live `itr` backlog. Walks the Product Owner section-by-section: status (✅/🟡/❌), effort sizing (S/M/L/XL), dependencies, v1 boundary. Optionally drafts a sprint trajectory and files `itr` stubs for uncovered sections so future `/sprint` runs can pull them.
+Produce (or update) `docs/ROADMAP.md`, the cross-sprint product map that lives between a locked spec and the live `itr` backlog. Walks the Product Owner section-by-section: status (✅/🟡/❌), effort sizing (S/M/L/XL), dependencies, v1 boundary. Optionally drafts a sprint trajectory and files `itr` stubs for uncovered sections so future `$sprint` runs can pull them.
 
-This skill fills the gap between `/sprint` (plans one sprint) and `/sprint-review` (closes one sprint). Neither answers *"are we feature-complete yet?"* — `/roadmap` does. Read at the start of every `/sprint`. Updated at the end of every `/sprint-review`.
+This skill fills the gap between `$sprint` (plans one sprint) and `$sprint-review` (closes one sprint). Neither answers *"are we feature-complete yet?"* — `$roadmap` does. Read at the start of every `$sprint`. Updated at the end of every `$sprint-review`.
 
 Codex acts as **Scrum Master with a Product Manager lens**:
 - The **user** is Product Owner — owns status confirmations, sizing, dependency edges, v1 boundary, trajectory decisions.
-- The **spec** is the locked scope contract; the **`itr` backlog** is live execution state. `/roadmap` is the connecting tissue.
-- Codex coaches the *why* of each cell as it reaches it. Verbose, structured, phase-announced output — same principle as `/sprint` and `/sprint-review`.
+- The **spec** is the locked scope contract; the **`itr` backlog** is live execution state. `$roadmap` is the connecting tissue.
+- Codex coaches the *why* of each cell as it reaches it. Verbose, structured, phase-announced output — same principle as `$sprint` and `$sprint-review`.
 
-## Slash invocation
+## Invocation
 
 ```
-/roadmap [--spec <path>] [--scope <section>] [--update] [--brief] [--no-itr-stubs] [--dry-run]
+$roadmap [--spec <path>] [--scope <section>] [--update] [--brief] [--no-itr-stubs] [--dry-run]
 ```
 
 | Form | Meaning |
 |---|---|
-| `/roadmap` | Default. Auto-detect spec (`docs/SPEC.md` → `docs/REWRITE_SPEC.md` → `README.md` → `AGENTS.md`); auto-detect sprint history + `itr` state; full per-section interview. |
+| `$roadmap` | Default. Auto-detect spec (`docs/SPEC.md` → `docs/REWRITE_SPEC.md` → `README.md` → `AGENTS.md`); auto-detect sprint history + `itr` state; full per-section interview. |
 | `--spec <path>` | Override spec detection. Use when the spec lives somewhere unusual or when multiple specs exist in the repo. |
 | `--scope <section>` | Limit the roadmap to a subset of the spec (e.g. `§A`, `§B.popup`). Used for monorepos with multiple products in one spec; the strong default is one roadmap per repo. |
-| `--update` | Existing `docs/ROADMAP.md` found — interview only the rows whose status may have changed since the last update. Used by `/sprint-review` Phase 8. |
+| `--update` | Existing `docs/ROADMAP.md` found — interview only the rows whose status may have changed since the last update. Used by `$sprint-review` Phase 8. |
 | `--brief` | Render the artifact in summary-only mode (status + linked issues only; no per-section notes). Good for 50+ section specs. |
 | `--no-itr-stubs` | Skip Phase 7 entirely — don't file `itr` stubs for sections with zero backlog coverage. |
 | `--dry-run` | Run all phases including alignment, print what *would* have been written/filed, no writes. |
@@ -38,8 +38,8 @@ State once at the top of every run so the user knows the contract:
 
 - **Spec** = the locked scope contract (`docs/SPEC.md` or equivalent). Read-only input.
 - **Product Backlog** = live work in `itr` tagged `product-backlog`. Survives across sprints.
-- **Sprint Backlog** = filed by `/sprint`; closed by `/sprint-review`. Read for status inference, never written here.
-- **Roadmap** = `docs/ROADMAP.md` (or repo-root `ROADMAP.md` for spec-less projects). The bridge. Read by every `/sprint` Phase 0; updated by every `/sprint-review` Phase 8.
+- **Sprint Backlog** = filed by `$sprint`; closed by `$sprint-review`. Read for status inference, never written here.
+- **Roadmap** = `docs/ROADMAP.md` (or repo-root `ROADMAP.md` for spec-less projects). The bridge. Read by every `$sprint` Phase 0; updated by every `$sprint-review` Phase 8.
 - **Roadmap stubs** = `itr` issues filed for spec sections with zero backlog coverage. Tagged `roadmap-stub,needs-sprint,product-backlog`. Created by Phase 7.
 
 ---
@@ -82,7 +82,7 @@ Announce: `Phase 0 — Preflight`.
    - `itr stats` to verify the db is present.
    - `itr agent-info` to get authoritative flag/tag conventions.
    - `itr list -f json --tags product-backlog --fields id,title,tags,status` to pull the live backlog. Hold in memory for Phase 2 linked-issue inference and Phase 7 stub-dedup check.
-   - `itr list -f json --tags roadmap-stub --fields id,title,status` to pull existing roadmap stubs (used for Phase 7 idempotency — re-running `/roadmap` never double-files a stub).
+   - `itr list -f json --tags roadmap-stub --fields id,title,status` to pull existing roadmap stubs (used for Phase 7 idempotency — re-running `$roadmap` never double-files a stub).
 
 7. **Detect repos in scope.** Default = current repo (single-repo mode). If `--scope` was passed and the section selector spans multiple repos (e.g. `§B` refers to a sibling product in `../sibling-repo/`), collect the unique repo set; treat each repo's `itr` db and sprint history as a separate signal cluster. Multi-repo is a feature, not a default — most roadmaps stay in one repo.
 
@@ -91,9 +91,9 @@ Announce: `Phase 0 — Preflight`.
 9. **Detect `kgr`.** If present, plan to use `kgr query --who-imports` in Phase 4 for dependency inference. If absent, fall back to spec cross-reference parsing.
 
 10. **Spec-less mode** (if step 1 found no spec):
-    - Coach: *"A roadmap without a spec is a wishlist. Strongly consider `/alignment` first to capture the scope before mapping it. Proceeding anyway — section list will come from pure interview."*
+    - Coach: *"A roadmap without a spec is a wishlist. Strongly consider `$alignment` first to capture the scope before mapping it. Proceeding anyway — section list will come from pure interview."*
     - Default target shifts from `docs/ROADMAP.md` to `./ROADMAP.md` (repo root, more visible without a `docs/` convention).
-    - Skip steps 2, 4, and 9 — there's no spec to parse, no drift to detect, no cross-references to mine. Phase 2 will run pure-interview to draft the section list from scratch (same pattern as `/story-style`'s pure-interview path).
+    - Skip steps 2, 4, and 9 — there's no spec to parse, no drift to detect, no cross-references to mine. Phase 2 will run pure-interview to draft the section list from scratch (same pattern as `$story-style`'s pure-interview path).
 
 11. **Print the Phase 0 summary:**
 
@@ -104,7 +104,7 @@ Announce: `Phase 0 — Preflight`.
       Drift:          none | N candidates (M renames, P reorders, Q new, R orphans) — reconcile at Gate 1
       Sprint history: N folders (sprint-1 … sprint-N), K reviewed, M unreviewed | none
       itr:            <K> open in product-backlog, <S> existing roadmap stubs
-      Story style:    STORY_STYLE.md | base default — soft suggest /story-style
+      Story style:    STORY_STYLE.md | base default — soft suggest $story-style
       kgr:            present | absent — dependency inference from spec cross-refs only
       Repos:          single (.) | multi (<list>)
       Scope:          full spec | --scope §A
@@ -256,7 +256,7 @@ For each section with status `❌` or `🟡`:
 
 2. **PO accepts or edits** per section. For uncertain sections, fall back to alignment-style sub-questions: *"§A.15 Kinds has 7 subsections covering model, defaults, storage, identity, behavior, options-page editor, popup action. What's the smallest meaningful split you'd want to ship as one sprint? That's the size unit."*
 
-3. **Flag XL sections.** Any section sized XL means *"too big for one sprint"* — surface for splitting in Phase 6 trajectory drafting (if trajectory is opted in) or for `/sprint` to split at scoping time.
+3. **Flag XL sections.** Any section sized XL means *"too big for one sprint"* — surface for splitting in Phase 6 trajectory drafting (if trajectory is opted in) or for `$sprint` to split at scoping time.
 
 4. **`--update` mode**: re-prompt only on rows whose status changed in Phase 2. Preserve existing sizes otherwise.
 
@@ -293,7 +293,7 @@ Coach: *"Dependency edges are how trajectory survives contact with reality. Wide
      (d) Keep both, accept the cycle (trajectory will warn but not refuse)
    ```
 
-   Don't silently accept cycles — they make trajectory drafting impossible and force `/sprint` to over-serialize.
+   Don't silently accept cycles — they make trajectory drafting impossible and force `$sprint` to over-serialize.
 
 5. **`--update` mode**: re-walk only if Phase 2 flagged a section as newly closed or newly opened — its dependents may need updating. Cycle detection always runs (cheap, and a cycle introduced by a new section is the exact case `--update` should catch).
 
@@ -339,16 +339,16 @@ Coach: *"The release boundary is the line you'll push back against scope creep w
 
 Announce: `Phase 6 — Trajectory (opt-in)`.
 
-Coach: *"A trajectory is a planning aid, not a commitment. The next `/sprint` re-derives ordering from current backlog state. If you want a draft, I'll write it and label it 'draft'; if you'd rather just have the status map, that's the default."*
+Coach: *"A trajectory is a planning aid, not a commitment. The next `$sprint` re-derives ordering from current backlog state. If you want a draft, I'll write it and label it 'draft'; if you'd rather just have the status map, that's the default."*
 
 1. **Ask the PO** with a multiple-choice prompt:
-   - **Skip trajectory** (Recommended) — write the status map only; `/sprint` re-derives sprint goals each cycle.
+   - **Skip trajectory** (Recommended) — write the status map only; `$sprint` re-derives sprint goals each cycle.
    - **Draft a trajectory** — Codex proposes sprint-N+1 through sprint-N+M groupings respecting dependencies + sizes.
 
 2. **If trajectory is drafted:**
    - Group `❌` and `🟡` sections into sprint-sized chunks respecting dependency edges (wide consumers go first; XL sections get split-flagged).
    - PO accepts, edits, or scraps per sprint.
-   - **Always label trajectory as `draft, refined at each /sprint`.** Never as commitment. The header in the artifact carries this disclaimer in bold.
+   - **Always label trajectory as `draft, refined at each $sprint`.** Never as commitment. The header in the artifact carries this disclaimer in bold.
 
 3. **`--update` mode**: ask whether to refresh the existing trajectory. Default = preserve unless PO says otherwise (trajectory is the cell most likely to drift; over-refreshing is churn).
 
@@ -358,7 +358,7 @@ Coach: *"A trajectory is a planning aid, not a commitment. The next `/sprint` re
 
 Announce: `Phase 7 — Stub filing`.
 
-Coach: *"Sections with status ❌ and no linked itr issues are invisible to `/sprint` — it can't pull what isn't there. Stubs fix that. You decide the volume."*
+Coach: *"Sections with status ❌ and no linked itr issues are invisible to `$sprint` — it can't pull what isn't there. Stubs fix that. You decide the volume."*
 
 **Skip this phase entirely if `--no-itr-stubs` was passed.** Print `Stub filing skipped (--no-itr-stubs).` and proceed to Phase 8.
 
@@ -385,8 +385,8 @@ Coach: *"Sections with status ❌ and no linked itr issues are invisible to `/sp
 
 3. **Draft each stub issue** using `STORY_STYLE.md` conventions (defer to `itr` skill):
    - **Title** — from spec section title.
-   - **Body** — must contain the section number as a literal token (e.g. `§A.16`) on its own line; this is what future `/roadmap` runs use for dedup. Also include a link to the spec section (file + heading) and a one-liner: `Tracked by roadmap row §A.16. AC will be drafted at /sprint scoping time (Phase 3 Step 0).`
-   - **AC** — left empty (this is a stub; AC drafts at sprint scoping time per `/sprint` Phase 3 Step 0).
+   - **Body** — must contain the section number as a literal token (e.g. `§A.16`) on its own line; this is what future `$roadmap` runs use for dedup. Also include a link to the spec section (file + heading) and a one-liner: `Tracked by roadmap row §A.16. AC will be drafted at $sprint scoping time (Phase 3 Step 0).`
+   - **AC** — left empty (this is a stub; AC drafts at sprint scoping time per `$sprint` Phase 3 Step 0).
    - **Kind** — `task`.
    - **Tags** — `roadmap-stub, needs-sprint, product-backlog, risk:<tier-from-size>` (XL→high, L→med, S/M→low).
 
@@ -435,7 +435,7 @@ Approve, amend, or abort?
    Roadmap can still be updated to record the milestone; future cycles can re-open with new scope.
 ```
 
-No release-note generation — that's a separate concern (out of scope for `/roadmap`).
+No release-note generation — that's a separate concern (out of scope for `$roadmap`).
 
 ---
 
@@ -445,7 +445,7 @@ Announce: `Phase 9 — Applying changes`.
 
 Order matters — file stubs first so the artifact can reference real IDs:
 
-1. **File the stubs** via `itr batch add` (if any). Capture every new ID. On partial failure: retry once per item; if retry fails, surface failed payloads and resume (no rollback) — same pattern as `/sprint` Phase 5.
+1. **File the stubs** via `itr batch add` (if any). Capture every new ID. On partial failure: retry once per item; if retry fails, surface failed payloads and resume (no rollback) — same pattern as `$sprint` Phase 5.
 
 2. **Write the artifact with `<!-- auto -->` sentinel markers.**
 
@@ -471,10 +471,10 @@ Order matters — file stubs first so the artifact can reference real IDs:
 3. **Append an update log line** at the top of the file:
 
    ```
-   _Last updated: 2026-05-15 (post-/sprint-review-2)_
+   _Last updated: 2026-05-15 (post-sprint-review-2)_
    ```
 
-   For fresh drafts the log shows the trigger context (`/sprint-review-2`, `/init follow-up`, or `manual run`).
+   For fresh drafts the log shows the trigger context (`sprint-review-2`, `/init follow-up`, or `manual run`).
 
 ---
 
@@ -496,137 +496,22 @@ Roadmap baseline established (or updated).
   Stubs filed:        <N> new itr issues | none
 
 Next:
-  - Read `docs/ROADMAP.md` at the start of every `/sprint` to inform sprint goal selection.
-  - `/sprint-review` Phase 8 calls `/roadmap --update` automatically to keep status current.
-  - Re-run `/roadmap` manually when the spec changes (add/remove sections).
+  - Read `docs/ROADMAP.md` at the start of every `$sprint` to inform sprint goal selection.
+  - `$sprint-review` Phase 8 calls `$roadmap --update` automatically to keep status current.
+  - Re-run `$roadmap` manually when the spec changes (add/remove sections).
 ```
 
 Stop.
 
 ---
 
-## ROADMAP.md schema (the rendered file)
+## Artifact and integration reference
 
-```markdown
-# Roadmap — <project name>
-
-_Last updated: YYYY-MM-DD (post-<trigger>)_
-
-> Cross-sprint product map. Bridges `docs/SPEC.md` and the live `itr` backlog.
-> Read at the start of every `/sprint`. Updated at the end of every `/sprint-review`.
-
-## Status legend
-
-- ✅ — section is feature-complete (all subsections shipped, AC met)
-- 🟡 — partial (some subsections shipped, others scoped or unscoped)
-- ❌ — not started (no sprint has touched this; may have stubs filed)
-
-Cells with a trailing `<!-- auto -->` marker are Codex-owned and refreshed by `/roadmap --update`. Cells without the marker are PO-edited and preserved verbatim. A `<!-- po:override -->` marker pins a PO-asserted status against future inference.
-
-## Release boundary
-
-**v1 ships when:**
-- <bullet>
-- <bullet>
-
-**v2 scope (tracked, deferred):**
-- <section> — <one-line why>
-
-**Excluded (never):**
-- <section> — <one-line why>
-
-## Sections — v1
-
-### §A — <group title>
-
-| Section | Status | Size | Linked itr | Notes |
-|---------|--------|------|------------|-------|
-| §A.1 Architecture | ✅ <!-- auto --> | M <!-- auto --> | itr#12, itr#15 <!-- auto --> | shipped sprint-1 <!-- auto --> |
-| §A.6.1 popup base | ✅ <!-- auto --> | S <!-- auto --> | itr#34 <!-- auto --> | shipped sprint-2 <!-- auto --> |
-| §A.6.2 popup chonks | ❌ <!-- auto --> | M <!-- auto --> | itr#37 <!-- auto --> | chonks deferred <!-- auto --> |
-| §A.6.3 popup Vim nav | ❌ <!-- auto --> | M <!-- auto --> | itr#38 <!-- auto --> | deferred <!-- auto --> |
-| §A.16 WindowPicker | ❌ <!-- auto --> | S <!-- auto --> | itr#42 (stub) <!-- auto --> | **wide dep — 4 consumers** <!-- auto --> |
-| ... | ... | ... | ... | ... |
-
-### §B — <group title>
-
-| ... |
-
-## Sections — v2 (tracked, deferred)
-
-| Section | Status | Size | Linked itr | Notes |
-|---------|--------|------|------------|-------|
-| §A.17 Bookmark match (URL-mode selector) | ❌ <!-- auto --> | L <!-- auto --> | — | deferred from v1 boundary 2026-04 <!-- auto --> |
-
-## Cross-cutting
-
-**Wide dependencies (4+ consumers):**
-- §A.16 WindowPicker — consumed by popup, options-page, sibling, devtools
-- ...
-
-**Inter-section edges:**
-- §A.6 → §A.5 (chonks depend on storage)
-- ...
-
-## Trajectory _(draft — refined at each /sprint)_
-
-> This section is opt-in. If absent, `/sprint` re-derives ordering each cycle from current backlog state and dependency edges.
-
-- **Sprint-N+1** — §A.11 Group vocab, §A.16 WindowPicker (wide dep, land early)
-- **Sprint-N+2** — §A.15 Kinds (split: model + storage), §A.6.2 popup chonks
-- ...
-
-## Removed sections _(historical)_
-
-Sections orphaned by spec drift but with shipped scope worth preserving for audit:
-
-- §A.9 Tab quicklist _(removed from spec 2026-04-22; shipped scope was itr#88 sprint-1)_
-
-## Update cadence
-
-- Read at start of every `/sprint` (Phase 0 surfaces next ❌/🟡 sections).
-- Updated at end of every `/sprint-review` (Phase 8 calls `/roadmap --update`).
-- Manually re-run `/roadmap` when the spec gains or loses sections, or to handle drift reconciliation.
-```
-
-The `--brief` variant omits the `Notes`, `Cross-cutting`, `Trajectory`, and `Removed sections` blocks — keeps only the status legend, release boundary, and the per-group table reduced to `Section | Status | Linked itr`. Sentinels still apply.
-
----
-
-## Integration with other skills
-
-| Skill | How `/roadmap` integrates |
-|---|---|
-| `/init` | If a spec exists at `/init` time, `/init`'s final-report output should soft-suggest `/roadmap` (same pattern `/sprint` uses to suggest `/story-style`). New projects with no spec yet: don't suggest. |
-| `/alignment` | `/roadmap` does NOT call `/alignment` as a sub-skill. Instead, it borrows alignment's DNA — relentless per-decision interview — in Phases 2, 3, 5. If a Phase 5 v1-boundary question is too complex to answer in one shot, the PO can pivot to `/alignment` manually, then resume `/roadmap`. |
-| `/story-style` | `/roadmap` reads `STORY_STYLE.md` (if present) before Phase 7 stub filing so the stubs match project conventions. Same defer pattern as `/sprint`. |
-| `/sprint` | `/sprint` Phase 0 reads `docs/ROADMAP.md` (if present) to inform sprint goal selection. Surfaces the next ❌/🟡 section in trajectory order (or, if no trajectory, in dependency order with wide-deps first) as a soft suggest, not a forced choice. **Divergence feedback:** if the PO picks a Sprint Goal that does NOT match the roadmap soft-suggest, `/sprint` records this in the sprint's Open Assumptions log; `/sprint-review` Phase 8 passes the divergence note to `/roadmap --update` (via env var `ROADMAP_DIVERGENCE_NOTE` or a tmpfile pointer), which appends it to the affected row's notes for next-cycle context. |
-| `/blitz` | No direct integration. `/blitz` executes a sprint; the roadmap doesn't shape execution. |
-| `/sprint-review` | **Update hook.** `/sprint-review` Phase 8 adds a step: `/roadmap --update`. Non-blocking; if `--update` errors, log and proceed (roadmap can always be refreshed manually). Passes any sprint-goal divergence note from the closed sprint's Open Assumptions log into the update (see `/sprint` row above). |
-| `itr` skill | `/roadmap` Phase 7 defers to `itr` for stub creation (same as `/sprint` Phase 5). All stubs flow through `itr batch add` with `STORY_STYLE.md` conventions. |
-| `kgr` | If present, Phase 4 uses `kgr query --who-imports` to confirm import-edge dependencies. Optional; the skill works without it. |
-
----
-
-## Multi-repo handling
-
-The strong default is **one roadmap per repo**. Multi-repo is a feature, not a default — invoke it only when the spec genuinely spans repos (e.g. `§A` lives in `tab-manager/`, `§B` lives in `sibling-product/`).
-
-When `--scope` selects sections living in sibling repos (or when the spec body declares `Repo: path/to/repo` on a section heading):
-
-- **Phase 0:** collect the unique repo set in step 7; surface under `Repos:` in the summary print. For each repo, read its own `itr` db and `sprint/` history.
-- **Phase 2 (status walk):** linked-itr inference treats each repo's `.itr.db` independently; surface repo prefix on linked issue IDs (e.g. `sibling:itr#12`).
-- **Phase 4 (deps):** dependency edges across repos are allowed and explicitly flagged as `cross-repo` — they often correlate with wide dependencies (a primitive in one repo consumed by surfaces in another).
-- **Phase 7 (stubs):** stubs file into each section's owning repo's `itr` db, not the orchestrating repo's. The roadmap row references stubs with repo-prefixed IDs.
-- **Phase 9 (write):** one artifact at the coordinating repo root (default current dir). Sections declare their repo prefix in the row when they live elsewhere.
-
-Cross-repo roadmaps are higher-touch than single-repo ones — ambiguity in spec ownership multiplies across boundaries. The PO is the single source of truth for "does this section live in repo X or Y" — Codex never guesses.
-
----
+Before Phase 9 writes `docs/ROADMAP.md`, read `references/roadmap-artifact-and-integration.md` completely. It contains the rendered schema, brief variant, cross-skill integration contract, and multi-repo rules.
 
 ## Coaching style (Scrum Master tone)
 
-- **Announce every phase by name** (`Phase 0 — ...`, `Phase 1 — ...`). Same structured-output principle as `/sprint` and `/sprint-review`.
+- **Announce every phase by name** (`Phase 0 — ...`, `Phase 1 — ...`). Same structured-output principle as `$sprint` and `$sprint-review`.
 - **Coach the *why* of each cell** in one short line as you reach it:
   - *"Status drift is the silent killer of roadmaps."*
   - *"Sizing is for the PO; I'll propose, you correct."*
@@ -635,20 +520,20 @@ Cross-repo roadmaps are higher-touch than single-repo ones — ambiguity in spec
   - *"A trajectory is a planning aid, not a commitment."*
 - **Adaptive depth per row.** Fast path on obvious cells (no history → ❌, one-shot confirm); slow path on partial-state cells (alignment-style grilling). The PO learns the rhythm.
 - **Codex proposes, PO disposes.** Every status / size / dep / boundary cell is Codex-drafted, PO-confirmed. Never assert without giving the PO a chance to redirect.
-- **One sprint of language at a time.** Scrum vocabulary (Product Backlog, Sprint Backlog, Increment, Definition of Done) is consistent across `/sprint`, `/sprint-review`, and `/roadmap`. Reusing terms is what builds the PO's mental model.
+- **One sprint of language at a time.** Scrum vocabulary (Product Backlog, Sprint Backlog, Increment, Definition of Done) is consistent across `$sprint`, `$sprint-review`, and `$roadmap`. Reusing terms is what builds the PO's mental model.
 
 ---
 
 ## Principles
 
 - **Bridge, not authority.** The roadmap is connecting tissue between spec and `itr`. The spec defines scope; `itr` defines live work; the roadmap maps one to the other. It doesn't override either.
-- **Read-once-per-sprint cadence.** The roadmap is consulted by every `/sprint` Phase 0 and updated by every `/sprint-review` Phase 8. Manual `/roadmap` runs are rare — for fresh drafts or spec changes.
+- **Read-once-per-sprint cadence.** The roadmap is consulted by every `$sprint` Phase 0 and updated by every `$sprint-review` Phase 8. Manual `$roadmap` runs are rare — for fresh drafts or spec changes.
 - **Per-section PO confirmation is the only non-negotiable interaction.** Every other coach line, every other proposal — those are surface, not gate. The per-section walk is what makes the artifact load-bearing.
 - **Two BLOCKING gates, no more.** Gate 1 confirms scope/section list; Gate 2 approves the full picture before any writes. Per-section walks in Phase 2 are inline, not gates.
-- **Trajectory is opt-in.** Drafting a sprint plan in the roadmap risks commitment-shaped output. Default is no trajectory; `/sprint` re-derives ordering each cycle.
-- **Stubs are how spec sections become pullable.** `/sprint` can't pull a section that has no `itr` presence. Phase 7 creates that presence — selectively on first run, comprehensively on `--update`.
+- **Trajectory is opt-in.** Drafting a sprint plan in the roadmap risks commitment-shaped output. Default is no trajectory; `$sprint` re-derives ordering each cycle.
+- **Stubs are how spec sections become pullable.** `$sprint` can't pull a section that has no `itr` presence. Phase 7 creates that presence — selectively on first run, comprehensively on `--update`.
 - **The artifact is the durable record.** `docs/ROADMAP.md` ends each cycle with the current map. Reading it tells anyone — Codex or human — where the project stands without re-deriving from sprint history.
-- **Spec-less mode is supported but discouraged.** It works, but the coach line at Phase 0 reminds the PO that `/alignment` first is the higher-leverage path.
+- **Spec-less mode is supported but discouraged.** It works, but the coach line at Phase 0 reminds the PO that `$alignment` first is the higher-leverage path.
 
 ---
 
@@ -667,6 +552,6 @@ Cross-repo roadmaps are higher-touch than single-repo ones — ambiguity in spec
 - Don't infer status from title-keyword match alone. Linked-itr is primary; title-fallback always offers links as candidates, never auto-applies.
 - Don't file roadmap stubs without `STORY_STYLE.md` conventions if the file is present.
 - Don't generate release notes when the project hits feature-complete — that's a separate concern. Celebrate the milestone with one line, stop there.
-- Don't call `/sprint` or `/blitz` from this skill — handoff happens by the PO reading the artifact, not by automation.
+- Don't call `$sprint` or `$blitz` from this skill — handoff happens by the PO reading the artifact, not by automation.
 - Don't review more than one repo's roadmap per invocation. Use `--scope` to narrow within a repo; re-run for separate repos.
 - Don't lecture — coach in one line per cell. Verbose is fine; preachy is not.

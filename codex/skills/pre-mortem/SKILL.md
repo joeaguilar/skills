@@ -1,6 +1,6 @@
 ---
 name: pre-mortem
-description: "Pre-mortem: assume plan failed, rank failure modes, launch/migration/rollout risks, guardrails; not ordinary planning."
+description: "Use when the user asks to assume one risky plan, design, launch, migration, or rollout already failed and work backward to ranked failure modes and guardrails. Do not use for ordinary forward planning, a human alignment interview, or adversarial verification of a single factual claim."
 metadata:
   short-description: Rank failure modes before committing
 ---

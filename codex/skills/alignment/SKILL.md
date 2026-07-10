@@ -1,6 +1,6 @@
 ---
 name: alignment
-description: "Alignment interview: stress-test plan/design/agent workflow, resolve assumptions, decision branches, user-agent expectations."
+description: "Use when the user wants an interactive interview to resolve assumptions, decision branches, acceptance criteria, or human-agent expectations in a plan or design. Ask focused questions and recommend answers. Do not use for a simple factual clarification or for implementation without an unresolved decision tree."
 ---
 
 # Alignment

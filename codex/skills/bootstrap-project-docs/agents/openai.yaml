@@ -2,3 +2,5 @@ interface:
   display_name: "Bootstrap Project Docs"
   short_description: "Create the project memory scaffold"
   default_prompt: "Use $bootstrap-project-docs to create the AGENTS/SOUL/GOSPEL/APOSTLE documentation scaffold in this repo."
+policy:
+  allow_implicit_invocation: false

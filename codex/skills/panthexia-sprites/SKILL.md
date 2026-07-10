@@ -1,6 +1,6 @@
 ---
 name: panthexia-sprites
-description: "Panthexia sprites: player/NPC/enemy/prop/item/UI/battle VFX, transparent PNG/sheets, manifest IDs, contact sheets, visual gates."
+description: "Use for Panthexia player, NPC, enemy, prop, item, UI, marker, or battle-VFX sprite production and integration, including transparent PNGs, sheets, manifest IDs, contact sheets, and visual gates. Do not use for floor, wall, water, sky, or other repeating environment materials."
 ---
 
 # Panthexia Sprites

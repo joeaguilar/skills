@@ -21,9 +21,18 @@ set -uo pipefail
 # 3b), skipping parity/staleness/deep checks. This is the pre-commit gate mode:
 # broken frontmatter ships broken primitives, so it must block a commit, while
 # parity gaps are legitimate mid-port states that shouldn't.
+# --strict-staleness: make any parity staleness warning fail the command. Use
+# this in CI and before declaring a porting pass complete.
 
 FRONTMATTER_ONLY=0
-[ "${1:-}" = "--frontmatter-only" ] && FRONTMATTER_ONLY=1
+STRICT_STALENESS="${STRICT_STALENESS:-0}"
+for arg in "$@"; do
+  case "$arg" in
+    --frontmatter-only) FRONTMATTER_ONLY=1 ;;
+    --strict-staleness) STRICT_STALENESS=1 ;;
+    *) echo "Unknown option: $arg" >&2; exit 2 ;;
+  esac
+done
 
 REPO_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd -P)"
 CLAUDE_SKILLS="$REPO_DIR/claude/skills"
@@ -184,4 +193,4 @@ fi # FRONTMATTER_ONLY
 
 echo
 echo "== Summary: $errors error(s), $warns staleness warning(s) =="
-[ "$errors" -eq 0 ]
+[ "$errors" -eq 0 ] && { [ "$STRICT_STALENESS" -eq 0 ] || [ "$warns" -eq 0 ]; }

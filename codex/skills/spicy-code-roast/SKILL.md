@@ -1,6 +1,6 @@
 ---
 name: spicy-code-roast
-description: "Spicy/topical code roast: harsher funny review with current-event or pop-culture references; quick joke research required."
+description: "Use only when the user explicitly asks for a spicy or topical code roast with harsher humor and fresh current-event or pop-culture references; perform brief joke research first. Do not use for ordinary reviews, the milder $code-roast style, or when browsing is disallowed."
 ---
 
 # Spicy Code Roast

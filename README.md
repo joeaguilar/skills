@@ -88,25 +88,25 @@ back up existing installed directories.
 
 ## Codex Skill Loading
 
-Codex currently uses two skill roots in this setup:
+Current Codex installs use `~/.codex/skills` as the single authoritative root:
 
-- `~/.codex/skills/.system` for bundled/system skills.
-- `~/.codex/skills/<skill>` for direct-root user skills installed by current
-  Codex builds.
-- `~/.agents/skills` for local custom skills.
+- `~/.codex/skills/.system` is a real Codex-owned directory so product refreshes
+  cannot write into this git checkout.
+- Each `~/.codex/skills/<skill>` custom skill is a link to the matching
+  repository-managed payload.
 
-This repo imports portable direct-root user skills into `codex/skills/` so the
-global installer can manage them with the rest of the Codex tree. Use the Codex
-helper when the custom skills under `~/.agents/skills` need to be refreshed from
-this repo:
+`~/.agents/skills` is compatibility-only. Duplicate names there can expose
+different instructions depending on discovery order. Audit and safely retire
+duplicates while preserving unique legacy-only skills with:
 
 ```bash
-codex/scripts/link-agent-skills.sh
-codex/scripts/link-agent-skills.sh --apply
+codex/scripts/audit-installed-skills.sh
+codex/scripts/retire-agent-skill-duplicates.sh
+codex/scripts/retire-agent-skill-duplicates.sh --apply
 ```
 
-The helper links only non-system skills from `codex/skills` and backs up stale
-installed directories under `codex/backups/`.
+`link-agent-skills.sh` remains available only for older Codex builds and
+requires `--compat` with `--apply` to acknowledge duplicate-name mode.
 
 ## Validation
 
@@ -114,12 +114,14 @@ Run the full cross-tree check before committing meaningful changes:
 
 ```bash
 ./validate-skills.sh
+./validate-skills.sh --strict-staleness
 ```
 
 Run Codex-only checks after touching `codex/`:
 
 ```bash
 codex/scripts/validate-codex-skills.sh
+CODEX_VALIDATE_INSTALLED=1 codex/scripts/validate-codex-skills.sh
 node --check codex/scripts/skill-tree.js
 node --check codex/explorer/app.js
 ```
@@ -232,7 +234,7 @@ Current development status:
   install planner work in `codex/ROADMAP.md`.
 
 For now, use the UI/CLI to manage and inspect enablement state, then use
-`install.sh` or the Codex link helpers to materialize symlinks.
+`install.sh` to materialize the Codex overlay and other primitive links.
 
 ## Porting Rules
 
@@ -253,8 +255,8 @@ add the peer payload and remove its platform-only line.
 
 ## Recovery
 
-The installer and Codex link helper back up replaced real directories before
-symlinking. Backups are written under:
+The installer and Codex helpers back up replaced paths before linking or
+retiring them. Backups are written under:
 
 - `backups/` for root `install.sh` operations.
 - `codex/backups/` for Codex-specific helper operations.

@@ -390,7 +390,13 @@ function mergePlatformOnlyPrimitives(entries) {
     const type = typeForRoot(entry.root);
     const platformPath = normalizePath(`${entry.root}/${entry.name}`);
     const fullPath = normalizePath(`${entry.platform}/${platformPath}`);
-    const alreadyManaged = primitiveEntries().some(([, primitive]) => registryPathCandidates("", primitive).has(fullPath));
+    const markdownPath = markdownFileForPrimitivePath(type, platformPath);
+    const fullMarkdownPath = normalizePath(`${entry.platform}/${markdownPath}`);
+    const alreadyManaged = primitiveEntries().some(([id, primitive]) => {
+      if (primitive.type !== type) return false;
+      const candidates = registryPathCandidates(id, primitive);
+      return candidates.has(fullPath) || candidates.has(markdownPath) || candidates.has(fullMarkdownPath);
+    });
     if (alreadyManaged) continue;
 
     const key = `${entry.platform}:${type}`;

@@ -2,3 +2,5 @@ interface:
   display_name: "Shell Prompt"
   short_description: "Install a lightweight git-aware zsh prompt"
   default_prompt: "Use $shell-prompt to install a lightweight git-aware zsh prompt."
+policy:
+  allow_implicit_invocation: false

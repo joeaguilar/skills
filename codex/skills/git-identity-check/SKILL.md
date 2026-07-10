@@ -1,6 +1,6 @@
 ---
 name: git-identity-check
-description: "Audit git identity across repos: user.name/email overrides, old commit authors, global config drift; no history rewrite."
+description: "Use when the user asks to audit git author identity, user.name/email overrides, historical author drift, or inconsistent repository configuration across one or more repos. Report and optionally fix configuration only when requested; never rewrite commit history."
 ---
 
 # git-identity-check

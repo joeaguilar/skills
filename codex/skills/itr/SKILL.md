@@ -1,6 +1,6 @@
 ---
 name: itr
-description: "File itr issues: create/log/open/track bug, ticket, task, backlog item, or bulk issue list; not claim/update/close work."
+description: "Use only when the user asks to file, create, log, open, or track one or more bugs, tickets, tasks, epics, or backlog items in itr. Check conventions and duplicates before writing. Do not use to claim, start, update, close, or merely report issue state."
 ---
 
 # itr - File Issues
@@ -14,7 +14,7 @@ description: "File itr issues: create/log/open/track bug, ticket, task, backlog 
 3. Look up project story conventions before writing titles, bodies, acceptance criteria, and tags:
    - Prefer `./STORY_STYLE.md`.
    - Then scan `AGENTS.md`, `CODEX.md`, or other repo-local agent instruction files for issue or story style.
-   - If no style file exists, continue with the defaults below and print one soft suggestion: `No STORY_STYLE.md found - consider /story-style to capture project conventions.` Skip the suggestion if the user already declined it this session.
+   - If no style file exists, continue with the defaults below and print one soft suggestion: `No STORY_STYLE.md found - consider $story-style to capture project conventions.` Skip the suggestion if the user already declined it this session.
 
 When a style exists, follow it for title shape, body template, acceptance format, tags, priority scheme, terminology, and voice.
 

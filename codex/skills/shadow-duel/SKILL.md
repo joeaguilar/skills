@@ -1,6 +1,6 @@
 ---
 name: shadow-duel
-description: "Adversarial verification: red-team claim/plan/design/fix/artifact, challengers and judge, stress-test holes."
+description: "Use when the user asks to red-team, adversarially verify, or try to break one claim, plan, design, fix, or artifact and wants a judged verdict on what survives. Do not use for cooperative polishing, a human alignment interview, or an ordinary non-adversarial review."
 metadata:
   short-description: Red-team an artifact before trusting it
 ---

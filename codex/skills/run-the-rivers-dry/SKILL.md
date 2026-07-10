@@ -1,6 +1,6 @@
 ---
 name: run-the-rivers-dry
-description: "Maximum-autonomy completion: $run-the-rivers-dry, go all-in, spawn agents, persist through failures, prove task complete."
+description: "Use only when the user explicitly invokes $run-the-rivers-dry or unmistakably asks for maximum-autonomy completion with parallel agents, retries, verification, and persistence until a broad goal is proven complete. Do not use for casual questions, report-only work, coached approval-by-step execution, or an ordinary bounded edit."
 ---
 
 # Run the Rivers Dry
@@ -94,10 +94,12 @@ When stopping before completion, leave a durable state summary: current status, 
 
 ## Agent Use
 
-Use Codex subagents aggressively but responsibly. In environments with `multi_agent_v1`, use:
+Use the Codex collaboration mechanism available in the current environment. Give each spawned task a concrete role in its task name and prompt:
 
-- `explorer` agents for read-only reconnaissance.
-- `worker` agents for implementation with explicit file ownership.
+- Read-only scout tasks for reconnaissance.
+- Implementation tasks with explicit file ownership.
+
+Do not invent unsupported agent types or tool parameters. Respect the environment's actual concurrency limit and reserve one slot for the orchestrator.
 
 Do not spawn agents for the immediate critical-path task if waiting for them would slow the main rollout. While agents run, continue local work on non-overlapping tasks.
 

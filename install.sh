@@ -4,7 +4,9 @@ set -euo pipefail
 # Unified primitive installer for this repo.
 #
 # Dry-run by default. Existing real target dirs are backed up before replacement;
-# existing symlinks are replaced atomically with ln -sfn.
+# existing symlinks are replaced atomically with ln -sfn. Codex skills are the
+# exception: the installer keeps a real `.system` overlay and links custom skills
+# individually so product refreshes cannot mutate the source checkout.
 
 usage() {
   cat <<'USAGE'
@@ -50,8 +52,9 @@ Examples:
   install.sh claude --scope local --project /path/to/project --primitive commands --apply
   install.sh codex --local /path/to/project --primitives skills,agents --apply
 
-Codex skills must contain `.system`; other primitive roots are optional unless
-selected directly. `config` is Claude-only today; for codex it is a no-op.
+Codex skills must contain `.system`; installation seeds a real Codex-owned copy
+and links non-system children individually. Other primitive roots are optional
+unless selected directly. `config` is Claude-only today; for codex it is a no-op.
 USAGE
 }
 
@@ -234,6 +237,93 @@ install_root() {
   echo "[$platform/$primitive] linked $target -> $source"
 }
 
+# install_codex_skills SOURCE_DIR TARGET_DIR
+# Keep Codex-owned `.system` payloads as a real directory under CODEX_HOME while
+# linking each repository-managed skill individually. A root symlink would let
+# Codex system-skill refreshes write into this git checkout.
+install_codex_skills() {
+  local source="$1" target="$2"
+  if [ ! -d "$source/.system" ]; then
+    echo "[codex/skills] source is missing .system: $source" >&2
+    return 1
+  fi
+
+  local root_backup="" root_action
+  if [ -L "$target" ]; then
+    root_backup="$BACKUP_ROOT/codex-${SCOPE_SEL}-skills-root-before-overlay-$timestamp"
+    root_action="replace root symlink with a real overlay directory; preserve .system; link managed skills individually; backup root link to $root_backup"
+  elif [ -d "$target" ]; then
+    root_action="preserve real overlay and .system; reconcile managed per-skill links"
+  elif [ -e "$target" ]; then
+    echo "[codex/skills] target exists but is not a directory or symlink: $target" >&2
+    return 1
+  else
+    root_action="create real overlay, seed .system, and link managed skills individually"
+  fi
+
+  echo "[codex/skills] plan:"
+  echo "    scope:  $SCOPE_SEL"
+  echo "    source: $source"
+  echo "    target: $target"
+  echo "    action: $root_action"
+
+  if [ "$APPLY" -eq 1 ]; then
+    mkdir -p "$(dirname "$target")" "$BACKUP_ROOT"
+    if [ -L "$target" ]; then
+      mv "$target" "$root_backup"
+      mkdir -p "$target"
+      if [ -d "$root_backup/.system" ]; then
+        cp -R "$root_backup/.system" "$target/.system"
+      else
+        cp -R "$source/.system" "$target/.system"
+      fi
+      echo "[codex/skills] backed up root link to $root_backup"
+    elif [ ! -e "$target" ]; then
+      mkdir -p "$target"
+      cp -R "$source/.system" "$target/.system"
+    elif [ ! -d "$target/.system" ]; then
+      cp -R "$source/.system" "$target/.system"
+    fi
+  fi
+
+  local source_skill name target_skill backup action
+  while IFS= read -r source_skill; do
+    name="$(basename "$source_skill")"
+    [ "$name" = ".system" ] && continue
+    [ -f "$source_skill/SKILL.md" ] || continue
+    target_skill="$target/$name"
+    backup="$BACKUP_ROOT/codex-${SCOPE_SEL}-skill-$name-before-link-$timestamp"
+
+    if [ -L "$target_skill" ] && [ "$(readlink "$target_skill")" = "$source_skill" ]; then
+      echo "[codex/skills/$name] already linked: $target_skill -> $source_skill"
+      continue
+    elif [ -L "$target_skill" ]; then
+      action="replace symlink ($(readlink "$target_skill")) -> $source_skill"
+    elif [ -e "$target_skill" ]; then
+      action="back up existing path to $backup, then symlink -> $source_skill"
+    else
+      action="create symlink -> $source_skill"
+    fi
+    echo "[codex/skills/$name] $action"
+
+    if [ "$APPLY" -ne 1 ]; then
+      continue
+    fi
+    if [ -L "$target_skill" ]; then
+      ln -sfn "$source_skill" "$target_skill"
+    elif [ -e "$target_skill" ]; then
+      mv "$target_skill" "$backup"
+      ln -s "$source_skill" "$target_skill"
+    else
+      ln -s "$source_skill" "$target_skill"
+    fi
+  done < <(find "$source" -mindepth 1 -maxdepth 1 -type d | sort)
+
+  if [ "$APPLY" -ne 1 ]; then
+    echo "[codex/skills] dry run only. Re-run with --apply to make this change."
+  fi
+}
+
 # install_file PLATFORM SOURCE TARGET — symlink a single home file (the `config` primitive).
 # Mirrors install_root, but for one file: a real file at the target is backed up first.
 install_file() {
@@ -346,7 +436,11 @@ while IFS= read -r platform; do
     else
       source="$REPO_DIR/$platform/$primitive"
       target="$(target_root "$platform")/$primitive"
-      install_root "$platform" "$primitive" "$source" "$target" || status=1
+      if [ "$platform" = "codex" ] && [ "$primitive" = "skills" ]; then
+        install_codex_skills "$source" "$target" || status=1
+      else
+        install_root "$platform" "$primitive" "$source" "$target" || status=1
+      fi
     fi
   done < <(primitives_for_selection)
 done < <(platforms_for_selection)

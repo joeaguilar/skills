@@ -1,6 +1,6 @@
 ---
 name: kgr
-description: "Source graph with kgr: refs, callers, definitions, imports, dead code, cycles, orphans, dependency paths, architecture checks."
+description: "Use for structural codebase questions about symbol references, callers, definitions, imports, dead code, cycles, orphans, dependency paths, or architecture rules in supported languages. Do not use for literal text, comments, config values, unsupported languages, or when the exact file is already known."
 ---
 
 # kgr - Codebase Navigation

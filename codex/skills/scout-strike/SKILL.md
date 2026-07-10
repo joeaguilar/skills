@@ -1,6 +1,6 @@
 ---
 name: scout-strike
-description: "Scout first: map unfamiliar code/system before focused fix; recon, survey, inspect strange repo; not routine edits."
+description: "Use only when the user wants action in unfamiliar or coupled terrain and a read-only reconnaissance map must guide a focused implementation change. Do not use for research, audits, reviews, or reports with no follow-on change, or for routine edits in already-known files."
 metadata:
   short-description: Scout unfamiliar code before acting
 ---

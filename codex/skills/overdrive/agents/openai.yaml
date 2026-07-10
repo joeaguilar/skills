@@ -2,3 +2,5 @@ interface:
   display_name: "Overdrive"
   short_description: "Run an autonomous sprint swarm"
   default_prompt: "Use $overdrive to plan, execute, and review this backlog end to end."
+policy:
+  allow_implicit_invocation: false

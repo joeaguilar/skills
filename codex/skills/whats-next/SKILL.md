@@ -1,6 +1,6 @@
 ---
 name: whats-next
-description: Answer "what is next / what's left / where did we leave off" for the current project by reconciling the itr tracker, docs/ROADMAP.md, sprint/CURRENT, the latest handoff, and git state into one report. Trigger on /whats-next, or when the user asks what's next, what's left, or for status at session start or after /clear. REPORT ONLY by default — an interrogative is never permission to start work. Only with the --start flag does it claim the top ready item and begin executing it.
+description: Answer "what is next / what's left / where did we leave off" for the current project by reconciling the itr tracker, docs/ROADMAP.md, sprint/CURRENT, the latest handoff, and git state into one report. Trigger on $whats-next, or when the user asks what's next, what's left, or for status at session start or after /clear. REPORT ONLY by default — an interrogative is never permission to start work. Only with the --start flag does it claim the top ready item and begin executing it.
 ---
 
 # whats-next — one-shot reconciliation of "what is next?"
@@ -83,7 +83,7 @@ Handoff/sprint: <latest pointer + staleness badge>
 **Flags:** <digest-vs-itr mismatches, contradictions, stale pointers, actually-unblocked items — or "none">
 ```
 
-Close the report with: `Run /whats-next --start to begin the top item.`
+Close the report with: `Run $whats-next --start to begin the top item.`
 Then STOP. Do not continue into execution, do not ask "shall I proceed".
 
 ## `--start` — the explicit imperative

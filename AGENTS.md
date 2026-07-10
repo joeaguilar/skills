@@ -37,7 +37,7 @@ Install / link primitive roots. Dry-run is the default; pass `--apply` to act. E
 
 ```bash
 ./install.sh claude            # global dry run: ~/.claude/skills -> claude/skills
-./install.sh codex --apply     # global apply: ~/.codex/skills -> codex/skills
+./install.sh codex --apply     # global apply: real ~/.codex/skills overlay + per-skill links
 ./install.sh both --apply
 ```
 
@@ -164,20 +164,21 @@ node --check codex/scripts/skill-tree.js
 For UI changes, run a local server and verify the explorer in a browser. Check that:
 
 - The installer launches from the repo root at `http://127.0.0.1:8765/`.
-- Codex shows 45 current primitives: 26 skills, 17 agents, and 2 slash commands.
+- Codex shows 53 current primitives: 34 skills, 17 agents, and 2 slash commands.
 - Claude platform mode hides Codex-only `.system` skills and loads Claude payload markdown.
 - Claude platform mode includes Claude-only slash commands declared in `PLATFORM_ONLY.tsv`.
 - Each primitive type has its own tab.
 - The Claude/Codex platform switch updates path labels, markdown source, manifest path, and enabled/provider state independently.
 - The Local/Global scope switch updates the manifest preview and enabled state independently.
 - Locked future skills are visible as silhouettes.
-- Enabling `itr` and `kgr` makes `sprint` available.
+- Enabling `itr` makes `sprint` available; `kgr` remains a recommended enhancement.
 - Enabling `skill-creator` makes `primitive-architect-agent` available.
 - Enabling `primitive-architect-agent` makes both primitive audit commands available.
 - Enabling both primitive audit commands exposes provider routing for `primitive-audit`.
-- Enabling `sprint` makes `blitz` and `sprint-review` available.
+- `blitz` is available as a standalone backlog executor and recommends `sprint`, `kgr`, and `gatr`.
+- Enabling `sprint` makes `sprint-review` available.
 - Enabling `blitz` makes `dual-blitz` available.
-- `overdrive` remains visible and sealed until its required capabilities are enabled.
+- `overdrive` and `run-the-rivers-dry` remain visible as explicitly invoked standalone workflows; their supporting capabilities render as recommendations rather than hard locks.
 - The folder picker can load and save `.claude/project-primitives.json` and `.codex/project-primitives.json` when supported.
 - The scan control displays managed and unmanaged detected skills, agents, and commands.
 - The Markdown Explorer renders `SKILL.md` for skills and markdown payloads for agents/commands.

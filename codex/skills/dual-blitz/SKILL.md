@@ -1,20 +1,20 @@
 ---
 name: dual-blitz
-description: "Dual blitz: split backlog/sprint into two isolated agent lanes for simultaneous inner blitzes with strict file ownership."
+description: "Use only when the user explicitly invokes $dual-blitz or asks to split a large backlog into two independently executable main-agent lanes with strict file isolation. Do not use when lanes share lockfiles, schemas, generated outputs, migrations, APIs, or uncertain file ownership."
 ---
 
-# /dual-blitz - two isolated blitz lanes
+# $dual-blitz - two isolated blitz lanes
 
-Split a sprint or backlog into two standalone execution lanes. Each lane is handed to a different main Codex session, and each main session may run its own inner `/blitz` waves. The outer split is stricter than `/blitz`: two main agents cannot coordinate, so a task may enter a lane only when its required writes are isolated from the other lane.
+Split a sprint or backlog into two standalone execution lanes. Each lane is handed to a different main Codex session, and each main session may run its own inner `$blitz` waves. The outer split is stricter than `$blitz`: two main agents cannot coordinate, so a task may enter a lane only when its required writes are isolated from the other lane.
 
-Borrow the backlog grooming and file-ownership discipline from `/sprint` and `/blitz`, the closeout handoff from `/sprint-review`, and the compact status/artifact style from `/proof-campaign`.
+Borrow the backlog grooming and file-ownership discipline from `$sprint` and `$blitz`, the closeout handoff from `$sprint-review`, and the compact status/artifact style from `$proof-campaign`.
 
 ## Invocation
 
 ```text
-/dual-blitz [plan] [input] [--agent-1 "area"] [--agent-2 "area"] [--concurrency-per-agent N] [--verify "..."] [--dry-run]
-/dual-blitz agent 1 [path/to/agent-1.md]
-/dual-blitz agent 2 [path/to/agent-2.md]
+$dual-blitz [plan] [input] [--agent-1 "area"] [--agent-2 "area"] [--concurrency-per-agent N] [--verify "..."] [--dry-run]
+$dual-blitz agent 1 [path/to/agent-1.md]
+$dual-blitz agent 2 [path/to/agent-2.md]
 /dual blitz agent 1
 /dual blitz agent 2
 ```
@@ -71,7 +71,7 @@ Then:
 
 - Run `itr stats` and `itr agent-info` when `itr` is the tracker.
 - Detect `kgr`; use it for file inference when present, otherwise use `rg`.
-- Detect the verify gate like `/blitz` unless `--verify` is supplied.
+- Detect the verify gate like `$blitz` unless `--verify` is supplied.
 - Inspect the dirty worktree before planning. Existing unrelated changes are not lane-owned unless the plan explicitly assigns them.
 - Set `concurrency-per-agent` to 3 by default. Lower it when shell/session pressure is obvious.
 
@@ -99,7 +99,7 @@ id, title, source, priority, risk, acceptance, owned_files, deps, notes
 
 Rules:
 
-- Preserve `/sprint` story IDs, acceptance criteria, risk tags, dependencies, and declared `--files`.
+- Preserve `$sprint` story IDs, acceptance criteria, risk tags, dependencies, and declared `--files`.
 - For missing files, run one batched planner pass, not one subagent per task.
 - Keep file lists minimal. Include only files the task is expected to edit.
 - Mark low-confidence file sets as `parked:file-uncertain` unless the task can be safely bounded by a whole directory or subsystem that no other lane will touch.
@@ -172,77 +172,11 @@ Wait for explicit approval. If `--dry-run`, stop after printing this block.
 
 ## Phase 4 - Write Lane Artifacts
 
-Create exactly two agent-facing artifacts:
-
-```text
-dual-blitz/
-  CURRENT
-  dual-blitz-<N>-YYYY-MM-DD-<slug>/
-    agent-1.md
-    agent-2.md
-```
-
-`dual-blitz/CURRENT` contains only the run folder name. It is written before agents launch and is not edited by lane agents.
-
-Each lane agent owns only its own artifact. Agent 1 may append outcomes to `agent-1.md`; Agent 2 may append outcomes to `agent-2.md`. Neither agent edits the sibling artifact or any shared run-state file.
-
-Use this artifact shape:
-
-```markdown
-# Dual Blitz <run> - Agent <1|2>
-
-**Mode:** execute-lane
-**Source:** <sprint/itr/path>
-**Lane goal:** <one sentence>
-**Verify gate:** <command>
-**Concurrency:** <N inner blitz workers max>
-**Artifact owner:** agent-<N> only
-
-## Safety Contract
-- Execute only the Lane Backlog below.
-- Edit only files listed in Owned Files, unless a task discovers a required extra file that is not forbidden; record it before editing.
-- Never edit Forbidden Files.
-- Never run write-mode formatters or code generators that can touch files outside Owned Files.
-- If required work crosses into Forbidden Files, quarantine the task and continue with unrelated work.
-- The API sees both lanes at once, so effective fan-out is 2 x concurrency-per-agent. On a rate-limit cascade (workers in both lanes failing identically at the same time), halve inner concurrency before respawning only the failed tasks.
-- Do not commit, push, or rewrite history.
-
-## Owned Files
-- <file or root>
-
-## Forbidden Files
-- <file or root owned by the other lane>
-- <parked conflict files>
-
-## Neighbor Warnings
-- <semantic warning or "none">
-
-## Lane Backlog
-| ID | Title | Risk | Files | Dependencies | Acceptance |
-|----|-------|------|-------|--------------|------------|
-| ... |
-
-## Parked For This Lane
-- <id/title> - <reason>
-
-## Execution Instructions
-Run a lane-contained `/blitz`:
-1. Treat `Lane Backlog` as the complete tracker. Do not list or execute global backlog items.
-2. Build inner waves exactly like `/blitz`: no two inner workers in the same wave may own the same file.
-3. Pass each inner worker the Safety Contract, Owned Files, Forbidden Files, Neighbor Warnings, task body, and verify gate.
-4. Run the full verify gate between inner waves.
-5. Quarantine, do not improvise, when a task needs forbidden files or cross-lane coordination.
-6. Append outcomes to this artifact only.
-
-## Outcomes
-<!-- Agent <N> appends compact wave outcomes here. -->
-```
-
-If `itr` supports safe tag updates according to `itr agent-info`, optionally tag lane tasks after approval with `dual-blitz-<N>` and `dual-agent-1` or `dual-agent-2`. The artifacts remain the source of truth; do not depend on tracker filters for safety.
+Before writing either lane artifact, read `references/lane-artifact-template.md` completely. Use its safety contract, ownership sections, backlog schema, execution instructions, and outcomes structure verbatim where applicable.
 
 ## Agent Mode
 
-When invoked as `/dual-blitz agent 1` or `/dual-blitz agent 2`:
+When invoked as `$dual-blitz agent 1` or `$dual-blitz agent 2`:
 
 1. Resolve and read the lane artifact.
 2. Re-state the Safety Contract in the first status block.
@@ -252,7 +186,7 @@ When invoked as `/dual-blitz agent 1` or `/dual-blitz agent 2`:
    - `Owned Files` and `Forbidden Files` overlap,
    - no verify gate is declared,
    - the worktree already has uncommitted changes in forbidden files.
-4. Run the lane-contained `/blitz` from the artifact's `Execution Instructions`.
+4. Run the lane-contained `$blitz` from the artifact's `Execution Instructions`.
 5. Keep all status compact. Append detailed outcomes to the lane artifact.
 6. End only after every inner worker is terminal and no background session needed for this lane is still running.
 
@@ -260,14 +194,14 @@ When invoked as `/dual-blitz agent 1` or `/dual-blitz agent 2`:
 
 When both lane agents finish:
 
-- For a sprint-backed run, use `/sprint-review` to review the sprint. The lane artifacts provide the blitz-log evidence and friction notes.
+- For a sprint-backed run, use `$sprint-review` to review the sprint. The lane artifacts provide the blitz-log evidence and friction notes.
 - For a non-sprint run, print a compact aggregate from both `Outcomes` sections and leave follow-up filing to `itr`.
 - Do not merge the two artifacts into a shared report while lane agents are still running.
 
 ## Principles
 
 - Two main agents do not communicate; the artifacts must contain everything they need.
-- File ownership is the outer split. Inner `/blitz` waves still use file ownership inside each lane.
+- File ownership is the outer split. Inner `$blitz` waves still use file ownership inside each lane.
 - Parked work is a successful safety outcome when the alternative is cross-lane collision.
 - One approval starts the run; after that, lane agents work from artifacts.
 - Verification, not optimism, is the done gate.
@@ -280,4 +214,4 @@ When both lane agents finish:
 - Don't ask the two agents to coordinate by chat.
 - Don't run write-mode formatters, codegen, migrations, or package-manager mutations unless their outputs are wholly inside one lane's Owned Files.
 - Don't have lane agents edit `dual-blitz/CURRENT` or the sibling lane artifact.
-- Don't run `/sprint-review` until both lanes have ended.
+- Don't run `$sprint-review` until both lanes have ended.

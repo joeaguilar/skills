@@ -1,6 +1,6 @@
 # Codex Primitive Validation
 
-Snapshot: 2026-06-03, current working tree under `codex/`.
+Snapshot: 2026-07-09, current working tree under `codex/`.
 
 ## Checks
 
@@ -9,21 +9,21 @@ Snapshot: 2026-06-03, current working tree under `codex/`.
 - System skill drift was audited against `~/.codex/skills/.system`. The repo
   keeps its enhanced `plugin-creator` copy instead of replacing it with the
   installed older copy; other system skill payloads match.
-- Repo-root skills with `SKILL.md` are all represented under `codex/skills`:
-  `alignment`, `blitz`, `code-roast`, `itr`, `kgr`, `overdrive`,
-  `retro-game-assets`, `roadmap`, `run-the-rivers-dry`, `shell-prompt`,
-  `spicy-code-roast`, `sprint`, `sprint-review`, `story-style`.
-- `~/.agents/skills` is linked to the non-system Codex skills above via
-  `codex/scripts/link-agent-skills.sh`; stale real directories were backed up
-  under `codex/backups/agents-skill-*-before-link-20260530-004149`.
+- Every repository-managed `codex/skills/**/SKILL.md` payload is represented in
+  the primitive registry; validation compares the two sets directly.
+- `~/.codex/skills` uses a real overlay: `.system` remains Codex-owned and
+  non-system skills are linked individually. `~/.agents/skills` is treated as
+  compatibility-only; duplicate names are audited and retired with dedicated
+  scripts rather than loaded beside canonical providers.
 - Each converted non-system skill currently has `agents/openai.yaml`.
 - All current `codex/skills/**/SKILL.md` files have parseable YAML
   frontmatter with `name` and `description`.
-- The installed `~/.agents/skills/*/SKILL.md` files all parse as YAML
-  frontmatter; this covers the previous `sprint` and `sprint-review` load
-  errors from stale installed copies.
+- `codex/scripts/audit-installed-skills.sh` detects root symlinks, duplicate
+  providers, and differing legacy payloads.
 - Optional primitive roots are present for `codex/agents` and `codex/commands`.
-- Current registry validates 38 primitives: 19 skills, 17 agents, and 2 commands.
+- Current registry validates 53 primitives: 34 skills, 17 agents, and 2 commands.
+- Codex validation enforces payload-to-registry coverage, so an installed skill
+  cannot silently disappear from the explorer registry.
 - The two primitive audit commands both provide `primitive-audit`, so provider routing is covered by a real registry path.
 - Registry validation rejects required capabilities with no provider unless the capability is explicitly marked external.
 - The explorer supports stale port metadata from `stale`, `stalePort`, `stale_port`, `portState`, or `port_state`.
@@ -34,6 +34,9 @@ Snapshot: 2026-06-03, current working tree under `codex/`.
 - The browser installer reads `PLATFORM_ONLY.tsv`, so Claude-only slash commands
   render as Claude platform nodes without Codex stubs.
 - Current search found no `~/.claude/skills`, `AskUserQuestion`, or Claude-only tool API names in `codex/skills`. Remaining `CLAUDE.md` mentions are project-instruction-file fallbacks, not Claude skill paths or tool calls.
+- Mutation-heavy skills disable implicit invocation. Codex skill descriptions
+  state positive triggers and nearest exclusions, and `$skill` is the canonical
+  invocation spelling.
 - Claude legacy commands remain platform-specific unless they are deliberately
   ported as Codex-native commands with managed frontmatter and registry entries.
   The Codex command set currently contains the two primitive audit commands.
@@ -46,4 +49,5 @@ Snapshot: 2026-06-03, current working tree under `codex/`.
 
 ## Recommended Fixes
 
-1. Decide whether converted non-system skills must preserve auxiliary source files. If yes, copy the omitted roadmap brief and shell-prompt README, or document that Codex output intentionally keeps only runtime-relevant assets.
+1. Keep detailed schemas, prompt templates, and worked examples in routed
+   `references/` files so orchestration skill bodies stay lean.

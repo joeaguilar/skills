@@ -1,6 +1,6 @@
 ---
 name: code-roast
-description: "Funny code review: roast code with accurate findings, respectful jokes, teaching moments, file/line-grounded bug explanations."
+description: "Use when the user explicitly asks for a funny code roast or humorous review that still delivers accurate file-and-line-grounded findings and teaching moments. Do not use for an ordinary code review or when humor would undermine the requested tone."
 ---
 
 # Code Roast

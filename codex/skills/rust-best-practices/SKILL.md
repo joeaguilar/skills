@@ -1,6 +1,6 @@
 ---
 name: rust-best-practices
-description: "Rust best practices: idiomatic Rust/Cargo review/refactor, ownership, lifetimes, errors, traits, async Tokio, Clippy, unsafe."
+description: "Use for Rust or Cargo reviews, implementations, and refactors where idiomatic ownership, lifetimes, error handling, traits, API design, async/Tokio, testing, Clippy, performance, or unsafe-code discipline matter. Do not use as a generic language-independent review checklist."
 ---
 
 # Rust Best Practices

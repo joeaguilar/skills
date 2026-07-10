@@ -1,6 +1,6 @@
 ---
 name: plr
-description: "Prompt library plr: save, get, list, find, reuse, copy, promote, or feed stored prompts/system prompts/instruction templates."
+description: "Use when the user asks to save, retrieve, list, search, reuse, copy, promote, or feed a reusable prompt, system prompt, or instruction template through the plr library. Do not use for one-off prose, arbitrary markdown editing, issue tracking, or code navigation."
 ---
 
 # plr — prompt library

@@ -1,6 +1,6 @@
 ---
 name: panthexia-tiled-materials
-description: "Panthexia environment tiles: floor/wall/water/sky materials, seamless repeats, palettes, 3x3 previews; not character sprites."
+description: "Use for Panthexia floor, wall, water, sky, and parallax environment materials that need projection-aware dimensions, seamless repeats, palettes, repeat previews, or visual gates. Do not use for characters, enemies, props, items, UI icons, or battle VFX sprites."
 ---
 
 # Panthexia Tiled Materials

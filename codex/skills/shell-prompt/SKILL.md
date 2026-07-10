@@ -1,6 +1,6 @@
 ---
 name: shell-prompt
-description: "Install/customize lightweight zsh git prompt with vcs_info in ~/.zshrc; no oh-my-zsh, powerlevel10k, starship."
+description: "Use only when the user explicitly invokes $shell-prompt or asks to install or customize the repository's lightweight native-zsh git prompt in ~/.zshrc using vcs_info. Do not use for oh-my-zsh, Powerlevel10k, Starship, bash/fish prompts, or unrelated shell configuration."
 ---
 
 # Shell Prompt

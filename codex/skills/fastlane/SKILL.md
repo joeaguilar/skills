@@ -1,13 +1,14 @@
 ---
 name: fastlane
-description: "Choose multi-agent workflow: fastlane, proof-campaign, blitz, dual-blitz, overdrive, run-the-rivers-dry; speed vs safety."
+description: "Use when the user asks which multi-agent workflow to choose, invokes $fastlane, or wants to optimize execution speed while controlling safety, scope, drift, and verification. Route to an available workflow only; do not execute that workflow until its own invocation and safety contract are satisfied."
 ---
 
 # Fastlane
 
 Fastlane is a routing skill. It inspects the request and project, then chooses
-the safest fast multi-agent workflow to run. It does not replace the selected
-workflow. After choosing, use the selected skill and obey its gates.
+the safest fast multi-agent workflow to run. It does not replace or implicitly
+launch the selected workflow. After choosing, hand back an explicit `$skill`
+invocation and let that skill enforce its own safety contract.
 
 Treat repeated candidate names as one candidate. If multiple variants of a
 candidate exist, prefer the platform-native Codex skill, then installed local
@@ -15,9 +16,11 @@ skills, then user-provided skill text.
 
 ## Candidate Set
 
-Always consider at least these workflows:
+Consider only workflows discovered in the current environment. The scanner may
+find compatibility-installed skills outside the canonical Codex tree; label
+those as compatibility providers rather than assuming they are portable.
 
-- `$proof-campaign`: roadmap-bounded, evidence-first campaign with async PO
+- `$proof-campaign` (when installed): roadmap-bounded, evidence-first campaign with async PO
   reports and strong drift control. Best for broad roadmap slices, product
   proof, and work where objective evidence matters more than raw velocity.
 - `$blitz`: execution-only backlog clearance with conflict-free waves and
@@ -29,7 +32,7 @@ Always consider at least these workflows:
   migrations, route tables, or API contracts.
 - `$overdrive`: autonomous plan, execute, and review loop with per-wave commits
   and rollback points. Best when the user wants end-to-end sprint clearance,
-  accepts orchestrator commits/stashing, and can provide visual smoke verdicts
+  accepts orchestrator commits and a clean or explicitly isolated worktree, and can provide visual smoke verdicts
   or use `--auto` with a real time/wave cap.
 - `$run-the-rivers-dry`: maximum-autonomy completion mode for hard, broad, or
   ambiguous problems. Best when the user asks Codex to go all-in and persist
@@ -63,7 +66,7 @@ You may also recommend another available workflow when it is clearly safer:
    - desired autonomy level and approval gates
    - time or wave budget
    - security/compliance/secrets risk
-   - tolerance for git commits, stash, reset, or rollback
+   - tolerance for git commits and auditable revert commits
    - visual smoke-test availability
    - whether scope must stay inside roadmap rows, sprint stories, or tracker IDs
 5. Inspect project safety:
@@ -101,7 +104,7 @@ user approval before execution.
 
 Use this default routing after applying the rubric:
 
-- Choose `$proof-campaign` when roadmap scope, evidence, reports, and drift
+- Choose `$proof-campaign` only when a Codex-compatible provider is installed and roadmap scope, evidence, reports, and drift
   control dominate. Use it for broad work where the output should be a campaign
   artifact with proof and async PO review.
 - Choose `$blitz` when a sprint/backlog already exists and the user wants
@@ -109,10 +112,10 @@ Use this default routing after applying the rubric:
   bounded open tickets.
 - Choose `$dual-blitz` only when two isolated lanes are obvious. If file
   ownership is uncertain, lanes are imbalanced, or shared artifacts exist, park
-  the split and use `$blitz` or `$proof-campaign`.
+  the split and use `$blitz` or an available evidence-first workflow.
 - Choose `$overdrive` when the user wants autonomous plan-execute-review and the
-  repo can support commits, rollback, tracker updates, and visual smoke gates.
-  Avoid it when a dirty tree cannot be stashed safely or when the user does not
+  repo can support commits, auditable reverts, tracker updates, and visual smoke gates.
+  Avoid it when a dirty tree cannot be isolated safely or when the user does not
   want orchestrator commits.
 - Choose `$run-the-rivers-dry` when the problem is not primarily a prepared
   backlog or roadmap slice, and the user wants maximum persistence on one broad
@@ -132,7 +135,7 @@ Print a compact recommendation before handing off:
   scope: 🎯 <approved boundary>
   drift: 🧭 <roadmap/backlog/git risk>
   avoid: 🚧 <workflow> because <specific risk>
-  next: ▶ use $<workflow> and follow its gates
+  next: ▶ explicitly invoke $<workflow> and follow its gates
 ```
 
 Use the same visual language in scanner output and chat recommendations:
@@ -145,7 +148,7 @@ launch multiple orchestration workflows against the same backlog or sprint.
 
 ## Handoff
 
-After the user approves, load and follow the selected skill. Do not blend
+After the user explicitly invokes or approves the selected `$skill`, load and follow it. Do not blend
 procedures across workflows unless the selected skill explicitly composes them.
 
 Pass through the relevant constraints:

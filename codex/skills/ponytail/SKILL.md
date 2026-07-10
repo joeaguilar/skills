@@ -1,6 +1,6 @@
 ---
 name: ponytail
-description: "Minimal solution mode: ponytail, YAGNI, do less, shortest path, bloat/boilerplate complaints; smallest safe diff, stdlib first."
+description: "Use when the user invokes $ponytail, asks for the smallest safe solution, says YAGNI or do less, or objects to bloat, boilerplate, or over-engineering. Prefer the shortest reversible diff and standard library. Do not skip required correctness, security, migration, or verification work."
 ---
 
 # Ponytail

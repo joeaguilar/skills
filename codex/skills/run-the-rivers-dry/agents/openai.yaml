@@ -2,3 +2,5 @@ interface:
   display_name: "Run the Rivers Dry"
   short_description: "Maximum-autonomy completion loop"
   default_prompt: "Use $run-the-rivers-dry to finish this problem end to end. Add --god for highest effort or --mortal for normal prose."
+policy:
+  allow_implicit_invocation: false

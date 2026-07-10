@@ -35,6 +35,8 @@ Global installs link roots such as `~/.claude/skills`, `~/.claude/agents`, `~/.c
 **Standalone:** `itr` (file issues), `kgr` (codebase graph), `alignment` (stress-test a plan), `shell-prompt` (zsh prompt).
 **The Dojo — orchestration-primitive family (autonomous, ninja-voiced, caveman register):** `fan-of-agents`, `hundred-blades`, `shadow-duel`, `first-blood`, `splitting-blade`, `the-clan`, `relay`, `whetstone`, `scout-strike`, `drawn-steel`, `pre-mortem` — each a self-contained "blade" that slices a problem a different way. **`claude/DOJO.md` is the rack (catalog + composition) and the forge (authoring contract); composition lives there, never in a blade's body.**
 
+**Composed delivery workflows:** `forge-change` owns one explicit higher-order chain—read-only scout → focused implementation → adversarial duel → repair → verification → one local commit. It is not a blade, so the Dojo blade rule against sibling references and commits does not apply to its wrapper body.
+
 ## SKILL.md conventions
 
 - **Frontmatter** = `name:` + `description:`. The `description` is the router's signal — list concrete **trigger** phrases *and* explicit **"Do NOT trigger"** routing to siblings. Mirror the density of the existing descriptions.
@@ -79,4 +81,4 @@ The browser installer is launched from the repo root at `http://127.0.0.1:8765/`
 
 ## Side ownership
 
-Claude should own Claude-side files: `claude/**`, Claude-facing guidance, and Claude install/config behavior. Avoid editing `codex/**` unless the user gives an explicit one-off exception. When shared repo-level files must change (`install.sh`, `validate-skills.sh`, `PLATFORM_ONLY.tsv`, root docs), keep the edit minimal, state why it crosses the side boundary, and prefer a Claude-only path whenever that can solve the problem. Codex will mirror or port its side separately in Codex wording.
+Claude owns Claude-side files (`claude/**`, Claude-facing guidance, and Claude install/config behavior) and may edit shared repo-level files when the task requires it. Only a cross-platform edit into Codex-owned files (`codex/**` or Codex-only guidance/config) requires an explicit one-off user exception. Shared files such as `install.sh`, `validate-skills.sh`, `PLATFORM_ONLY.tsv`, and root docs are not cross-side edits; keep those changes minimal and relevant. Codex mirrors or ports its side separately in Codex wording unless the user grants that exception.

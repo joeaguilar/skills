@@ -23,7 +23,7 @@ This repository holds parallel installable primitive trees for **Claude** and **
 - The two platform trees are **parallel ports, not copies**. Codex skills are reworded for Codex: replace Claude-only tool names (`AskUserQuestion`, `subagent_type`, `run_in_background`, `SendMessage`) with Codex-native user-input and subagent/background-session language, and prefer `AGENTS.md` / `CODEX.md` for Codex repo instructions. Do not paste Claude wording into `codex/skills/`.
 - A skill's behavior change starts in `claude/skills/<skill>/`. When the Codex port needs the same change, edit `codex/skills/<skill>/` in Codex wording, then refresh that skill's line in `codex/PARITY.tsv` (`git hash-object claude/skills/<skill>/SKILL.md`).
 - For non-skill primitives, keep source roots platform-specific: edit `claude/<primitive>/` for Claude payloads and `codex/<primitive>/` for Codex payloads. Do not mix per-project install state into these canonical roots.
-- **Side ownership:** Codex agents should edit Codex-owned files (`codex/**` and Codex-facing guidance such as `AGENTS.md`) and avoid changing `claude/**` unless the user gives an explicit one-off exception. When shared repo-level files must change (`install.sh`, `validate-skills.sh`, `PLATFORM_ONLY.tsv`, root docs), keep the edit minimal, state why it crosses the side boundary, and prefer a Codex-only path whenever that can solve the problem.
+- **Cross-platform side ownership:** Codex agents own Codex files (`codex/**` and Codex-facing guidance such as `AGENTS.md`) and may edit shared repo-level files when the task requires it. Only a cross-platform edit into Claude-owned files (`claude/**` or Claude-only guidance/config) requires an explicit one-off user exception. Shared files such as `install.sh`, `validate-skills.sh`, `PLATFORM_ONLY.tsv`, and root docs are not cross-side edits; keep those changes minimal and relevant.
 - Run `./validate-skills.sh` after touching either tree; it flags any skill present in one tree but not the other, and any Codex port whose Claude source moved past its `PARITY.tsv` baseline. Treat staleness warnings as actionable review items: re-port the Codex skill first, then update `PARITY.tsv`; never silence drift by refreshing the hash alone.
 - **Porting a Claude-only primitive to parity** (e.g. the legacy commands under `claude/commands/` listed in `PLATFORM_ONLY.tsv`): add the reworded Codex peer in the matching root (`codex/commands/<name>.md`, Codex wording — no Claude-isms), give it the managed frontmatter, then **delete that primitive's line from `PLATFORM_ONLY.tsv`** so the validator resumes enforcing parity for it. Conversely, a genuinely Codex-only primitive (no Claude equivalent possible) gets a `codex  <root>  <name>` line added to `PLATFORM_ONLY.tsv` instead of a forced Claude stub.
 - Do not edit `codex/backups/` or `backups/` unless the task is backup maintenance.
@@ -164,7 +164,7 @@ node --check codex/scripts/skill-tree.js
 For UI changes, run a local server and verify the explorer in a browser. Check that:
 
 - The installer launches from the repo root at `http://127.0.0.1:8765/`.
-- Codex shows 53 current primitives: 34 skills, 17 agents, and 2 slash commands.
+- Codex shows 54 current primitives: 35 skills, 17 agents, and 2 slash commands.
 - Claude platform mode hides Codex-only `.system` skills and loads Claude payload markdown.
 - Claude platform mode includes Claude-only slash commands declared in `PLATFORM_ONLY.tsv`.
 - Each primitive type has its own tab.

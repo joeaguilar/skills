@@ -69,6 +69,20 @@ When two blades' triggers feel close, the rack disambiguates:
 - **whetstone vs shadow-duel** — cooperative self-improvement of my draft (critic helps) vs adversarial combat to verify (critic tries to kill it, judge rules).
 - **relay vs fan-of-agents** — serial stages that transform vs parallel facets that synthesize.
 
+### Composed delivery workflows — above the rack
+
+Higher-order workflows may name and sequence blades because composition is their
+purpose; they are not blades and do not inherit the blade body's sibling-reference
+or never-commit constraints.
+
+| Workflow | Composition | Draw it when |
+|---|---|---|
+| `forge-change` | scout-strike map → focused write/verify → shadow-duel → repair/re-verify → one orchestrator commit | one bounded unfamiliar change must travel from research to a hardened, repository-compliant local commit |
+
+`forge-change` is the canonical executable form of the scout/duel seam. Keep
+the two blades independent; change the wrapper when the end-to-end lifecycle
+changes.
+
 ---
 
 ## The Forge — how a blade is made

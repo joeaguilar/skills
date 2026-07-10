@@ -68,6 +68,7 @@
     "minimal-engineering": { "label": "Minimal Engineering" },
     "code-reconnaissance": { "label": "Code Reconnaissance" },
     "adversarial-verification": { "label": "Adversarial Verification" },
+    "hardened-change-delivery": { "label": "Hardened Change Delivery" },
     "artifact-refinement": { "label": "Artifact Refinement" },
     "premortem-risk": { "label": "Pre-Mortem Risk" },
     "story-conventions": { "label": "Story Conventions" },
@@ -419,6 +420,20 @@
       "recommends": [],
       "unlockedBy": [],
       "position": { "x": 45, "y": 22 }
+    },
+    "forge-change": {
+      "path": "skills/forge-change",
+      "group": "protocols",
+      "tier": 2,
+      "icon": "FRG",
+      "theme": "forge",
+      "title": "Forge Change",
+      "summary": "Recon, implement, adversarially harden, verify, and commit one bounded change.",
+      "provides": ["hardened-change-delivery"],
+      "requires": ["code-reconnaissance", "adversarial-verification"],
+      "recommends": ["code-graph", "gate-runner", "git-identity-audit", "issue-tracker"],
+      "unlockedBy": ["scout-strike", "shadow-duel"],
+      "position": { "x": 58, "y": 28 }
     },
     "whetstone": {
       "path": "skills/whetstone",

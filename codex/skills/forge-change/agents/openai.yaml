@@ -1,0 +1,6 @@
+interface:
+  display_name: "Forge Change"
+  short_description: "Recon, harden, verify, and commit one change"
+  default_prompt: "Use $forge-change to research, implement, adversarially review, repair, verify, and commit this bounded change."
+policy:
+  allow_implicit_invocation: false

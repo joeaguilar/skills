@@ -23,6 +23,21 @@ capabilities:
   minimal-engineering:
     label: "Minimal Engineering"
     description: "Prefer the shortest safe implementation, standard tools, and YAGNI decisions."
+  code-reconnaissance:
+    label: "Code Reconnaissance"
+    description: "Map unfamiliar code and coupling before making a focused change."
+  adversarial-verification:
+    label: "Adversarial Verification"
+    description: "Try to break an artifact with concrete counterexamples before trusting it."
+  artifact-refinement:
+    label: "Artifact Refinement"
+    description: "Polish one artifact through bounded critique and revision passes."
+  premortem-risk:
+    label: "Pre-Mortem Risk"
+    description: "Work backward from a failed plan to ranked failure modes and guardrails."
+  hardened-change-delivery:
+    label: "Hardened Change Delivery"
+    description: "Reconnoiter, implement, adversarially review, repair, verify, and commit one bounded change."
   story-conventions:
     label: "Story Conventions"
     description: "Project-specific issue and acceptance criteria style."
@@ -65,6 +80,9 @@ capabilities:
   panthexia-sprites:
     label: "Panthexia Sprites"
     description: "Create Panthexia runtime sprite assets and manifest entries."
+  panthexia-tiled-materials:
+    label: "Panthexia Tiled Materials"
+    description: "Create projection-aware repeating environment materials for Panthexia."
   openai-docs:
     label: "OpenAI Docs"
     description: "Use current official OpenAI product and API documentation."

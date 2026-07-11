@@ -7,7 +7,7 @@ model-table drift check (§6) flags every skill whose inline table no longer mat
 the Scores table below, so a half-finished update can't ship silently.
 
 > Data lives here; **voice lives in the skills.** This file is data-only on purpose —
-> the verbose (`crossfire-blitz`) and caveman-register (`ninja-clan`) skills keep their
+> the verbose (`crossfire-blitz`) and caveman-register (`ninja-meiyaku`) skills keep their
 > own prose, we don't generate it. The check only compares the *numbers*.
 
 ## Scores

@@ -1,6 +1,6 @@
 ---
 name: silent-strike
-description: "General-purpose silent execution — do ONE task under the silence contract (a closed whitelist of permitted utterances, no preamble/postamble, one terse line back). Throws the whole task to a background subagent via `--model` (default `sonnet`) so its chatter never touches the main context; the strike lands on disk by default. Trigger: `/silent-strike`, \"do this quietly\", \"silent strike\", \"handle it in silence\", \"minimal output\". NOT for the whole-backlog stealth blitz (use /ninja-clan), the Fable one perfect cut (use /masamune), fanning one task into aspects (use /fan-of-agents), or racing rivals (use /first-blood)."
+description: "General-purpose silent execution — do ONE task under the silence contract (a closed whitelist of permitted utterances, no preamble/postamble, one terse line back). Throws the whole task to a background subagent via `--model` (default `sonnet`) so its chatter never touches the main context; the strike lands on disk by default. Trigger: `/silent-strike`, \"do this quietly\", \"silent strike\", \"handle it in silence\", \"minimal output\". NOT for the whole-backlog stealth blitz (use /ninja-meiyaku), the Fable one perfect cut (use /masamune), fanning one task into aspects (use /fan-of-agents), or racing rivals (use /first-blood)."
 ---
 
 # /silent-strike — 黙

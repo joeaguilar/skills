@@ -62,9 +62,9 @@ claude	skills	codex-computer-use
 # subagent + adversarial-review runtime) and cross-reviews with a different model — the Codex-plugin
 # orchestration from inside Claude Code is the dependency, same Claude-only lineage as crossfire-review.
 claude	skills	crossfire-blitz
-# ninja-clan runs the whole plan→blitz→review gamut in stealth, routing across Claude models +
+# ninja-meiyaku runs the whole plan→blitz→review gamut in stealth, routing across Claude models +
 # gpt-5.5 via the Codex plugin — same harness dependency, same Claude-only lineage as crossfire-*.
-claude	skills	ninja-clan
+claude	skills	ninja-meiyaku
 # The Dojo — orchestration-primitive family (see claude/DOJO.md = the rack + forge).
 # Each is a self-contained "blade" that slices a problem a different way. Claude forged
 # these first; graduate each to parity as its codex/skills/<blade> port lands.

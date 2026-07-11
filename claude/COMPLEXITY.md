@@ -4,7 +4,7 @@ Companion to [`MODELS.md`](MODELS.md). MODELS.md owns the scores and role→mode
 bindings; **this file owns the grooming-time question: "which model class should
 take this ticket?"** Apply it while grooming an `itr` backlog (during `/sprint`,
 `/roadmap`, or ad-hoc triage), record the verdict as tags, and the execution
-skills (`/blitz`, `/crossfire-blitz`, `/ninja-clan`) inherit a pre-routed backlog.
+skills (`/blitz`, `/crossfire-blitz`, `/ninja-meiyaku`) inherit a pre-routed backlog.
 
 **Evidence base** (fetched 2026-07-11 — see snapshot at bottom for refresh):
 

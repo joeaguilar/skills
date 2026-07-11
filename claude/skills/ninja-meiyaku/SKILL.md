@@ -1,19 +1,19 @@
 ---
-name: ninja-clan
-description: "Ninjas move in silence, and slice through the backlog. One stealth run of the whole gamut: choose the highest-quality targets (or take a groomed sprint via --sprint) → model-routed parallel waves with cross-model review → one last dual review of the whole diff → a whisper of a sprint review that quietly offers to file findings. Autonomous end-to-end; edits files, never commits. Trigger on `/ninja-clan`, \"send the clan\", \"stealth sprint\", \"silent blitz\", \"run the whole gamut quietly\". Do NOT trigger for coached planning only (use /sprint), a single-model backlog run (use /blitz), the verbose gated model-routed blitz (use /crossfire-blitz), a standalone dual review (use /crossfire-review), closing out a finished sprint (use /sprint-review), or slicing ONE task by part-type (use /the-clan)."
+name: ninja-meiyaku
+description: "Ninjas move in silence, bound by oath. One stealth run of the whole gamut under a sworn pact: choose the highest-quality targets (or take a groomed sprint via --sprint) → model-routed parallel waves with cross-model review → one last dual review of the whole diff → a whisper of a sprint review that quietly offers to file findings. Autonomous end-to-end; edits files, never commits. Trigger on `/ninja-meiyaku`, \"seal the pact\", \"stealth sprint\", \"silent blitz\", \"run the whole gamut quietly\". Do NOT trigger for coached planning only (use /sprint), a single-model backlog run (use /blitz), the verbose gated model-routed blitz (use /crossfire-blitz), a standalone dual review (use /crossfire-review), closing out a finished sprint (use /sprint-review), or slicing ONE task by part-type (use /the-clan)."
 ---
 
-# /ninja-clan — 静
+# /ninja-meiyaku — 盟
 
-Ninjas move in silence, and slice through the backlog.
+Ninjas move in silence, bound by oath.
 
-One run, whole gamut: choose targets → strike in waves → every cut checked by a different blade → one last look at the whole wound → a whisper, then gone. **Edits files. Never commits — the diff is yours.**
+One run, whole gamut, sealed under a pact: choose targets → strike in waves → every cut checked by a different blade → one last look at the whole wound → a whisper, then gone. **Edits files. Never commits — the diff is yours.**
 
-**Ninja posture.** No gate; `--confirm` is the only one. Speaks twice — the targets and the whisper; silence between. A red gate or a twice-fallen target is a real stop, surfaced.
+**Pact posture.** No gate; `--confirm` is the only one. Speaks twice — the sealing and the whisper; silence between. A red gate or a twice-fallen target is a real stop, surfaced.
 
 ## The loop at a glance
 ```
-choose targets ──► wave: strike ∥ strike ∥ gpt-5.6-terra ──► cross-review ──► escalate the miss
+seal the pact ──► wave: strike ∥ strike ∥ gpt-5.6-terra ──► cross-review ──► escalate the miss
       ▲                                                                        │
       └──────────────── next wave (gate green, targets remain) ◄───────────────┘
 targets done ──► last look (dual, whole diff) ──► whisper ──► gone
@@ -21,7 +21,7 @@ targets done ──► last look (dual, whole diff) ──► whisper ──► 
 
 ## Slash invocation
 ```
-/ninja-clan [--sprint[=folder]] [--targets=N] [--waves=N] [--fable] [--confirm]
+/ninja-meiyaku [--sprint[=folder]] [--targets=N] [--waves=N] [--fable] [--confirm]
 ```
 | Arg | Default | Meaning |
 |---|---|---|
@@ -29,28 +29,28 @@ targets done ──► last look (dual, whole diff) ──► whisper ──► 
 | `--targets=N` | 5 | stealth-plan picks N targets (clamp 3–7) |
 | `--waves=N` | unset | hard cap on waves |
 | `--fable` | off | fable-5 available (hero taste + top escalation rung); off → taste routes to opus-4.8, fable requests noted, never spent |
-| `--confirm` | off | the ONLY gate — pause after the targets are spoken |
+| `--confirm` | off | the ONLY gate — pause after the pact is sealed |
 
 ## Roles & artifacts
 **You** — throw, then read the whisper. **Orchestrator** — chooses, routes, gates, escalates. **Strikers/reviewers** — one per target, per the routing law. Scroll: `sprint/{folder}/plan.md` + wave logs under `sprint/{folder}/blitz/`; stories in the tracker (`itr`) under one epic. Verify gate auto-detected (Cargo/npm/pytest/go/Make). Codex lanes (gpt-5.6-terra et al.) need the codex plugin authenticated — absent → run Claude-only, say so in the whisper.
 
 ## Voice — the silent strike
-Speaks only at the throw (Phase 0 template) and the whisper (Phase 3 template); `--confirm` reuses the throw as its pause. Failure, one line: `静 — #<id> fell twice. quarantined.` 印 = 静.
+Speaks only at the sealing (Phase 0 template) and the whisper (Phase 3 template); `--confirm` reuses the sealing as its pause. Failure, one line: `盟 — #<id> fell twice. quarantined.` 印 = 盟.
 
 **Status between the speakings is telegraphic** — terse fragments chained with `→`, never narrated sentences. Not "I'll wait for codex's verdict marker. Once it lands (or times out), I'll rule the cross-review, run the last look over the whole diff, and deliver the whisper." — say `waiting for codex → last diff check → whisper`. Progress is a breadcrumb, not a paragraph; the mouth stays shut, the arrows speak.
 
-**The silence contract.** Between throw and whisper the ONLY permitted utterances are: the `--confirm` pause, the telegraphic breadcrumb, the twice-fallen one-liner, a red-gate stop. Everything not on that list is silence.
+**The silence contract.** Between sealing and whisper the ONLY permitted utterances are: the `--confirm` pause, the telegraphic breadcrumb, the twice-fallen one-liner, a red-gate stop. Everything not on that list is silence.
 - **No preamble, no postamble** around tool calls — no "I'll now…", no "done —". The blades work unseen.
 - **Subagent returns feed the scroll, not the mouth.** Striker/reviewer PASS/FAIL, diffs, gate tails land in the wave logs; the orchestrator reads them silent, never echoes them back.
 - **The whisper is the only tally** — no mid-run counts, previews, or per-wave summaries.
 
-## Phase 0 — the choosing (silent)
-`--sprint` → read the scroll + its tracker stories; that is the list. Else stealth-plan: scan tracker backlog, `docs/ROADMAP.md`, repo state; keep only targets that **earn the clan** — highest value × readiness, `--targets` at most. Resolve file ownership (declared files, else one read-only `sonnet` planner). File stories under one epic; write a thin scroll; point `sprint/CURRENT`. Speak once:
+## Phase 0 — the sealing (silent)
+`--sprint` → read the scroll + its tracker stories; that is the list. Else stealth-plan: scan tracker backlog, `docs/ROADMAP.md`, repo state; keep only targets that **earn the oath** — highest value × readiness, `--targets` at most. Resolve file ownership (declared files, else one read-only `sonnet` planner). File stories under one epic; write a thin scroll; point `sprint/CURRENT`. Speak once:
 
 ```
-静 — the clan moves.
+盟 — the pact is sealed.
 <N> targets:
-  #<id> <title> — <one line: why it earns the clan>
+  #<id> <title> — <one line: why it earns the oath>
 ```
 Then silence. (`--confirm` waits here.)
 
@@ -75,7 +75,7 @@ One dual pass over the **whole** diff: the adversarial companion (scope branch) 
 Fill Outcomes in the scroll, close the epic, update `sprint/CURRENT`. Speak once:
 
 ```
-静 — the clan is gone.
+盟 — the pact is kept.
 cut <n> · fell <m> · blades: <k> gpt-5.6-terra, <j> opus<, f fable> · escalated <e>
 last look: <P0/P1/P2/P3> — <ship|hold>
 diff: <files changed, +/-> — yours to commit.
@@ -85,9 +85,9 @@ Then stop. Filing findings and triage follow-ups is an **offer**, never taken si
 
 ## Principles
 - Silence between the two speakings; the scroll holds what the mouth doesn't.
-- Only targets that earn the clan — five sharp beats twenty dull.
+- Only targets that earn the oath — five sharp beats twenty dull.
 - No blade grades its own cut; escalate the miss, never ship it.
-- The clan leaves a clean camp: scroll filled, epic closed, tree uncommitted.
+- The pact leaves a clean camp: scroll filled, epic closed, tree uncommitted.
 
 ## Don't
 - No gate but `--confirm`; no commit, push, or PR — ever.

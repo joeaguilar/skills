@@ -1,6 +1,6 @@
 ---
 name: "openai-docs"
-description: "OpenAI/Codex docs: APIs, models, migrations, prompts, official citations; use Docs MCP/manual and official OpenAI fallback only."
+description: "Use when the user asks how to build with OpenAI products or APIs, asks about Codex itself or choosing Codex surfaces, needs up-to-date official documentation with citations, help choosing the latest model for a use case, or model upgrade and prompt-upgrade guidance; use OpenAI docs MCP tools for non-Codex docs questions, use the Codex manual helper first for broad Codex self-knowledge, and restrict fallback browsing to official OpenAI domains."
 ---
 
 

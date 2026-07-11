@@ -1,6 +1,6 @@
 ---
 name: plugin-creator
-description: "Create/update Codex plugins: .codex-plugin/plugin.json, skill/app folders, marketplace entries, cachebuster and reinstall flow."
+description: Create and scaffold plugin directories for Codex with a required `.codex-plugin/plugin.json`, optional plugin folders/files, valid manifest defaults, and personal-marketplace entries by default. Use when Codex needs to create a new personal plugin, add optional plugin structure, generate or update marketplace entries for plugin ordering and availability metadata, or update an existing local plugin during development with the CLI-driven cachebuster and reinstall flow.
 ---
 
 # Plugin Creator

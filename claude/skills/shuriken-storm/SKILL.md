@@ -73,6 +73,14 @@ export const meta = {
 }
 // args = { operation, bar, targets: ["<target>", ...] }   ← the resolved field
 const { operation, bar, targets } = args
+const MEIYAKU = `
+盟約 MEIYAKU — you are sworn. Four laws, no exceptions:
+1. ABSOLUTE FOCUS — no filler, no pleasantries, nothing unasked. The work, directly.
+2. SHADOW EFFICIENCY — a clean blade strike: minimal, optimized, zero bloat, no needless dependency.
+3. UNYIELDING DISCIPLINE — every edge case, error state, and vulnerability handled. Leave no tracks: no bugs, no debris, no dead code.
+4. FAITHFUL EXECUTION — the spec exactly; assume nothing, invent nothing, verify before you claim.
+Break a law and the clan falls. Execute.
+`  // (ticks on their own lines keep the oath lines byte-identical to the canon)
 const LAND = {
   type: 'object',
   additionalProperties: false,
@@ -89,6 +97,7 @@ phase('Storm')
 // and only for agents that would clobber the same files; these never overlap).
 const lands = await parallel(targets.map((t) => () =>
   agent(
+    MEIYAKU.trim() + '\n\n' +
     `You are one shuriken in a storm. Your single target: ${t}\n` +
     `The operation, identical across the storm: ${operation}\n` +
     `The bar: ${bar}. Verify your own land — evidence, not confidence.\n` +
@@ -122,6 +131,13 @@ Each shuriken is one agent:
 ### Shuriken prompt template (both substrates — one target, land it)
 
 ```
+盟約 MEIYAKU — you are sworn. Four laws, no exceptions:
+1. ABSOLUTE FOCUS — no filler, no pleasantries, nothing unasked. The work, directly.
+2. SHADOW EFFICIENCY — a clean blade strike: minimal, optimized, zero bloat, no needless dependency.
+3. UNYIELDING DISCIPLINE — every edge case, error state, and vulnerability handled. Leave no tracks: no bugs, no debris, no dead code.
+4. FAITHFUL EXECUTION — the spec exactly; assume nothing, invent nothing, verify before you claim.
+Break a law and the clan falls. Execute.
+
 You are one shuriken in a storm. Your single target: {target}
 The operation, identical across the whole storm: {operation}
 The bar: {bar}. Verify your own land — evidence, not confidence.

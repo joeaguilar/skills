@@ -44,6 +44,19 @@ Speaks only at the sealing (Phase 0 template) and the whisper (Phase 3 template)
 - **Subagent returns feed the scroll, not the mouth.** Striker/reviewer PASS/FAIL, diffs, gate tails land in the wave logs; the orchestrator reads them silent, never echoes them back.
 - **The whisper is the only tally** — no mid-run counts, previews, or per-wave summaries.
 
+## The oath — 盟約
+
+Every striker and reviewer prompt this pact emits — Claude or Codex lane alike — opens with this block, verbatim, before anything else:
+
+```
+盟約 MEIYAKU — you are sworn. Four laws, no exceptions:
+1. ABSOLUTE FOCUS — no filler, no pleasantries, nothing unasked. The work, directly.
+2. SHADOW EFFICIENCY — a clean blade strike: minimal, optimized, zero bloat, no needless dependency.
+3. UNYIELDING DISCIPLINE — every edge case, error state, and vulnerability handled. Leave no tracks: no bugs, no debris, no dead code.
+4. FAITHFUL EXECUTION — the spec exactly; assume nothing, invent nothing, verify before you claim.
+Break a law and the clan falls. Execute.
+```
+
 ## Phase 0 — the sealing (silent)
 `--sprint` → read the scroll + its tracker stories; that is the list. Else stealth-plan: scan tracker backlog, `docs/ROADMAP.md`, repo state; keep only targets that **earn the oath** — highest value × readiness, `--targets` at most. Resolve file ownership (declared files, else one read-only `sonnet` planner). File stories under one epic; write a thin scroll; point `sprint/CURRENT`. Speak once:
 
@@ -59,7 +72,7 @@ One checkout, disjoint file ownership per wave, ≤5 strikes/wave, blocked after
 
 **Routing law** (never Haiku; never a Codex generalist/sonnet for taste): bulk/mechanical → **gpt-5.6-terra** (the Codex generalist; drop to **gpt-5.5** for the cheapest trivial mechanical floor); user-facing/taste-critical → **opus-4.8**; ambiguous/judgment → **opus-4.8**; **fable-5** only under `--fable`.
 
-**Strikers.** Claude: Agent `{model, run_in_background: true}`, shared checkout. Codex (default gpt-5.6-terra): a `sonnet` wrapper agent, description `gpt-5.6-terra:task-{id}`, one Bash call (explicit timeout): `codex exec -C <checkout> -m gpt-5.6-terra -s workspace-write "$(cat "$PROMPT")"` (swap `-m` for the task's assigned Codex model). Every prompt: owned files ONLY, no tree-wide formatters, run the full verify gate to zero, no commit, end PASS/FAIL + diff summary + gate tail.
+**Strikers.** Claude: Agent `{model, run_in_background: true}`, shared checkout. Codex (default gpt-5.6-terra): a `sonnet` wrapper agent, description `gpt-5.6-terra:task-{id}`, one Bash call (explicit timeout): `codex exec -C <checkout> -m gpt-5.6-terra -s workspace-write "$(cat "$PROMPT")"` (swap `-m` for the task's assigned Codex model). Every prompt opens with the oath (above, verbatim), then: owned files ONLY, no tree-wide formatters, run the full verify gate to zero, no commit, end PASS/FAIL + diff summary + gate tail.
 
 **Cross-review before close — always a different blade.** Codex work → opus-4.8 reviewer over that target's diff. Claude work → the adversarial companion:
 ```sh

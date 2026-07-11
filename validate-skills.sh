@@ -212,5 +212,32 @@ else
 fi
 
 echo
+echo "== 7. Meiyaku drift (dojo oath copies vs claude/DOJO.md canon) =="
+# Runs in every mode: every prompt a dojo blade emits to a thrown agent opens with
+# the Meiyaku oath block, byte-for-byte (leading indentation aside — a copy inside an
+# indented fence keeps its fence's indent). A drifted copy ships a drifted oath.
+DOJO_MD="$REPO_DIR/claude/DOJO.md"
+canon="$(awk '/^盟約 MEIYAKU/{f=1} f{print} f&&/^Break a law and the clan falls\. Execute\.$/{exit}' "$DOJO_MD" 2>/dev/null)"
+if [ -z "$canon" ]; then
+  echo "  SKIP: no canonical Meiyaku block found in claude/DOJO.md"
+else
+  oath_lines="$(printf '%s\n' "$canon" | wc -l | tr -d ' ')"
+  oath_errs=0; oath_copies=0
+  while IFS= read -r md; do
+    [ -z "$md" ] && continue
+    while IFS= read -r ln; do
+      [ -z "$ln" ] && continue
+      oath_copies=$((oath_copies+1))
+      blk="$(sed -n "${ln},$((ln+oath_lines-1))p" "$md" | sed 's/^[[:space:]]*//')"
+      if [ "$blk" != "$canon" ]; then
+        echo "  ERROR: ${md#$REPO_DIR/}:$ln oath copy drifted from the DOJO.md canon -> paste the canonical block from claude/DOJO.md"
+        errors=$((errors+1)); oath_errs=$((oath_errs+1))
+      fi
+    done < <(grep -n '^[[:space:]]*盟約 MEIYAKU' "$md" | cut -d: -f1)
+  done < <(grep -rl '盟約 MEIYAKU' "$CLAUDE_SKILLS" --include=SKILL.md 2>/dev/null | sort)
+  [ "$oath_errs" -eq 0 ] && echo "  OK: $oath_copies oath copies match the DOJO.md canon"
+fi
+
+echo
 echo "== Summary: $errors error(s), $warns staleness warning(s) =="
 [ "$errors" -eq 0 ] && { [ "$STRICT_STALENESS" -eq 0 ] || [ "$warns" -eq 0 ]; }

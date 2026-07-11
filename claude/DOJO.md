@@ -98,6 +98,22 @@ Every blade obeys one contract. Forge to it; the rack stays consistent.
 5. **Voice — speak twice, silent between.** A `## Voice` section with in-character templates. The skill surfaces only at the **throw** and the **return** — no progress chatter. `{slots}` are the contract; the flavor is mouth. Each blade carries its own signature 印 (see the rack).
 6. **Right-size & clamp.** Default and clamp on the fan-width flag (fan-of-agents: 2–5, default 5; synthesis/monitoring degrades past ~5, and wide fan-outs trip API rate-limit cascades). State the clamp.
 7. **Write by default, never commit.** Execution blades edit files in disjoint sets (overlapping edits clobber) simply by being invoked — no flag gates the write; the orchestrator never commits/pushes/PRs — the user reviews. Read-only is **not** a mode of an execution blade — it is its own blade (`feint` 虚, the empty attack). Pure-analysis blades (`pre-mortem`, `tsugi`, and read phases like `scout-strike`'s scouts) touch nothing by nature.
+8. **The Meiyaku (盟約).** Every prompt a blade emits to a thrown agent — worker, critic, challenger, proposer, judge, scout, router, striker — opens with the oath block below, **byte-for-byte**, before the role text. It is brain, not mouth: never compress, reword, or trim it (`./validate-skills.sh` §7 kills any drifted copy). Only a blade that throws no one (`tsugi`) carries no oath.
+
+### The Meiyaku — the oath every thrown agent swears
+
+```
+盟約 MEIYAKU — you are sworn. Four laws, no exceptions:
+1. ABSOLUTE FOCUS — no filler, no pleasantries, nothing unasked. The work, directly.
+2. SHADOW EFFICIENCY — a clean blade strike: minimal, optimized, zero bloat, no needless dependency.
+3. UNYIELDING DISCIPLINE — every edge case, error state, and vulnerability handled. Leave no tracks: no bugs, no debris, no dead code.
+4. FAITHFUL EXECUTION — the spec exactly; assume nothing, invent nothing, verify before you claim.
+Break a law and the clan falls. Execute.
+```
+
+Why it works, mechanically: an explicit identity under stakes flattens drift in the agent's reasoning. Law 1 anchors low-token, high-density returns (the portion, not chat). Law 2 biases attention toward optimization over bloat. Law 3 pulls the weights for defensive programming, error handling, and clean architecture. Law 4 pins the agent to the spec and to evidence — "a written value ≠ a wired feature," sworn as an oath.
+
+Read-only and analysis agents (scouts, challengers, pre-mortem prophets) swear the same oath — the laws govern conduct, not file writes. The canon lives here; every blade carries an inline copy so it stays self-contained when installed.
 
 ### The skeleton (fill the ⟨slots⟩)
 
@@ -141,7 +157,7 @@ No tracker/graph/sprint deps — stands alone.
 ⟨Throw template⟩ · ⟨Return template⟩ · ⟨the-pause for --confirm⟩ · ⟨failure template⟩. 印 = ⟨glyph⟩.
 
 ## Phase 0 — Frame (no gate) … resolve config, pick the cut, emit Throw, go.
-## Phase 1 — ⟨Throw/Stage/Recurse⟩ … spawn per the per-agent template (brain — emit verbatim).
+## Phase 1 — ⟨Throw/Stage/Recurse⟩ … spawn per the per-agent template (brain — emit verbatim; opens with the Meiyaku block, byte-for-byte).
 ## Phase 2 — ⟨Collect/Iterate/Judge⟩ … the Merge + Stop rules.
 ## Phase 3 — Deliver … Return template + the merged deliverable.
 
@@ -155,6 +171,6 @@ No tracker/graph/sprint deps — stands alone.
 2. Add a line to **`PLATFORM_ONLY.tsv`** under the Claude-only skills block (Claude forges first; Codex ports and graduates it later):
    `claude<TAB>skills<TAB><blade>`
 3. Add its row to **The Rack** table above + any composition note.
-4. Run **`./validate-skills.sh`** (0 errors) and the per-file integrity grep (fences even; every `--flag` in both table and body; 印 present).
+4. Run **`./validate-skills.sh`** (0 errors) and the per-file integrity grep (fences even; every `--flag` in both table and body; 印 present; every emitted-prompt fence opens with the Meiyaku, byte-for-byte — §7 checks the bytes, you check the coverage).
 
 > A blade not on the rack and not in `PLATFORM_ONLY.tsv` is a weapon on the floor. Sheathe it in both, or it trips the validator.

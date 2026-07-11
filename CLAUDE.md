@@ -17,6 +17,7 @@ skills/                         (repo root)
 │                                      (commands/ also holds imported legacy commands)
 ├── claude/settings.json               canonical ~/.claude/settings.json (config primitive)
 ├── claude/MODELS.md                    source of truth for the cost/intelligence/taste table + role bindings
+├── claude/COMPLEXITY.md                grooming rubric: ticket complexity signals → tier → model route (benchmark-grounded)
 ├── claude/scripts/models.sh           `table` (inject the live table) + `check` (drift gate, wired into validate-skills.sh §6)
 ├── PLATFORM_ONLY.tsv                   intentional one-tree-only primitives (parity exemptions)
 ├── codex/

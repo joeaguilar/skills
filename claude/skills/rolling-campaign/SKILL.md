@@ -126,6 +126,10 @@ The steamroll failure: a leg deflects a hard item to `itr#88`, a later leg's sco
 
 The mental model is loop-until-dry where **"dry" = no NEW provable work**, and deflected issues never count as new. A chain always converges: each leg either proves work (shrinking the roadmap remainder) or deflects it (moving it permanently out of scope) — the provable remainder strictly decreases, so it reaches zero.
 
+### Visual-gate-only work is pre-deflected — hand it to the PO, never spend a wave on it
+
+A ticket whose only deliverable is the PO's own visual smoke against a Visual Gate block (`LOOK AT / IGNORE / EXPECTED / CONFOUNDERS`) — tagged `visual-gate-only`, or visual-scope with no agent-implementable code — cannot be agent-proven, ever. Treat it as **pre-deflected**: on sight, *without* spending any of the 3-attempt cap, add it to the PO smoke-test list (`ledger.smoke_test.items`) and to `deflected_issues` + the cumulative `deflected_all` exclusion set, and mark it `blocked` in `queue.json` (never `verified`). It renders in `smoke-test.html` — the async report that **is** the human review — and, being in `deflected_all`, no fresh leg or scout ever re-pulls it (same steamroll guard as any deflected item). For the convergence check it counts exactly like a deflected item: a chain whose only remaining work is visual-gate-only tickets is **done** (`stop_condition: only_deflected_remains`) — success, over to the PO. This differs from a ticket with real code work *plus* a visual gate: that one runs a wave and only its final smoke defers to the report.
+
 ### Stuck-risk ledger — anticipated failure modes and their guard
 
 | Risk | Could get stuck how | Guard |

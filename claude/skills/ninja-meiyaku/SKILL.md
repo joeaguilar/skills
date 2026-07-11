@@ -58,7 +58,7 @@ Break a law and the clan falls. Execute.
 ```
 
 ## Phase 0 — the sealing (silent)
-`--sprint` → read the scroll + its tracker stories; that is the list. Else stealth-plan: scan tracker backlog, `docs/ROADMAP.md`, repo state; keep only targets that **earn the oath** — highest value × readiness, `--targets` at most. Resolve file ownership (declared files, else one read-only `sonnet` planner). File stories under one epic; write a thin scroll; point `sprint/CURRENT`. Speak once:
+`--sprint` → read the scroll + its tracker stories; that is the list. Else stealth-plan: scan tracker backlog, `docs/ROADMAP.md`, repo state; keep only targets that **earn the oath** — highest value × readiness, `--targets` at most. A **visual-gate-only** target (tag `visual-gate-only`, or visual-scope with no code to cut — only the PO's eyes on a `LOOK AT / IGNORE / EXPECTED / CONFOUNDERS` block) **earns no strike**: set it aside — unrouted, no wave, no attempt. It sleeps in the scroll for the PO's smoke, surfaced in the whisper (smoke-only), resolved at `/sprint-review` — never by a blade. Not counted against targets-done. Resolve file ownership (declared files, else one read-only `sonnet` planner). File stories under one epic; write a thin scroll; point `sprint/CURRENT`. Speak once:
 
 ```
 盟 — the pact is sealed.
@@ -90,6 +90,7 @@ Fill Outcomes in the scroll, close the epic, update `sprint/CURRENT`. Speak once
 ```
 盟 — the pact is kept.
 cut <n> · fell <m> · blades: <k> gpt-5.6-terra, <j> opus<, f fable> · escalated <e>
+<smoke-only: <s> — #<id>… await PO eyes (visual-gate-only); resolve at /sprint-review>
 last look: <P0/P1/P2/P3> — <ship|hold>
 diff: <files changed, +/-> — yours to commit.
 findings sleep in the scroll. say the word — they become issues.

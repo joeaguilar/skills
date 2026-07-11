@@ -240,6 +240,8 @@ Queue lanes:
 - `parked`: out-of-scope, human-dependent, over cap, or insufficiently verifiable.
 - `next_campaign`: valid work that should not fit this campaign.
 
+**Visual-gate-only / pure PO-smoke tickets go straight to `parked` — never `ready`.** A ticket whose only deliverable is the PO's own visual smoke against a Visual Gate block (`LOOK AT / IGNORE / EXPECTED / CONFOUNDERS`) — tagged `visual-gate-only`, or visual-scope with no agent-implementable code — cannot be `agent-verified` by any worker. On sight, route it to `parked` and onto the PO smoke-test list (`ledger.smoke_test.items`) so it renders in `smoke-test.html`; that async report is the review that picks it up (this campaign has no live PO gate — the report **is** the review). Spend no wave, no attempt, no scout on it. It does **not** count against the Phase 7 `in-scope queue empty` stop condition — for loop purposes it is already resolved (handed to the PO), exactly like a deflected item — and it is never re-pulled into a later wave. This differs from a ticket with real code work *plus* a visual gate: that one runs a wave normally and only its final smoke defers to the report.
+
 Use compact JSON records: `id`, `title`, `source`, `roadmap_rows`, `lane`, `status`, `owned_files`, `forbidden_files`, `acceptance`, `verify`, `evidence_needed`, `token_estimate`, `deps`, `risk`.
 
 Use batch reads and one planner pass for unknown file sets. Do not spawn one planner per ticket.

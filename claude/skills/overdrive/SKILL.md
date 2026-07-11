@@ -185,7 +185,9 @@ Announce `Phase 2 — Pre-plan`. Blitz discovers files at run time; overdrive ba
 
 ## Phase 3 — Wave-pack (autonomous)
 
-Announce `Phase 3 — Wave-pack`. **Eligible pool = currently-open tickets minus any tagged `quarantined-sprint-N`** — quarantined never re-enter (this exclusion = termination). Same filter every re-derive (Phase 4).
+Announce `Phase 3 — Wave-pack`. **Eligible pool = currently-open tickets minus any tagged `quarantined-sprint-N` minus any tagged `visual-gate-only`** — quarantined never re-enter (this exclusion = termination); visual-gate-only never enter at all (nothing for an arm to build — pure PO smoke). Same filter every re-derive (Phase 4).
+
+**Visual-gate-only = smoke-only, deferred to the gate.** A ticket tagged `visual-gate-only` (or visual-scope with no agent-implementable code — its only AC is the PO's own visual smoke against a `LOOK AT / IGNORE / EXPECTED / CONFOUNDERS` block) gets **no arm, no wave, no attempt**. Overdrive already has a PO smoke (Phase 7 per-wave / Phase 8 end-of-run) — that's the review that picks these up. Hold them aside; surface them in the smoke report (Phase 7/8) for the PO to eyeball; **accept → close, reject → carryover** (Phase 8 triage). For loop purposes treat them as **resolved** — they never block `backlog empty` (see stop conditions). Pre-plan (Phase 2) flags them: a ticket whose pre-plan returns `files: []` / no implementable step *and* is visual-scope is visual-gate-only — tag it `visual-gate-only` so this filter catches it.
 
 1. **Conflict graph.** From eligible pool, file → owning tickets. File owned by ≥2 = conflict edge (can't share a wave). Add semantic edges from `semantic_neighbors`.
 2. **Greedy bin-pack** respecting: topo order of `blocked-by` (ticket after its blockers' waves), no intra-wave file conflict, wave ≤ `concurrency`.
@@ -254,7 +256,7 @@ Announce `Phase 7 — Wave N smoke`. **Only human ask in the loop.** `--auto`/`-
    ```
    Any check yellow/partial → highlight + offer three verdicts.
 
-2. **Run visual smoke** the project way (project `/run` skill, `npm run dev` + screenshot, CLI invocation). Show result.
+2. **Run visual smoke** the project way (project `/run` skill, `npm run dev` + screenshot, CLI invocation). Show result. **Also list any held `visual-gate-only` tickets in scope for this smoke** (they ran no arm — Phase 3) so the PO eyeballs them here against their `LOOK AT / EXPECTED` lines; accept → `itr close`, reject → carryover (Phase 8). Under `--auto` they all defer to the single Phase 8 smoke.
 
 3. **Verdict:**
    - **accept** → log verdict+timestamp; reset rework budget; next cycle.
@@ -281,7 +283,7 @@ Step-1 stash = **recoverable backup, not auto-restored** (popping re-introduces 
 
 Check **once/cycle, right after a wave is accepted (or auto-accepted), before re-deriving the next plan.** Re-query open tickets, test:
 
-- **Backlog empty** (no open remain; quarantined are tagged out) → success → Phase 8.
+- **Backlog empty** (no open remain; quarantined *and* visual-gate-only are tagged out — the latter resolve at the Phase 7/8 smoke, not by an arm) → success → Phase 8.
 - **Only quarantined remain** (every open ticket tagged `quarantined-sprint-N`) → exhausted → Phase 8.
 - **Poisoned** — `consecutive-zero` counter: after each accepted wave, +1 if it closed zero else reset 0. Reaches **2** *and* no attempt in flight (no re-plan/defer pending) → stop → Phase 8. Mid-attempt = progress (no false-trigger on slow sprint).
 - **Blocking quarantine** (quarantined ticket that still-open tickets are `blocked-by`) → stop launching dependents → Phase 8.

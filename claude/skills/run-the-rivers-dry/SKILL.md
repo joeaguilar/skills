@@ -176,6 +176,14 @@ If no gate is detectable, construct a practical proof from targeted commands, st
 - On simultaneous identical failures across a wave (API 429/overloaded): treat it as a rate-limit cascade, not slice failures. Pause ~60s, halve concurrency, and respawn only the failed workers without charging their retry budget.
 - On budget pressure: finish the active safe checkpoint, record state, and report the next action.
 
+## Visual-gate-only work
+
+A ticket whose only deliverable is a human PO's visual smoke against a Visual Gate block (`LOOK AT / IGNORE / EXPECTED / CONFOUNDERS`) — tagged `visual-gate-only`, or visual-scope with no agent-implementable code — is **not** agent-provable. Do not spend a worker, a scout, or a retry on it, and never let it block completion.
+
+This mode holds no PO review of its own, so **skip it entirely and hand it off**: leave it open (or file/note a `visual-gate-only` follow-up when a tracker exists), record it in the final proof under a `handed to human smoke` line, and treat the goal as complete once all *agent-provable* work is proven — assume a later `/sprint-review` (or the PO directly) performs the smoke. A run whose only remainder is visual-gate-only tickets is **done and successful**, not blocked.
+
+This is distinct from UI work the agent itself CAN verify via browser/screenshot (`--god` visual proof) — that stays fully in scope and gets the strongest practical gate. Visual-gate-only means there is nothing to build and nothing an agent can prove; the human's eyes are the only acceptance.
+
 ## Final response
 
 Keep the final answer concise and evidence-first. In `--god`, label it `Final Judgment`; otherwise use the normal final response shape.

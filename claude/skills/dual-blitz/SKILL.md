@@ -104,6 +104,7 @@ Rules:
 - Keep file lists minimal. Include only files the task is expected to edit.
 - Mark low-confidence file sets as `parked:file-uncertain` unless the task can be safely bounded by a whole directory or subsystem that no other lane will touch.
 - Keep dependencies in the same lane when possible. If a dependency must cross lanes, put the dependent task in `parked:cross-lane-dependency`; do not rely on the two agents to coordinate.
+- Route any **visual-gate-only** ticket (tag `visual-gate-only`, or visual-scope with no agent-implementable code — its only acceptance is the PO's own visual smoke against a `LOOK AT / IGNORE / EXPECTED / CONFOUNDERS` block) to `parked:visual-gate-only`. No lane worker can prove it, and the inner `/blitz` would skip it anyway; parking it keeps it out of both lane backlogs. It is resolved at closeout by `/sprint-review` (the PO smoke), not inside a lane.
 
 ## Phase 2 — Split into two lanes
 
@@ -260,7 +261,7 @@ When invoked as `/dual-blitz agent 1` or `/dual-blitz agent 2`:
 
 When both lane agents finish:
 
-- For a sprint-backed run, use `/sprint-review` to review the sprint. The lane artifacts provide the blitz-log evidence and friction notes.
+- For a sprint-backed run, use `/sprint-review` to review the sprint. The lane artifacts provide the blitz-log evidence and friction notes. Any `parked:visual-gate-only` tickets surface here for the PO's own visual smoke — that review is where they get accepted/rejected, never inside a lane.
 - For a non-sprint run, print a compact aggregate from both `Outcomes` sections and leave follow-up filing to `itr`.
 - Do not merge the two artifacts into a shared report while lane agents are still running.
 

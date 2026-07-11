@@ -42,8 +42,9 @@ codex exec \
   "$(cat "$PROMPT")"
 ```
 
-- `-o "$REPORT"` writes Codex's **final message** to `$REPORT` — so tell Codex its final message *is* the report; don't also ask it to write a separate `report.md` (they'd collide).
-- Use `-s danger-full-access` for GUI automation, iOS/Android simulators, desktop-app launching, screenshots, or any access outside the repo. For non-GUI checks that only need the repo and artifact directory, prefer `-s workspace-write`.
+- `-o "$REPORT"` (the letter **o**, not zero) writes Codex's **final message** to `$REPORT` — so tell Codex its final message *is* the report; don't also ask it to write a separate `report.md` (they'd collide).
+- **`-s danger-full-access` is the mode this skill runs in.** Real computer use — launching a browser or GUI app, driving a simulator, reaching a local server on `localhost` — requires it. Under `-s workspace-write` Codex's sandbox **denies network by default (so `localhost` is unreachable) *and* blocks browser/GUI launch**, so a computer-use run there comes back **BLOCKED** without ever loading the app. If a run reports BLOCKED and never reached the UI, this is almost always why — rerun with `danger-full-access`. Only use `workspace-write` for a rare in-repo, no-network, no-GUI check, and those usually belong in `/run` or `/verify`, not here.
+- **`danger-full-access` removes *all* sandboxing** (full network, filesystem, and process access) — a real privilege escalation. Scope the prompt to the app under test on `localhost`; the "launch without asking" latitude covers launching that local app, **not** reaching real hosts, accounts, or system state (see Don't).
 - `-C "$PWD"` sets Codex's working root; point it at the repo you want verified. `--add-dir "$ARTIFACT_DIR"` keeps the artifact dir writable when it lives outside that root.
 - Add `--skip-git-repo-check` when the working directory is not a git repository.
 
@@ -64,7 +65,7 @@ Keep the prompt specific enough that Codex does not need the surrounding Claude 
 
 - **Independent check, not a proxy for Claude's own tools.** Reach for Codex when the value is a *second* agent driving real UI outside Claude's context — not to offload work Claude can do inline.
 - **Evidence over assertion.** A report that claims "works" without a screenshot path or observed-behavior detail is a blocked run, not a pass — say so to the user.
-- **Least privilege sandbox.** Use `workspace-write` unless the flow genuinely needs GUI/out-of-repo access; escalate to `danger-full-access` only when it does.
+- **Full-access sandbox is the norm here — and a real escalation.** Genuine computer use (browser, GUI, simulator, `localhost`) requires `-s danger-full-access`; `workspace-write` can't reach a local server or launch a browser and comes back BLOCKED. Because full access removes all sandboxing, keep the prompt scoped to the app under test on `localhost` and never point it at real accounts, hosts, or system state.
 
 ## Don't
 

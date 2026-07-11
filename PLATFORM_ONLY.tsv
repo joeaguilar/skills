@@ -44,6 +44,10 @@ codex	agents	tdd-workflow-coach.md
 
 # --- Claude-only skills (intentional unless a Codex feature gap appears) ---
 claude	skills	ccq
+# groom routes itr issues across Claude models + the Codex generalists (sonnet/opus/fable vs
+# gpt-5.5/5.6) — the cross-model routing vocabulary is Claude-side (MODELS.md/COMPLEXITY.md);
+# graduate when a Codex port of the rubric lands.
+claude	skills	groom
 claude	skills	proof-campaign
 # rolling-campaign chains proof campaigns across FRESH contexts via an external
 # headless driver (scripts/chain.sh) — same Claude-only lineage as proof-campaign.

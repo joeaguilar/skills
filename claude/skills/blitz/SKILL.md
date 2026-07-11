@@ -113,6 +113,14 @@ Merge the planner's output back into the task list. Tasks the planner returned w
 - Cross-reference task bodies for **semantic conflicts** — shared symbol names, API shapes, one task explicitly removing what another depends on. For each affected task, record a `neighbors:` note (e.g. "task #58 is removing `tokenize`, do not call it").
 - Honor declared dependencies (`blocked-by`, `parent`): a blocked task lands in a strictly later wave than its blocker.
 
+### Set aside visual-gate-only tickets (skip during the blitz)
+
+Before bin-packing, pull any **visual-gate-only** ticket out of the wave plan entirely. A ticket is visual-gate-only if it is tagged `visual-gate-only`, **or** it is visual-scope (tag `visual`/`ui`/`render`, or rendering-path files) and its *only* acceptance is a Visual Gate (`LOOK AT / IGNORE / EXPECTED / CONFOUNDERS`) block with no code an agent could write and self-verify. A wave agent cannot close such a ticket — closing it means a human confirmed a visual result on the running app, which no agent can do.
+
+**Ignore these during the blitz:** never assign them to a wave, leave them open, and record them in the wave plan and the Phase 8 report under `Deferred to /sprint-review — visual-gate-only`. They are resolved by the PO at `/sprint-review`, where the visual smoke happens under human eyes — not here.
+
+This is distinct from a task that has real implementation work *plus* a visual gate: that one goes to a wave normally, the agent does the work and captures runtime evidence, and only the final PO smoke defers (the `awaiting PO visual smoke` soft-quarantine in Phase 7). Visual-gate-only means there is nothing for an agent to implement in the first place, so it never enters a wave at all.
+
 ### Construct waves
 
 Greedy bin-pack tasks into waves such that:
@@ -131,7 +139,7 @@ Always write a wave log file. Resolve the path in this order:
 1. **If `sprint/CURRENT` exists** and names a valid folder under `sprint/`: write to `sprint/{folder-from-CURRENT}/blitz/wave-{N}.md` where N is the next available wave number (max of existing `wave-*.md` filenames + 1, or 1 if none). Create `sprint/{folder}/blitz/` if missing.
 2. **Else** (no in-flight sprint): write to `sprint/_unscoped/blitz-{ISO-timestamp}.md`. Create `sprint/_unscoped/` if missing. The `_unscoped` prefix sorts to the end and signals these aren't part of any sprint.
 
-Sections: `Config`, `Waves`, `File conflicts`, `Semantic warnings`, `Interventions` (empty), `Outcomes` (empty). This is the running blitz log — the orchestrator appends to it through Phases 4–8.
+Sections: `Config`, `Waves`, `File conflicts`, `Semantic warnings`, `Deferred to /sprint-review — visual-gate-only` (the tickets set aside in Phase 2; empty if none), `Interventions` (empty), `Outcomes` (empty). This is the running blitz log — the orchestrator appends to it through Phases 4–8.
 
 If the tracker supports it, also record a high-priority epic linking to the plan file with a wave-structure summary (e.g. `itr add -k epic -p high ...`).
 
@@ -291,6 +299,7 @@ Stop launching new waves when **any** fire:
 Then print a final report:
 
 - **Outcomes** — per task: `closed` / `failed-skipped` / `blitz-blocked` / `pending`. Group by wave.
+- **Deferred to /sprint-review — visual-gate-only** — every ticket set aside in Phase 2 as visual-gate-only, listed open with a one-line reminder that the PO resolves it at `/sprint-review`. These were never assigned to a wave; they are expected to be open at the end of the blitz, not a failure.
 - **Files touched per task** — audit trail from declared/inferred file sets.
 - **Wave timeline** — start/end timestamps, agents per wave.
 - **Interventions log** — every orchestrator unblock and its resolution.
@@ -326,5 +335,6 @@ Waves here are Agent-tool spawns, but when a backlog is cleared through a Workfl
 - Don't spawn agents in worktrees — the shared tree is what powers self-healing.
 - Don't skip the wave gate, even if every agent reported green.
 - Don't silently drop a quarantined task. Every task must end with an `Outcomes` entry.
+- Don't assign a visual-gate-only ticket to a wave. Skip it, leave it open, list it under `Deferred to /sprint-review — visual-gate-only`, and let the PO resolve it at `/sprint-review`. A wave agent can't smoke a visual gate.
 - Don't run more agents per wave than `concurrency` — orchestrator monitoring quality degrades past ~5, and wider fan-outs of file-reading agents trip API rate-limit cascades.
 - Don't fan out fresh file-reading agents to synthesize or review a finished wave — work from the agents' returned reports; if bulk re-reading is unavoidable, delegate it to one subagent.

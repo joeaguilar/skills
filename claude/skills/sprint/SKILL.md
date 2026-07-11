@@ -313,6 +313,8 @@ Run this immediately after Step 0, before the alignment clusters. It exists beca
 
 6. **Do not proceed to the alignment clusters until every visual-scope in-sprint story has a Visual Gate block.** BLOCKING; the Phase 4 Gate 2 check re-verifies this, so resolving it here is cheaper.
 
+7. **Mark visual-gate-only stories.** Some visual-scope stories have *nothing a wave agent can implement* — their entire deliverable is the PO looking at the running app against the Visual Gate block (no code to write, no gate an agent can self-satisfy). Tag any such story `visual-gate-only` in addition to `visual`. This tag is the cross-skill signal that `/blitz` must **skip** the story during the blitz (a wave agent cannot close a ticket whose only acceptance is a human's eyes) and that `/sprint-review` **must** perform the visual smoke to resolve it. Distinguish carefully: a story with real implementation work *plus* a visual gate is **not** visual-gate-only — a wave agent does the work, captures runtime evidence, and defers only the final PO smoke (the existing `awaiting PO visual smoke` soft-quarantine path in `/blitz`). Visual-gate-only means there is no implementable deliverable at all. Note in the Phase 4 draft and the plan artifact which stories carry `visual-gate-only`, so the PO expects to resolve them at review — never during the blitz.
+
 ### Alignment topic clusters
 
 Invoke the `/alignment` interview pattern (`AskUserQuestion` for simple choices, freeform for nuanced ones) on these four topic clusters, in order. For each, present your recommendation alongside the question.
@@ -403,7 +405,7 @@ Order matters — epic first so stories can `--parent` it:
    - Title, body (story description from draft).
    - `priority`, `kind: task`, `parent: <epic-id>`.
    - `acceptance`: story-specific AC + appended sprint DoD checklist.
-   - `tags`: `sprint-N,risk:<tier>` (plus any project-style tags from `STORY_STYLE.md`).
+   - `tags`: `sprint-N,risk:<tier>` (plus any project-style tags from `STORY_STYLE.md`; add `visual-gate-only` for any story Phase 3 Step 0b marked so — this is what tells `/blitz` to skip it and `/sprint-review` to smoke it).
    - `files`: declared set when confident, omit otherwise.
    - `blocked_by`: only when conservative inference set it.
 

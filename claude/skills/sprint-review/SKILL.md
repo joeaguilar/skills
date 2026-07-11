@@ -167,9 +167,11 @@ Announce: `Phase 3 — Demo`.
 
 Coach: *"Demo is per-story so the PO actually looks at each one. Skipping this is how 'incomplete' sprints sneak through."*
 
+**Visual-gate-only stories (MUST resolve here).** Any story tagged `visual-gate-only`, plus any task `/blitz` soft-quarantined as `awaiting PO visual smoke`, reaches this review still **open** — `/blitz` deliberately skipped it because no wave agent can close a ticket whose only acceptance is the PO's eyes on the running app. Resolving these is **mandatory**, not optional: include every one in the Demo loop below even though it is open, launch/drive the app for each, walk the PO through its Visual Gate block (`LOOK AT / IGNORE / EXPECTED / CONFOUNDERS`), and record accept / reject / conditional exactly like any other story. Do **not** let a visual-gate-only ticket pass through review unresolved — an un-smoked visual ticket that silently stays open forever is the single failure mode this rule exists to prevent. If the PO genuinely can't smoke it this session, that must be an explicit carryover decision (drafts a carryover issue at Gate 2), never a silent skip.
+
 **Requirement-coverage check (do this first).** Re-read the PO's ORIGINAL request text — the conversation, spec, or brief that seeded this sprint — not the agent's or plan's summary of it. Confirm every explicit user request maps to an `itr` issue in scope, and verify each story against that original wording. A request that never became an issue is a silently-dropped requirement; a story that satisfies the summary but not the original ask is drift. Flag either for triage at Gate 2. Summaries paraphrase away detail — the original text is the source of truth.
 
-For each closed (or quarantined) story, in priority order:
+For each closed (or quarantined) story — **plus every open `visual-gate-only` / `awaiting PO visual smoke` story** (see the mandatory block above) — in priority order:
 
 1. **Print the story card:**
 
@@ -535,6 +537,7 @@ Multi-repo is a feature, not a default — most sprints stay in one repo. The sk
 - Don't proceed past Gate 2 without explicit approval of the full triage list and epic closure.
 - Don't write to `itr`, the plan artifact, the retro file, or `sprint/CURRENT` before Gate 2.
 - Don't close the sprint epic if any goal-critical story is open without an explicit carryover decision from the PO.
+- Don't leave a `visual-gate-only` (or `awaiting PO visual smoke`) story unresolved. `/blitz` skipped it by design; this review is where it MUST be smoked — accept, reject, or make an explicit carryover call. Never let it pass through silently open.
 - Don't silently invent a fresh `sprint/{folder}/plan.md`; confirm with the user first.
 - Don't review more than one sprint per invocation. Re-run for each.
 - Don't run a full Retro on a clean sprint just because Scrum says so. Adaptive depth is the point.

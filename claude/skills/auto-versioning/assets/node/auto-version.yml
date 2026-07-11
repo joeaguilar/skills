@@ -1,0 +1,128 @@
+name: Auto Version
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: write
+
+jobs:
+  tag:
+    name: Auto Tag & Changelog
+    runs-on: ubuntu-latest
+    # Skip the manifest/changelog sync commit's own re-trigger, or any commit
+    # explicitly opting out with [skip version].
+    if: "!contains(github.event.head_commit.message, '[skip version]')"
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+          fetch-tags: true
+
+      - name: Determine bump, sync package.json, update changelog, tag
+        run: |
+          set -euo pipefail
+          git fetch --tags --force
+
+          # ---- Latest version tag ----------------------------------------
+          LATEST_TAG=$(git tag -l 'v*' --sort=-version:refname | head -1)
+          if [ -z "$LATEST_TAG" ]; then
+            echo "No existing version tags, starting from v0.0.0"
+            LATEST_TAG="v0.0.0"
+          fi
+          echo "Latest tag: $LATEST_TAG"
+          VERSION="${LATEST_TAG#v}"
+          MAJOR=$(echo "$VERSION" | cut -d. -f1)
+          MINOR=$(echo "$VERSION" | cut -d. -f2)
+          PATCH=$(echo "$VERSION" | cut -d. -f3)
+
+          # ---- Commits since last tag (RS \x1e; record = subject\nbody) ---
+          if git rev-parse "$LATEST_TAG" >/dev/null 2>&1; then
+            COMMITS=$(git log "$LATEST_TAG"..HEAD --pretty=format:"%s%n%b%x1e")
+          else
+            COMMITS=$(git log --pretty=format:"%s%n%b%x1e")
+          fi
+          if [ -z "$COMMITS" ]; then echo "No new commits, skipping"; exit 0; fi
+
+          TMPDIR=$(mktemp -d)
+          BREAKING="$TMPDIR/breaking"; ADDED="$TMPDIR/added"
+          FIXED="$TMPDIR/fixed";       CHANGED="$TMPDIR/changed"; DOCS="$TMPDIR/docs"
+          : > "$BREAKING"; : > "$ADDED"; : > "$FIXED"; : > "$CHANGED"; : > "$DOCS"
+
+          BUMP="none"
+          while IFS= read -r -d $'\036' commit || [ -n "$commit" ]; do
+            subject=$(printf '%s' "$commit" | awk 'NF{print; exit}')
+            [ -z "$subject" ] && continue
+            is_breaking=false
+            if printf '%s\n' "$subject" | grep -qE '^[a-z]+(\(.+\))?!:' || \
+               printf '%s\n' "$commit"  | grep -qE '^BREAKING CHANGE:'; then
+              is_breaking=true
+            fi
+            scope=$(printf '%s' "$subject" | sed -nE 's/^[a-z]+\(([^)]+)\)!?:.*/\1/p')
+            desc=$(printf '%s'  "$subject" | sed -E 's/^[a-z]+(\([^)]+\))?!?: //')
+            if [ -n "$scope" ]; then bullet="- **${scope}:** ${desc}"; else bullet="- ${desc}"; fi
+            if [ "$is_breaking" = true ]; then
+              BUMP="major"; printf '%s\n' "$bullet" >> "$BREAKING"; continue
+            fi
+            case "$subject" in
+              feat*) [ "$BUMP" != "major" ] && BUMP="minor"; printf '%s\n' "$bullet" >> "$ADDED" ;;
+              fix*)  [ "$BUMP" = "none" ] && BUMP="patch"; printf '%s\n' "$bullet" >> "$FIXED" ;;
+              docs*) printf '%s\n' "$bullet" >> "$DOCS" ;;
+              perf*|refactor*|revert*) printf '%s\n' "$bullet" >> "$CHANGED" ;;
+              *) : ;;
+            esac
+          done < <(printf '%s' "$COMMITS")
+
+          if [ "$BUMP" = "none" ]; then echo "No feat/fix/breaking commits, skipping"; exit 0; fi
+          case "$BUMP" in
+            major) MAJOR=$((MAJOR + 1)); MINOR=0; PATCH=0 ;;
+            minor) MINOR=$((MINOR + 1)); PATCH=0 ;;
+            patch) PATCH=$((PATCH + 1)) ;;
+          esac
+          NEW_TAG="v${MAJOR}.${MINOR}.${PATCH}"
+          NEW_VERSION="${MAJOR}.${MINOR}.${PATCH}"
+          DATE=$(date -u +%Y-%m-%d)
+          echo "Bump: $BUMP -> $NEW_TAG"
+
+          # ---- Sync package.json (+ lockfile) so the tag carries the version.
+          # jq is preinstalled on GitHub-hosted runners. `npm version` is avoided
+          # on purpose: it wants a clean tree, creates its own commit/tag, and
+          # needs node set up — a plain jq edit is simpler and toolchain-free.
+          jq --arg v "$NEW_VERSION" '.version = $v' package.json > package.json.tmp
+          mv package.json.tmp package.json
+          if [ -f package-lock.json ]; then
+            jq --arg v "$NEW_VERSION" '.version = $v | (.packages[""].version) |= $v' \
+              package-lock.json > package-lock.json.tmp
+            mv package-lock.json.tmp package-lock.json
+          fi
+
+          # ---- Build & splice the changelog section ----------------------
+          SECTION="$TMPDIR/section.md"
+          {
+            echo "## ${NEW_TAG} - ${DATE}"; echo ""
+            emit() { if [ -s "$2" ]; then echo "### $1"; echo ""; cat "$2"; echo ""; fi; }
+            emit "⚠ Breaking Changes" "$BREAKING"
+            emit "Added" "$ADDED"; emit "Fixed" "$FIXED"
+            emit "Changed" "$CHANGED"; emit "Docs" "$DOCS"
+          } > "$SECTION"
+          if [ -f CHANGELOG.md ] && grep -q '<!-- BEGIN AUTO -->' CHANGELOG.md; then
+            {
+              sed '/<!-- BEGIN AUTO -->/q' CHANGELOG.md
+              echo ""; cat "$SECTION"
+              sed '1,/<!-- BEGIN AUTO -->/d' CHANGELOG.md
+            } > CHANGELOG.new && mv CHANGELOG.new CHANGELOG.md
+          fi
+
+          # ---- Commit the sync, then tag that commit ---------------------
+          git config user.name  "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add package.json CHANGELOG.md
+          [ -f package-lock.json ] && git add package-lock.json || true
+          if ! git diff --cached --quiet; then
+            git commit -m "chore(release): ${NEW_TAG} [skip version]"
+            git push origin HEAD:main
+          fi
+          git tag "$NEW_TAG"
+          git push origin "$NEW_TAG"
+          echo "Tagged $NEW_TAG"

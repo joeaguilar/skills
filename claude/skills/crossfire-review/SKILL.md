@@ -86,6 +86,8 @@ misgivings, no style-guide sermons. If the change is genuinely clean, say
 "no findings" plainly. Your final message IS the findings list — data, not chat.
 ```
 
+**How to wait (a known stall lives here).** Both lanes are harness-tracked (background Bash / background agent), so their completion `<task-notification>`s are the wake signal — do **not** write a foreground sleep-poll loop (observed: a `for … do sleep 10` waiter died at Bash's 2-min default timeout, exit 143), and when a lane's notification arrives, **act on it immediately** — never answer a completion notification with "No response requested" (observed: a completed Codex lane's notification was dropped exactly that way and the review sat dead). One lane done + one still running → note the done lane's status in a sentence and keep waiting; both done → synthesize now, in that same turn.
+
 Wait for both, then **confirm each lane actually completed a review before you report anything combined.** Inspect each lane's output for real review content — not a runtime error masquerading as a result: Codex's `object … is a tree, not a commit` merge-base failure, empty stdout, a non-zero exit, an auth/`/codex:setup` prompt, or a timeout notice. An errored lane is **not** a clean "no findings" — never fold it into synthesis as if it reviewed. Any lane that didn't produce a genuine review → retry it once (fix the cause first if it's base/scope, per Phase 0 — e.g. re-resolve the whole-codebase base to the root commit); still dead → continue single-lane and mark the report **degraded** with which lane is missing. Only when **both** lanes have real review output do you proceed to a two-lane synthesis.
 
 ## Phase 2 — Synthesize & prioritize

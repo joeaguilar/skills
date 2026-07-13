@@ -36,12 +36,14 @@ PROMPT="$ARTIFACT_DIR/prompt.md"
 codex exec \
   -C "$PWD" \
   -m gpt-5.6-terra \
+  -c model_reasoning_effort="high" \
   --add-dir "$ARTIFACT_DIR" \
   -s danger-full-access \
   -o "$REPORT" \
   "$(cat "$PROMPT")"
 ```
 
+- `-c model_reasoning_effort="high"` pins terra's standing default — a bare `codex exec` inherits `~/.codex/config.toml`, which may be set to `ultra` (per the Codex 5.6 rules in `claude/MODELS.md`, ultra is user-requested-only). Only bump to `ultra` if the user asked for it; this is already a solo run, so that satisfies the solo-lane half of the gate.
 - `-o "$REPORT"` (the letter **o**, not zero) writes Codex's **final message** to `$REPORT` — so tell Codex its final message *is* the report; don't also ask it to write a separate `report.md` (they'd collide).
 - **`-s danger-full-access` is the mode this skill runs in.** Real computer use — launching a browser or GUI app, driving a simulator, reaching a local server on `localhost` — requires it. Under `-s workspace-write` Codex's sandbox **denies network by default (so `localhost` is unreachable) *and* blocks browser/GUI launch**, so a computer-use run there comes back **BLOCKED** without ever loading the app. If a run reports BLOCKED and never reached the UI, this is almost always why — rerun with `danger-full-access`. Only use `workspace-write` for a rare in-repo, no-network, no-GUI check, and those usually belong in `/run` or `/verify`, not here.
 - **`danger-full-access` removes *all* sandboxing** (full network, filesystem, and process access) — a real privilege escalation. Scope the prompt to the app under test on `localhost`; the "launch without asking" latitude covers launching that local app, **not** reaching real hosts, accounts, or system state (see Don't).

@@ -70,6 +70,24 @@ wrap Codex in a thin `sonnet` agent whose Bash call is `codex exec -m <model>`, 
 label the wrapper with the real worker (`gpt-5.6-terra:...`) so the roster shows which
 Codex model actually ran. See the `crossfire-blitz` skill for the full mechanics.
 
+## Codex 5.6 effort & invocation rules
+
+Pin `-c model_reasoning_effort="…"` on **every** `codex exec` — a bare invocation
+inherits `~/.codex/config.toml`, which may name a level the target model rejects
+(gpt-5.5 hard-fails on `ultra`/`max`) or a level these rules don't grant.
+
+| Model | Allowed effort | `ultra` | Invocation rule |
+|---|---|---|---|
+| gpt-5.6-terra | `medium` / `high` / `xhigh` (`high` is the standing default) | **Only use `ultra` if the user requested it, and only in a solo subagent run** — one Codex lane, nothing else in flight; never inside a parallel wave/fan-out | default generalist — free to route |
+| gpt-5.6-sol | `medium` / `high` / `xhigh` (`medium` is the standing default) | **Only use `ultra` if the user requested it, and only in a solo subagent run** — one Codex lane, nothing else in flight; never inside a parallel wave/fan-out | escalation rung — free to route |
+| gpt-5.6-luna | `medium` / `high` / `xhigh` | no ultra lane — work that seems to need luna-at-ultra routes to terra/sol instead | **Automated workflows only** (a router assigned it — a `route:` tag, a cost-sensitive C1 batch). **Never self-invoke**: don't pick luna on your own initiative, and never for risky or Novelty ≥ 1 work |
+| gpt-5.5 | `none`…`xhigh` (API **rejects** `ultra`/`max`) | rejected by the API | cheapest floor, C0/trivial only |
+
+Risky tasks (miss is costly, spec subtle, blast radius wide) never run below `high`
+on a Codex model and never route to luna; if a risky task seems to demand `ultra`
+mid-wave, don't sneak it in — defer the task to `sonnet` (a Claude executor) or
+surface the ultra request to the user and run it as a solo lane.
+
 ## Where these numbers are duplicated (kept honest by §6 of `validate-skills.sh`)
 
 - `claude/skills/crossfire-blitz/SKILL.md` — the routing table (5-column, `Reached via`)

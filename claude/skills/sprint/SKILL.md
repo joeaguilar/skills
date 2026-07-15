@@ -104,7 +104,7 @@ Announce: `Phase 0 — Intake & preflight`.
 
    3. For each unique ID, run `itr get <id> -f json --fields id,status`. If `status == "open"`, the ticket is a **stale-closure candidate**: a commit claims it's done but `itr` still has it open.
 
-   4. If any candidates surface, include them in the Phase 0 summary print (step 9 below) under a `Stale tickets:` line, and **pause for PO direction**. Offer exactly three choices:
+   4. If any candidates surface, include them in the Phase 0 summary print (step 11 below) under a `Stale tickets:` line, and **pause for PO direction**. Offer exactly three choices:
 
       - **(a) Close them now.** Run `itr close <id> "Stale closure: shipped in <commit-sha> (<commit-subject>); detected by /sprint preflight on <date>."` for each. Then continue to Phase 1.
       - **(b) Include them in the sprint as no-op closures.** File them as Sprint Backlog stories whose AC is "Verify shipped in <commit-sha>; close as no-op." This matches the sprint-1 pattern where a wave-agent organically caught and closed the duplicate. Useful when the PO wants the bookkeeping to flow through the normal sprint workflow.
@@ -127,7 +127,20 @@ Announce: `Phase 0 — Intake & preflight`.
 
    If `docs/ROADMAP.md` is absent: include the one-line `Roadmap: absent — run /roadmap to map cross-sprint scope.` surface in the Phase 0 summary. Do not pause — this is a surface, not a gate.
 
-10. **Print the Phase 0 summary** so the user can see the resolved context:
+10. **Surface open retro items (pause for PO disposition).** Retro actions get filed reliably and scheduled never. Read them here, next to the roadmap, so they compete for this sprint's capacity instead of ageing quietly in the tracker.
+
+    1. List the open process-improvement items by tag — `retro` by default, but use whatever this project actually spells it (`itr agent-info` from step 3 and the existing tag set are authoritative). E.g. `itr list --tag retro --status open -f json --fields id,title`.
+
+    2. Print them in the Phase 0 summary (step 11 below) and take an explicit PO disposition on **each** one. Exactly two are valid:
+
+       - **(a) Pull into this sprint.** It becomes a Phase 2 candidate story, held to the same Definition of Done as any other.
+       - **(b) Close it.** `itr close <id> "Not scheduling — <reason>."` A rule nobody will action is cheaper closed than open.
+
+    3. **"Leave it open" is not a disposition** — it is the failure this step exists to kill. An open retro item reads as a plan and behaves as a wish; if it recurs, file it fresh. *(The sprint-2 retro action "verify declared files exist before fan-out" was filed, never scheduled, and went on to cost sprint-6 and sprint-11 the same mid-wave intervention it was written to prevent.)*
+
+    4. If nothing is open under the retro tag, the `Retro items:` line reads `none`. Do not pause.
+
+11. **Print the Phase 0 summary** so the user can see the resolved context:
 
     ```
     Sprint preflight
@@ -139,9 +152,10 @@ Announce: `Phase 0 — Intake & preflight`.
       Sprint number: sprint-N (auto-incremented from sprint/ folders)
       In-flight:     none | sprint-K reviewed, awaiting new-sprint increment | sprint-K still open per sprint/CURRENT (warning, not blocking)
       Stale tickets: none | #<id> (<title>) — closed in <sha> "<subject>"; choose (a) close now / (b) include as no-op / (c) skip
+      Retro items:   none | #<id> (<title>) — choose (a) pull into sprint-N / (b) close
     ```
 
-    If `Stale tickets:` is non-empty, wait for the PO choice (a/b/c) before proceeding. If empty, no confirmation needed — this is a transparency print, not a gate. Proceed straight to Phase 1.
+    If `Stale tickets:` is non-empty, wait for the PO choice (a/b/c) before proceeding. If `Retro items:` is non-empty, wait for a disposition (a/b) on every listed item — there is no third option. If both are empty, no confirmation needed — this is a transparency print, not a gate. Proceed straight to Phase 1.
 
     **Stash ticket data for Phase 3.** When the stale-ticket step (step 8) pulls ticket data via `itr get <id>` (or any equivalent batch read), keep the `acceptance` field for every candidate story in memory. Phase 3 Step 0 reads it directly — do not refetch.
 
@@ -204,7 +218,11 @@ Coach: *"Now I'll decompose the spec into stories sized to be completed by one `
    - If kgr is present, use `kgr refs <symbol>` and `kgr query --who-imports <file>` to identify the file set.
    - Otherwise, grep for entry points referenced in the spec.
    - Files only go into `--files` when you're confident; ambiguous cases stay blank and `/blitz`'s planner agent will fill them later.
+   - **Every declared file must exist, or be marked NEW.** `ls` each one before it goes into `--files`. When the story names a *symbol* (a handler, an export/save dispatch, a registration site), grep for the symbol rather than trusting the path — a stale path that still exists is the miss that survives an existence check. Dispatch and persistence symbols are the repeat offenders: they cluster in files whose names don't advertise them. *(sprint-6 #689 declared `bg-io/src/lib.rs` + `app/actions.rs`; the .3dl export dispatch actually lived in `formats.rs` + `action_handler.rs`, and `/blitz` had to SendMessage a mid-flight ownership correction.)*
+   - **The plan is canonical for file naming — reconcile the issue body to it, not later.** When adopting a pre-filed story whose body names different paths than the plan, `itr update` the story body to match the plan **before** filing/handoff. Two sources of truth for one file set means the wave agent picks one and someone reconciles it mid-sprint. *(sprint-1 #378 needed a mid-sprint note to reconcile `test_ip_adapter_proj.cpp` against the plan's `test_ip_adapter_imageproj.cpp`.)*
+   - **Flag shared surfaces at planning time — including docs.** Two stories are contended when they touch the same file, when one publishes an API (enum variant, trait method, struct field, signature) the other consumes, **or** when both edit the same spec/ADR/roadmap doc. Docs are the invisible case: they rarely appear in `--files`, and "two stories, one paragraph, last writer wins" is the same collision as two stories on one function. Record it in the story body as a `Contends: <file/symbol> with #NNN` line, and where the shared surface must exist before consumers can build, either set `--blocked-by` or draft a small prep story that lands the surface first. Declaring the contention is the planning job; `/blitz` Phase 2 makes the final call on wave shape.
    - **If a story's acceptance criterion is user-visible** ("user sees X", "surface a warning", "show a notice"), the ownership set must include the UI/surface file that *renders* it — not just the data-layer file that *produces* it. A data-layer change behind an unowned render site ships a dead path and forces the executor to skip the AC or reach outside its files. If data and surface naturally belong to different agents, split into a data-layer story + a UI-hookup story (`--blocked-by` the data-layer one). *(sprint-4 retro: #407 declared `bg-io` only; its "user sees a warning" AC needed a `bg-app` render site, forcing a `/blitz` orchestrator intervention.)*
+   - **If a story adds persisted state to a core domain type** — a new variant, or just one new field that must survive a save/load or an undo — its ownership set must include **every** subsystem that serializes or reconstructs that type: the persistence/file-format path, the undo/redo snapshot path, and any flatten/composite/render path that reads it. All of them, in the *same* story. Splitting them across stories ships a field that writes and never restores, and every gate stays green because no test crosses two subsystems. The snapshot/undo path is the one that gets missed — check it explicitly. *(sprint-5: a new layer kind landed without its history snapshot, so a later story produced layers that couldn't undo losslessly. sprint-7: a persisted per-layer field silently dropped through undo/redo mid-sprint, and the story had to be granted extra crate ownership in flight.)*
 
 3. **Infer dependencies (`--blocked-by`) conservatively:**
    - Only set when there's a concrete signal: a kgr import edge between owned files, or a clear "X must exist before Y" ordering from the spec.
@@ -224,6 +242,10 @@ Coach: *"Now I'll decompose the spec into stories sized to be completed by one `
    - Project verify gate (tests, lint, typecheck, format) is green.
    - Behavior is observable to the user (or to the next dependent story).
    - Docs/README updated when user-facing behavior changes.
+   - Multi-entry-point behavior is verified at **every** entry point. If an AC describes a behavior that has more than one route/path/mode into it, the AC enumerates them by name and the story proves the read site of each — not the first one. Route the heaviest or most-divergent path to the PO smoke first. *(A green gate that traced two of three routes is how a missing path ships.)*
+   - A story whose type is test-only (`test(...)`, "add coverage", "close the baseline gap") but whose diff touches non-test production code says so explicitly in its close reason, naming the production sites it changed. Coverage work that alters shipping behavior passes every gate by construction.
+
+   **If the DoD requires a reviewer signoff, say when it binds: before the FIRST close, not as a re-close after audit.** Write it as "reviewer signoff recorded as a tracker note before the **first** close of the issue". Signoff that lands after a close is an audit, and an audit finds what the close already declared done. *(sprint-1 is the worked example of this working, not failing: its DoD said "signoff recorded as an itr note **before issue close**", the reviewer returned REQUEST CHANGES on a story that had passed its own green gate against a tautological test, a fix-up agent ran, and the story closed once — after APPROVE. The gate sat in the right place and caught a green-but-wrong close. Write it that way from the start.)*
 
    This will be appended to every story's acceptance criteria in Phase 5.
 
@@ -322,6 +344,8 @@ Invoke the `/alignment` interview pattern (`AskUserQuestion` for simple choices,
 1. **Goal + non-goals + scope boundaries.** Re-confirm the goal still holds against the drafted stories. Surface any drafted story that doesn't visibly serve the goal.
 
 2. **Definition of Done (sprint + per-story).** Confirm the sprint-level DoD checklist. For any story whose AC reads as a judgment call rather than an observable outcome, flag it: *"This AC isn't checkable by an agent — can we make it observable?"*
+
+   Also scan every AC for **branch points** — phrases like *fallback*, *if X*, *optional*, *debug-only*, *CPU path*, *edge case*. Each one is a decision the executing agent will otherwise make alone, mid-flight, with no context for the PO's scope intent. Tag each explicitly in the AC text: `scope: in` or `scope: defer to <epic/issue>`. Ask the PO per branch point; don't infer. *(sprint-3 shipped two defensible-but-unplanned deviations — a deferred CPU fallback and a swapped lint attribute — purely because "is this in scope?" was answered by an agent instead of the PO.)*
 
 3. **Risks, unknowns, human dependencies.** What could derail the sprint? Anything blocked by external review, access, data, or human decision? Capture answers into the **Open Assumptions** log for the artifact.
 

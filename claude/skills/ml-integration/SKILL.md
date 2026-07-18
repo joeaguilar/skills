@@ -29,3 +29,4 @@ Bridge data science and production engineering: make a model reliable, performan
 - **Measure to the target** — design to the stated latency/throughput/accuracy, not vibes.
 - **Monitor accuracy and drift**, not just uptime.
 - **Always have a fallback** — degrade gracefully when the model is unavailable or low-confidence.
+- **Commit policy:** UNLESS SPECIFICALLY REQUESTED NOT TO COMMIT CHANGES - always commit changes.

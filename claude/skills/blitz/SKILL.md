@@ -342,7 +342,7 @@ Only after the gate is fully green (and, for UI/behavioral diffs, runtime eviden
   - Close this task in the tracker: {close command}
   - Report a one-paragraph summary of what you changed and the verify-gate output (last 10 lines). If you filed any gap tickets, list their #NNNs.
 
-Do NOT commit, push, or branch. The user reviews and commits at the end.
+Do NOT commit, push, or branch. The orchestrator owns git and commits the wave's work at the wave gate.
 ```
 
 ---
@@ -367,7 +367,7 @@ Event-driven only — no polling. React to background-agent completion notificat
 Once every wave agent (including retries) has reached a terminal state — closed, quarantined, or stopped:
 
 1. Run the full verify gate yourself in every repo in scope.
-2. **Green**: proceed to Phase 7 (quarantine triage), then to the next wave.
+2. **Green**: commit the wave's work (unless the user requested no commits), then proceed to Phase 7 (quarantine triage), then to the next wave.
 3. **Red** on a slice no agent owned: diagnose. If the fix is small and obvious, apply it yourself and log under `Interventions`. Otherwise stop and surface to the user. Do not launch the next wave on a red gate.
 
 **Post-wave LSP diagnostics are presumed stale (itr #432).** After a wave of
@@ -425,11 +425,11 @@ Then print a final report:
 - **Interventions log** — every orchestrator unblock and its resolution.
 - **Quarantine triage notes** — context the user supplied during triage. (High value for tuning future blitzes.)
 - **Diff summary** — `git diff --stat` against the starting commit.
-- **Next steps** — pending tasks (if any) plus a reminder to review and commit.
+- **Next steps** — pending tasks (if any) plus the commits made during the run (or a reminder to review and commit, if the user opted out of commits).
 
 Then **append a `Blitz complete` line to the wave log's `Outcomes` section** — date, tasks terminal, final gate result. This is the terminal marker Phase 0's second-orchestrator check reads: a wave log without it means a blitz started here and never finished. Write it even when the blitz stops early (`**Blitz complete (<date>) — stopped early: <reason>.**`); a log left marker-less because you gave up is indistinguishable from a live session and will warn the next orchestrator. Whatever ends the run — success, stop condition, or abandonment — ends by marking the log.
 
-Do **not** commit. Do **not** push. Do **not** open PRs unless the user asks.
+Commit the run's work by default (the user can opt out — see the Commit policy principle). Do **not** push. Do **not** open PRs unless the user asks.
 
 ---
 
@@ -449,11 +449,12 @@ Waves here are Agent-tool spawns, but when a backlog is cleared through a Workfl
 - **Self-healing is a feature.** When an agent runs the full-repo verify gate, it often fixes another agent's leftover errors. Don't try to prevent this — the gate is the convergence point.
 - **Unblock immediately.** If you can resolve a permission failure or missing dep yourself in seconds, do it and resume. Surface only what genuinely needs the user.
 - **Confirm twice, run once.** Phase 0 confirms config; Phase 3 confirms the wave plan. After that the orchestrator runs autonomously through Phases 4–8 unless a quarantine triage or red gate intervenes.
+- **Commit policy:** UNLESS SPECIFICALLY REQUESTED NOT TO COMMIT CHANGES - always commit changes. The orchestrator owns git — wave agents never commit; the orchestrator commits at each green wave gate and at completion.
 
 ## Don't
 
 - Don't proceed past Phase 0 or Phase 3 without explicit user approval.
-- Don't commit, push, or open PRs.
+- Don't push or open PRs. (Local commits are the orchestrator's default per the Commit policy — skip them only when the user asked not to commit. Wave agents still never commit.)
 - Don't spawn agents in worktrees — the shared tree is what powers self-healing.
 - Don't run a second orchestrator against a tree that already has one. The fences only hold with a single scheduler.
 - Don't let any agent — or yourself at the gate — edit a file carrying uncommitted human work. Fence it, and surface a gate that's red only on such a file instead of fixing it.

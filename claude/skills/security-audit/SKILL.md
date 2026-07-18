@@ -28,3 +28,7 @@ A standing, whole-system security audit — the complement to native `/security-
 - **Hardening roadmap** + relevant compliance notes (PCI-DSS, GDPR, HIPAA, SOC2).
 
 Be educational: explain *why* each issue is exploitable and prefer preventive measures over one-off patches. Balance security with usability and performance.
+
+## Commit policy
+
+- **Commit policy:** UNLESS SPECIFICALLY REQUESTED NOT TO COMMIT CHANGES - always commit changes. This audit is read-only — a run that lands no file changes has nothing to commit. If the audit's report or remediations are written to files, commit them.

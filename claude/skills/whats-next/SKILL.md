@@ -97,7 +97,8 @@ override the pick):
    `just next`); else the `itr next` recommendation.
    If the pick carries a `⚠ stale claim` by someone else, say so before taking it.
 3. `itr claim <id>` and begin the work per normal project conventions
-   (verify gates via gatr, evidence before close, you don't own git).
+   (verify gates via gatr, evidence before close); commit the work as it
+   lands unless the user asked otherwise.
 
 ## Guardrails
 
@@ -106,3 +107,6 @@ override the pick):
   write before real work begins is the single `itr claim`.
 - Single project scope (the cwd repo). Cross-project rollup is the command-center
   re-entry digest (werkit itr#7), not this skill.
+- **Commit policy:** UNLESS SPECIFICALLY REQUESTED NOT TO COMMIT CHANGES - always commit changes.
+  Without `--start` this skill writes nothing, so a report run has nothing to
+  commit; with `--start`, commit the work it lands.

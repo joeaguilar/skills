@@ -1,4 +1,7 @@
-// args: { sprintFolder, tracker?='itr', verifyCmd?, wave, finalize? }
+// args: { sprintFolder, tracker?='itr', verifyCmd?, wave, finalize?, noCommit? }
+// Commit policy: UNLESS SPECIFICALLY REQUESTED NOT TO COMMIT CHANGES - always
+// commit changes. args.noCommit=true is that specific request — waves then land
+// uncommitted and the caller owns git.
 // Requires an already-groomed itr sprint backlog (run /sprint first).
 // Advances one wave per invocation; call again with resumeFromRunId and
 // args.wave+1 after smoke-testing, or args.finalize=true once all waves
@@ -149,12 +152,15 @@ for (let i = 0; i < targetWave; i++) {
 
   phase(`Wave ${waveNum} Commit`)
   await agent(
-    `Stage exactly the files these tickets own (${ownedFiles.join(', ')}) and create one git commit, Conventional Commits style, ` +
-    `summarizing wave ${waveNum} (tickets: ${wave.tickets.map(t => t.id).join(', ')}). Then close each ticket in ${tracker} with its evidence.`,
+    (args.noCommit
+      ? `The caller specifically requested no commits — leave the working tree uncommitted. `
+      : `Stage exactly the files these tickets own (${ownedFiles.join(', ')}) and create one git commit, Conventional Commits style, ` +
+        `summarizing wave ${waveNum} (tickets: ${wave.tickets.map(t => t.id).join(', ')}). `) +
+    `Then close each ticket in ${tracker} with its evidence.`,
     { phase: `Wave ${waveNum} Commit`, label: `commit:${waveNum}` }
   )
 
-  log(`Wave ${waveNum}/${plan.waves.length} committed. ${blocking.length ? blocking.length + ' finding(s) repaired.' : 'Review clean.'}`)
+  log(`Wave ${waveNum}/${plan.waves.length} ${args.noCommit ? 'landed (no-commit requested)' : 'committed'}. ${blocking.length ? blocking.length + ' finding(s) repaired.' : 'Review clean.'}`)
 }
 
 const allWavesDone = targetWave >= plan.waves.length

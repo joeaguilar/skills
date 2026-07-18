@@ -444,6 +444,7 @@ Waves here are Agent-tool spawns, but when a campaign runs through a Workflow-to
 - Roadmap defines total campaign scope; the campaign pushes back when scope exceeds cap.
 - Planner may reprioritize, append, and draft next campaigns inside the approved roadmap boundary.
 - Original `/sprint`, `/blitz`, `/sprint-review` remain available for slower, higher-ceremony work.
+- **Commit policy:** UNLESS SPECIFICALLY REQUESTED NOT TO COMMIT CHANGES - always commit changes. The orchestrator commits verified work (per verified wave or at final); workers never commit.
 
 ## Don't
 

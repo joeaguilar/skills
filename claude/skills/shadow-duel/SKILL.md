@@ -161,7 +161,7 @@ Orchestrator's own ruling. Emit the **Verdict** template (or **Fallen** if BROKE
 - **The hardened artifact** — the surviving revised version (to `--out` if set; on disk if `--write`).
 - **The deepest cut** — the strongest attack it faced and how it was answered (or why it's fatal).
 - **Scars** — residual risks, wounds left unhealed, caveats on the "holds".
-- **`--write` next step** — review and commit (the skill never commits).
+- **`--write` next step** — the orchestrator commits the hardened artifact (unless the user requested no commit); the user reviews.
 
 A verdict of HOLDS means *survived this duel*, not *proven for all time* — say so. Don't launder confidence the rounds didn't earn.
 
@@ -174,6 +174,7 @@ A verdict of HOLDS means *survived this duel*, not *proven for all time* — say
 - **Revise only as far as the strike demands.** Over-conceding turns a duel into a rewrite and loses what already worked.
 - **Survival ≠ proof.** HOLDS means it withstood this many rounds of this many assassins — report the bound, don't inflate it.
 - **Fire without a gate; run to a verdict.** `--confirm` is the only pause. The duel doesn't stop voluntarily — it stops on a verdict.
+- **Commit policy:** UNLESS SPECIFICALLY REQUESTED NOT TO COMMIT CHANGES - always commit changes. In `--write` mode the orchestrator commits the hardened artifact (the proposer never commits); a verdict-only duel lands nothing on disk and has nothing to commit.
 
 ## Don't
 
@@ -182,5 +183,5 @@ A verdict of HOLDS means *survived this duel*, not *proven for all time* — say
 - Don't accept a vague strike as a kill, and don't ignore a concrete one.
 - Don't declare HOLDS while a fatal strike stands unanswered.
 - Don't over-revise past the strike that landed.
-- Don't commit, push, or PR in `--write` mode — the user reviews and commits.
+- Don't push or PR in `--write` mode — commits stay local. The proposer never commits; the orchestrator commits at the end (unless the user requested no commit).
 - Don't exceed 4 challengers — the judge can't weigh more strikes well in one round.

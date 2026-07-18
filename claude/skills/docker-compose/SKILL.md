@@ -29,3 +29,4 @@ Design containerized environments that "just work" for developers, with dev/prod
 - **Health checks + explicit dependencies** so startup is reliable, not racy.
 - **Dev convenience and prod parity together** — not one at the other's expense.
 - **Security defaults**: non-root, least privilege, real secret management.
+- **Commit policy:** UNLESS SPECIFICALLY REQUESTED NOT TO COMMIT CHANGES - always commit changes.

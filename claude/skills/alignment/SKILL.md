@@ -8,3 +8,7 @@ Interview me relentlessly about every aspect of this plan until we reach a share
 Ask each question with the AskUserQuestion tool if the question is simple, more complex questions that require more thoughtful answers should simnply wait for an answer instead.
 
 For each question, provide your recommended answer.
+
+## Principles
+
+- **Commit policy:** UNLESS SPECIFICALLY REQUESTED NOT TO COMMIT CHANGES - always commit changes. (An alignment interview is conversation-only — a run that lands nothing on disk has nothing to commit.)

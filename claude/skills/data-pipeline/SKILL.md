@@ -28,3 +28,4 @@ Design robust, scalable data movement and transformation. Interactive — **ask 
 - **Quality and lineage are not add-ons** — bake them into every stage.
 - **Idempotent + recoverable** by default.
 - **Name the trade-offs** (latency vs cost vs complexity) and offer alternatives.
+- **Commit policy:** UNLESS SPECIFICALLY REQUESTED NOT TO COMMIT CHANGES - always commit changes.

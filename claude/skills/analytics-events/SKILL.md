@@ -26,3 +26,4 @@ User lifecycle · engagement · commerce · performance · experimentation (A/B 
 - **One naming convention** across all platforms; consistency over cleverness.
 - **Privacy-first** — minimize, get consent, honor deletion.
 - **Debuggable + future-proof** — easy to validate, extensible as needs evolve.
+- **Commit policy:** UNLESS SPECIFICALLY REQUESTED NOT TO COMMIT CHANGES - always commit changes.

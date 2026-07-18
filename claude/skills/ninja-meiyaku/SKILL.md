@@ -1,13 +1,13 @@
 ---
 name: ninja-meiyaku
-description: "Ninjas move in silence, bound by oath. One stealth run of the whole gamut under a sworn pact: choose the highest-quality targets (or take a groomed sprint via --sprint) → model-routed parallel waves with cross-model review → one last dual review of the whole diff → a whisper of a sprint review that quietly offers to file findings. Autonomous end-to-end; edits files, never commits. Trigger on `/ninja-meiyaku`, \"seal the pact\", \"stealth sprint\", \"silent blitz\", \"run the whole gamut quietly\". Do NOT trigger for coached planning only (use /sprint), a single-model backlog run (use /blitz), the verbose gated model-routed blitz (use /crossfire-blitz), a standalone dual review (use /crossfire-review), closing out a finished sprint (use /sprint-review), or slicing ONE task by part-type (use /the-clan)."
+description: "Ninjas move in silence, bound by oath. One stealth run of the whole gamut under a sworn pact: choose the highest-quality targets (or take a groomed sprint via --sprint) → model-routed parallel waves with cross-model review → one last dual review of the whole diff → a whisper of a sprint review that quietly offers to file findings. Autonomous end-to-end; edits files and commits the kept diff at the close (unless the user forbade commits). Trigger on `/ninja-meiyaku`, \"seal the pact\", \"stealth sprint\", \"silent blitz\", \"run the whole gamut quietly\". Do NOT trigger for coached planning only (use /sprint), a single-model backlog run (use /blitz), the verbose gated model-routed blitz (use /crossfire-blitz), a standalone dual review (use /crossfire-review), closing out a finished sprint (use /sprint-review), or slicing ONE task by part-type (use /the-clan)."
 ---
 
 # /ninja-meiyaku — 盟
 
 Ninjas move in silence, bound by oath.
 
-One run, whole gamut, sealed under a pact: choose targets → strike in waves → every cut checked by a different blade → one last look at the whole wound → a whisper, then gone. **Edits files. Never commits — the diff is yours.**
+One run, whole gamut, sealed under a pact: choose targets → strike in waves → every cut checked by a different blade → one last look at the whole wound → a whisper, then gone. **Edits files. Commits the kept diff at the whisper — unless you forbade it.**
 
 **Pact posture.** No gate; `--confirm` is the only one. Speaks twice — the sealing and the whisper; silence between. A red gate or a twice-fallen target is a real stop, surfaced.
 
@@ -85,14 +85,14 @@ An errored review lane is not a clean pass — retry once, else close on the str
 One dual pass over the **whole** diff: the adversarial companion (scope branch) + one independent opus-4.8 (fable-5 under `--fable`) reviewer → dedup → P0–P3 survivors → ship/hold.
 
 ## Phase 3 — the whisper (return)
-Fill Outcomes in the scroll, close the epic, update `sprint/CURRENT`. Speak once:
+Fill Outcomes in the scroll, close the epic, update `sprint/CURRENT`, commit the kept diff — the blades never commit; the orchestrator does, unless the user forbade it. Speak once:
 
 ```
 盟 — the pact is kept.
 cut <n> · fell <m> · blades: <k> gpt-5.6-terra, <j> opus<, f fable> · escalated <e>
 <smoke-only: <s> — #<id>… await PO eyes (visual-gate-only); resolve at /sprint-review>
 last look: <P0/P1/P2/P3> — <ship|hold>
-diff: <files changed, +/-> — yours to commit.
+diff: <files changed, +/-> — committed (or yours, if you forbade the commit).
 findings sleep in the scroll. say the word — they become issues.
 ```
 Then stop. Filing findings and triage follow-ups is an **offer**, never taken silently.
@@ -101,9 +101,10 @@ Then stop. Filing findings and triage follow-ups is an **offer**, never taken si
 - Silence between the two speakings; the scroll holds what the mouth doesn't.
 - Only targets that earn the oath — five sharp beats twenty dull.
 - No blade grades its own cut; escalate the miss, never ship it.
-- The pact leaves a clean camp: scroll filled, epic closed, tree uncommitted.
+- The pact leaves a clean camp: scroll filled, epic closed, diff committed — unless the user forbade it.
+- **Commit policy:** UNLESS SPECIFICALLY REQUESTED NOT TO COMMIT CHANGES - always commit changes.
 
 ## Don't
-- No gate but `--confirm`; no commit, push, or PR — ever.
+- No gate but `--confirm`; no push or PR — ever. No blade ever commits — only the orchestrator, at the whisper.
 - No fable under default; no Haiku anywhere; no taste work to a Codex generalist (terra/sol/luna/gpt-5.5)/sonnet.
 - Don't advance a red gate, drop a quarantined target unlogged, or file findings without the word.

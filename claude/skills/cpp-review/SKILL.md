@@ -36,3 +36,7 @@ The modern-C++ standards to enforce when reviewing C++20/23. Pair with `/code-re
 **Severity** (Critical/High/Medium) · **Issue** · **Location** (file:line) · **Fix** (exact change) · **Rationale** (perf/safety/maintainability) · **Standard** (which Core Guideline it violates).
 
 If the code wouldn't survive review on a FAANG systems team, it's not good enough.
+
+## Commit policy
+
+- **Commit policy:** UNLESS SPECIFICALLY REQUESTED NOT TO COMMIT CHANGES - always commit changes. This skill is the checklist — a pure review pass edits nothing, so there is nothing to commit; when fixes from the findings are applied, commit them.

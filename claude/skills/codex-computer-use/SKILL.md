@@ -68,6 +68,7 @@ Keep the prompt specific enough that Codex does not need the surrounding Claude 
 - **Independent check, not a proxy for Claude's own tools.** Reach for Codex when the value is a *second* agent driving real UI outside Claude's context — not to offload work Claude can do inline.
 - **Evidence over assertion.** A report that claims "works" without a screenshot path or observed-behavior detail is a blocked run, not a pass — say so to the user.
 - **Full-access sandbox is the norm here — and a real escalation.** Genuine computer use (browser, GUI, simulator, `localhost`) requires `-s danger-full-access`; `workspace-write` can't reach a local server or launch a browser and comes back BLOCKED. Because full access removes all sandboxing, keep the prompt scoped to the app under test on `localhost` and never point it at real accounts, hosts, or system state.
+- **Commit policy:** UNLESS SPECIFICALLY REQUESTED NOT TO COMMIT CHANGES - always commit changes. A pure verification run edits no source (screenshots and reports live in the temp artifact dir) — nothing lands in the repo, so there is nothing to commit; if the user allowed Codex to edit source, commit those changes.
 
 ## Don't
 

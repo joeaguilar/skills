@@ -40,7 +40,7 @@ Edit only {files}; never commit.
 Your final message IS the cut: result · bar-evidence · doubt, if any.
 ```
 
-Orchestrator draws, waits, presents. No tracker deps.
+Orchestrator draws, waits, presents, and seals a clean cut with a commit — unless the user forbade it. No tracker deps.
 
 ## Voice — one cut, then stillness. 印 = 正
 
@@ -51,5 +51,6 @@ Orchestrator draws, waits, presents. No tracker deps.
 ## The way
 - Whole task, one hand, finest steel. Never slice, fan, race, or escalate.
 - An unverified cut is a swing — evidence names the cut.
-- The cut lands on disk; never commit — the user reviews what the blade landed.
+- The cut lands on disk; the blade never commits — the orchestrator commits the landed cut, unless the user forbade it.
+- **Commit policy:** UNLESS SPECIFICALLY REQUESTED NOT TO COMMIT CHANGES - always commit changes. A cut with no disk surface leaves nothing to commit.
 - Every word earns its place; silence outranks padding.

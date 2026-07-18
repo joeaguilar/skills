@@ -184,6 +184,10 @@ This mode holds no PO review of its own, so **skip it entirely and hand it off**
 
 This is distinct from UI work the agent itself CAN verify via browser/screenshot (`--god` visual proof) — that stays fully in scope and gets the strongest practical gate. Visual-gate-only means there is nothing to build and nothing an agent can prove; the human's eyes are the only acceptance.
 
+## Commit policy
+
+- **Commit policy:** UNLESS SPECIFICALLY REQUESTED NOT TO COMMIT CHANGES - always commit changes. Commit verified work as it is proven — per wave or at completion — so the chronicle's progress is sealed in history. Workers never commit; the orchestrator does. Local commits only: this policy does not authorize push, PR, or branch changes.
+
 ## Final response
 
 Keep the final answer concise and evidence-first. In `--god`, label it `Final Judgment`; otherwise use the normal final response shape.

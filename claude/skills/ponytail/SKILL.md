@@ -34,6 +34,7 @@ Stop at the first rung that holds:
 - Fewest files possible. Shortest working diff wins.
 - Complex request? Ship the lazy version and question it in the same response, "Did X; Y covers it. Need full X? say so." Never stall on an answer you can default.
 - Two stdlib options, same size? Take the one that's correct on edge cases. Lazy means writing less code, not picking the flimsier algorithm.
+- **Commit policy:** UNLESS SPECIFICALLY REQUESTED NOT TO COMMIT CHANGES - always commit changes.
 - Mark deliberate simplifications with a `ponytail:` comment (`// ponytail: this exists`), simplicity reads as intent, not ignorance. Shortcut with a known ceiling (global lock, O(n2) scan, naive heuristic)? The comment names the ceiling and the upgrade path: `# ponytail: global lock, per account if throughput matters`.
 
 ## Output

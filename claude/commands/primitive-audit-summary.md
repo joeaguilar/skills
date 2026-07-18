@@ -15,3 +15,7 @@ Report:
 - stale ports
 - global versus local manifest differences
 
+Rules:
+
+- **Commit policy:** UNLESS SPECIFICALLY REQUESTED NOT TO COMMIT CHANGES - always commit changes. (A summary run that changes no files has nothing to commit.)
+

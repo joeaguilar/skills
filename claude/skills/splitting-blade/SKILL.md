@@ -183,7 +183,7 @@ Close with:
 Your final message IS your leaf result — return data, not chat. Be self-contained.
 ```
 
-Leaf file sets are disjoint across the whole tree. Orchestrator never commits — user reviews and commits.
+Leaf file sets are disjoint across the whole tree. Leaves never commit; the orchestrator commits the assembled work at the end — unless the user asked for no commit.
 
 ---
 
@@ -206,7 +206,7 @@ Terse. Emit, in order:
 
 - **Return** template (see Voice) — depth reached, `{leaves_solved}/{leaves_total}`, the tree sketch, gaps. Add a **Depth wall** line for each node clamped at max depth.
 - **The assembled root** — the fused-up deliverable (to `--out` if set, else inline).
-- **Next step** — review and commit (the skill never commits).
+- **Commit** — the orchestrator commits the assembled root, unless the user asked for no commit.
 
 ---
 
@@ -220,6 +220,7 @@ Terse. Emit, in order:
 - **Right-size the leaf.** A good base condition keeps leaves one-pass-sized; too coarse wastes the tree, too fine explodes it.
 - **Nothing to land is not a miss.** A leaf whose slice has no disk surface (a pure question, an analysis) has nothing to land — its answer is the deliverable, not a miss.
 - **Fire without a gate; run to a fused root.** `--confirm` is the only pause.
+- **Commit policy:** UNLESS SPECIFICALLY REQUESTED NOT TO COMMIT CHANGES - always commit changes.
 
 ## Don't
 
@@ -230,4 +231,4 @@ Terse. Emit, in order:
 - Don't let a leaf solve its parent or the whole task — each stays in its leaf.
 - Don't give two leaves anywhere in the tree a shared file — sets are disjoint across the entire tree.
 - Don't hand back the raw leaves — always fuse up into one assembled root.
-- Don't commit, push, or PR — the user reviews and commits.
+- Don't push or PR. Leaves never commit — the orchestrator commits at the end, unless the user asked otherwise.

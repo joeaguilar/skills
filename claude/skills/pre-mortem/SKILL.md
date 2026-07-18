@@ -31,7 +31,7 @@ Deliver .... ranked failure modes + guardrails  (--apply → a hardened plan)
 |---|---|---|
 | `<plan>` | — | The plan / design / launch under the knife. Inline prose, a spec path, or "the plan we just laid out". |
 | `--axes=N` | `5` | Failure dimensions, one agent each. **Clamp 3–7** (`<3` → bump 3; `>7` → clamp 7 + warn: ranking blurs past ~7 axes). |
-| `--apply` | off | Fold the derived guardrails back into the plan, emit a **hardened revised plan** artifact. Off → ranked failure modes + guardrails only. **Never commits** — produces a revised plan, not a write to live code. |
+| `--apply` | off | Fold the derived guardrails back into the plan, emit a **hardened revised plan** artifact. Off → ranked failure modes + guardrails only. Produces a revised plan, not a write to live code. |
 | `--out=path` | conversation | Persist the ranked list (and, with `--apply`, the hardened plan) to `path`. |
 | `--confirm` | off | The **only** way to add a gate — print the death-plan and wait before throwing. Default fires without asking. |
 
@@ -151,7 +151,7 @@ a long vague list. Your final message IS your portion — return the structured
 failure modes, not chat. Be self-contained.
 ```
 
-Each axis is exclusive — don't hand one agent another's axis. Orchestrator never commits.
+Each axis is exclusive — don't hand one agent another's axis. Orchestrator writes no live code.
 
 ---
 
@@ -178,7 +178,7 @@ Orchestrator's own work — not a hand-off. Turn the landed failure modes into o
 4. **Guardrail each** — carry the agent's guardrail, or sharpen it; attach the early-warning signal. One ranked row = mode + L×I + guardrail + signal.
 5. **Already buried?** — if a `fatal` mode came back with a guardrail of *none — unguardable as posed*, the plan is dead as posed: emit the **Already buried** template and say what a survivable version would have to change. Don't bury it for a mode that *has* a guardrail — that's a risk to harden against, not a fatal flaw.
 
-**`--apply`** → after ranking, fold the guardrails back into the plan and emit a **hardened revised plan** (the original plan plus each guardrail woven in, top risks addressed first). This is a revised plan artifact, never a write to live code and never a commit.
+**`--apply`** → after ranking, fold the guardrails back into the plan and emit a **hardened revised plan** (the original plan plus each guardrail woven in, top risks addressed first). This is a revised plan artifact, never a write to live code.
 
 ---
 
@@ -188,7 +188,7 @@ Terse. Emit, in order:
 
 - **Return** template (see Voice) — the `{hits}/{N}` axes read + the ranked failure modes with guardrails (or **Already buried** if a fatal mode is unguardable).
 - **The ranked list** — failure modes sorted by likelihood×impact, each with its guardrail + early-warning signal (to `--out` if set, else inline).
-- **`--apply`** → also emit the hardened revised plan. Next step: review and adopt (the skill never commits).
+- **`--apply`** → also emit the hardened revised plan. Next step: review and adopt (the skill writes no live code; an `--out` artifact that landed is committed per the commit policy).
 
 ---
 
@@ -201,6 +201,7 @@ Terse. Emit, in order:
 - **Failure-tolerant by design.** A lost axis is an uncovered failure mode, noted, never healed — rank what came back.
 - **Fire without a gate; run straight to the ranking.** `--confirm` is the only pause. Only hard stop: zero axes returned.
 - **Right-size the axes.** Default 5, clamp 3–7; fewer real failure dimensions → fewer agents.
+- **Commit policy:** UNLESS SPECIFICALLY REQUESTED NOT TO COMMIT CHANGES - always commit changes. Reading the corpse is pure analysis — a run that lands nothing has nothing to commit; only an `--out` artifact ever lands.
 
 ## Don't
 
@@ -211,5 +212,5 @@ Terse. Emit, in order:
 - Don't block the ranking waiting on a straggler.
 - Don't hand back N raw axis dumps — always pool, dedupe, and rank by likelihood×impact.
 - Don't bury the plan for a mode that has a guardrail — only an unguardable fatal mode is "already buried".
-- Don't commit, push, or PR — `--apply` emits a revised plan only; the user reviews and adopts.
+- Don't push or PR — `--apply` emits a revised plan only; the user reviews and adopts.
 - Don't exceed 7 axes — ranking blurs when one orchestrator weighs more failure dimensions than that.

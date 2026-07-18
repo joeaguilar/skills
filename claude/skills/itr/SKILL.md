@@ -45,6 +45,10 @@ When the user dumps a list ("file these five things…"), use `itr batch add` wi
 3. **File it.** Use `-f json` so you can capture the new ID from the response.
 4. **Report back** with the issue ID and a one-line summary. Don't dump the full JSON.
 
+## Principles
+
+- **Commit policy:** UNLESS SPECIFICALLY REQUESTED NOT TO COMMIT CHANGES - always commit changes. Filing writes `.itr.db` — if the project tracks it, commit what landed.
+
 ## Don't
 
 - Don't invent priorities, kinds, or acceptance criteria the user didn't imply — ask or leave a field empty.

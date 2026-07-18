@@ -47,6 +47,7 @@ Wrap Phases 1–3 in a quality loop (condensed from the strict-feat workflow):
 - **Coached, not autonomous** — the plan is approved before implementation; that's the line vs `/overdrive`.
 - **Minimal diff, matched patterns** — new code should look like it was always there.
 - **Verified or it isn't done** — green gate before you call it complete.
+- **Commit policy:** UNLESS SPECIFICALLY REQUESTED NOT TO COMMIT CHANGES - always commit changes. Once the Phase 3 gate is green, commit the work.
 
 ## Don't
 

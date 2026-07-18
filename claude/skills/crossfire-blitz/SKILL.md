@@ -7,14 +7,14 @@ description: "Clear a backlog with a model-routed parallel blitz: each task goes
 
 A blitz where **the model is chosen per task, not per session.** Bulk/mechanical work goes to **gpt-5.6-terra** (the Codex generalist — cheap, intelligence 8), dropping to **gpt-5.5** as the cheapest floor for trivial mechanical work; user-facing / taste-critical work goes to **opus-4.8** or **fable-5**; every closed task is **cross-reviewed by a different model** than executed it. When a cheaper model's output misses the bar, the task is **redone by a smarter model without asking** — cost is a tie-breaker, never a reason to ship mediocre work.
 
-By default crossfire-blitz **runs exactly like a plain blitz** — one **shared checkout**, disjoint-file waves, a self-healing full-repo verify gate between waves, **no commits** — and adds just two things: per-task **model routing** and a **cross-model review** before each close. The invariants carry straight over:
+By default crossfire-blitz **runs exactly like a plain blitz** — one **shared checkout**, disjoint-file waves, a self-healing full-repo verify gate between waves, **no mid-run commits** — and adds just two things: per-task **model routing** and a **cross-model review** before each close. The invariants carry straight over:
 
 - **File ownership is the unit of parallelism.** No two tasks in a wave own the same file — so agents editing disjoint files in the shared tree never collide.
 - **A self-healing verify gate between waves.** Each agent runs the full-repo gate; the shared tree is the convergence point. The wave doesn't advance on a red gate.
 
-The one wrinkle Codex adds: the Codex companion allows only **one active task per checkout**, so by default **each wave carries at most one Codex task**, run in the shared tree via `codex exec -C` right alongside the Claude agents. That keeps the whole run in one tree and preserves blitz's model — including self-healing and no-commit.
+The one wrinkle Codex adds: the Codex companion allows only **one active task per checkout**, so by default **each wave carries at most one Codex task**, run in the shared tree via `codex exec -C` right alongside the Claude agents. That keeps the whole run in one tree and preserves blitz's model — including self-healing and no mid-run commits.
 
-**Opt-in `codex_parallel=on`** — for Codex-heavy backlogs that want *several* Codex tasks per wave running in parallel: Codex tasks then run in **orchestrator-managed git worktrees** off a committed run-branch base, integrated and committed per wave. This buys Codex throughput at the cost of blitz's self-healing and no-commit (the worktree machinery + its verified caveats live in Phases 4/6).
+**Opt-in `codex_parallel=on`** — for Codex-heavy backlogs that want *several* Codex tasks per wave running in parallel: Codex tasks then run in **orchestrator-managed git worktrees** off a committed run-branch base, integrated and committed per wave. This buys Codex throughput at the cost of blitz's self-healing and single end-of-run commit (the worktree machinery + its verified caveats live in Phases 4/6).
 
 ## Slash invocation
 
@@ -32,7 +32,7 @@ The one wrinkle Codex adds: the Codex companion allows only **one active task pe
 | `repos` | `.` | Comma-separated repo paths in scope. |
 | `fable` | `off` | Master gate for the (expensive) **fable-5** model. `off` → taste-critical work always routes to **opus-4.8**, and fable is never spent unattended. `on` (or the `--fable` alias) → fable-5 is available for hero/flagship taste surfaces and as the top escalation rung. A task can *request* fable in its body; under `fable=off` that request triggers an `AskUserQuestion` (off is the default option) rather than silently spending it. |
 | `review` | `on` | Cross-model review gate before each close. `off` skips it (faster, less safety). |
-| `codex_parallel` | `off` | `off` = shared-tree, ≤1 Codex task per wave, no commits (blitz-style). `on` = Codex tasks run in orchestrator-managed worktrees, several per wave, committed per wave on a run branch. |
+| `codex_parallel` | `off` | `off` = shared-tree, ≤1 Codex task per wave, no mid-run commits (blitz-style). `on` = Codex tasks run in orchestrator-managed worktrees, several per wave, committed per wave on a run branch. |
 | `defer_docs` | `auto` | Whether to pull shared prose/`.md` edits out of their tasks and batch them into one **consolidated docs wave** at the end. `auto` = detect shared-doc conflict cliques in Phase 2 and *offer* it; `on` = always defer; `off` = never (docs edit in place with their task). Deferring collapses the biggest needless serializer — a doc many tasks all touch — and often roughly halves the wave count. |
 
 ---
@@ -82,7 +82,7 @@ Every model score below is **higher = better**; `cost` is what the user pays, so
 - **Orchestrator (main agent)** — routes models, spawns executors, runs cross-model review, gates each wave, escalates on miss (and in `codex_parallel=on`, integrates + commits each wave).
 - **Executor agents** — one per task, at its assigned model. Codex executors (default gpt-5.6-terra) run through Codex (see Phase 4).
 - **Reviewer agents** — one per closed task, at a different model.
-- **Artifacts** — a wave log at `sprint/{folder}/blitz/wave-{N}.md` (or `sprint/_unscoped/crossfire-blitz-{ts}.md` if no in-flight sprint), plus the tracker epic. Same layout as a standard blitz log, with an added **Model routing** column and a **Cross-model review** section. **Default (`codex_parallel=off`): no commits** — like a plain blitz, the user reviews and commits at the end. **`codex_parallel=on`:** each green wave is committed to a dedicated `crossfire-blitz/{ts}` run branch (never `main`, never pushed; worktree isolation forces it — Phase 6), handed to the user at the end to squash, merge, or discard.
+- **Artifacts** — a wave log at `sprint/{folder}/blitz/wave-{N}.md` (or `sprint/_unscoped/crossfire-blitz-{ts}.md` if no in-flight sprint), plus the tracker epic. Same layout as a standard blitz log, with an added **Model routing** column and a **Cross-model review** section. **Default (`codex_parallel=off`): no mid-run commits** — like a plain blitz mid-run; the orchestrator commits the run's work once at the end (Phase 8, Conventional Commits), unless the user specifically requested no commit. **`codex_parallel=on`:** each green wave is committed to a dedicated `crossfire-blitz/{ts}` run branch (never `main`, never pushed; worktree isolation forces it — Phase 6), handed to the user at the end to squash, merge, or discard.
 
 Requires: git repo(s); the tracker on PATH; whenever any task routes to a Codex model (gpt-5.6-terra et al.), the **codex plugin** installed and authenticated (`/codex:setup` fixes it — it wraps the Codex CLI, whose `~/.codex/config.toml` defaults to gpt-5.5; select the executor model with `codex exec -m <model>`) so the `codex:codex-rescue` subagent and the `/codex:adversarial-review` runtime are reachable.
 
@@ -105,7 +105,7 @@ Crossfire-blitz preflight
   Concurrency:  <N>
   Repos:        <paths>
   Codex:        available (default exec model: gpt-5.6-terra; config default: gpt-5.5) | UNAVAILABLE — Claude-only fallback
-  Execution:    shared-tree, ≤1 Codex/wave, no commits (default)
+  Execution:    shared-tree, ≤1 Codex/wave, no mid-run commits (default)
                 | codex_parallel — Codex in worktrees, per-wave commit on crossfire-blitz/{ts}
   Taste exec:   opus-4.8
   Fable:        OFF — taste work → opus (default; fable never spent unattended)
@@ -216,7 +216,7 @@ Confirm each reviewer **actually reviewed** — a Codex lane that errored (empty
 
    **The stable-tree wave gate is the authoritative signal — mid-wave LSP diagnostics are not.** While a wave is in flight, several agents are editing one tree, so LSP/language-server flags (`dead_code`, `E0004`, `E0308`, unresolved imports, …) are **stale mid-edit snapshots**: a symbol another agent is still adding reads as undefined, a match another agent will complete reads as non-exhaustive. Do **not** act on, escalate, or report these mid-wave — verify each against the **green stable-tree gate** first, and trust that. Only diagnostics that survive the stable gate are real.
 2. **Green** → proceed to Phase 7, then the next wave. **Red** on a slice no task owned → diagnose; small+obvious fix applied yourself and logged under `Interventions`, else stop and surface. Never launch the next wave on a red gate.
-3. **No commit.** The user reviews and commits at the end (Phase 8), like a plain blitz.
+3. **No per-wave commit.** The orchestrator commits once at the end (Phase 8) — unless the user specifically requested no commit.
 
 **`codex_parallel=on` — integrate the Codex worktrees, then commit the wave.** Each completed Codex worktree is harvested via the `worktreePath` the spawn returned; disjoint file sets integrate as a clean union:
 
@@ -238,10 +238,10 @@ Confirm each reviewer **actually reviewed** — a Codex lane that errored (empty
 - **Model spend** — count of tasks per executor model; note that Codex tokens (gpt-5.6-terra et al.) are free and **invisible to any Workflow `budget.spent()`** (only Claude tokens count).
 - **Cross-model review summary** — findings caught by the review gate, and the escalations they triggered (high-value: this is where cheap-model misses got caught).
 - **Wave timeline**, **Interventions log**, **Escalations log**, **Diff summary**, **Next steps**.
-  - Default: `git diff --stat` of the uncommitted working tree (nothing was committed — the user reviews and commits).
+  - Default: `git diff --stat` of the run's working tree, then commit it (Conventional Commits, e.g. `chore(crossfire-blitz): {run summary — task ids}`) — unless the user specifically requested no commit, in which case leave the tree for the user to review and commit.
   - `codex_parallel=on`: `git diff --stat main..crossfire-blitz/{ts}`, and name the **run branch** holding the per-wave commits — ask the user how to land it (squash-merge, keep, or discard).
 
-Default mode makes **no commits** (like a plain blitz). Under `codex_parallel=on`, per-wave commits go to the **run branch only** — never to `main`, never pushed, never a PR (unless the user asks).
+Default mode makes **no mid-run commits** (like a plain blitz) — the orchestrator's single end-of-run commit lands in Phase 8 unless the user specifically requested no commit. Under `codex_parallel=on`, per-wave commits go to the **run branch only** — never to `main`, never pushed, never a PR (unless the user asks).
 
 ---
 
@@ -262,9 +262,10 @@ crossfire-blitz maps cleanly onto a Workflow `pipeline(tasks, execute, review)`:
 - **The model is a per-task decision.** Route by the work, not the session: bulk → gpt-5.6-terra, taste-critical → opus/fable, ambiguous → opus. Cost is a tie-breaker only; intelligence > taste > cost for anything that ships.
 - **A different model reviews than executed — this gate is load-bearing, not ceremony.** No model grades its own homework. **Executor self-reports routinely hide real defects behind a confident "PASS / gate green"** — observed: a task that reported "starts at 0.0" didn't, one that claimed "consumers audited" hadn't, one silently skipped a file its AC covered. A green `cargo test` and the executor's own confidence *both* missed P1s that the different-model review caught. The cross-model gate is the thing that catches bugs the executor and its unit tests agree aren't there — treat a clean self-report as unverified until a different model has looked.
 - **Escalate without asking.** A real defect from a cheap model's output means redo it with a smarter one — judge the output, not the price tag. Escalating cost beats shipping the miss.
-- **Stay in the shared tree by default; reach for worktrees only when Codex must parallelize.** One Codex task per wave runs in the shared checkout alongside the Claude agents — keeping blitz's self-healing and no-commit. Worktrees (and the per-wave commits they force) are the price of *several* Codex tasks per wave, paid only under `codex_parallel`.
+- **Stay in the shared tree by default; reach for worktrees only when Codex must parallelize.** One Codex task per wave runs in the shared checkout alongside the Claude agents — keeping blitz's self-healing and no-mid-run-commit flow. Worktrees (and the per-wave commits they force) are the price of *several* Codex tasks per wave, paid only under `codex_parallel`.
 - **Disjoint file ownership is the invariant in both modes.** It's what lets shared-tree agents not collide, and what lets worktree diffs integrate conflict-free.
 - **Confirm twice, run once.** Phase 0 (config + model availability) and Phase 3 (wave plan + routing) gate on the user; Phases 4–8 run autonomously unless a red gate or hard quarantine intervenes.
+- **Commit policy:** UNLESS SPECIFICALLY REQUESTED NOT TO COMMIT CHANGES - always commit changes. Executors never commit (the orchestrator owns git); the orchestrator commits once at the end in the default mode, and per green wave to the run branch under `codex_parallel`.
 
 ## Don't
 
@@ -286,4 +287,4 @@ crossfire-blitz maps cleanly onto a Workflow `pipeline(tasks, execute, review)`:
 - Don't quarantine a ceiling-executed (opus under `fable=off`) task as "escalation exhausted" without first recommending fable-5 or `gpt-5.6-sol` at ultra — `fable=off` never silences a ceiling, it only declines to spend fable unattended.
 - Don't leave a shared `.md` clique serializing the plan when `defer_docs` would collapse it — offer the consolidated docs wave.
 - Don't advance a wave on a red gate, and don't silently drop a quarantined task — every task ends with an `Outcomes` entry naming its executor and reviewer.
-- Don't commit in the default mode (like a plain blitz — the user commits at the end). Under `codex_parallel`, don't try to carry a wave forward through the **uncommitted** tree (worktrees fork from a commit and won't see it), and commit **only** to the `crossfire-blitz/{ts}` run branch — never `main`, never pushed.
+- Don't commit mid-run in the default mode (per-wave commits belong to `codex_parallel`; the orchestrator's single commit lands at Phase 8, skipped only when the user specifically requested no commit). Under `codex_parallel`, don't try to carry a wave forward through the **uncommitted** tree (worktrees fork from a commit and won't see it), and commit **only** to the `crossfire-blitz/{ts}` run branch — never `main`, never pushed.

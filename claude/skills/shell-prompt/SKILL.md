@@ -43,3 +43,7 @@ After it runs, tell the user to activate it in the current shell with `source ~/
 ## Uninstall
 
 Delete everything between the `# >>> shell-prompt skill >>>` and `# <<< shell-prompt skill <<<` markers in `~/.zshrc` (or restore a `~/.zshrc.bak.*` backup), then `source ~/.zshrc`.
+
+## Commit policy
+
+- **Commit policy:** UNLESS SPECIFICALLY REQUESTED NOT TO COMMIT CHANGES - always commit changes. This skill writes only `~/.zshrc`, which normally lives outside any git repo — a typical run has nothing tracked to commit. If `~/.zshrc` is tracked (e.g. a dotfiles repo), commit the change there.

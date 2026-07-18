@@ -138,7 +138,7 @@ PRODUCE — what stage {n+1} ({next stage role}) needs as ITS input:
 {if this stage builds/codes — has a disk surface:}
 You edit files to do your stage's work — that IS your deliverable. Edit only what
 your stage needs; leave the rest clean. Do NOT commit, push, branch, or PR — the
-user reviews. Note every path you touched so the next stage can verify it.
+orchestrator owns git and commits at the end. Note every path you touched so the next stage can verify it.
 {if this stage researches/designs — no disk surface: your scroll of words IS the
 deliverable; nothing to land.}
 
@@ -174,7 +174,7 @@ Terse. Emit, in order:
 
 - **Return** template (chain complete) — the per-stage `✓` journey, ending at the last stage whose output **is** the deliverable. (Or, if the chain broke, the **Dropped baton** template — and stop here.)
 - **The final deliverable** — the last stage's output (to `--out` if set, else inline; a build/code final stage's edits already landed on disk, a research/design final stage's scroll is the deliverable).
-- **Next step** — review and commit (the skill never commits).
+- **Next step** — the orchestrator commits the landed work (unless the user requested no commit); the user reviews.
 
 The deliverable is the scroll that survived the whole chain — not a synthesis of stages, not a vote. Each stage already transformed it; the end is the product.
 
@@ -188,6 +188,7 @@ The deliverable is the scroll that survived the whole chain — not a synthesis 
 - **A broken link is a real stop.** This blade does not tolerate misses. A failed stage breaks the chain; never feed garbage downstream. One retry, then halt.
 - **No disk surface, nothing to land.** A chain whose final stage has no disk surface (research, a design in words) has nothing to land — the final scroll is the deliverable, not a miss.
 - **Fire without a gate; run to chain-complete or a dropped baton.** `--confirm` is the only pause; otherwise run straight through the stages.
+- **Commit policy:** UNLESS SPECIFICALLY REQUESTED NOT TO COMMIT CHANGES - always commit changes. The orchestrator commits the landed chain at the end; stage agents never commit, and a chain with no disk surface has nothing to commit.
 
 ## Don't
 
@@ -197,4 +198,4 @@ The deliverable is the scroll that survived the whole chain — not a synthesis 
 - Don't fabricate, skip, or paper over a failed stage — one retry, then stop and surface the dropped baton.
 - Don't let a stage solve the whole task — each does only its one transform on the carried work.
 - Don't add stages the task doesn't need, and don't chain work that isn't actually dependent.
-- Don't commit, push, or PR — the user reviews and commits.
+- Don't push or PR — commits stay local. Stage agents never commit; the orchestrator commits at the end (unless the user requested no commit).

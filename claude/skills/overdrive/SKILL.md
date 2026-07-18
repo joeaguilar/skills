@@ -447,6 +447,7 @@ Arms here are Agent-tool spawns, but when a cycle runs through a Workflow-tool s
 - **Roll back safely.** Stash untracked before any hard reset; reopen `itr` tickets to resync. Never lose human files.
 - **Autonomous ≠ reckless.** Cycle detection, file audits, flaky double-checks, time budgets, concurrency cap — guardrails that need no human.
 - **Same artifacts as the trio.** `plan.md` + `itr` lifecycle schema-identical → interchangeable.
+- **Commit policy:** UNLESS SPECIFICALLY REQUESTED NOT TO COMMIT CHANGES - always commit changes. Already the design: one commit/accepted wave, orchestrator sole committer, arms never.
 
 ---
 

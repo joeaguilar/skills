@@ -23,8 +23,8 @@ Treat repeated candidate names as one candidate. If multiple variants of a candi
 Always consider at least these workflows:
 
 - `/proof-campaign`: roadmap-bounded, evidence-first campaign with async PO reports and strong drift control. Best for broad roadmap slices, product proof, and work where objective evidence matters more than raw velocity.
-- `/blitz`: execution-only backlog clearance with conflict-free waves and two approval gates. Best for a prepared backlog or sprint where tasks already have bounded file ownership and the user wants speed without commits.
-- `/crossfire-blitz`: the model-routed variant of `/blitz` — each task runs on the cheapest capable model (gpt-5.6-terra via the Codex plugin for bulk/mechanical, opus-4.8 for taste-critical) then a *different* model cross-reviews before close, escalating to a smarter model on a miss. Runs in the **shared tree like `/blitz`** (self-healing gate, no commits) with **≤1 Codex task per wave** by default; opt-in `codex_parallel=on` fans Codex into worktrees (with per-wave commits) for throughput. **fable-5 is off by default** (cost-gated `fable=off|on`). Best when a backlog mixes cheap grunt work with user-facing/taste-sensitive work and the user wants cost-optimized execution plus an independent second-model review. Requires the codex plugin authenticated (`/codex:setup`) for the Codex lanes.
+- `/blitz`: execution-only backlog clearance with conflict-free waves and two approval gates. Best for a prepared backlog or sprint where tasks already have bounded file ownership and the user wants speed (commits land at each green wave gate unless the user opted out).
+- `/crossfire-blitz`: the model-routed variant of `/blitz` — each task runs on the cheapest capable model (gpt-5.6-terra via the Codex plugin for bulk/mechanical, opus-4.8 for taste-critical) then a *different* model cross-reviews before close, escalating to a smarter model on a miss. Runs in the **shared tree like `/blitz`** (self-healing gate, no mid-run commits — one end-of-run commit) with **≤1 Codex task per wave** by default; opt-in `codex_parallel=on` fans Codex into worktrees (with per-wave commits) for throughput. **fable-5 is off by default** (cost-gated `fable=off|on`). Best when a backlog mixes cheap grunt work with user-facing/taste-sensitive work and the user wants cost-optimized execution plus an independent second-model review. Requires the codex plugin authenticated (`/codex:setup`) for the Codex lanes.
 - `/dual-blitz`: two isolated main-agent lanes, each running an inner blitz. Best when a large backlog splits cleanly into two disjoint subsystems. Do not use when lanes might share files, lockfiles, generated output, schemas, migrations, route tables, or API contracts.
 - `/overdrive`: autonomous plan, execute, and review loop with per-wave commits and rollback points. Best when the user wants end-to-end sprint clearance, accepts orchestrator commits/stashing, and can provide visual smoke verdicts or use `--auto` with a real time/wave cap.
 - `/run-the-rivers-dry`: maximum-autonomy completion mode for hard, broad, or ambiguous problems. Best when the user asks Claude to go all-in and persist until proven complete. Use `--mortal` when the user wants normal prose.
@@ -125,6 +125,10 @@ Pass through the relevant constraints:
 - dirty-tree or git constraints
 - security caveats
 - normal prose preference for `/run-the-rivers-dry --mortal`
+
+## Principles
+
+- **Commit policy:** UNLESS SPECIFICALLY REQUESTED NOT TO COMMIT CHANGES - always commit changes. Fastlane itself only routes — a routing pass lands nothing, so there is nothing to commit — but carry this default through the handoff constraints: a "no commits" preference exists only when the user actually requested it.
 
 ## Don't
 

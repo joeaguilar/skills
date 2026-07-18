@@ -108,3 +108,4 @@ workflow depends on.
   hook installed. Mention this if both are present; they don't conflict.
 - **Manifest sync commits to `main`.** The workflow needs `contents: write` (and
   `actions: write` for the Rust release dispatch). These are in the templates.
+- **Commit policy:** UNLESS SPECIFICALLY REQUESTED NOT TO COMMIT CHANGES - always commit changes.

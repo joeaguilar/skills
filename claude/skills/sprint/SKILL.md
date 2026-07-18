@@ -586,6 +586,7 @@ When in single-repo mode (the default), don't add the repo prefix — keep file 
 - **File ownership is hand-off currency.** Declared `--files` are gifts to `/blitz`'s wave planner. Conservative when uncertain.
 - **Spillover is a feature.** Surfacing what *won't* fit is as valuable as picking what will. Nothing gets lost — every deferred item lands in `itr`.
 - **Coaching is structured output.** The phase headers and Scrum vocabulary make the workflow legible. Verbose is fine; opaque is not.
+- **Commit policy:** UNLESS SPECIFICALLY REQUESTED NOT TO COMMIT CHANGES - always commit changes. After Phase 6 writes the sprint folder and `sprint/CURRENT`, commit those planning artifacts — unless the PO asked otherwise.
 
 ---
 

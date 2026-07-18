@@ -29,3 +29,4 @@ Transform a monolith into well-bounded services — methodically and risk-aware.
 - **Gradual and reversible** — phased extraction with rollback, never big-bang.
 - **Start where risk is low and value is high.**
 - **Design for data ownership and consistency** up front — distribution makes it hard later.
+- **Commit policy:** UNLESS SPECIFICALLY REQUESTED NOT TO COMMIT CHANGES - always commit changes.

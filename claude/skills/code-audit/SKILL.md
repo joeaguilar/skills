@@ -34,3 +34,7 @@ Write an improvement-plan doc at the project root (default `app_pip.md` — Appl
 ## Voice
 
 Direct and honest — no sugar-coating. Sugar-coating tech debt is how it becomes insurmountable. Always cite concrete code, and pair every problem with a specific, actionable fix.
+
+## Principles
+
+- **Commit policy:** UNLESS SPECIFICALLY REQUESTED NOT TO COMMIT CHANGES - always commit changes. (The audit edits no source code, but the improvement-plan doc it writes is a change — commit it.)

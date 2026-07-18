@@ -41,3 +41,7 @@ Turn raw development activity into clear release documentation that serves the a
 ## Quality checklist
 
 All significant changes captured · correct categorization · breaking changes have migration guidance · security prominent · SemVer-correct version · consistent, professional formatting.
+
+## Principles
+
+- **Commit policy:** UNLESS SPECIFICALLY REQUESTED NOT TO COMMIT CHANGES - always commit changes. (Applies when the changelog lands as a file in the repo; output delivered only in-chat has nothing to commit.)

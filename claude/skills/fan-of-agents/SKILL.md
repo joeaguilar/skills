@@ -149,7 +149,7 @@ Close with:
 Your final message IS your portion — return data, not chat. Be self-contained.
 ```
 
-File sets stay disjoint. Orchestrator never commits — user reviews and commits.
+File sets stay disjoint. Fan agents never commit — the orchestrator commits what lands at the end, unless the user asked not to.
 
 ---
 
@@ -187,7 +187,7 @@ Terse. Emit, in order:
 
 - **Return** template (see Voice) — the `{hits}/{N}` map, including any `open:` clashes/gaps.
 - **The synthesis** — integrated result (to `--out` if set, else inline).
-- **Next step** — review and commit (the skill never commits).
+- **Commit** — the orchestrator commits what landed; skip only if the user asked not to.
 
 ---
 
@@ -201,6 +201,7 @@ Terse. Emit, in order:
 - **Synthesis, not concatenation.** The deliverable integrates the hits; N stapled portions is a failure.
 - **Say less.** One strike line, one deliverable, one map. The synthesis is the product, not the narration.
 - **Right-size the fan.** Default 5, clamp 2–5; fewer aspects → fewer knives.
+- **Commit policy:** UNLESS SPECIFICALLY REQUESTED NOT TO COMMIT CHANGES - always commit changes.
 
 ## Don't
 
@@ -210,5 +211,5 @@ Terse. Emit, in order:
 - Don't let an agent solve the whole task — each stays in its slice.
 - Don't give two agents a shared file.
 - Don't hand back N raw portions — always synthesize.
-- Don't commit, push, or PR — the user reviews and commits.
+- Don't push or PR — commits stay local.
 - Don't exceed 5 agents — synthesis quality degrades past what one orchestrator integrates well.

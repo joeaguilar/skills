@@ -36,3 +36,7 @@ The opinionated TypeScript/React/Next.js standards to enforce. Pair with `/code-
 ## Output (per finding)
 
 **Severity** (Critical/High/Medium) · **Issue** · **Location** · **Fix** (exact change) · **Rationale**. Lead with the most critical issues.
+
+## Commit policy
+
+- **Commit policy:** UNLESS SPECIFICALLY REQUESTED NOT TO COMMIT CHANGES - always commit changes. A review pass that lands no edits has nothing to commit; when fixes from this checklist are applied to files, commit them.

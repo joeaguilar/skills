@@ -29,3 +29,4 @@ Design automated build/test/deploy workflows. Interactive — **ask before desig
 - **Least privilege** everywhere; real secret management, not env hardcoding.
 - **Reusable templates** over copy-paste across pipelines.
 - **Explain the trade-offs** (speed vs cost vs safety) for each design choice.
+- **Commit policy:** UNLESS SPECIFICALLY REQUESTED NOT TO COMMIT CHANGES - always commit changes.

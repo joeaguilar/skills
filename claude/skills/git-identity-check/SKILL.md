@@ -33,3 +33,7 @@ Report a compact table per repo: local override (yes/no + value), resolved ident
 
 - Prefer `git config --local` (not `--global`) checks to detect overrides — `git config --get` alone won't tell you *which* level supplied the value.
 - A repo with a GitHub/GitLab `origin` remote counts as published; call that out explicitly when flagging history issues so the user weighs the blast radius before deciding.
+
+## Principles
+
+- **Commit policy:** UNLESS SPECIFICALLY REQUESTED NOT TO COMMIT CHANGES - always commit changes. The audit is read-only and its fixes touch only `.git/config` (untracked), so a typical run lands nothing in the working tree and has nothing to commit. History rewrites remain out of scope regardless.

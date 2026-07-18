@@ -50,3 +50,4 @@ The script creates:
 - Core memory files should stay under 5000 lines.
 - When a core file gets too large, move a coherent section into a focused document, leave a cliffnote summary in the original file, and link to the new document.
 - Supporting docs such as `docs/ARCHITECTURE.md`, `docs/DECISIONS.md`, `docs/ROADMAP.md`, `docs/RUNBOOK.md`, `docs/GLOSSARY.md`, `docs/RESEARCH.md`, and `docs/ASSETS.md` should be created only when they have real content.
+- **Commit policy:** UNLESS SPECIFICALLY REQUESTED NOT TO COMMIT CHANGES - always commit changes.

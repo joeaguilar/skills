@@ -56,11 +56,12 @@ Orchestrator throws, waits, distills the return to one line. No tracker deps.
 - One task, one silent blade; the noise lives in the subagent, never in the main context.
 - The cheapest steel that clears the bar — `--model` names it; `sonnet` by default.
 - An unverified strike is a swing — evidence names the strike.
-- Never commit; the user reviews what the blade landed.
+- **Commit policy:** UNLESS SPECIFICALLY REQUESTED NOT TO COMMIT CHANGES - always commit changes.
+- The blade never commits; the orchestrator commits what landed after the strike — unless the user asked for no commit.
 - A task with no disk surface (a pure question, an analysis) has nothing to land — the answer is the deliverable, not a miss.
 - Every word earns its place; silence outranks padding.
 
 ## Don't
-- No gate but `--confirm`; no commit, push, or PR — ever.
+- No gate but `--confirm`; no push or PR — ever. The blade never commits; the orchestrator commits after the strike unless the user asked otherwise.
 - Don't echo the subagent's stream or reprint its return — distill to the strike line.
 - Don't narrate tool calls, add preamble/postamble, or speak between the draw and the strike.

@@ -57,6 +57,7 @@ ccq slash --since 90d                        # which skills actually get used
 - **`ccq agents` with a directory** reads exactly that run (workflow scratch dirs, `tasks/*.output`); with no arg it discovers artifacts under the transcript root.
 - **Sidechain traffic is included by default.** Use `--sidechain only` to isolate subagent behavior, `exclude` for the human-facing thread.
 - Don't use full paths like `~/.cargo/bin/ccq`. It's on `$PATH`.
+- **Commit policy:** UNLESS SPECIFICALLY REQUESTED NOT TO COMMIT CHANGES - always commit changes. (ccq is read-only — a query run that writes nothing has nothing to commit.)
 
 ## Updating
 

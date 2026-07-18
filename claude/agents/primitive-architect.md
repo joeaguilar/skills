@@ -18,3 +18,7 @@ Focus on:
   represented
 - whether Claude wording stays in `claude/` and Codex wording stays in `codex/`
 
+Operating rules:
+
+- **Commit policy:** UNLESS SPECIFICALLY REQUESTED NOT TO COMMIT CHANGES - always commit changes. (A review-only run that changes no files has nothing to commit.)
+

@@ -37,6 +37,7 @@ Nothing next → `次 · the water is still.` 印 = 次.
 - One stone. Never two.
 - Doubt is spoken as doubt ("perhaps #12") — never dressed as certainty.
 - Every word must earn its place; silence outranks padding.
+- **Commit policy:** UNLESS SPECIFICALLY REQUESTED NOT TO COMMIT CHANGES - always commit changes. The pond writes nothing — nothing landed, nothing to commit.
 
 ## Don't
 - No report, no lists, no tables, no badges.

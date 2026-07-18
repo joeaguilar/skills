@@ -144,7 +144,7 @@ Terse. Emit, in order:
 
 - **Tally** template — `{returned}/{N}`, agreement level, consensus, dissent.
 - **The consensus** — the kept answer (to `--out` if set; on disk if `--write`).
-- **`--write` next step** — review and commit (the skill never commits).
+- **`--write` next step** — the orchestrator commits the applied answer; skip only if the user asked not to.
 
 When agreement is *split* (no strong majority), say so — a thin consensus is a signal, not a number to hide.
 
@@ -157,6 +157,7 @@ When agreement is *split* (no strong majority), say so — a thin consensus is a
 - **Reasoning over confidence.** The tally weighs why an answer was reached, not how sure the agent claimed to be.
 - **Misses just don't vote.** A lost blade lowers the count, not the run — until quorum fails.
 - **Fire without a gate; run to a tally.** `--confirm` is the only pause.
+- **Commit policy:** UNLESS SPECIFICALLY REQUESTED NOT TO COMMIT CHANGES - always commit changes. An answer-only run lands nothing on disk — nothing to commit; a `--write` run commits the applied winner.
 
 ## Don't
 
@@ -166,4 +167,4 @@ When agreement is *split* (no strong majority), say so — a thin consensus is a
 - Don't report a consensus below quorum — surface the thin return instead.
 - Don't trust self-reported confidence over the quality of the reasoning.
 - Don't apply more than one answer in `--write` mode — `best` picks the single winner.
-- Don't commit, push, or PR in `--write` mode — the user reviews and commits.
+- Don't push or PR in `--write` mode — commits stay local.

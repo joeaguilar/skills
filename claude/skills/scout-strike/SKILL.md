@@ -213,7 +213,7 @@ Close with:
 Your final message IS your strike — data, not chat. Be self-contained.
 ```
 
-Striker file sets are disjoint. Orchestrator never commits — the user reviews and commits.
+Striker file sets are disjoint. Strikers never commit — the orchestrator commits the landed strike at the end (unless the user requested no commit).
 
 ---
 
@@ -223,7 +223,7 @@ Terse. Emit, in order:
 
 - **Return** template (see Voice) — terrain revealed + what the strike did, including any `open:` dark spots.
 - **The strike output** — the deliverable (to `--out` if set; on disk).
-- **Next step** — review and commit (the skill never commits).
+- **Next step** — the orchestrator commits the landed strike (unless the user requested no commit); the user reviews.
 
 ---
 
@@ -237,6 +237,7 @@ Terse. Emit, in order:
 - **A strike may land on nothing.** A strike whose target has no disk surface (a pure question, an analysis) has nothing to land — its answer is the deliverable, not a miss.
 - **Fire without a gate.** `--confirm` is the only pause, and it sits at the natural seam — after the map, before the strike.
 - **Right-size the recon.** Scouts default 3, clamp 2–5; strikers default 1, raised only to fan across disjoint mapped targets.
+- **Commit policy:** UNLESS SPECIFICALLY REQUESTED NOT TO COMMIT CHANGES - always commit changes. Scouts and strikers never commit; the orchestrator commits the landed strike at the end. A strike with no disk surface has nothing to commit.
 
 ## Don't
 
@@ -246,5 +247,5 @@ Terse. Emit, in order:
 - Don't strike when the scouts mapped nothing usable — emit the fog and stop instead of committing blind.
 - Don't make the striker re-explore from scratch — hand it the fused map and let it exploit it.
 - Don't give two strikers a shared file.
-- Don't commit, push, or PR — the user reviews and commits.
+- Don't push or PR — commits stay local. Strikers never commit; the orchestrator commits at the end (unless the user requested no commit).
 - Don't exceed 5 scouts — map fusion degrades past what one orchestrator stitches well.

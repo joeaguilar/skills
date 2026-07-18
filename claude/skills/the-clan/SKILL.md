@@ -175,7 +175,7 @@ Close with:
 Your final message IS your handled part — return data, not chat. Be self-contained.
 ```
 
-File sets disjoint, one art per set — always. Orchestrator never commits — user reviews and commits.
+File sets disjoint, one art per set — always. Specialists never commit; the orchestrator commits the assembled work at the end — unless the user asked for no commit.
 
 ---
 
@@ -212,7 +212,7 @@ Terse. Emit, in order:
 
 - **Return** template (see Voice) — the `{handled}/{K}` part→art map, including any unmanned posts and `seams:`.
 - **The assembled whole** — the fitted result (to `--out` if set, else inline).
-- **Next step** — review and commit (the skill never commits).
+- **Commit** — the orchestrator commits the assembled whole, unless the user asked for no commit.
 
 ---
 
@@ -227,6 +227,7 @@ Terse. Emit, in order:
 - **Assembly, not concatenation.** The deliverable fits the routed parts into one whole; K stapled parts is a failure.
 - **Right-size the clan.** Route only parts that truly need different arts. All one art → one specialist, not a manufactured clan.
 - **Fire without a gate; run to the assembly.** `--confirm` is the only pause; default never asks. Only hard stop: zero parts handled.
+- **Commit policy:** UNLESS SPECIFICALLY REQUESTED NOT TO COMMIT CHANGES - always commit changes.
 
 ## Don't
 
@@ -238,4 +239,4 @@ Terse. Emit, in order:
 - Don't let a specialist handle a part outside its art — each stays in its routed part.
 - Don't give two specialists a shared file.
 - Don't hand back K raw parts — always assemble into the whole.
-- Don't commit, push, or PR — the user reviews and commits.
+- Don't push or PR. Specialists never commit — the orchestrator commits at the end, unless the user asked otherwise.

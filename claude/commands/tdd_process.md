@@ -206,6 +206,7 @@ npm run test:ci && npm run build
 - **Green first** - Always get to passing before refactoring
 - **Small steps** - Each cycle should be 5-15 minutes
 - **Commit often** - After each successful cycle
+- **Commit policy:** UNLESS SPECIFICALLY REQUESTED NOT TO COMMIT CHANGES - always commit changes.
 - **Feedback loop** - Keep tests running and watch for immediate feedback
 
 ---

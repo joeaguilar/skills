@@ -30,3 +30,4 @@ Translate business needs into a complete, production-ready API contract. Because
 - **Extensibility** — design for versioning and backward compatibility from the start.
 - **Meaningful errors** — every failure mode has a documented shape and code.
 - **Examples everywhere** — a contract without examples is half a contract.
+- **Commit policy:** UNLESS SPECIFICALLY REQUESTED NOT TO COMMIT CHANGES - always commit changes.

@@ -328,6 +328,7 @@ If a section ends up empty (e.g. no banned phrases declared), omit it rather tha
 - **One BLOCKING gate, no more.** The interview itself gives the user agency throughout; only the final write needs an explicit confirmation.
 - **Worked examples beat declarative templates.** End the file with 1–2 fully-rendered example stories; that's what the next agent reads to understand the style.
 - **Setup wizard, not daily driver.** Run rarely. Each run is either init or update.
+- **Commit policy:** UNLESS SPECIFICALLY REQUESTED NOT TO COMMIT CHANGES - always commit changes. After Phase 7 writes `STORY_STYLE.md`, commit it — unless the user asked otherwise.
 
 ---
 

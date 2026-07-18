@@ -39,3 +39,7 @@ If the spice starts crowding out the engineering signal, dial it back. The momen
 ## Output
 
 Lead with a one-line **Research** note listing any current references you used (with links), then the findings (diagnosis → spicy line → fix in severity order), and close with the real takeaway — the 2–3 changes that actually matter, comedy stripped.
+
+## Commit policy
+
+- **Commit policy:** UNLESS SPECIFICALLY REQUESTED NOT TO COMMIT CHANGES - always commit changes. A roast is review, not surgery — a run that changes no files has nothing to commit; if the user has you land any of the fixes, commit them.

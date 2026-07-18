@@ -170,7 +170,7 @@ Terse. Emit, in order:
 
 - **Fall** template (see Voice) — lands/total clean, misses skittered.
 - **The tally + manifest** — to `--out` if set; inline otherwise.
-- **Re-throw** — the miss list, offered as a fresh `--targets` for a second storm. The user reviews and commits (the blade never commits).
+- **Re-throw** — the miss list, offered as a fresh `--targets` for a second storm. The orchestrator commits the landed volley (unless the user requested no commit); the user reviews.
 
 ## Voice — the whistle, then the fall. 印 = 嵐
 
@@ -206,7 +206,8 @@ Speak twice: when the shuriken are loosed, when the field falls. `{slots}` are t
 - **Width is throughput, not ambition.** The storm is as wide as the field; under `agents`, `--width` caps how many fly at once; under `workflow`, the harness cap rules. Either way, the cap — not the field size — is what keeps the volley from rebounding.
 - **No synthesis — the tally is the product.** Shuriken land themselves; the deliverable is lands, misses, and a re-throw list.
 - **Tolerant volley.** A lost shuriken is a thinner field, noted and passed — no retry, no respawn mid-storm; misses re-throw.
-- **Lands on disk, never commits.** A thrown shuriken edits its target; the user reviews the whole volley and commits.
+- **Lands on disk; the orchestrator seals it.** A thrown shuriken edits its target and never commits; the orchestrator commits the whole volley at the end (unless the user requested no commit).
+- **Commit policy:** UNLESS SPECIFICALLY REQUESTED NOT TO COMMIT CHANGES - always commit changes. Shuriken never commit — the orchestrator commits the volley; a field of pure no-ops has nothing to commit.
 
 ## Don't
 
@@ -218,4 +219,4 @@ Speak twice: when the shuriken are loosed, when the field falls. `{slots}` are t
 - Don't synthesize or merge the lands — there is nothing to stitch; tally them.
 - Don't retry or respawn a miss mid-volley — it goes on the re-throw list.
 - Don't run a project-wide formatter inside a shuriken — it reaches past the one target and clobbers siblings.
-- Don't commit, push, or PR — the user reviews the volley and commits.
+- Don't push or PR — commits stay local. Shuriken never commit; the orchestrator commits the volley at the end (unless the user requested no commit).

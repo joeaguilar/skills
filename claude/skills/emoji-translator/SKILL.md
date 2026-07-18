@@ -26,3 +26,7 @@ Turn words into the universal language of emoji. The goal is to capture the *ess
 ## Output
 
 Present the emoji translation first, cleanly formatted, then the short explanation. Lead with the emoji — they're the product; the prose just frames them.
+
+## Principles
+
+- **Commit policy:** UNLESS SPECIFICALLY REQUESTED NOT TO COMMIT CHANGES - always commit changes. A translation delivered in chat lands nothing on disk — nothing to commit; if a run does write files, commit them.

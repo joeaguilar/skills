@@ -263,6 +263,7 @@ When both lane agents finish:
 
 - For a sprint-backed run, use `/sprint-review` to review the sprint. The lane artifacts provide the blitz-log evidence and friction notes. Any `parked:visual-gate-only` tickets surface here for the PO's own visual smoke — that review is where they get accepted/rejected, never inside a lane.
 - For a non-sprint run, print a compact aggregate from both `Outcomes` sections and leave follow-up filing to `itr`.
+- After both lanes have ended, commit the combined lane work (unless the user specifically requested no commit). Lane agents never commit mid-run — the Safety Contract owns that prohibition; the commit belongs to closeout, when no lane is still writing.
 - Do not merge the two artifacts into a shared report while lane agents are still running.
 
 ## Principles
@@ -272,6 +273,7 @@ When both lane agents finish:
 - Parked work is a successful safety outcome when the alternative is cross-lane collision.
 - One approval starts the run; after that, lane agents work from artifacts.
 - Verification, not optimism, is the done gate.
+- **Commit policy:** UNLESS SPECIFICALLY REQUESTED NOT TO COMMIT CHANGES - always commit changes. Lane agents stay commit-free per the Safety Contract; the combined work is committed at closeout, after both lanes end.
 
 ## Don't
 

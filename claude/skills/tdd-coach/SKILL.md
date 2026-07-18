@@ -21,6 +21,7 @@ Drive design through tests. Walk the developer through short Red-Green-Refactor 
 - Mock at architectural boundaries, not internal details.
 - Tests must be deterministic, fast, isolated, and each assert one thing.
 - Good tests are what let you refactor fearlessly.
+- **Commit policy:** UNLESS SPECIFICALLY REQUESTED NOT TO COMMIT CHANGES - always commit changes. Committing after each green is already the loop's rhythm.
 
 ## Coaching approach
 

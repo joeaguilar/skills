@@ -16,3 +16,7 @@ Check:
 - dependency cycles
 - stale Claude-to-Codex ports
 
+Rules:
+
+- **Commit policy:** UNLESS SPECIFICALLY REQUESTED NOT TO COMMIT CHANGES - always commit changes. (An audit run that changes no files has nothing to commit.)
+

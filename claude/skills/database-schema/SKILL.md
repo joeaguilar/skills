@@ -28,3 +28,4 @@ Design the data layer from requirements. Interactive — **ask before modeling**
 - **Normalize, then denormalize on purpose** — never accidentally.
 - **Index for the queries you'll actually run**, not speculatively.
 - **Present trade-offs** when several designs are viable; let the user choose informed.
+- **Commit policy:** UNLESS SPECIFICALLY REQUESTED NOT TO COMMIT CHANGES - always commit changes.

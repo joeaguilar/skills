@@ -166,3 +166,4 @@ and commit SHA/subject. Do not push, open a PR, deploy, or claim universal proof
 - Verification must be green before and after repairs.
 - A verdict is evidence bounded by the attacks run, not proof for all time.
 - User work is preserved; no stash, reset, clean, amend, rebase, or force-push.
+- **Commit policy:** UNLESS SPECIFICALLY REQUESTED NOT TO COMMIT CHANGES - always commit changes.

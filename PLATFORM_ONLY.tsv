@@ -115,6 +115,8 @@ claude	skills	database-schema
 claude	skills	docker-compose
 claude	skills	microservices
 claude	skills	ml-integration
+# auto-versioning encodes the CI-based SemVer workflow; Claude forged first — graduate on its Codex port.
+claude	skills	auto-versioning
 
 # --- Claude-only agents (imported from ~/.claude/agents; awaiting Codex ports) ---
 # (none — every remaining Claude agent now has a Codex peer; see git history for the prior imports)

@@ -73,7 +73,8 @@ When two blades' triggers feel close, the rack disambiguates:
 
 Higher-order workflows may name and sequence blades because composition is their
 purpose; they are not blades and do not inherit the blade body's sibling-reference
-or never-commit constraints.
+constraint. Like every primitive, they commit what they land (UNLESS SPECIFICALLY
+REQUESTED NOT TO COMMIT CHANGES - always commit changes).
 
 | Workflow | Composition | Draw it when |
 |---|---|---|
@@ -97,7 +98,7 @@ Every blade obeys one contract. Forge to it; the rack stays consistent.
 4. **Caveman register.** Compress the mouth, keep the brain byte-for-byte (commands, thresholds, flags, the emitted per-agent prompt template, the 4-knob settings). Method: `../COMPRESSION.md`. Fragments + arrows; the contract loses nothing.
 5. **Voice — speak twice, silent between.** A `## Voice` section with in-character templates. The skill surfaces only at the **throw** and the **return** — no progress chatter. `{slots}` are the contract; the flavor is mouth. Each blade carries its own signature 印 (see the rack).
 6. **Right-size & clamp.** Default and clamp on the fan-width flag (fan-of-agents: 2–5, default 5; synthesis/monitoring degrades past ~5, and wide fan-outs trip API rate-limit cascades). State the clamp.
-7. **Write by default, never commit.** Execution blades edit files in disjoint sets (overlapping edits clobber) simply by being invoked — no flag gates the write; the orchestrator never commits/pushes/PRs — the user reviews. Read-only is **not** a mode of an execution blade — it is its own blade (`feint` 虚, the empty attack). Pure-analysis blades (`pre-mortem`, `tsugi`, and read phases like `scout-strike`'s scouts) touch nothing by nature.
+7. **Write by default, commit by default.** Execution blades edit files in disjoint sets (overlapping edits clobber) simply by being invoked — no flag gates the write. Thrown agents never touch git; the orchestrator is the sole committer and commits the landed change at Deliver (Conventional Commits) — UNLESS SPECIFICALLY REQUESTED NOT TO COMMIT CHANGES - always commit changes. Never push/PR/branch — the user reviews the commits. Read-only is **not** a mode of an execution blade — it is its own blade (`feint` 虚, the empty attack). Pure-analysis blades (`pre-mortem`, `tsugi`, and read phases like `scout-strike`'s scouts) touch nothing by nature — nothing landed, nothing to commit.
 8. **The Meiyaku (盟約).** Every prompt a blade emits to a thrown agent — worker, critic, challenger, proposer, judge, scout, router, striker — opens with the oath block below, **byte-for-byte**, before the role text. It is brain, not mouth: never compress, reword, or trim it (`./validate-skills.sh` §7 kills any drifted copy). Only a blade that throws no one (`tsugi`) carries no oath.
 
 ### The Meiyaku — the oath every thrown agent swears
@@ -145,7 +146,7 @@ description: ⟨one-line what-it-does⟩. ⟨ninja posture line⟩. Trigger when
 | `--out=path` | conversation | persist deliverable |
 | `--confirm` | off | the ONLY gate — print plan, wait |
 
-**No `--write` flag.** Execution blades write by default — invoking the blade lands the change on disk (disjoint file sets; never commits). There is no read-only mode on an execution blade; read-only is its own blade (`feint` 虚). A blade whose task has no disk surface (a pure question, an analysis) simply returns its answer — nothing to land is not a miss.
+**No `--write` flag.** Execution blades write by default — invoking the blade lands the change on disk (disjoint file sets; the orchestrator commits at Deliver, thrown agents never do). There is no read-only mode on an execution blade; read-only is its own blade (`feint` 虚). A blade whose task has no disk surface (a pure question, an analysis) simply returns its answer — nothing to land is not a miss.
 
 ## Roles & artifacts
 - **You** — throw the task. No live decisions unless `--confirm`.
@@ -162,7 +163,7 @@ No tracker/graph/sprint deps — stands alone.
 ## Phase 3 — Deliver … Return template + the merged deliverable.
 
 ## Principles … ⟨the 4-knob settings restated as terse laws⟩
-## Don't … ⟨gate-only-on-confirm · never commit · stay-in-cut · the blade's specific footgun⟩
+## Don't … ⟨gate-only-on-confirm · no push/PR — commit unless the user said not to · stay-in-cut · the blade's specific footgun⟩
 ```
 
 ### Registering a new blade

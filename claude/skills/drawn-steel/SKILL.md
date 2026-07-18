@@ -160,7 +160,7 @@ Terse. Emit, in order:
 
 - **Return** template (rung that drew blood + rungs climbed + bar cleared) — or **Ladder exhausted** if no rung passed.
 - **The deliverable** — the passing rung's result (to `--out` if set; on disk). On exhaustion, the best rung's result + the explicit gap.
-- **Next step** — review and commit (the skill never commits).
+- **Next step** — commit the landed change (the orchestrator commits; skipped only when the user specifically requested no commit).
 
 A pass means *this rung cleared this bar* — report which rung and how many you spent, so the cost is visible. Don't inflate a cheap-rung pass into more certainty than the bar earned.
 
@@ -174,7 +174,8 @@ A pass means *this rung cleared this bar* — report which rung and how many you
 - **Stop the instant a rung passes.** The first rung to clear the bar is the deliverable — do not keep climbing. Cost-awareness is the whole point.
 - **Spend effort only where the cheap path breaks.** Don't burn a heavy multi-agent rung on what one quick agent solves; don't under-power a hard task either — climb until it clears.
 - **Right-size the ladder.** Default the proposed rungs, clamp 2–4; a trivial task gets a short ladder, often one rung.
-- **Nothing to land is not a miss.** A task with no disk surface (a pure question, an analysis) has nothing to land — the passing rung's answer is the deliverable, not a miss.
+- **Nothing to land is not a miss.** A task with no disk surface (a pure question, an analysis) has nothing to land — the passing rung's answer is the deliverable, not a miss. And nothing landed means nothing to commit.
+- **Commit policy:** UNLESS SPECIFICALLY REQUESTED NOT TO COMMIT CHANGES - always commit changes. Rung agents never commit (the orchestrator owns git); the orchestrator commits the landed change at Deliver.
 - **Fire without a gate; run to a pass or an exhausted ladder.** `--confirm` is the only pause.
 
 ## Don't
@@ -185,4 +186,4 @@ A pass means *this rung cleared this bar* — report which rung and how many you
 - Don't keep climbing after a rung passes — stop and deliver the cheapest rung that cleared the bar.
 - Don't build a tall ladder for a trivial task — clamp 2–4 rungs; fewer is fine.
 - Don't launder an exhausted ladder into a pass — surface the best rung + what's still missing as a real failure.
-- Don't commit, push, or PR — the user reviews and commits.
+- Don't push or PR — and skip the commit only when the user specifically requested not to; otherwise the orchestrator commits the landed change.

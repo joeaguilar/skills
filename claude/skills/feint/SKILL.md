@@ -141,6 +141,7 @@ Speak twice: when the probers are loosed, when the preview returns. `{slots}` ar
 - **Tolerant probe pass.** A lost prober is a thinner preview, noted and passed — no retry, no respawn.
 - **Right-size.** Probes default 1, clamp 2–5; split only when one prober can't draft the whole change cleanly.
 - **The preview is the product.** Terse elsewhere; the withheld cut is what you hand back.
+- **Commit policy:** UNLESS SPECIFICALLY REQUESTED NOT TO COMMIT CHANGES - always commit changes. The feint lands nothing on disk — nothing landed, nothing to commit.
 
 ## Don't
 

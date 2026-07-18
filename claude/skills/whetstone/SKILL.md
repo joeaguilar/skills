@@ -156,7 +156,7 @@ When the artifact is a file, apply the revision to its file(s) — same file, no
 
 **Stop** when: the best version **meets the bar** (→ done, stop early) · a pass yields **no meaningful gain** over the prior best (converged — grinding a dull stone; stop) · `--passes` **exhausted** (→ deliver best; if it still misses the bar, that's the **No edge** case). Two regressions in a row also = converged — stop.
 
-When the artifact is a file, only the best version stays on disk by default; if a pass regresses, restore the prior best to the file. When the artifact has no file on disk — pure prose, a spec, a design in words — the sharpened text is returned inline; that is the deliverable's natural form, not a miss. Orchestrator never commits.
+When the artifact is a file, only the best version stays on disk by default; if a pass regresses, restore the prior best to the file. When the artifact has no file on disk — pure prose, a spec, a design in words — the sharpened text is returned inline; that is the deliverable's natural form, not a miss. Revisers never commit; the orchestrator commits the sharpened file at the end — unless the user asked for no commit.
 
 ---
 
@@ -174,7 +174,7 @@ Terse. Emit, in order:
 
 - **Return** template (or **No edge** if passes spent and the bar's unmet) — `{used}/{passes}`, bar met?, what each pass sharpened, which pass was best.
 - **The converged artifact** — the single best version (to `--out` if set; on disk when the artifact is a file; returned inline when it has no file).
-- **Next step** — review and commit (the skill never commits).
+- **Commit** — when the artifact is a file, the orchestrator commits the sharpened version, unless the user asked for no commit.
 
 ---
 
@@ -188,6 +188,7 @@ Terse. Emit, in order:
 - **Independence sharpens.** A separate critic each pass sees what the reviser can't; default to it.
 - **Right-size the grind.** Default 3, clamp 1–6 — past 6 the stone takes off more than it sets.
 - **Fire without a gate; run to convergence.** `--confirm` is the only pause.
+- **Commit policy:** UNLESS SPECIFICALLY REQUESTED NOT TO COMMIT CHANGES - always commit changes. An artifact with no file on disk has nothing to commit.
 
 ## Don't
 
@@ -197,5 +198,5 @@ Terse. Emit, in order:
 - Don't keep grinding once the bar is met or a pass adds nothing — stop on convergence.
 - Don't over-revise: a pass changes what the critique calls out and preserves the rest.
 - Don't slice the artifact across agents or run independent attempts — this is one artifact, one loop.
-- Don't commit, push, or PR — the user reviews and commits.
+- Don't push or PR. The reviser never commits — the orchestrator commits the sharpened file, unless the user asked otherwise.
 - Don't exceed 6 passes — diminishing returns, and the stone starts grinding away what was good.

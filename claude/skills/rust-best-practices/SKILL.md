@@ -52,6 +52,8 @@ needed section instead of loading unrelated detail.
    move CPU-heavy work to `spawn_blocking` or Rayon.
 7. Keep `unsafe` rare, small, documented with `SAFETY:` invariants, and covered
    by tests or Miri when practical.
+8. **Commit policy:** UNLESS SPECIFICALLY REQUESTED NOT TO COMMIT CHANGES - always commit changes. A review-only or advisory pass that touches no files has
+   nothing to commit; when this skill's edits land, commit them.
 
 ## Review Checklist
 

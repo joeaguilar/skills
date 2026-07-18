@@ -310,6 +310,7 @@ rolling-campaign leg complete
 - Every retry is 3-capped; the 3rd failure deflects to a filed `itr` issue, never a 4th try. The workflow always terminates.
 - Verification replaces live PO acceptance; the PO reviews rendered reports async, per leg.
 - Campaign state is compact JSON; HTML comes from the renderer; file ownership controls parallelism.
+- **Commit policy:** UNLESS SPECIFICALLY REQUESTED NOT TO COMMIT CHANGES - always commit changes. Each leg's orchestrator commits its verified work before writing the handoff — a fresh process must inherit committed state, not a dirty tree.
 
 ## Don't
 

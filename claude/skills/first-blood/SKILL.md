@@ -147,7 +147,7 @@ Report AS SOON AS you have a verdict — don't sit on a clearing result:
 Your final message IS your result — data, not chat. Be self-contained.
 ```
 
-File sets disjoint — every runner writes. Orchestrator never commits — user reviews and commits.
+File sets disjoint — every runner writes. Runners never commit — the orchestrator commits the winner at the end, unless the user asked not to.
 
 ---
 
@@ -170,7 +170,7 @@ Terse. Emit, in order:
 
 - **First blood** template (see Voice) — the winning strategy, the bar it cleared, how many were abandoned, the runner-up.
 - **The winner** — its result/artifact (to `--out` if set; on disk). One deliverable — the winner's, not a blend of rivals.
-- **Next step** — review and commit (the skill never commits). The losers' edits were discarded; only the winner's set landed.
+- **Commit** — the orchestrator commits the winner's set; skip only if the user asked not to. The losers' edits were discarded; only the winner's set landed.
 
 Report the bar honestly — "cleared the bar" means *this bar, this race*, not "best possible". If the win was marginal or the bar was inferred, say so.
 
@@ -185,6 +185,7 @@ Report the bar honestly — "cleared the bar" means *this bar, this race*, not "
 - **Losers are abandoned, not mourned.** A fallen or cancelled runner is the cost of speculation — wasted work bought certainty and latency. No retry, no respawn.
 - **Fire without a gate; run to first blood.** `--confirm` is the only pause. Only hard stop: zero runners cleared the bar.
 - **Right-size the field.** Default 3, clamp 2–5 — more rivals cover more angles but throw away more work.
+- **Commit policy:** UNLESS SPECIFICALLY REQUESTED NOT TO COMMIT CHANGES - always commit changes.
 
 ## Don't
 
@@ -195,5 +196,5 @@ Report the bar honestly — "cleared the bar" means *this bar, this race*, not "
 - Don't crown a runner that didn't show it cleared the bar — an unchecked "done" is not first blood.
 - Don't retry, resume, or respawn a fallen runner — it just lost the race.
 - Don't give two runners a shared file — overlapping edits clobber the eventual winner.
-- Don't commit, push, or PR — the user reviews and commits.
+- Don't push or PR — commits stay local.
 - Don't exceed 5 runners — past that the wasted work outweighs the extra angle.

@@ -649,6 +649,7 @@ Cross-repo roadmaps are higher-touch than single-repo ones — ambiguity in spec
 - **Stubs are how spec sections become pullable.** `/sprint` can't pull a section that has no `itr` presence. Phase 7 creates that presence — selectively on first run, comprehensively on `--update`.
 - **The artifact is the durable record.** `docs/ROADMAP.md` ends each cycle with the current map. Reading it tells anyone — agent or human — where the project stands without re-deriving from sprint history.
 - **Spec-less mode is supported but discouraged.** It works, but the coach line at Phase 0 reminds the PO that `/alignment` first is the higher-leverage path.
+- **Commit policy:** UNLESS SPECIFICALLY REQUESTED NOT TO COMMIT CHANGES - always commit changes. Once Phase 9 lands the artifact, commit it — the durable record belongs in history, and the PO can opt out per this rule. A `--dry-run` writes nothing and so has nothing to commit.
 
 ---
 

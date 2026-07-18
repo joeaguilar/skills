@@ -141,3 +141,7 @@ These come up constantly and will mislead you if you don't account for them. The
 ## Reporting back to the user
 
 When you run kgr, tell the user the *answer*, not the command output. Cite files as `path/to/file.py:LINE` from the JSON. If the result is large (e.g. dozens of references), summarize counts and show the most relevant entries — don't dump the whole array.
+
+## Principles
+
+- **Commit policy:** UNLESS SPECIFICALLY REQUESTED NOT TO COMMIT CHANGES - always commit changes. kgr itself is read-only navigation — a run that changes no files leaves nothing to commit.

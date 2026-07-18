@@ -128,3 +128,7 @@ error_start = "^BOOM:"
 Quote the contract line verbatim when reporting a gate result — it carries
 exit, counts, duration, and the log path in one greppable line. For failures,
 show the extracted error block(s), not raw log dumps.
+
+## Principles
+
+- **Commit policy:** UNLESS SPECIFICALLY REQUESTED NOT TO COMMIT CHANGES - always commit changes. gatr itself writes only logs outside the repo — a gate run alone leaves nothing to commit — but a green gate on edited work is the cue to commit that work.

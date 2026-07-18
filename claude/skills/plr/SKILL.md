@@ -89,3 +89,7 @@ returns `body` and `path`.
 
 `plr upgrade` rebuilds and reinstalls from the source checkout — run it only when
 the user explicitly asks to update plr.
+
+## Principles
+
+- **Commit policy:** UNLESS SPECIFICALLY REQUESTED NOT TO COMMIT CHANGES - always commit changes. Local-scope prompts live in the repo's `.plr/` — commit what lands there; `profile`/`global` scopes live outside the repo, nothing to commit.

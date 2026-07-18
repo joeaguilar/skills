@@ -35,6 +35,7 @@ Works for a single feature, an enhancement, or a greenfield project concept (it 
 - **Acceptance criteria must be testable.** "Works well" is not a criterion.
 - **Cite real code.** Reference actual files/modules, not hypothetical ones.
 - **No estimates or timelines** — sizing belongs to `/roadmap` and `/sprint`.
+- **Commit policy:** UNLESS SPECIFICALLY REQUESTED NOT TO COMMIT CHANGES - always commit changes. Commit the written spec file as part of Phase 3.
 
 ## Don't
 

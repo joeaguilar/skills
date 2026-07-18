@@ -145,6 +145,7 @@ can be down-tiered.
 - **Tags use exact model names** so a future model swap is one bulk retag:
   `itr bulk --tag route:<old> update --add-tag route:<new> --remove-tag route:<old>`.
 - **Routing priority: intelligence > taste > cost.** Cost breaks ties only.
+- **Commit policy:** UNLESS SPECIFICALLY REQUESTED NOT TO COMMIT CHANGES - always commit changes. Groom's only writes are tracker tags — when those land in a tracked file, commit them; a `--dry` run lands nothing and has nothing to commit.
 
 ## Don't
 

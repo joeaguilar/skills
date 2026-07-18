@@ -138,6 +138,7 @@ Each issue: title = the finding summary; body = file:line, evidence, suggested f
 - **Corroboration ranks evidence, not severity.** `both` means "almost certainly real", not "automatically P0".
 - **The orchestrator verifies before it ranks.** Every surviving singleton was checked against the actual code — the report contains no finding you couldn't defend yourself.
 - **Review-only.** No lane, and not the orchestrator, edits code. The outputs are the report and (opted-in) tracker issues.
+- **Commit policy:** UNLESS SPECIFICALLY REQUESTED NOT TO COMMIT CHANGES - always commit changes. A review-only run edits no code — nothing lands, so there is nothing to commit.
 
 ## Don't
 

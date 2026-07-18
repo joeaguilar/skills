@@ -528,6 +528,7 @@ Multi-repo is a feature, not a default — most sprints stay in one repo. The sk
 - **The artifact is the durable record.** `sprint/{folder}/plan.md` ends the day with all four sections filled (or Retro marked skipped). `sprint/{folder}/retro-{date}.md` captures the per-retro process learnings; the cross-sprint view comes from listing `sprint/sprint-*/retro-*.md`.
 - **Closing the epic flips the in-flight signal.** Future `/sprint` runs will warn (but not refuse) about stacked sprints; closing makes the next planning session cleaner.
 - **Two BLOCKING gates, no more.** Gate 1 confirms scope; Gate 2 approves the full picture before any writes. PO acceptance per story is inline, not a gate.
+- **Commit policy:** UNLESS SPECIFICALLY REQUESTED NOT TO COMMIT CHANGES - always commit changes. After Phase 8 applies the plan/retro/`sprint/CURRENT`/roadmap updates, commit those review artifacts — unless the PO asked otherwise. (`--dry-run` writes nothing, so there is nothing to commit.)
 
 ---
 

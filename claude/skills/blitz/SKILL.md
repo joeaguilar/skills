@@ -327,9 +327,20 @@ Visual Gate PO-smoke gate — stories whose AC contains a Visual Gate block ONLY
        Phase 7 treats this as a soft quarantine — the wave still proceeds and the story
        resolves at /sprint-review under PO eyes.
 
-Only after the gate is fully green (and, for UI/behavioral diffs, runtime evidence is captured; and, for Visual-Gate stories, the PO has confirmed the smoke):
+Discovered-gap gate — file any gap/bug/tech-debt you find BEFORE you close:
+  If mid-ticket you discover a bug, missing wiring, tech-debt, or a gap OUTSIDE
+  the fix you're shipping (even in a file you don't own), FILE IT IN THE TRACKER
+  before you close this task — do not leave it as a prose note in your report for
+  the orchestrator to catch later. Project rule is file-every-gap-immediately
+  (memory feedback_file_itr_for_every_tech_debt). Then, if you leave a code
+  comment or blitz-log note about it, reference the filed #NNN. A gap left only
+  as a report note is how a real bug ships green: sprint-8 #421's agent found the
+  Death-clip render-path gap, wrote it as a log note instead of a ticket, and it
+  survived to review before anyone filed it as #431. File first, note second.
+
+Only after the gate is fully green (and, for UI/behavioral diffs, runtime evidence is captured; and, for Visual-Gate stories, the PO has confirmed the smoke; and every discovered gap is filed):
   - Close this task in the tracker: {close command}
-  - Report a one-paragraph summary of what you changed and the verify-gate output (last 10 lines).
+  - Report a one-paragraph summary of what you changed and the verify-gate output (last 10 lines). If you filed any gap tickets, list their #NNNs.
 
 Do NOT commit, push, or branch. The user reviews and commits at the end.
 ```
@@ -358,6 +369,23 @@ Once every wave agent (including retries) has reached a terminal state — close
 1. Run the full verify gate yourself in every repo in scope.
 2. **Green**: proceed to Phase 7 (quarantine triage), then to the next wave.
 3. **Red** on a slice no agent owned: diagnose. If the fix is small and obvious, apply it yourself and log under `Interventions`. Otherwise stop and surface to the user. Do not launch the next wave on a red gate.
+
+**Post-wave LSP diagnostics are presumed stale (itr #432).** After a wave of
+multi-file parallel edits, an LSP/rust-analyzer snapshot lags the real code state
+— a diagnostic on the freshly-edited tree is very likely noise, not a failure.
+Do NOT re-run the whole verify gate just to disprove an LSP alarm. Confirm with a
+real compiler run first; for a Rust project that means BOTH targets:
+
+```bash
+cargo check --all-targets
+cargo check --target wasm32-unknown-unknown --all-targets
+```
+
+If both are clean, the LSP diagnostic is stale — ignore it and proceed. Only a red
+`cargo check` is a real failure. Sprint-8 burned three orchestrator gate re-runs
+disproving stale LSP alarms this way (dead_code post-W2, `E0609` on an
+already-removed field post-W4, `E0425` in an unowned file post-W5). This is the
+post-wave peer of the Phase 5 "mid-edit LSP diagnostics are noise" rule.
 
 ---
 

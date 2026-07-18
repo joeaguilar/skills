@@ -2,7 +2,7 @@
 
 ## What this is
 
-The **canonical source for two parallel installable primitive distributions**: Claude payloads under `claude/` and Codex payloads under `codex/`. Skills remain the main primitive type, with `agents/` and `commands/` now managed as first-class roots. A root `install.sh` symlinks selected roots into global agent homes or local project folders.
+The **canonical source for two parallel installable primitive distributions**: Claude payloads under `claude/` and Codex payloads under `codex/`. Skills remain the main primitive type, with `agents/`, `commands/`, and `workflows/` now managed as first-class roots. A root `install.sh` symlinks selected roots into global agent homes or local project folders.
 
 Author **Claude** primitives in `claude/<primitive>/`; don't hand-edit installed copies under `~/.claude` or a target project's `.claude` directory. The Codex tree is a **separate, intentionally reworded port** — same intent, Codex phrasing (see "Two ports" below), not a byte copy.
 
@@ -15,6 +15,10 @@ skills/                         (repo root)
 ├── claude/skills/<skill>/SKILL.md     the Claude skill sources (10 skills)
 ├── claude/agents/  claude/commands/   optional Claude primitive roots
 │                                      (commands/ also holds imported legacy commands)
+├── claude/workflows/                  optional Claude-only primitive root: deterministic
+│                                      multi-agent orchestration scripts (the Workflow tool).
+│                                      No Codex counterpart — the Workflow tool doesn't exist
+│                                      there, so this root is exempt from parity checks.
 ├── claude/settings.json               canonical ~/.claude/settings.json (config primitive)
 ├── claude/MODELS.md                    source of truth for the cost/intelligence/taste table + role bindings
 ├── claude/COMPLEXITY.md                grooming rubric: ticket complexity signals → tier → model route (benchmark-grounded)
@@ -29,7 +33,7 @@ skills/                         (repo root)
 ├── CLAUDE.md  AGENTS.md  COMPRESSION.md  statusline.sh  .gitignore
 ```
 
-Global installs link roots such as `~/.claude/skills`, `~/.claude/agents`, `~/.codex/skills`, and `~/.codex/commands`. Local installs link the same roots into a target project's `.claude/` or `.codex/` directory. Skills produce artifacts **in target repos** (`itr` backlog, `sprint/{folder}/plan.md`, `STORY_STYLE.md`, `docs/ROADMAP.md`), never here.
+Global installs link roots such as `~/.claude/skills`, `~/.claude/agents`, `~/.claude/workflows`, `~/.codex/skills`, and `~/.codex/commands`. Local installs link the same roots into a target project's `.claude/` or `.codex/` directory. Skills produce artifacts **in target repos** (`itr` backlog, `sprint/{folder}/plan.md`, `STORY_STYLE.md`, `docs/ROADMAP.md`), never here.
 
 ## The skills
 
@@ -37,6 +41,10 @@ Global installs link roots such as `~/.claude/skills`, `~/.claude/agents`, `~/.c
 **Autonomous / multi-agent execution:** `overdrive` (condenses sprint+blitz+sprint-review into one hands-off loop — **caveman-compressed**, see below), `proof-campaign` (roadmap-bounded, evidence-first campaign), `rolling-campaign` (chains proof campaigns back-to-back across fresh contexts via an external headless driver), `dual-blitz` (two isolated blitz lanes for two main agents), `run-the-rivers-dry` (maximum-autonomy completion mode). `fastlane` is the **router** — it scans the project (read-only `claude/skills/fastlane/scripts/fastlane-scan.sh`) and recommends the safest fast workflow among these before execution, then hands off.
 **Standalone:** `itr` (file issues), `kgr` (codebase graph), `alignment` (stress-test a plan), `shell-prompt` (zsh prompt).
 **The Dojo — orchestration-primitive family (autonomous, ninja-voiced, caveman register):** `fan-of-agents`, `hundred-blades`, `shadow-duel`, `first-blood`, `splitting-blade`, `the-clan`, `relay`, `whetstone`, `scout-strike`, `drawn-steel`, `pre-mortem` — each a self-contained "blade" that slices a problem a different way. **`claude/DOJO.md` is the rack (catalog + composition) and the forge (authoring contract); composition lives there, never in a blade's body.**
+
+## The workflows
+
+`claude/workflows/*.js` are deterministic Workflow-tool scripts, not skills — they orchestrate fixed phases of `agent()`/`parallel()`/`pipeline()` calls rather than being interpreted by the main loop. Distinct from the sprint suite in that they trade the coached, per-story human touch for scripted repeatability, but they can still gate on a human: a script that must pause for approval simply stops and `return`s after the gated phase, and the caller resumes it later with `Workflow({scriptPath, resumeFromRunId, args})` — unchanged prior `agent()` calls cache-hit instantly, so only the newly-unlocked phase runs live. `sprint-blitz-review` is the first: it executes an already-groomed `itr` sprint backlog wave-by-wave (implement → adversarial review → repair → verify → commit), pausing for a smoke test after each wave and again before the closing sprint-review synthesis.
 
 **Composed delivery workflows:** `forge-change` owns one explicit higher-order chain—read-only scout → focused implementation → adversarial duel → repair → verification → one local commit. It is not a blade, so the Dojo blade rule against sibling references and commits does not apply to its wrapper body.
 
@@ -59,8 +67,8 @@ Global installs link roots such as `~/.claude/skills`, `~/.claude/agents`, `~/.c
 
 ## Working here
 
-- **Install/relink:** `./install.sh claude` (or `codex`/`both`). Dry-run by default; `--apply` to act; `--restore` to roll back. Use `--all-primitives` for `skills`, `agents`, and `commands`; use `--local /path/to/project` for project-scoped installs. The opt-in `config` primitive (`--primitive config` or `--primitives …,config`) links individual home files instead of a directory root — for Claude, `settings.json` + `statusline.sh` into `~/.claude/`; for Codex it is a no-op. It is **not** part of `--all-primitives`.
-- **Validate after any skill change:** `./validate-skills.sh` — flags a skill present in one tree but not the other, any Codex port whose Claude source drifted past its `PARITY.tsv` baseline, and (§6) any skill whose inline model table drifted from `claude/MODELS.md`. Intentional one-tree-only primitives are exempted via `PLATFORM_ONLY.tsv` (see "Two ports").
+- **Install/relink:** `./install.sh claude` (or `codex`/`both`). Dry-run by default; `--apply` to act; `--restore` to roll back. Use `--all-primitives` for `skills`, `agents`, `commands`, and `workflows`; use `--local /path/to/project` for project-scoped installs. `workflows` is Claude-only — selecting it (or `--all-primitives`) for `codex` is a no-op since `codex/workflows/` doesn't exist and isn't expected to. The opt-in `config` primitive (`--primitive config` or `--primitives …,config`) links individual home files instead of a directory root — for Claude, `settings.json` + `statusline.sh` into `~/.claude/`; for Codex it is a no-op. It is **not** part of `--all-primitives`.
+- **Validate after any skill change:** `./validate-skills.sh` — flags a skill present in one tree but not the other, any Codex port whose Claude source drifted past its `PARITY.tsv` baseline, and (§6) any skill whose inline model table drifted from `claude/MODELS.md`. Intentional one-tree-only primitives are exempted via `PLATFORM_ONLY.tsv` (see "Two ports"). `claude/workflows/` is exempt from cross-tree parity by design (see Layout), not via `PLATFORM_ONLY.tsv`.
 - **Model values:** `claude/MODELS.md` is the single source of truth for the cost/intelligence/taste scores and the role→model bindings skills route by (bulk/generalist/taste/floor/…). Edit it, then `./validate-skills.sh` §6 names every skill table that now disagrees. Skills route by **role**, so a model swap is usually a one-line binding edit. A skill can inject the live table into its own context with `` !`claude/scripts/models.sh table` `` (dynamic context injection — re-reads MODELS.md each run, so it can't drift).
 - Author Claude skills in `claude/skills/`; let `install.sh` link them — never author under `~/.claude`.
 

@@ -12,7 +12,7 @@ usage() {
   cat <<'USAGE'
 Usage:
   install.sh <claude|codex|both> [--apply] [--scope global|local]
-             [--primitive skills|agents|commands|all]
+             [--primitive skills|agents|commands|workflows|all]
              [--primitives skills,agents] [--all-primitives]
              [--project PATH] [--restore BACKUP_PATH]
              [--claude-home PATH] [--codex-home PATH]
@@ -29,11 +29,14 @@ Scopes:
 Options:
   --apply              Make changes. Without it, print the plan only (dry run).
   --scope SCOPE        Install scope: global or local (default: global).
-  --primitive TYPE     Primitive root: skills, agents, commands, config, or all
-                       (default: skills, preserving legacy behavior). `config`
-                       links individual home files (claude: settings.json +
-                       statusline.sh) rather than a directory root; it is opt-in
-                       and is NOT included in --all-primitives.
+  --primitive TYPE     Primitive root: skills, agents, commands, workflows,
+                       config, or all (default: skills, preserving legacy
+                       behavior). `workflows` is Claude-only (no Workflow tool
+                       on Codex) and is skipped as optional for codex under
+                       --all-primitives. `config` links individual home files
+                       (claude: settings.json + statusline.sh) rather than a
+                       directory root; it is opt-in and is NOT included in
+                       --all-primitives.
   --primitives LIST    Comma-separated primitive roots.
   --all-primitives     Select all standard primitive roots.
   --global             Alias for --scope global.
@@ -55,6 +58,8 @@ Examples:
 Codex skills must contain `.system`; installation seeds a real Codex-owned copy
 and links non-system children individually. Other primitive roots are optional
 unless selected directly. `config` is Claude-only today; for codex it is a no-op.
+`workflows` is Claude-only by design (no Workflow tool on Codex); it is skipped
+for codex under --all-primitives and errors if selected directly for codex.
 USAGE
 }
 
@@ -110,8 +115,8 @@ esac
 
 validate_primitive() {
   case "$1" in
-    skills|agents|commands|config) ;;
-    *) echo "Error: primitive roots must be skills, agents, commands, or config." >&2; exit 2 ;;
+    skills|agents|commands|workflows|config) ;;
+    *) echo "Error: primitive roots must be skills, agents, commands, workflows, or config." >&2; exit 2 ;;
   esac
 }
 
@@ -135,7 +140,7 @@ platforms_for_selection() {
 
 primitives_for_selection() {
   case "$PRIMITIVE_SEL" in
-    all) printf '%s\n' skills agents commands ;;
+    all) printf '%s\n' skills agents commands workflows ;;
     *)
       for primitive in ${PRIMITIVE_SEL//,/ }; do
         echo "$primitive"

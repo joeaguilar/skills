@@ -1,6 +1,6 @@
 ---
 name: blitz
-description: Orchestrate a parallel agent blitz that clears a task backlog by spawning conflict-free waves of subagents. Trigger when the user types `/blitz`, or asks to "blitz the backlog", "execute a parallel agent blitz", "fan out the queue", "clear the open issues in parallel", "groom and sprint through the backlog", or similar phrasing. Language-agnostic — auto-detects the verify gate (Cargo, npm, pytest, go, Make, …) and defers to the configured tracker (default `itr`). Do NOT trigger for serial single-task work, or when the user just wants a plan without execution.
+description: Orchestrate a parallel agent blitz that clears a task backlog by spawning conflict-free waves of subagents. Trigger when the user types `/blitz`, or asks to "blitz the backlog", "execute a parallel agent blitz", "fan out the queue", "clear the open issues in parallel", "groom and sprint through the backlog", or similar phrasing. Language-agnostic — auto-detects the verify gate (Cargo, npm, pytest, go, Make, …) and defers to the configured tracker (default `itr`). Do NOT trigger for serial single-task work, when the user just wants a plan without execution, or for chain-based continuous delivery with no wave barriers (use /mission).
 ---
 
 # blitz — parallel agent backlog clearance

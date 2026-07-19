@@ -4,7 +4,7 @@ description: >-
   Choose the best multi-agent workflow for a project before execution. Trigger
   when the user types `/fastlane`, asks to "fastlane" work, pick an agent
   workflow, choose between proof-campaign, blitz, crossfire-blitz, dual-blitz,
-  overdrive, run-the-rivers-dry, or other multi-agent modes, or optimize for speed while
+  overdrive, mission, run-the-rivers-dry, or other multi-agent modes, or optimize for speed while
   controlling security, project safety, scope creep, drift, verification, and
   autonomy risk. Do NOT trigger to actually RUN one of those workflows (this
   skill only routes, then hands off), for single-task slicing across agents (use
@@ -27,6 +27,7 @@ Always consider at least these workflows:
 - `/crossfire-blitz`: the model-routed variant of `/blitz` — each task runs on the cheapest capable model (gpt-5.6-terra via the Codex plugin for bulk/mechanical, opus-4.8 for taste-critical) then a *different* model cross-reviews before close, escalating to a smarter model on a miss. Runs in the **shared tree like `/blitz`** (self-healing gate, no mid-run commits — one end-of-run commit) with **≤1 Codex task per wave** by default; opt-in `codex_parallel=on` fans Codex into worktrees (with per-wave commits) for throughput. **fable-5 is off by default** (cost-gated `fable=off|on`). Best when a backlog mixes cheap grunt work with user-facing/taste-sensitive work and the user wants cost-optimized execution plus an independent second-model review. Requires the codex plugin authenticated (`/codex:setup`) for the Codex lanes.
 - `/dual-blitz`: two isolated main-agent lanes, each running an inner blitz. Best when a large backlog splits cleanly into two disjoint subsystems. Do not use when lanes might share files, lockfiles, generated output, schemas, migrations, route tables, or API contracts.
 - `/overdrive`: autonomous plan, execute, and review loop with per-wave commits and rollback points. Best when the user wants end-to-end sprint clearance, accepts orchestrator commits/stashing, and can provide visual smoke verdicts or use `--auto` with a real time/wave cap.
+- `/mission`: chain-based continuous delivery — dependency-ordered chains with falsifiable premises, no wave barriers, a commit per verified link, adversarial per-link review, and 3-seat councils that can rescope or cancel a chain mid-flight with a falsification report. Best for deep dependency stacks, discovery-heavy work, or plans that might be wrong; heavier per-task ceremony than `/blitz`/`/overdrive`, so avoid it for backlogs of independent bounded tickets.
 - `/run-the-rivers-dry`: maximum-autonomy completion mode for hard, broad, or ambiguous problems. Best when the user asks Claude to go all-in and persist until proven complete. Use `--mortal` when the user wants normal prose.
 
 You may also recommend another available workflow when it is clearly safer: `/sprint` for planning only, `/roadmap` for missing roadmap alignment, `/sprint-review` for review only, `/pre-mortem` for risky plans, or `/alignment` when human-agent expectations are unclear. When the task is ONE problem to slice across agents rather than a backlog to clear, defer to the Dojo (see `claude/DOJO.md`): `/fan-of-agents`, `/the-clan`, `/relay`, `/splitting-blade`, `/scout-strike`, `/first-blood`, `/hundred-blades`, `/drawn-steel`, `/shadow-duel`.
@@ -89,6 +90,7 @@ Use this default routing after applying the rubric:
 - Choose `/crossfire-blitz` over `/blitz` when the same prepared backlog would benefit from per-task model routing — a mix of mechanical work (cheap on gpt-5.6-terra) and taste-critical work (opus-4.8) — and the user wants an independent cross-model review before each close. It needs the codex plugin authenticated for the Codex lanes; if Codex is unavailable, or the backlog is uniform mechanical work with no taste-sensitive surface, fall back to `/blitz`.
 - Choose `/dual-blitz` only when two isolated lanes are obvious. If file ownership is uncertain, lanes are imbalanced, or shared artifacts exist, park the split and use `/blitz` or `/proof-campaign`.
 - Choose `/overdrive` when the user wants autonomous plan-execute-review and the repo can support commits, rollback, tracker updates, and visual smoke gates. Avoid it when a dirty tree cannot be stashed safely or when the user does not want orchestrator commits.
+- Choose `/mission` when the work is a deep dependency stack or the plan itself is uncertain — its premises, councils, and cancellation machinery pay for themselves exactly when assumptions might be wrong. Avoid it for backlogs of independent bounded tickets, where `/blitz` or `/overdrive` is simpler and faster.
 - Choose `/run-the-rivers-dry` when the problem is not primarily a prepared backlog or roadmap slice, and the user wants maximum persistence on one broad goal. Add `--mortal` unless the user explicitly wants the chronicle style.
 
 ## Output contract

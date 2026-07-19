@@ -1,6 +1,6 @@
 ---
 name: overdrive
-description: "Autonomous plan→execute→review loop condensing /sprint + /blitz + /sprint-review: pre-plans implementation and owned files per ticket, runs conflict-free waves on one branch with a commit per wave for clean rollback; the only human touch is a per-wave smoke test (`--auto` defers it to end-of-run). Loops until every ticket closes or quarantines. Trigger: `/overdrive`, \"run the whole sprint autonomously\", \"swarm the backlog hands-off\". NOT for coached single-phase work (use /sprint, /blitz, or /sprint-review)."
+description: "Autonomous plan→execute→review loop condensing /sprint + /blitz + /sprint-review: pre-plans implementation and owned files per ticket, runs conflict-free waves on one branch with a commit per wave for clean rollback; the only human touch is a per-wave smoke test (`--auto` defers it to end-of-run). Loops until every ticket closes or quarantines. Trigger: `/overdrive`, \"run the whole sprint autonomously\", \"swarm the backlog hands-off\". NOT for coached single-phase work (use /sprint, /blitz, or /sprint-review) or chain-based continuous delivery with no wave barriers (use /mission)."
 ---
 
 # /overdrive — autonomous plan · swarm · review loop

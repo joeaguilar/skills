@@ -188,9 +188,12 @@ The **chain-map** exists as a *derived index* — rebuilt on demand from tracker
 Minimalist seat's layout, amended per the skeptic (FACTS at project root):
 
 ```
-FACTS.jsonl                       # PROJECT-scoped ledger (flock'd append helper)
 missions/
 ├── CURRENT                       # one line: active mission slug
+├── FACTS.jsonl                   # project-lifetime ledger — lives in missions/ so the skill's
+│                                 #   artifacts stay contained, but is NEVER per-slug: it spans
+│                                 #   missions (the skeptic's scope argument holds; only the
+│                                 #   location moved). Orchestrator is sole writer in v1.
 └── <slug>/
     ├── contract.md               # immutable; amendments append as versioned sections
     │     outcomes · non-goals · acceptance-oracles (executable) · budget arithmetic ·
@@ -212,6 +215,8 @@ Links are **tracker issues** (`chain:<id>` label, blocked-by edges for order, Do
 ---
 
 ## 12. Open items
+
+**Packaging (resolved 2026-07-18):** implemented as `claude/skills/mission/SKILL.md` — a single caveman-register suite skill (autonomous-execution family, not a Dojo blade, not a Workflow script: the mutable DAG and intervention verbs fight deterministic scripts). v1 is attended-with-defaults; single orchestrator = the write gate (subagents never touch git), lanes = worktree-isolated link agents landed serially via patch + integration gate; budget metered in subagent tokens; DoD/oracles run through `gatr`; council seats on the `ambiguous` role (opus) with optional Codex-sol evidence seat. The tracker capability check passed: `itr` provides blocked-by edges with mutation-time cycle rejection, tags, claim, and `supersedes` relations — tracker-is-the-graph holds.
 
 - **Integration mechanics for `landed`** across 2–6 concurrent lanes (shared integration branch vs serialized merge queue). Related: whether git multi-ref transactions can serialize the merge gate across worktrees, or a single gatekeeper process is required (prior-art seat leans gatekeeper).
 - **Fever-chart zone thresholds** — no empirical green/yellow/red boundaries exist for agent work; initial zones must be guessed and tuned against real missions.

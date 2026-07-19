@@ -1,6 +1,6 @@
 ---
 name: proof-campaign
-description: "Run a roadmap-bounded autonomous campaign where agents only close work they can PROVE — tests, evidence, screenshots, full verify gates — with `campaign/{N}-...` artifacts, wave execution, scout discovery, automatic review/retro, and PO HTML reports. Trigger: `/proof-campaign`, `/campaign`, \"run a campaign from the roadmap\". NOT for chaining multiple campaigns across cleared contexts (use /rolling-campaign)."
+description: "Run a roadmap-bounded autonomous campaign where agents only close work they can PROVE — tests, evidence, screenshots, full verify gates — with `campaign/{N}-...` artifacts, wave execution, scout discovery, automatic review/retro, and PO HTML reports. Trigger: `/proof-campaign`, `/campaign`, \"run a campaign from the roadmap\". NOT for chaining multiple campaigns across cleared contexts (use /rolling-campaign) or chain-based mission delivery with dependency-ordered lanes (use /mission)."
 ---
 
 # /proof-campaign - roadmap-bounded proof work

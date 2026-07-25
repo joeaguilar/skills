@@ -91,12 +91,18 @@ case "$cmd" in
         delete seen; names(seen)
         for (n in seen) {
           if (!(n in KNOWN)) {
-            printf "  UNKNOWN MODEL %s:%d  \"%s\" is not in the MODELS.md Scores table or its models-allow list\n", \
+            # WARN, never an error. MODELS.md is a guide, not a rule: a name it
+            # does not list may be a half-finished rename, or a deliberate call.
+            # This tool cannot tell them apart, so it reports and gets out of the
+            # way. It must never fail a commit.
+            # (No apostrophes in this awk block — it is single-quoted in sh.)
+            printf "  WARN %s:%d  \"%s\" is not in the MODELS.md Scores table or its models-allow list\n", \
                    FILENAME, FNR, n
-            bad++
           }
         }
       }
+      # Only score drift is an error: an inlined copy that disagrees with the
+      # canonical table is simply wrong data, and nobody chose it.
       END { exit (bad>0 ? 1 : 0) }
     ' "$MODELS_MD" $files
     ;;

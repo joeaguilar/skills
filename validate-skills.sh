@@ -197,13 +197,27 @@ fi # FRONTMATTER_ONLY
 
 echo
 echo "== 6. Model table drift (claude/skills tables vs claude/MODELS.md) =="
-# Runs in every mode (incl. --frontmatter-only pre-commit gate): a drifted scores
-# table ships wrong routing, so it must block a commit like broken frontmatter does.
+# Two severities, on purpose. MODELS.md is a GUIDE, not a rule — it must never
+# block what a skill does:
+#   ERROR  score drift  — an inlined copy of the scores table that disagrees with
+#                         the canonical one is simply wrong data; nobody chose it.
+#                         Blocks a commit, like broken frontmatter.
+#   WARN   unknown name — a skill naming a model the table doesn't list may be a
+#                         half-finished rename or a deliberate call. Reported so a
+#                         stalled rename is visible; never fails the gate.
 if [ -x "$REPO_DIR/claude/scripts/models.sh" ]; then
-  if drift="$("$REPO_DIR/claude/scripts/models.sh" check)"; then
-    echo "  OK: every inline model table matches claude/MODELS.md"
+  if out="$("$REPO_DIR/claude/scripts/models.sh" check)"; then
+    if [ -n "$out" ]; then
+      printf '%s\n' "$out"
+      n=$(printf '%s\n' "$out" | /usr/bin/grep -c '  WARN ')
+      echo "  -> $n name(s) outside claude/MODELS.md. Fine if deliberate; if this is a"
+      echo "     half-finished rename, finish it or add the name to the models-allow line."
+      warns=$((warns+n))
+    else
+      echo "  OK: every inline model table matches claude/MODELS.md"
+    fi
   else
-    printf '%s\n' "$drift"
+    printf '%s\n' "$out"
     echo "  -> edit the skill table to match claude/MODELS.md (the source of truth), or update MODELS.md"
     errors=$((errors+1))
   fi

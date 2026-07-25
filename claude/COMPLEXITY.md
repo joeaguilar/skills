@@ -52,7 +52,7 @@ Sum the five signals (0–10), apply the verifiability modifier, then route:
 | **C0 — trivial** | 0–1 | gpt-5.5 (`codex exec`) | floor | `complexity:C0`, `route:gpt-5.5` |
 | **C1 — routine** | 2–3 | gpt-5.6-terra (luna for cost-sensitive batches) | bulk | `complexity:C1`, `route:gpt-5.6-terra` |
 | **C2 — standard** | 4–5 | **sonnet-5** if spec-complete build work; terra if mechanical-heavy | — / bulk | `complexity:C2`, `route:sonnet-5` |
-| **C3 — complex** | 6–7 | **gpt-5.6-sol** if novelty-dominant; **opus-4.8** if ambiguity/blast-radius-dominant | — / ambiguous | `complexity:C3`, `route:opus-4.8` |
+| **C3 — complex** | 6–7 | **gpt-5.6-sol** if novelty-dominant; **opus-5** if ambiguity/blast-radius-dominant | — / ambiguous | `complexity:C3`, `route:opus-5` |
 | **C4 — frontier** | 8–10 | **fable-5** (gated: `fable=on` / `--fable`) — but try to slice first | taste-hero | `complexity:C4`, `route:fable-5` |
 
 ### C0 — trivial / mechanical → gpt-5.5
@@ -97,11 +97,11 @@ sweep), terra remains the better per-dollar route.
   or better score. This is the "requires GPT" tier: novel reasoning per dollar
   is where the GPT-5.6 line is untouchable.
 - **Ambiguity- or blast-radius-dominant** (judgment across a coupled codebase,
-  underspecified requirements, risky refactor): **opus-4.8**. It is the
+  underspecified requirements, risky refactor): **opus-5**. It is the
   consistency pick — #2 on FrontierSWE (75% dominance), #1 full-coverage run on
   SWE-Marathon (26%), 82.7% on Vibe Code — strong on *every* axis where Sol is
   only strong on two.
-- **Taste=2 always forces opus-4.8 minimum** regardless of the other signals
+- **Taste=2 always forces opus-5 minimum** regardless of the other signals
   (MODELS.md taste bar: > 7 — no GPT model or sonnet-5 clears it).
 
 ### C4 — frontier → fable-5, but slice first
@@ -116,7 +116,7 @@ gated per MODELS.md (`fable=on` / `--fable`).
 
 ## Hard overrides (apply after scoring)
 
-1. **Taste-critical → opus-4.8 or fable-5, always** — Vibe Code's UI-tested
+1. **Taste-critical → opus-5 or fable-5, always** — Vibe Code's UI-tested
    board has Anthropic in the top four spots; the MODELS.md taste bar stands.
 2. **Never haiku-4.5, any tier** — 4.0% ARC-AGI-2, 11.4% Vibe Code. Confirmed.
 3. **Never gpt-5.5 on long-horizon or weakly-gated work** — highest
@@ -126,8 +126,8 @@ gated per MODELS.md (`fable=on` / `--fable`).
    SWE-Marathon). Pair Claude execution with a non-Claude reviewer (the
    `crossfire` pattern) before close.
 5. **Escalation ladder unchanged** (MODELS.md): a miss escalates
-   `gpt-5.6-terra → gpt-5.6-sol → opus-4.8 → fable-5 (gated)` without asking.
-   A sonnet-5 miss escalates directly to opus-4.8. On escalation, re-tag:
+   `gpt-5.6-terra → gpt-5.6-sol → opus-5 → fable-5 (gated)` without asking.
+   A sonnet-5 miss escalates directly to opus-5. On escalation, re-tag:
    `--remove-tag route:X --add-tag route:Y --add-tag escalated:from-X`.
 
 ## Grooming procedure (itr)
@@ -174,6 +174,7 @@ update this table and any tier reasoning that no longer holds.
 |---|---|---|---|---|
 | fable-5 | 90% (#1) | ~29.9% (partial) | — | 90.4%, $12.51 (#1) |
 | opus-4.8 | 75% (#2) | 26.0% (#1 full) | 72.1%, $2.74 | 82.7%, $5.09 (#2) |
+| opus-5 | — | — | — | — |
 | sonnet-5 | — | — | — | 81.3%, $38.08 (#3) |
 | gpt-5.6-sol | — | — | 92.5%, $1.44 (#1) | 80.5%, $33.40 (#4) |
 | gpt-5.6-terra | — | — | 83.9%, $1.09 | 67.8%, $10.82 |
@@ -183,3 +184,10 @@ update this table and any tier reasoning that no longer holds.
 
 (FrontierSWE and SWE-Marathon don't list the GPT-5.6 line or sonnet-5 yet;
 absence is absence of data, not a zero score.)
+
+**opus-5 is unmeasured here — that row is empty on purpose.** The tiers above now
+route to opus-5, but this snapshot predates it (fetched 2026-07-11; opus-5 adopted
+2026-07-25). The **opus-4.8 row is kept deliberately**: it is real measured data,
+and it is the closest available proxy for the Opus rung until these are re-pulled.
+Do not relabel it as opus-5 — that would invent benchmark numbers. Fill the opus-5
+row on the next refresh.

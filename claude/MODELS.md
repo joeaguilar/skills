@@ -24,8 +24,19 @@ unsupervised. `Taste` = UI/UX, code quality, API design, copy.
 | gpt-5.5 | 9 | 7 | 5 |
 | haiku-4.5 | 7 | 3 | 5 |
 | sonnet-5 | 5 | 5 | 7 |
-| opus-4.8 | 7 | 7 | 8 |
+| opus-5 | 7 | 8 | 8 |
 | fable-5 | 2 | 9 | 9 |
+
+**opus-5 replaced opus-4.8 as the Opus rung on 2026-07-25.** Pricing is identical
+($5/$25 per MTok), so **cost stays 7**; intelligence goes **7 → 8** (Anthropic
+documents Opus 5 as a step-change over 4.8 on deep reasoning, agentic and
+long-horizon work); taste stays **8**, so the `> 7` taste bar and the
+opus-vs-fable split are unchanged. **fable-5 is still the capability ceiling** —
+Opus 5 is explicitly "half the cost of Fable 5", with Fable 5 remaining the
+highest-capability tier, which is why fable keeps intelligence 9 and the gated
+`taste-hero` rung. `opus-4.8` is still a live model (same price, still reachable)
+but has **no routing role here**; it survives only as Opus 5's refusal fallback —
+cyber-category refusals on `claude-opus-5` route to `claude-opus-4-8`.
 
 ## Roles → model
 
@@ -38,19 +49,19 @@ generalist**" never changes when terra replaces gpt-5.5.)
 | generalist | gpt-5.6-terra | the default Codex generalist Claude spins up when needed |
 | bulk | gpt-5.6-terra | bulk / mechanical implementation, migrations, data transforms |
 | floor | gpt-5.5 | cheapest floor for the most trivial mechanical work |
-| ambiguous | opus-4.8 | judgment-heavy but not user-facing |
-| taste | opus-4.8 | user-facing / taste-critical default (taste must be > 7) |
+| ambiguous | opus-5 | judgment-heavy but not user-facing |
+| taste | opus-5 | user-facing / taste-critical default (taste must be > 7) |
 | taste-hero | fable-5 | hero / flagship taste surface — gated (`fable=on` / `--fable`) |
 | computer-use | gpt-5.6-terra | Codex real-UI runtime verification (the `codex-computer-use` skill) |
 | codex-default | gpt-5.6-terra | default `-m` for `codex exec` |
 | never | haiku-4.5 | never used, any role |
 
 **Escalation ladder (non-taste)** — cheapest rung first, escalate a miss without asking
-until the fable rung (gated): `gpt-5.6-terra → gpt-5.6-sol → opus-4.8 → fable-5`.
+until the fable rung (gated): `gpt-5.6-terra → gpt-5.6-sol → opus-5 → fable-5`.
 
 **Routing priority when axes conflict / for anything that ships:** intelligence > taste
 > cost. Cost is a tie-breaker only. No Codex generalist (terra/sol/luna/gpt-5.5) or
-sonnet-5 clears the taste bar (> 7) — taste work is opus-4.8 or fable-5.
+sonnet-5 clears the taste bar (> 7) — taste work is opus-5 or fable-5.
 
 ## Reach — how to invoke each model
 
@@ -61,7 +72,7 @@ sonnet-5 clears the taste bar (> 7) — taste work is opus-4.8 or fable-5.
 | gpt-5.6-luna | Codex — `codex exec -m gpt-5.6-luna` (cheaper terra-peer) |
 | gpt-5.5 | Codex — `~/.codex/config.toml` default; `codex exec` with no `-m` |
 | sonnet-5 | Agent/Workflow `model: 'sonnet'` |
-| opus-4.8 | Agent/Workflow `model: 'opus'` |
+| opus-5 | Agent/Workflow `model: 'opus'` |
 | fable-5 | Agent/Workflow `model: 'fable'` |
 
 Codex generalists (gpt-5.5, gpt-5.6-*) are reachable **only via Codex** — the

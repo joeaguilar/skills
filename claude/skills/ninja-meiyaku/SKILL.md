@@ -28,7 +28,7 @@ targets done ──► last look (dual, whole diff) ──► whisper ──► 
 | `--sprint[=folder]` | off | take the groomed sprint (`sprint/CURRENT`, or the named folder) as the target list — skip stealth planning |
 | `--targets=N` | 5 | stealth-plan picks N targets (clamp 3–7) |
 | `--waves=N` | unset | hard cap on waves |
-| `--fable` | off | fable-5 available (hero taste + top escalation rung); off → taste routes to opus-4.8, fable requests noted, never spent |
+| `--fable` | off | fable-5 available (hero taste + top escalation rung); off → taste routes to opus-5, fable requests noted, never spent |
 | `--confirm` | off | the ONLY gate — pause after the pact is sealed |
 
 ## Roles & artifacts
@@ -70,19 +70,19 @@ Then silence. (`--confirm` waits here.)
 ## Phase 1 — waves, shared shadow
 One checkout, disjoint file ownership per wave, ≤5 strikes/wave, blocked after blockers, **≤1 Codex strike per wave** (the Codex companion allows one active task per checkout). Full-repo verify gate is the self-healing convergence; never advance red — small obvious fix yourself and log it, else stop and surface.
 
-**Routing law** (never Haiku; never a Codex generalist/sonnet for taste): bulk/mechanical → **gpt-5.6-terra** (the Codex generalist; drop to **gpt-5.5** for the cheapest trivial mechanical floor); user-facing/taste-critical → **opus-4.8**; ambiguous/judgment → **opus-4.8**; **fable-5** only under `--fable`.
+**Routing law** (never Haiku; never a Codex generalist/sonnet for taste): bulk/mechanical → **gpt-5.6-terra** (the Codex generalist; drop to **gpt-5.5** for the cheapest trivial mechanical floor); user-facing/taste-critical → **opus-5**; ambiguous/judgment → **opus-5**; **fable-5** only under `--fable`.
 
 **Strikers.** Claude: Agent `{model, run_in_background: true}`, shared checkout. Codex (default gpt-5.6-terra): a `sonnet` wrapper agent, description `gpt-5.6-terra:task-{id}`, one Bash call (explicit timeout): `codex exec -C <checkout> -m gpt-5.6-terra -s workspace-write "$(cat "$PROMPT")"` (swap `-m` for the task's assigned Codex model). Every prompt opens with the oath (above, verbatim), then: owned files ONLY, no tree-wide formatters, run the full verify gate to zero, no commit, end PASS/FAIL + diff summary + gate tail.
 
-**Cross-review before close — always a different blade.** Codex work → opus-4.8 reviewer over that target's diff. Claude work → the adversarial companion:
+**Cross-review before close — always a different blade.** Codex work → opus-5 reviewer over that target's diff. Claude work → the adversarial companion:
 ```sh
 COMPANION=$(ls -d ~/.claude/plugins/cache/openai-codex/codex/*/scripts/codex-companion.mjs | sort -V | tail -1)
 node "$COMPANION" adversarial-review --wait --base <ref> --scope branch "<focus>"
 ```
-An errored review lane is not a clean pass — retry once, else close on the striker's gate, marked degraded. P0/P1 finding → redo with the next-smarter blade (gpt-5.6-terra → gpt-5.6-sol → opus-4.8 → fable-5 only under `--fable`), findings spliced in, re-reviewed. **Two falls → quarantine**; surface it, move on. Stop waves when: targets done · two zero-close waves · `--waves` reached.
+An errored review lane is not a clean pass — retry once, else close on the striker's gate, marked degraded. P0/P1 finding → redo with the next-smarter blade (gpt-5.6-terra → gpt-5.6-sol → opus-5 → fable-5 only under `--fable`), findings spliced in, re-reviewed. **Two falls → quarantine**; surface it, move on. Stop waves when: targets done · two zero-close waves · `--waves` reached.
 
 ## Phase 2 — the last look
-One dual pass over the **whole** diff: the adversarial companion (scope branch) + one independent opus-4.8 (fable-5 under `--fable`) reviewer → dedup → P0–P3 survivors → ship/hold.
+One dual pass over the **whole** diff: the adversarial companion (scope branch) + one independent opus-5 (fable-5 under `--fable`) reviewer → dedup → P0–P3 survivors → ship/hold.
 
 ## Phase 3 — the whisper (return)
 Fill Outcomes in the scroll, close the epic, update `sprint/CURRENT`, commit the kept diff — the blades never commit; the orchestrator does, unless the user forbade it. Speak once:

@@ -38,6 +38,16 @@ highest-capability tier, which is why fable keeps intelligence 9 and the gated
 but has **no routing role here**; it survives only as Opus 5's refusal fallback —
 cyber-category refusals on `claude-opus-5` route to `claude-opus-4-8`.
 
+**Model names legal in skills** = the Scores table above, plus anything listed on
+an allowlist line. A skill naming anything else fails `models.sh check`. Legality
+deliberately does **not** come from prose mentions in this file — otherwise a
+historical note like the paragraph above would silently re-legalize every stale
+reference to a model we just retired. To let a non-routing model be named in a
+skill, add it here on purpose:
+
+<!-- models-allow: -->
+(empty — no non-routing model may be named in a skill today)
+
 ## Roles → model
 
 Skills route by **role**, not by model name — so a model swap changes only the lines

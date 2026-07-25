@@ -43,7 +43,8 @@ whole map* and wanting to reach the far edge of it.
 
 The single most important interaction. Sequence on Enable (bridge mode):
 
-1. **Commit** — API call returns; the symlink exists. Everything after this is honest.
+1. **Commit** — API call returns; the payload is on disk *(rev. 3: a managed copy, not a
+   symlink — ARCHITECTURE §7)*. Everything after this is honest.
 2. **Burst** — current particle burst, upgraded: scale with tier (tier 0 = crisp pop,
    tier 4 = screen-edge shockwave + brief camera push on the node).
 3. **Edge surge** — energy travels every outgoing dependency edge; children whose prereqs
@@ -92,12 +93,14 @@ Persistent header strip, per project: `nodes enabled / visible` · constellation
 ("Planning ✦ complete") · build token total · platform/scope. This is the at-a-glance
 "character sheet" for the current run.
 
-At **global scope** the strip also states the machine posture honestly: **"lean core
-active"** (adopted) or **"default: all skills"**. Read-only in v1 — the toggle itself is a
-deliberate, typed CLI gesture (`adopt`/`reset`); an in-UI toggle button is a v1.5 candidate.
-An adopted machine's global tree shows the 9 core nodes lit and everything else dark; a
-default machine's global tree shows all 32 lit — the view never lies about what a session
-will actually carry.
+At **global scope** the strip states the machine posture honestly: **"lean core active"** or
+**"all skills installed"**, plus, *(rev. 3)*, two counts the overlay makes meaningful —
+**`N unmanaged`** (yours, never touched by this tool) and **`N behind`** (managed copies the
+library has moved past, offered as a suggestion, never acted on automatically). Migration
+itself stays a deliberate, typed CLI gesture (`migrate`); bulk install/uninstall from the UI
+is a v1.5 candidate. A lean machine's global tree shows the core nodes lit and everything
+else dark; a full machine shows every managed skill lit — the view never lies about what a
+session will actually carry, and never claims ownership of an unmanaged skill.
 
 ## 7. Meta layer (v1.5) — scoreboard & achievements
 

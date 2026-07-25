@@ -1,7 +1,12 @@
 # Skill Tree — Architecture
 
-**Status:** Draft for review · **Date:** 2026-06-11
+**Status:** Draft for review · **Date:** 2026-06-11 · **Rev. 3:** 2026-07-25
 **Companion docs:** [VISION.md](VISION.md) · [UX.md](UX.md) · [ROADMAP.md](ROADMAP.md)
+
+**Rev. 3 changes §3, §4, and §7:** the global home becomes a real directory of managed
+**copies** alongside untouched unmanaged skills; `dist/` and the home-symlink toggle are
+retired. §§1–2 and 5–6 are unaffected — notably §5's dual live/degraded bridge is confirmed
+as specified.
 
 System contract for the skill-tree installer: repo layout, registry data, apply engine,
 bridge API, state stores, migration, and validation. Implementation-facing.
@@ -94,47 +99,61 @@ group, radial tiers) — not hand-specified here. The 20 skills stay listed in
 `PLATFORM_ONLY.tsv` (parity exemption is orthogonal); the explorer's PLATFORM_ONLY merge
 already skips registry-managed entries, so no duplicate nodes.
 
-## 3. Manifest (v2) — the per-project intent record
+## 3. Manifest (v2) — the intent record *(rev. 3)*
 
-`.claude/project-primitives.json` (committable; the shareable reproduction recipe):
+Two scopes, one schema. The manifest is **desired state plus ownership**: `apply` reconciles
+the filesystem to it, and anything it does not name is unmanaged and untouchable.
+
+**Global — `~/.claude/primitives.json`** (per-machine state; not committed, not in this repo).
+The single canonical path for global scope — no fallback chain, no candidate list:
 
 ```json
 {
   "version": 2,
   "platform": "claude",
-  "scope": "local",
-  "enabled": ["itr", "kgr", "sprint"],
-  "providers": { "issue-tracker": "itr" },
-  "materialization": {
-    "default": "symlink",
-    "overrides": {
-      "sprint": {
-        "mode": "copy",
-        "baselineHash": "sha256:…",
-        "localOverride": false,
-        "copiedAt": "2026-06-11T00:00:00Z"
-      }
-    }
-  }
+  "scope": "global",
+  "library": "/Users/josefaguilar/AI_Projects/skills",
+  "managed": {
+    "blitz":  { "mode": "copy", "baseline": "sha256:…", "installedAt": "2026-07-25T00:00:00Z", "localOverride": false },
+    "sprint": { "mode": "copy", "baseline": "sha256:…", "installedAt": "2026-07-25T00:00:00Z", "localOverride": true }
+  },
+  "providers": { "issue-tracker": "itr" }
 }
 ```
 
-Target-project hygiene: payload links/copies under `.claude/skills/` are gitignored in the
-target project; the manifest is the thing you commit.
+**Per-project — `.claude/project-primitives.json`** (committable; the shareable reproduction
+recipe). Same shape, `"scope": "local"`, plus the enabled/provider selections the explorer
+already writes. Payload copies under `.claude/skills/` are gitignored in the target project;
+the manifest is the thing you commit.
+
+**Schema notes**
+
+- `managed` is the **ownership set**. Its keys are the only paths any flow may create, modify,
+  refresh, or remove. A skill present on disk but absent here is unmanaged, permanently.
+- `mode` is `"copy"` by default and in practice always (decision #23). The field is retained
+  so a future `"link"` mode is expressible, but linking is not offered for the global home —
+  it reintroduces the propagation hazard the copy model exists to prevent.
+- `baseline` is the hash of the **library payload tree at install/refresh time**. It is what
+  makes "behind" and "locally edited" distinguishable — see §4's update table.
+- `library` records which checkout a home was installed from, so a moved or missing library is
+  diagnosed ("library not found at …") rather than silently treated as "everything drifted".
+- No entry is ever written for a skill the flow did not itself materialize.
 
 ## 4. Apply engine (`skill-tree.js`)
 
 New commands (existing `enable/disable/provider/status/validate` retained):
 
 ```
-skill-tree.js apply   --project PATH [--platform claude|codex] [--scope local|global]
-                      [--with-deps] [--copy id,…] [--dry-run]   # dry-run default in CLI
-skill-tree.js update  --project PATH [id] [--pull|--keep]       # drift management
-skill-tree.js diff    --project PATH id                          # unified diff, copy vs canonical
-skill-tree.js loadout <list|apply NAME|save NAME> --project PATH
-skill-tree.js adopt   --platform claude|codex                    # lean global: build dist, re-point home (§7)
-skill-tree.js reset   --platform claude|codex                    # restore home symlink → canonical (all skills)
-skill-tree.js serve   [--port 7777] [--project PATH]
+skill-tree.js apply     [--project PATH | --global] [--platform claude|codex]
+                        [--with-deps] [--dry-run]                # dry-run default in CLI
+skill-tree.js status    [--project PATH | --global]              # managed / unmanaged / behind / drifted
+skill-tree.js refresh   [--project PATH | --global] [id…] [--all] [--keep|--pull]
+skill-tree.js promote   [--project PATH | --global] id           # installed → library working tree (§4 guards)
+skill-tree.js diff      [--project PATH | --global] id           # unified diff, installed vs library
+skill-tree.js uninstall [--project PATH | --global] id…          # move to backups, never delete
+skill-tree.js loadout   <list|apply NAME|save NAME> --project PATH
+skill-tree.js migrate   --platform claude --global               # one-time: root symlink → overlay (§7)
+skill-tree.js serve     [--port 7777] [--project PATH]
 skill-tree.js build-registry                                     # yaml → json
 ```
 
@@ -142,21 +161,75 @@ skill-tree.js build-registry                                     # yaml → json
 1. Load manifest + registry; resolve providers; compute prerequisite closure.
    Unmet required capability → fail with the exact missing chain, or auto-enable it with
    `--with-deps` (the CLI twin of "Unlock chain").
-2. Reconcile filesystem to manifest, per primitive:
-   - symlink mode: `<project>/.claude/skills/<id>` → `<repo>/claude/skills/<id>`
-   - copy mode: recursive copy; record `baselineHash` (hash of canonical payload tree)
-   - disabled-but-present managed entries are removed. **Managed** = symlink pointing into
-     this repo, or a copy recorded in `materialization`. Unmanaged files are never touched.
+2. Reconcile filesystem to manifest, per primitive *(rev. 3)*:
+   - **install**: recursive copy of the library payload into `<home>/skills/<id>`; record
+     `baseline` = hash of the library payload tree, and `installedAt`.
+   - **uninstall** (manifest entry removed, or explicit `uninstall`): move the payload to
+     `~/.claude/.primitive-backups/<ts>/<id>/`, then drop the manifest entry. Never `rm -rf`.
+   - **Managed** = present in the manifest's `managed` map. That is the *whole* definition —
+     it is no longer inferred from a symlink target, because inference cannot distinguish a
+     user's own symlink from ours. Unmanaged entries are never read, written, moved, or
+     reported.
+   - Nothing in any flow writes to the library. `claude/skills/` is opened read-only.
 3. Register the project in the meta store (§8). Print/return the ordered list of changes
    (the bridge uses this ordering to sequence unlock animations).
 
-**Update semantics (copies only; symlinks never drift)**
+**Destructive-operation policy** *(rev. 3 — decision #26)*
 
-| Canonical vs baseline | Local vs baseline | Result |
-|---|---|---|
-| same | same | up to date |
-| changed | same | fast-forward pull (auto, reported) |
-| any | changed | **drift** → show diff → `pull` (overwrite local, reset baseline, clear override) or `keep` (set `localOverride: true`, re-baseline to current canonical hash so it only re-warns on the next canonical change) |
+Four rules, each of which independently blocks the propagation class in VISION problem #5:
+
+1. **Never delete.** Uninstall and overwrite-on-refresh both move the outgoing payload to
+   `~/.claude/.primitive-backups/<ts>/` first. Recovery is always a `mv` away.
+2. **Never act on the unproven.** A path is writable only if it is manifest-managed *and*
+   its content hashes to its recorded `baseline`. Anything else halts with a diff and asks.
+3. **Never resolve through a link.** The engine operates on real directories. Managed paths
+   are `lstat`-checked; if a managed path is unexpectedly a symlink, it is reported, not
+   followed. This removes the trailing-slash and write-through cases entirely.
+4. **One explicit write path to the library — never an ambient one.** *(Amended rev. 3.)*
+   The hazard being eliminated is *accidental* propagation: with symlinks, every `rm` and
+   every editor save in the home reaches `claude/skills/` whether you meant it or not. A
+   single deliberate, named, reviewable command (`promote`, below) is the opposite of that —
+   it makes the library editable *from* the home without ever making it *exposed to* the
+   home. Nothing else in the system writes to `claude/skills/`, and `promote` never runs
+   as a side effect of `apply`, `refresh`, or anything the UI does implicitly.
+
+**Update semantics** *(rev. 3: every managed skill is a copy, so this governs all of them —
+it is no longer an opt-in path)*
+
+| Library vs baseline | Installed vs baseline | State | Resolution |
+|---|---|---|---|
+| same | same | **up to date** | nothing to do |
+| changed | same | **behind** | fast-forward pull (safe; the local copy has no edits to lose) |
+| same | changed | **locally edited** | three-way reconcile ↓ |
+| changed | changed | **conflict** | three-way reconcile ↓, with both diffs shown; `promote` requires explicit confirmation because it would discard the library's newer changes |
+
+**Three-way reconcile** — offered whenever the installed copy differs from its record. Order
+and defaults are deliberate: safest first, destructive-to-source last.
+
+| # | Action | Effect | Notes |
+|---|---|---|---|
+| 1 | **`keep`** — leave the skill alone ***(default)*** | Sets `localOverride: true` and re-baselines to the current library hash, so it only re-warns on the *next* library change. Neither side is written. | The default exists to make accidental overwrites impossible: taking no action, or dismissing the prompt, always lands here. Never silently upgrades to another action. |
+| 2 | **`pull`** — replace from `claude/skills` | Backs the installed payload up to `.primitive-backups/<ts>/`, re-copies from the library, resets `baseline`, clears `localOverride`. | The ordinary update. Destroys only home-side edits, and those are archived first. |
+| 3 | **`promote`** — move the update *into* `claude/skills` | Writes the installed payload into the library working tree, then re-baselines the entry to the new hash so it reads as up to date. | **Listed last because it is the only action that can reach the source.** Guards below. |
+
+**`promote` guards.** This is the system's one write path into the library, so it is fenced:
+
+- **Working tree only, never a commit.** `promote` writes files and stops. The change lands
+  as an ordinary unstaged diff for the human to review with `git diff` and commit or discard.
+  The tool never stages, never commits, never pushes.
+- **Refuses on a dirty target.** If `claude/skills/<id>/` already has uncommitted changes,
+  `promote` halts — otherwise it would bury un-reviewed work with no way back.
+- **Refuses on conflict without explicit confirmation.** In the *conflict* row the library has
+  also moved; promoting would discard that. Requires a typed confirmation after showing both
+  diffs.
+- **Scoped to one skill's directory.** `promote <id>` may write only under
+  `claude/skills/<id>/`. It cannot touch other skills, the Codex tree, or repo-level files.
+- **Never bulk.** No `--all`. Each promotion is one named skill, one decision.
+
+Net effect: you can edit a skill in `~/.claude/skills`, try it in a live session, and then
+deliberately promote it back into the library — **without** the library ever being exposed to
+casual modification from the home. That is precisely the property symlinks cannot provide,
+since they offer the write path *always* and the review step *never*.
 
 **Disable semantics:** disabling a primitive that enabled primitives require → list the
 dependent subtree, confirm once, cascade-disable all of it. No flag to leave the tree
@@ -175,7 +248,7 @@ statically (replaces `python3 -m http.server`) plus:
 | `POST /api/provider` | `{project, capability, id}` |
 | `POST /api/loadout/apply` · `/api/loadout/save` | cinematic apply / save current set |
 | `GET  /api/diff?project=&id=` | drift diff for a copied skill |
-| `POST /api/update` | `{project, id, action: "pull"\|"keep"}` |
+| `POST /api/update` | `{project, id, action: "keep"\|"pull"\|"promote"}` — `keep` is the default the UI preselects; `promote` is rendered last, visually separated, and requires a confirm step naming the library path it will write (§4 guards) |
 
 Explorer behavior: probe `/api/state` on load. Bridge present → live mode (no folder picker
 needed; filesystem is truth; Enable installs). Bridge absent (plain static server) →
@@ -194,39 +267,68 @@ gets a registry entry and a `PLATFORM_ONLY.tsv` line until Codex ports it.
 session start. Newly enabled skills route **from the next session**, not mid-session. The
 tree says so after each apply.
 
-## 7. Global scope — the adopt/reset toggle *(rev. 2; supersedes the v1-final migration)*
+## 7. Global scope — the managed overlay *(rev. 3; supersedes the rev. 2 adopt/reset toggle)*
 
-Out of the box nothing changes: `~/.claude/skills` stays a symlink to the canonical
-`claude/skills` — all skills, live, zero maintenance, exactly today's setup. The lean
-global core is **opt-in, per platform, instantly reversible**. The toggle is just where the
-home symlink points:
+`~/.claude/skills` becomes a **real directory** in which managed copies and unmanaged user
+skills coexist. The home is not a symlink at any level, and `dist/` is retired.
 
 ```
-DEFAULT    ~/.claude/skills ─→ <repo>/claude/skills          (all skills, live)
-ADOPTED    ~/.claude/skills ─→ <repo>/dist/claude/skills     (managed core set)
+BEFORE (today)   ~/.claude/skills ─→ <repo>/claude/skills      (symlink; all 68, live)
+                 └── no unmanaged skill can exist; the home can delete the library
+
+AFTER            ~/.claude/skills/                              (real directory)
+                 ├── blitz/          managed copy   ← manifest, baseline sha256
+                 ├── sprint/         managed copy   ← manifest, baseline sha256
+                 ├── my-experiment/  UNMANAGED      ← invisible to every flow
+                 └── vendored-thing/ UNMANAGED      ← invisible to every flow
 ```
 
-**`adopt --platform claude`** (idempotent)
-1. Build `dist/claude/skills/` (generated, gitignored): one **relative** per-skill symlink
-   back to canonical for each core-set member (the 9) — live-edit preserved, drift
-   impossible, survives repo relocation.
-2. Re-point the home symlink at `dist/claude/skills` (`ln -sfn`).
-3. Write the global manifest `~/.claude/primitives.json` (`enabled` = core set) so the
-   explorer's global scope reflects reality.
-4. Record adoption state in the meta store.
+Ownership is decided **only** by `~/.claude/primitives.json` (§3). The library is read-only
+to all flows, so no operation performed in the home can reach `claude/skills/`.
 
-**`reset --platform claude`** re-points the home symlink back to canonical (idempotent).
-No backup ceremony either direction — canonical is never modified.
+**`migrate --platform claude --global`** — the one-time conversion, idempotent, dry-run by
+default:
 
-**Codex note:** `dist/codex/skills` must always include `.system` (the Codex installer and
-harness require it); system skills are core by definition there. Whether/when Codex adopts
-is Codex's call (§11) — the platforms toggle independently.
+1. Refuse unless `~/.claude/skills` is a symlink into a known library (already migrated →
+   report and exit 0).
+2. Back the root symlink up to `~/.claude/.primitive-backups/<ts>/skills-root-symlink`.
+3. Create the real directory and copy in every skill that was reachable before, so the
+   installed set is **behaviorally identical** the moment migration finishes.
+4. Write the manifest marking exactly those skills managed, each with its `baseline` hash.
+5. Print the resulting managed/unmanaged census.
 
-**`install.sh` adopt-awareness** (the one minimal shared edit; replaces the previously
-planned marker-file guard): when the target skills symlink already points into `dist/`,
-leave it alone and say so — "adopted; use `skill-tree.js reset` to revert" — instead of
-silently re-pointing it to canonical and un-adopting the machine. `~/.claude/agents` and
-`~/.claude/commands` stay whole-root symlinks (v1 scope).
+Reversal is restoring the backed-up symlink; the library was never touched, so reversal is
+lossless by construction rather than by ceremony.
+
+**Install / uninstall / refresh** (the flows the UI drives)
+
+| Flow | Effect on home | Effect on library |
+|---|---|---|
+| install `id` | copy library → `<home>/skills/<id>`; add manifest entry + baseline | none (read-only) |
+| uninstall `id` | move payload → `.primitive-backups/<ts>/`; drop manifest entry | none |
+| refresh `id` | back up current payload, re-copy from library, re-baseline | none |
+| any op on an unmanaged id | **refused** — "not managed; the installer will not touch it" | none |
+
+**Refresh / "behind" detection** (requirement #3, decision #27): a managed skill is *behind*
+when its `baseline` no longer matches the library payload hash while the installed copy still
+matches `baseline` — i.e. the library moved and the local copy didn't. `status` reports the
+count; `serve` surfaces it on load as a suggestion. Refresh never runs on its own.
+
+**Codex note:** the same overlay applies if Codex adopts it, with `.system` always present —
+`install_codex_skills` in `install.sh` is already an overlay of exactly this shape (real dir,
+preserved `.system`, per-entry management), so the pattern is proven in this repo. Whether
+Codex moves to copies is Codex's call (§11); nothing here writes into `~/.codex`.
+
+**`install.sh` overlay-awareness** (the one shared edit, larger than the rev. 2 guard it
+replaces): `install_root` currently replaces the target with a root symlink, which would
+destroy the overlay and silently re-expose the library to home-side deletion. It must detect a
+migrated home — real directory plus a valid manifest — and reconcile per-skill against the
+manifest instead of re-linking the root, reporting managed and unmanaged counts. Re-running
+`./install.sh claude --apply` on a migrated machine must be a no-op, and must never adopt an
+unmanaged skill. `~/.claude/agents` and `~/.claude/commands` keep whole-root symlinks in v1
+(VISION decision #10) and therefore keep the propagation hazard until v2 — this is a known,
+accepted gap, and it is why `CLAUDE.md`'s "never author under `~/.claude`" rule stays in force
+for those two roots.
 
 ## 8. Meta store — `~/.config/skill-tree/`
 
@@ -256,6 +358,11 @@ add). Computed by the CLI/bridge from payload files, cached by mtime. Surfaced p
   every `requires` capability has ≥1 provider on that platform.
 - `validate-skills.sh` calls the above so one command still gates the repo.
 - Existing parity/drift checks (`PARITY.tsv`, `PLATFORM_ONLY.tsv`) are unaffected.
+- *(rev. 3)* Home integrity, via `status`: every manifest entry exists on disk; every managed
+  path is a real directory and not a symlink; every managed entry still exists in the library
+  (a removed library skill surfaces as *orphaned*, never as a silent uninstall); and the
+  unmanaged census is reported explicitly so "the installer is ignoring these" is always
+  visible rather than assumed.
 
 ## 11. Codex handoff
 

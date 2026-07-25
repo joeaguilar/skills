@@ -114,8 +114,13 @@ The single canonical path for global scope — no fallback chain, no candidate l
   "scope": "global",
   "library": "/Users/josefaguilar/AI_Projects/skills",
   "managed": {
-    "blitz":  { "mode": "copy", "baseline": "sha256:…", "installedAt": "2026-07-25T00:00:00Z", "localOverride": false },
-    "sprint": { "mode": "copy", "baseline": "sha256:…", "installedAt": "2026-07-25T00:00:00Z", "localOverride": true }
+    "skills": {
+      "blitz":  { "mode": "copy", "baseline": "sha256:…", "installedAt": "2026-07-25T00:00:00Z", "localOverride": false },
+      "sprint": { "mode": "copy", "baseline": "sha256:…", "installedAt": "2026-07-25T00:00:00Z", "localOverride": true }
+    },
+    "agents":    { "primitive-architect.md":   { "mode": "copy", "baseline": "sha256:…", "installedAt": "…" } },
+    "commands":  { "primitive-audit.md":       { "mode": "copy", "baseline": "sha256:…", "installedAt": "…" } },
+    "workflows": { "sprint-blitz-review.js":   { "mode": "copy", "baseline": "sha256:…", "installedAt": "…" } }
   },
   "providers": { "issue-tracker": "itr" }
 }
@@ -128,8 +133,24 @@ the manifest is the thing you commit.
 
 **Schema notes**
 
-- `managed` is the **ownership set**. Its keys are the only paths any flow may create, modify,
-  refresh, or remove. A skill present on disk but absent here is unmanaged, permanently.
+- `managed` is the **ownership set**, keyed by primitive root. Its entries are the only paths
+  any flow may create, modify, refresh, or remove. Anything present on disk but absent here is
+  unmanaged, permanently. One selector, one engine, one manifest across all four roots — the
+  primitive type is a parameter, never a separate code path (decision #31).
+- **The payload unit differs by root**, and only this differs:
+
+  | Root | Unit | Installed path | Baseline covers |
+  |---|---|---|---|
+  | `skills` | directory | `<home>/skills/<id>/` | the payload tree |
+  | `agents` | single `.md` | `<home>/agents/<id>.md` | the file |
+  | `commands` | single `.md`, optionally namespaced | `<home>/commands/[<ns>/]<id>.md` | the file |
+  | `workflows` | single `.js` | `<home>/workflows/<id>.js` | the file |
+
+- **Ownership is file-granular, not directory-granular.** A skill owns its whole directory, so
+  managed and unmanaged never interleave there. Agents, commands, and workflows are flat files
+  sharing one directory with the user's own, so `~/.claude/agents/` will routinely hold managed
+  and unmanaged files side by side. Every rule below therefore applies per *entry*, never per
+  containing directory — no flow may clear, rebuild, or "sync" a root directory as a unit.
 - `mode` is `"copy"` by default and in practice always (decision #23). The field is retained
   so a future `"link"` mode is expressible, but linking is not offered for the global home —
   it reintroduces the propagation hazard the copy model exists to prevent.
@@ -269,33 +290,47 @@ tree says so after each apply.
 
 ## 7. Global scope — the managed overlay *(rev. 3; supersedes the rev. 2 adopt/reset toggle)*
 
-`~/.claude/skills` becomes a **real directory** in which managed copies and unmanaged user
-skills coexist. The home is not a symlink at any level, and `dist/` is retired.
+**Every managed root** — `skills`, `agents`, `commands`, `workflows` — becomes a **real
+directory** in which managed copies and the user's own primitives coexist. No home root is a
+symlink at any level, and `dist/` is retired. This is one selector over all four roots, not a
+skills feature with three later ports: the explorer already carries per-type tabs, and the
+registry already models 54 primitives across types, so the type is a filter in the UI and a
+parameter in the engine.
 
 ```
-BEFORE (today)   ~/.claude/skills ─→ <repo>/claude/skills      (symlink; all 68, live)
-                 └── no unmanaged skill can exist; the home can delete the library
+BEFORE (today)   ~/.claude/skills   ─→ <repo>/claude/skills     (symlink; all 68, live)
+                 ~/.claude/agents   ─→ <repo>/claude/agents     (symlink; all 7)
+                 ~/.claude/commands ─→ <repo>/claude/commands   (symlink; all 3)
+                 └── no unmanaged primitive can exist in ANY root;
+                     the home can delete the library through any of them
 
-AFTER            ~/.claude/skills/                              (real directory)
-                 ├── blitz/          managed copy   ← manifest, baseline sha256
-                 ├── sprint/         managed copy   ← manifest, baseline sha256
-                 ├── my-experiment/  UNMANAGED      ← invisible to every flow
-                 └── vendored-thing/ UNMANAGED      ← invisible to every flow
+AFTER            ~/.claude/skills/                               (real directory)
+                 ├── blitz/               managed copy  ← manifest, baseline sha256
+                 └── my-experiment/       UNMANAGED     ← invisible to every flow
+
+                 ~/.claude/agents/                               (real directory)
+                 ├── primitive-architect.md  managed copy  ← manifest, baseline sha256
+                 └── my-own-agent.md         UNMANAGED    ← invisible to every flow
+                     ▲ managed and unmanaged FILES share this directory —
+                       ownership is per entry, never per directory
 ```
 
 Ownership is decided **only** by `~/.claude/primitives.json` (§3). The library is read-only
 to all flows, so no operation performed in the home can reach `claude/skills/`.
 
-**`migrate --platform claude --global`** — the one-time conversion, idempotent, dry-run by
-default:
+**`migrate --platform claude --global [--root skills|agents|commands|workflows]`** — the
+one-time conversion, idempotent, dry-run by default. Runs per root (default: all four), so a
+root can be migrated and verified before the next one follows:
 
-1. Refuse unless `~/.claude/skills` is a symlink into a known library (already migrated →
-   report and exit 0).
-2. Back the root symlink up to `~/.claude/.primitive-backups/<ts>/skills-root-symlink`.
-3. Create the real directory and copy in every skill that was reachable before, so the
+1. Refuse unless `~/.claude/<root>` is a symlink into a known library (already migrated →
+   report and exit 0). A root that does not exist yet — `~/.claude/workflows` today — is
+   created empty with no managed entries.
+2. Back the root symlink up to `~/.claude/.primitive-backups/<ts>/<root>-root-symlink`.
+3. Create the real directory and copy in every primitive that was reachable before, so the
    installed set is **behaviorally identical** the moment migration finishes.
-4. Write the manifest marking exactly those skills managed, each with its `baseline` hash.
-5. Print the resulting managed/unmanaged census.
+4. Write the manifest marking exactly those entries managed under their root key, each with
+   its `baseline` hash.
+5. Print the resulting managed/unmanaged census per root.
 
 Reversal is restoring the backed-up symlink; the library was never touched, so reversal is
 lossless by construction rather than by ceremony.
@@ -304,15 +339,34 @@ lossless by construction rather than by ceremony.
 
 | Flow | Effect on home | Effect on library |
 |---|---|---|
-| install `id` | copy library → `<home>/skills/<id>`; add manifest entry + baseline | none (read-only) |
-| uninstall `id` | move payload → `.primitive-backups/<ts>/`; drop manifest entry | none |
-| refresh `id` | back up current payload, re-copy from library, re-baseline | none |
+| install `<root>/<id>` | copy library payload → `<home>/<root>/<id>`; add manifest entry + baseline | none (read-only) |
+| uninstall `<root>/<id>` | move payload → `.primitive-backups/<ts>/<root>/`; drop manifest entry | none |
+| refresh `<root>/<id>` | back up current payload, re-copy from library, re-baseline | none |
 | any op on an unmanaged id | **refused** — "not managed; the installer will not touch it" | none |
 
-**Refresh / "behind" detection** (requirement #3, decision #27): a managed skill is *behind*
-when its `baseline` no longer matches the library payload hash while the installed copy still
-matches `baseline` — i.e. the library moved and the local copy didn't. `status` reports the
-count; `serve` surfaces it on load as a suggestion. Refresh never runs on its own.
+**Refresh / "behind" detection** (requirement #3, decision #27): a managed primitive is
+*behind* when its `baseline` no longer matches the library payload hash while the installed
+copy still matches `baseline` — i.e. the library moved and the local copy didn't. `status`
+reports the count per root; `serve` surfaces it on load as a suggestion. Refresh never runs on
+its own.
+
+**Flat-file root rules** *(the adaptation flat roots need, decision #32)*. Skills are isolated
+by their own directory; agents, commands, and workflows are not, so three rules carry the
+weight that directory isolation carries for skills:
+
+1. **Install refuses to overwrite an existing unmanaged file.** If `~/.claude/agents/foo.md`
+   exists and is not in the manifest, installing the library's `foo.md` halts with a name
+   collision and a suggested rename. It never assumes the user's file is a stale copy of ours.
+   Collisions are far likelier here than for skills, since a flat root is a single namespace.
+2. **Uninstall removes exactly one file** and prunes a containing namespace directory only if
+   the installer created it *and* it is now empty. A directory holding any unmanaged file is
+   never removed.
+3. **No root is ever reconciled as a unit.** There is no "sync the agents directory" operation
+   — only per-entry install, uninstall, and refresh. This is what makes an unmanaged file's
+   survival structural rather than a special case someone has to remember.
+
+Namespaced commands (`commands/<ns>/<name>.md`) are supported by these rules; the library has
+none today, so the path is specified but unexercised — the test suite covers it anyway.
 
 **Codex note:** the same overlay applies if Codex adopts it, with `.system` always present —
 `install_codex_skills` in `install.sh` is already an overlay of exactly this shape (real dir,
@@ -322,13 +376,19 @@ Codex moves to copies is Codex's call (§11); nothing here writes into `~/.codex
 **`install.sh` overlay-awareness** (the one shared edit, larger than the rev. 2 guard it
 replaces): `install_root` currently replaces the target with a root symlink, which would
 destroy the overlay and silently re-expose the library to home-side deletion. It must detect a
-migrated home — real directory plus a valid manifest — and reconcile per-skill against the
-manifest instead of re-linking the root, reporting managed and unmanaged counts. Re-running
+migrated root — real directory plus a valid manifest — and reconcile per-entry against the
+manifest instead of re-linking, reporting managed and unmanaged counts. This applies to **all
+four roots**, since `install.sh` links each of them the same way today. Re-running
 `./install.sh claude --apply` on a migrated machine must be a no-op, and must never adopt an
-unmanaged skill. `~/.claude/agents` and `~/.claude/commands` keep whole-root symlinks in v1
-(VISION decision #10) and therefore keep the propagation hazard until v2 — this is a known,
-accepted gap, and it is why `CLAUDE.md`'s "never author under `~/.claude`" rule stays in force
-for those two roots.
+unmanaged primitive. Roots may be migrated one at a time, so `install_root` must handle a
+mixed machine — some roots overlaid, others still whole-root symlinks — without complaint.
+
+**Out of scope:** the opt-in `config` primitive (`settings.json`, `statusline.sh`), which links
+individual home *files* rather than a root. It carries a sharper version of the same hazard —
+the harness itself rewrites `~/.claude/settings.json` when permissions or config change, so a
+linked settings file means Claude Code writes into this git repo. Not linked on this machine
+today (`~/.claude/settings.json` is a real file), so there is nothing live to fix; worth its
+own decision before anyone runs `--primitive config`.
 
 ## 8. Meta store — `~/.config/skill-tree/`
 

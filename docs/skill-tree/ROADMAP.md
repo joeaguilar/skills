@@ -23,9 +23,14 @@ Goal: the manifest stops being fiction, unmanaged skills become possible, and th
 longer damage the library. Terminal-only; the UI comes in Phase 2.
 
 1. Manifest v2 per ARCHITECTURE §3 — global (`~/.claude/primitives.json`) and per-project,
-   `managed` ownership map with `baseline`/`installedAt`, legacy v1 read-compat.
-2. `migrate --platform claude --global`: root symlink → real overlay, backup first, copy the
-   existing set in, write the manifest, print the census. Dry-run default, idempotent.
+   `managed` ownership map **keyed by root** (`skills`/`agents`/`commands`/`workflows`) with
+   `baseline`/`installedAt`, legacy v1 read-compat.
+2. `migrate --platform claude --global [--root …]`: root symlink → real overlay, backup first,
+   copy the existing set in, write the manifest, print the per-root census. Dry-run default,
+   idempotent, per-root so roots can be converted and verified one at a time.
+   2a. **Flat-root rules** (§7, decision #32): install refuses to overwrite an unmanaged file;
+   uninstall removes one file and prunes only installer-created empty directories; no root is
+   ever reconciled as a unit. Namespaced commands supported though currently unexercised.
 3. `install` / `uninstall` / `refresh` / `status` / `diff` per §7, with the four
    destructive-operation rules from §4 (never delete, never act on the unproven, never resolve
    through a link, one explicit library write path and no ambient one).
@@ -39,10 +44,13 @@ longer damage the library. Terminal-only; the UI comes in Phase 2.
 6. Meta store bootstrap: project auto-registration; `loadout list/apply/save` with built-in
    **Core Dev**.
 7. Tests, against a temp `--claude-home` so nothing touches the real one:
-   - **the safety suite** (this is the phase's reason for existing): an unmanaged skill
-     survives install/uninstall/refresh/`install.sh --apply` byte-for-byte and is never
-     reported as drift; `rm -rf <home>/skills/<managed>/` leaves the library intact; a managed
-     path that is unexpectedly a symlink is reported, not followed.
+   - **the safety suite** (this is the phase's reason for existing): an unmanaged primitive in
+     **each** root survives install/uninstall/refresh/`install.sh --apply` byte-for-byte and is
+     never reported as drift — including an unmanaged `.md` sharing a directory with a managed
+     one; `rm -rf <home>/skills/<managed>/` leaves the library intact; a managed path that is
+     unexpectedly a symlink is reported, not followed; installing over an existing unmanaged
+     file halts on collision instead of overwriting; uninstall never removes a directory that
+     still holds an unmanaged file.
    - migrate → identical installed set → reverse → original symlink restored.
    - library moves ahead → `status` says *behind* → `refresh` pulls; delete a skill from the
      library → *orphaned*, not silently uninstalled.
@@ -54,9 +62,10 @@ longer damage the library. Terminal-only; the UI comes in Phase 2.
    - enable chain → a fresh Claude session lists exactly the managed set.
 
 **Done when:** on a migrated machine, `install`/`uninstall` change what the next Claude session
-routes to; a hand-written skill in `~/.claude/skills` is provably untouched by every flow; no
-operation in the home can modify `claude/skills/` **except** a typed `promote` on a named
-skill; and that promotion always arrives as a reviewable unstaged diff rather than a commit.
+routes to **in every root**; a hand-written skill, agent, command, or workflow is provably
+untouched by every flow; no operation in the home can modify `claude/**` **except** a typed
+`promote` on a named primitive; and that promotion always arrives as a reviewable unstaged
+diff rather than a commit.
 
 ## Phase 0 — Foundations (size: M) — *non-blocking as of rev. 3; may land before or after Phase 1*
 
@@ -86,9 +95,11 @@ Goal: `/skill-tree` to a fully enabled build without touching a terminal; unlock
 unlocking a hack.
 
 1. `serve`: static hosting + the API surface (ARCHITECTURE §5), localhost-only.
-2. Explorer live mode: filesystem-truth states (incl. `pending`, `drifted`), Enable→install,
-   Unlock chain (sequential), disable cascade dialog, provider switching via API,
-   drift diff view with pull/keep.
+2. Explorer live mode across the **existing per-type tabs** — skills, agents, commands,
+   workflows all selectable, not just skills: filesystem-truth states (incl. `pending`,
+   `drifted`, `unmanaged`), Enable→install, Unlock chain (sequential), disable cascade dialog,
+   provider switching via API, drift view with the three-way reconcile (`keep` preselected,
+   `promote` last and separated).
 3. Degraded-mode banner + exact-command copy (UX §8); File System Access path retained.
 4. **Feel pass** (UX §3): tier-scaled bursts, edge energy surge, child ignition shimmer,
    readout ticks, next-session toast; loadout cinematic.
@@ -125,8 +136,8 @@ now because uninstall archives payloads instead of because canonical was never t
 
 ## v2 — Horizon (unsized until v1.5 ships)
 
-- Agents + commands join the tree (lean-global split applied to them; type-aware machinery
-  already in place).
+- ~~Agents + commands join the tree.~~ **Moved into Phase 1 by rev. 3 (#31)** — one selector
+  covers all four roots from the start.
 - Codex enablement per the handoff section (their wording, their core split, their launcher).
 - Push-upstream action for drifted copies; sound toggle; whatever v1 usage teaches.
 

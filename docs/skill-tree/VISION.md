@@ -15,9 +15,10 @@
    project `itr` + `kgr` + `sprint` and another project nothing.
 3. **The tree is decorative.** The explorer already renders a prerequisite-checked skill tree,
    but clicking Enable only writes a manifest no other tool reads. Nothing is actually installed.
-4. **There is nowhere to put a skill of your own.** *(rev. 3)* Because `~/.claude/skills` is
-   itself a symlink into this repo, a hand-written skill dropped into the home lands in the
-   library's working tree and appears in `git status`. An unmanaged skill cannot currently exist.
+4. **There is nowhere to put a primitive of your own.** *(rev. 3)* `~/.claude/skills`,
+   `~/.claude/agents`, and `~/.claude/commands` are each a symlink into this repo, so a
+   hand-written skill, agent, or command dropped into the home lands in the library's working
+   tree and appears in `git status`. An unmanaged primitive cannot currently exist in any root.
 5. **The home can destroy the library.** *(rev. 3)* Every path *through* a managed symlink
    resolves into `claude/skills/`. Verified on macOS: `rm -rf ~/.claude/skills/<id>/` — with a
    trailing slash — deletes the source directory outright, and `rm ~/.claude/skills/<id>/SKILL.md`
@@ -93,7 +94,7 @@ $ cd ~/new-project && claude
 | 7 | Portability | **Superseded by rev. 3 (#23):** symlink-default is retired for the global home. Manifest stays committable/shareable; `update` with diff (pull/keep) becomes the norm rather than an opt-in |
 | 8 | Ownership | Promote explorer/, registry/, tree CLI to repo root as platform-neutral infra (Codex reviews the move) |
 | 9 | Tree design | Claude drafts edges/capabilities for the ~20 unmodeled skills; PO reviews (table in ARCHITECTURE.md) |
-| 10 | v1 primitive scope | Skills only; agents/commands stay whole-root global until v2 |
+| 10 | v1 primitive scope | **Superseded by #31 (rev. 3):** skills-only would have left agents/commands carrying the exact hazard the skills work exists to remove |
 | 11 | Platform scope | Platform-neutral build, Claude-first enablement, Codex handoff section in docs |
 | 12 | Global migration | **Superseded by rev. 2:** adopt/reset ships in Phase 1; adoption is an at-will personal action, not a roadmap milestone |
 | 13 | Launch | `skill-tree serve` CLI + thin global `/skill-tree` skill that opens the tree for the current project |
@@ -114,14 +115,18 @@ $ cd ~/new-project && claude
 | 28 | UI apply surface *(rev. 3)* | Both modes ship: `serve` (live apply via localhost bridge) is the primary path, with static/`file://` mode auto-detected and degrading to manifest + copy-the-command banner. Confirms decision #4 |
 | 29 | Reconcile on drift *(rev. 3)* | When an installed skill differs from its record, offer three actions in this fixed order: **`keep`** (leave it alone — **the default**, so accidental overwrites are impossible), **`pull`** (replace from `claude/skills`), and **`promote`** (write the local version into the library) **listed last, because it is the only one that can reach the source**. Supersedes the v2 non-goal on upstreaming |
 | 30 | Promote guards *(rev. 3)* | `promote` writes the library **working tree only** — never stages, commits, or pushes; refuses on a dirty target path or an unconfirmed conflict; scoped to one skill directory; no bulk mode. The human reviews a normal `git diff` and decides. This yields an update path *from* `~/.claude/skills` without ever exposing the library *to* it |
+| 31 | Primitive-root scope *(rev. 3)* | **All four managed roots** — `skills`, `agents`, `commands`, `workflows` — use one overlay, one manifest, one engine, one selector. The primitive type is a filter in the UI and a parameter in the engine, never a separate code path. Supersedes #10; the explorer already has per-type tabs and the registry already models 54 primitives across types, so selection is the missing half, not a new concept |
+| 32 | Flat-root ownership *(rev. 3)* | Agents, commands, and workflows are single files sharing one directory with the user's own, so ownership is **per entry, never per directory**. Install refuses to overwrite an unmanaged file; uninstall removes one file and prunes only installer-created empty directories; no root is ever reconciled, cleared, or "synced" as a unit |
 
 ## Success criteria
 
 - Once adopted, a fresh repo session carries **only the global core** (~9 skill
   descriptions) until skills are deliberately enabled — measurable context reduction vs
   today's 68 — and `reset` provably restores the all-skills world.
-- *(rev. 3)* A hand-written skill placed in `~/.claude/skills` survives install, uninstall,
-  refresh, and `install.sh --apply` **byte-for-byte**, and is never listed as drifted.
+- *(rev. 3)* A hand-written skill, **agent, command, or workflow** placed in its `~/.claude`
+  root survives install, uninstall, refresh, and `install.sh --apply` **byte-for-byte**, and is
+  never listed as drifted — including a user's own `.md` sitting in the same directory as a
+  managed one.
 - *(rev. 3)* `rm -rf ~/.claude/skills/<managed-id>/` — trailing slash and all — leaves
   `claude/skills/<id>` untouched. This is a test, not an aspiration.
 - *(rev. 3)* A skill can be edited in the home, exercised in a live session, and promoted back
@@ -135,7 +140,9 @@ $ cd ~/new-project && claude
 
 ## Non-goals (v1)
 
-- Managing agents/commands primitives (v2).
+- ~~Managing agents/commands primitives (v2).~~ **Pulled into v1 by rev. 3 (#31)** — one
+  selector covers `skills`, `agents`, `commands`, and `workflows`. Deferring them would have
+  left two roots symlinked and therefore still able to damage the library.
 - Codex-side enablement (Codex's call, on their timeline).
 - ~~Pushing drifted copies back upstream (manual for now; candidate for v2).~~ **Promoted into
   v1 by rev. 3 (#29)** — `promote` is the reconcile flow's third option, fenced by ARCHITECTURE

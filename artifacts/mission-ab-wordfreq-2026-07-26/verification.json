@@ -1,0 +1,65 @@
+[
+  {
+    "arm": "original",
+    "checks": {
+      "own_unittests_pass": true,
+      "public_cli_exits_zero": true,
+      "case_count_sort_and_punctuation": false,
+      "missing_file_helpful": true,
+      "invalid_top_helpful": true
+    },
+    "all_requirement_checks_passed": false,
+    "observed_counts": [
+      ["blue", 2],
+      ["red", 2],
+      ["alpha_beta", 1]
+    ],
+    "expected_counts": [
+      ["blue", 2],
+      ["red", 2],
+      ["alpha", 1],
+      ["beta", 1]
+    ],
+    "parse_error": null,
+    "unittest_summary_tail": [
+      "----------------------------------------------------------------------",
+      "Ran 13 tests in 0.055s",
+      "",
+      "OK"
+    ],
+    "cli_stdout": "blue: 2\nred: 2\nalpha_beta: 1\n",
+    "cli_stderr": ""
+  },
+  {
+    "arm": "rewrite",
+    "checks": {
+      "own_unittests_pass": true,
+      "public_cli_exits_zero": true,
+      "case_count_sort_and_punctuation": true,
+      "missing_file_helpful": true,
+      "invalid_top_helpful": true
+    },
+    "all_requirement_checks_passed": true,
+    "observed_counts": [
+      ["blue", 2],
+      ["red", 2],
+      ["alpha", 1],
+      ["beta", 1]
+    ],
+    "expected_counts": [
+      ["blue", 2],
+      ["red", 2],
+      ["alpha", 1],
+      ["beta", 1]
+    ],
+    "parse_error": null,
+    "unittest_summary_tail": [
+      "----------------------------------------------------------------------",
+      "Ran 16 tests in 0.054s",
+      "",
+      "OK"
+    ],
+    "cli_stdout": "blue\t2\nred\t2\nalpha\t1\nbeta\t1\n",
+    "cli_stderr": ""
+  }
+]

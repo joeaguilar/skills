@@ -1,0 +1,6 @@
+[
+  {
+    "commit": "500e5e16088c56b211283c27033ace0fc418c1ca",
+    "subject": "feat: add wordfreq CLI for top-N word frequency counting"
+  }
+]

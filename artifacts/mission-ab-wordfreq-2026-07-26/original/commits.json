@@ -1,0 +1,14 @@
+[
+  {
+    "commit": "9af719bfef17b041dbf55cac323c282c6eb51075",
+    "subject": "feat(wordfreq): add core CLI for word frequency counting"
+  },
+  {
+    "commit": "a98ff2b3fb69211e8607fcbc8afb9424df17f2d5",
+    "subject": "test(wordfreq): add unittest suite and CLI smoke tests"
+  },
+  {
+    "commit": "b54285ad0ac4cf822f19bb7bec23cbf5bbb53302",
+    "subject": "docs(mission): close wordfreq mission with debrief"
+  }
+]

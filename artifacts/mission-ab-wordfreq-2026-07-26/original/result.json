@@ -1,0 +1,29 @@
+{
+  "session_id": "767758cb-f013-4f03-ab15-70eb5ee84ce3",
+  "loaded_skill_base": "/private/tmp/mission-ab.nlr6tM/designated-original/.claude/skills/mission",
+  "duration_ms": 140133,
+  "num_turns": 20,
+  "total_cost_usd": 0.6208122,
+  "usage": {
+    "cache_creation_input_tokens": 35262,
+    "cache_read_input_tokens": 993584,
+    "output_tokens": 7403
+  },
+  "tool_counts": {
+    "Bash": 15,
+    "Write": 4,
+    "Agent": 0
+  },
+  "first_write": {
+    "seconds_after_session_start": 35,
+    "path": "missions/wordfreq/chains/1/premise.md",
+    "production_code_seconds_after_session_start": 59
+  },
+  "tracker_items": 3,
+  "commits_after_baseline": 3,
+  "ceremony_files": [
+    "missions/wordfreq/chains/1/premise.md",
+    "missions/wordfreq/debrief.md"
+  ],
+  "claude_result": "Mission complete. Delivered wordfreq.py and 13 tests; itr epic plus two tasks closed; three commits."
+}

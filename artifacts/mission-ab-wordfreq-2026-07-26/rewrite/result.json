@@ -1,0 +1,27 @@
+{
+  "session_id": "bf8c7ec6-ccb4-44e7-bf20-6cc432064835",
+  "loaded_skill_base": "/private/tmp/mission-ab.nlr6tM/rewrite-project/.claude/skills/mission",
+  "duration_ms": 151372,
+  "num_turns": 20,
+  "total_cost_usd": 0.6993488999999999,
+  "usage": {
+    "cache_creation_input_tokens": 28534,
+    "cache_read_input_tokens": 863044,
+    "output_tokens": 7104
+  },
+  "tool_counts": {
+    "Bash": 13,
+    "Write": 2,
+    "Edit": 3,
+    "Agent": 1
+  },
+  "first_write": {
+    "seconds_after_session_start": 24,
+    "path": "wordfreq.py",
+    "production_code_seconds_after_session_start": 24
+  },
+  "tracker_items": 1,
+  "commits_after_baseline": 1,
+  "ceremony_files": [],
+  "claude_result": "MISSION COMPLETE. Delivered wordfreq.py and 16 tests; one itr issue closed; whole-diff reviewer found and fixed punctuation tokenization; one commit."
+}

@@ -1,0 +1,9 @@
+[
+  {
+    "id": 1,
+    "title": "Build wordfreq CLI core slice",
+    "status": "done",
+    "kind": "feature",
+    "acceptance": "Public CLI prints correct top-N words; errors are helpful; unittest suite passes."
+  }
+]

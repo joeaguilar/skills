@@ -1,0 +1,14 @@
+{
+  "valid_ab_arm": false,
+  "reason": "Claude resolved the globally installed rewritten skill instead of the project-local original skill.",
+  "session_id": "283ada32-e246-4e8a-b810-faa9921d9b06",
+  "duration_ms": 119094,
+  "num_turns": 17,
+  "total_cost_usd": 0.7168745999999999,
+  "usage": {
+    "cache_creation_input_tokens": 34688,
+    "cache_read_input_tokens": 861969,
+    "output_tokens": 5781
+  },
+  "result": "MISSION COMPLETE: wordfreq.py shipped; 16 tests passed; one tracker issue closed; commit 50d78f5."
+}

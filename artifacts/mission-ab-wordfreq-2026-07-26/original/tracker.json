@@ -1,0 +1,24 @@
+[
+  {
+    "id": 1,
+    "title": "wordfreq: greenfield CLI for word frequency counting",
+    "status": "done",
+    "kind": "epic",
+    "children": [2, 3]
+  },
+  {
+    "id": 2,
+    "title": "Implement wordfreq.py core + CLI",
+    "status": "done",
+    "kind": "task",
+    "parent_id": 1
+  },
+  {
+    "id": 3,
+    "title": "Test wordfreq.py with unittest + CLI smoke tests",
+    "status": "done",
+    "kind": "task",
+    "parent_id": 1,
+    "blocked_by": [2]
+  }
+]

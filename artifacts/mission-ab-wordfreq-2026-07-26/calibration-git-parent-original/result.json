@@ -1,0 +1,14 @@
+{
+  "valid_ab_arm": false,
+  "reason": "Project-local original loaded correctly, but its skill differs from the user-designated old-mission-skill-ab by one council-model line.",
+  "session_id": "e2162391-91bb-438a-9dd3-26a8b7e355ea",
+  "duration_ms": 90315,
+  "num_turns": 14,
+  "total_cost_usd": 0.48788310000000007,
+  "usage": {
+    "cache_creation_input_tokens": 32198,
+    "cache_read_input_tokens": 674287,
+    "output_tokens": 6155
+  },
+  "result": "Completed wordfreq.py with 20 tests, itr epic and task closed, commit d39598a. Claude explicitly bypassed full mission machinery because of the external budget."
+}

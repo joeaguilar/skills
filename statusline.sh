@@ -212,15 +212,27 @@ render_rl() {
   printf '%s %s %s%s' "$bar" "$pct_fmt" "$label" "$time_str"
 }
 
-line2=""
 rl_parts=()
 part=$(render_rl "$rl_5h_pct" "$rl_5h_at" "5h") && [ -n "$part" ] && rl_parts+=("$part")
 part=$(render_rl "$rl_7d_pct" "$rl_7d_at" "7d") && [ -n "$part" ] && rl_parts+=("$part")
-if [ "${#rl_parts[@]}" -eq 1 ]; then
-  line2="${rl_parts[0]}"
-elif [ "${#rl_parts[@]}" -ge 2 ]; then
-  line2="${rl_parts[0]} ${DIM}|${RESET} ${rl_parts[1]}"
-fi
+
+# Any extra windows the harness starts emitting (e.g. a per-model weekly like
+# seven_day_fable) render automatically with a label derived from the key.
+while IFS=$'\t' read -r rl_key rl_pct rl_at; do
+  [ -z "$rl_key" ] && continue
+  label="${rl_key/#seven_day/7d}"
+  label="${label/#five_hour/5h}"
+  label="${label//_/-}"
+  part=$(render_rl "$rl_pct" "$rl_at" "$label") && [ -n "$part" ] && rl_parts+=("$part")
+done < <(jq -r '.rate_limits // {} | to_entries[]
+  | select(.key != "five_hour" and .key != "seven_day")
+  | [.key, (.value.used_percentage // "" | tostring), (.value.resets_at // "" | tostring)]
+  | @tsv' <<<"$input" 2>/dev/null)
+
+line2=""
+for part in "${rl_parts[@]}"; do
+  if [ -z "$line2" ]; then line2="$part"; else line2+=" ${DIM}|${RESET} $part"; fi
+done
 
 # ───── Line 3: itr ─────
 

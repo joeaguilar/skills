@@ -73,6 +73,16 @@ has_sync=0;    [ -f "$WF" ] && grep -qE 'Cargo\.lock|package\.json|sync manifest
 has_release=0; [ -f .github/workflows/release.yml ] && has_release=1
 has_build=0;   [ -f build.rs ] && has_build=1
 has_changelog=0; [ -f CHANGELOG.md ] && has_changelog=1
+# Draft-first publishing: the release must be created as a draft and flipped
+# to published only after the whole build matrix succeeds. Without both halves
+# the new tag is "latest" while its assets are still uploading, and install
+# scripts that resolve /releases/latest download 404s for minutes.
+has_draft_first=0
+if [ -f .github/workflows/release.yml ] &&
+   grep -qE '^[[:space:]]*draft:[[:space:]]*true' .github/workflows/release.yml &&
+   grep -qE 'draft=false|draft:[[:space:]]*false' .github/workflows/release.yml; then
+  has_draft_first=1
+fi
 
 echo "Repo:        $REPO_ROOT"
 echo "Archetype:   $TYPE${BIN:+  (bin: $BIN)}"
@@ -81,6 +91,9 @@ if [ "$TYPE" = "rust" ] && [ $has_wf = 1 ]; then
   echo "  manifest sync (itr parity): $( [ $has_sync = 1 ] && echo yes || echo 'NO — upgrade available' )"
 fi
 [ "$TYPE" = "rust" ] && echo "release.yml: $( [ $has_release = 1 ] && echo present || echo MISSING )"
+if [ "$TYPE" = "rust" ] && [ $has_release = 1 ]; then
+  echo "  draft-first publish: $( [ $has_draft_first = 1 ] && echo yes || echo 'NO — /releases/latest goes live before assets finish uploading' )"
+fi
 [ "$TYPE" = "rust" ] && echo "build.rs:    $( [ $has_build = 1 ] && echo present || echo MISSING )"
 echo "CHANGELOG.md: $( [ $has_changelog = 1 ] && echo present || echo MISSING )"
 

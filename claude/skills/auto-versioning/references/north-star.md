@@ -38,17 +38,58 @@ manifest is a mirror kept honest by the sync commit.
   (`sed` on `Cargo.toml`, `awk` on `Cargo.lock`) and a step that dispatches
   `release.yml` via `gh workflow run` (a `GITHUB_TOKEN` push can't trigger the
   tag-push workflow directly, so it's dispatched explicitly).
-- `release.yml` — on tag push (or manual dispatch), creates a GitHub Release
-  with `generate_release_notes: true`, then a 7-target build matrix
+- `release.yml` — on tag push (or manual dispatch), creates a **draft** GitHub
+  Release with `generate_release_notes: true`, then a 7-target build matrix
   (linux gnu/musl, macos x86/arm, windows x86/arm) uploads `.tar.gz`/`.zip`
-  archives + `.sha256`. Release is created **once up front** so matrix jobs
-  don't race to create it.
+  archives + `.sha256` into that draft, and a final `publish` job flips it to
+  published + latest. Release is created **once up front** so matrix jobs
+  don't race to create it, and created **as a draft** so it isn't discoverable
+  until it's complete (see below).
 - `build.rs` + `src/version_shape.rs` — embed `git describe --tags` into the
   binary as `<BIN>_VERSION`, shaped to stay semver-looking on tagless checkouts.
   `version_shape.rs` is `include!`d (not a module) so the same code is unit-
   tested. **Read `env!("<BIN>_VERSION")` in your binary** or the env var is inert.
 - `CHANGELOG.md` — hand-maintained, newest-first, with a `## Versioning`
   preamble. itr deliberately does **not** auto-generate this.
+
+#### Why the release starts as a draft
+
+The install scripts (`install.sh`, `install.ps1`) resolve "latest" by following
+the `github.com/<owner>/<repo>/releases/latest` redirect — deliberately, since
+it needs no API token and no rate limit. That makes release *visibility* the
+contract, not just the tag.
+
+Publishing the release before the matrix uploads breaks that contract for the
+length of the build. Measured on itr v3.1.0: release public at `19:09:43Z`,
+first asset `+97s`, last asset `+178s`. In that window the redirect resolved to
+a release whose every asset 404'd, and `install.sh`'s source fallback needs a
+cloned repo — so a `curl … | bash` user got no install at all.
+
+GitHub excludes drafts from `/releases/latest`. Creating the release as a draft
+means the redirect keeps serving the previous *complete* release until the new
+one is whole, which downgrades a hard failure into "you got the previous
+version for three minutes". The publish job (`needs: [create-release, build]`)
+also turns any single failed target into "stays a draft" rather than "latest is
+missing three platforms".
+
+Draft-first has one sharp edge, learned the hard way on itr v3.1.1. The upload
+step must pass `draft: true` **explicitly**. `softprops/action-gh-release`
+claims to preserve the existing draft flag on update; it doesn't, and the first
+matrix target to finish published a 2-of-14-asset release as `latest`. The
+first attempt at this fix therefore reproduced the very bug it was meant to
+remove — with a *shorter* window, which is worse, because it looks like it
+worked. Hence two independent safeguards: the explicit flag on every upload,
+and an asset-count gate in the publish job that refuses to publish an
+incomplete release. Neither is redundant; the count gate is what turns "an
+upload step misbehaved" into a red workflow rather than a silent partial
+release.
+
+This is why the tag and the release are allowed to disagree briefly: the tag
+exists the moment `auto-version.yml` pushes it (so `git describe` and version
+pins see it), while the *latest redirect* deliberately lags until assets exist.
+Version pins pointed at a brand-new tag still 404 during that window, and
+should stay a hard error — silently serving an older version than the one the
+user explicitly pinned is worse than failing.
 
 ### `ccq` / `gatr` / `kgr` — the tag-only variant
 

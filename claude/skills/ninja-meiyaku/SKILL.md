@@ -13,7 +13,7 @@ One run, whole gamut, sealed under a pact: choose targets → strike in waves �
 
 ## The loop at a glance
 ```
-seal the pact ──► wave: strike ∥ strike ∥ gpt-5.6-terra ──► cross-review ──► escalate the miss
+seal the pact ──► wave: strike ∥ strike ∥ gpt-5.5 ──► cross-review ──► escalate the miss
       ▲                                                                        │
       └──────────────── next wave (gate green, targets remain) ◄───────────────┘
 targets done ──► last look (dual, whole diff) ──► whisper ──► gone
@@ -32,7 +32,7 @@ targets done ──► last look (dual, whole diff) ──► whisper ──► 
 | `--confirm` | off | the ONLY gate — pause after the pact is sealed |
 
 ## Roles & artifacts
-**You** — throw, then read the whisper. **Orchestrator** — chooses, routes, gates, escalates. **Strikers/reviewers** — one per target, per the routing law. Scroll: `sprint/{folder}/plan.md` + wave logs under `sprint/{folder}/blitz/`; stories in the tracker (`itr`) under one epic. Verify gate auto-detected (Cargo/npm/pytest/go/Make). Codex lanes (gpt-5.6-terra et al.) need the codex plugin authenticated — absent → run Claude-only, say so in the whisper.
+**You** — throw, then read the whisper. **Orchestrator** — chooses, routes, gates, escalates. **Strikers/reviewers** — one per target, per the routing law. Scroll: `sprint/{folder}/plan.md` + wave logs under `sprint/{folder}/blitz/`; stories in the tracker (`itr`) under one epic. Verify gate auto-detected (Cargo/npm/pytest/go/Make). Codex lanes (gpt-5.5 et al.) need the codex plugin authenticated — absent → run Claude-only, say so in the whisper.
 
 ## Voice — the silent strike
 Speaks only at the sealing (Phase 0 template) and the whisper (Phase 3 template); `--confirm` reuses the sealing as its pause. Failure, one line: `盟 — #<id> fell twice. quarantined.` 印 = 盟.
@@ -70,26 +70,26 @@ Then silence. (`--confirm` waits here.)
 ## Phase 1 — waves, shared shadow
 One checkout, disjoint file ownership per wave, ≤5 strikes/wave, blocked after blockers, **≤1 Codex strike per wave** (the Codex companion allows one active task per checkout). Full-repo verify gate is the self-healing convergence; never advance red — small obvious fix yourself and log it, else stop and surface.
 
-**Routing law** (never Haiku; never a Codex generalist/sonnet for taste): bulk/mechanical → **gpt-5.6-terra** (the Codex generalist; drop to **gpt-5.5** for the cheapest trivial mechanical floor); user-facing/taste-critical → **opus-5**; ambiguous/judgment → **opus-5**; **fable-5** only under `--fable`.
+**Routing law** (never Haiku; never a Codex generalist/sonnet for taste): bulk/mechanical → **gpt-5.5** (the Codex generalist / agents default; **gpt-5.6-terra** is the first escalation rung); user-facing/taste-critical → **opus-5**; ambiguous/judgment → **gpt-5.5** (Opus 5 is knowledge 7 and not effective at judging its own work); **fable-5** only under `--fable`.
 
-**Strikers.** Claude: Agent `{model, run_in_background: true}`, shared checkout. Codex (default gpt-5.6-terra): a `sonnet` wrapper agent, description `gpt-5.6-terra:task-{id}`, one Bash call (explicit timeout): `codex exec -C <checkout> -m gpt-5.6-terra -s workspace-write "$(cat "$PROMPT")"` (swap `-m` for the task's assigned Codex model). Every prompt opens with the oath (above, verbatim), then: owned files ONLY, no tree-wide formatters, run the full verify gate to zero, no commit, end PASS/FAIL + diff summary + gate tail.
+**Strikers.** Claude: Agent `{model, run_in_background: true}`, shared checkout. Codex (default gpt-5.5): a `sonnet` wrapper agent, description `gpt-5.5:task-{id}`, one Bash call (explicit timeout): `codex exec -C <checkout> -m gpt-5.5 -s workspace-write "$(cat "$PROMPT")"` (swap `-m` for the task's assigned Codex model). Every prompt opens with the oath (above, verbatim), then: owned files ONLY, no tree-wide formatters, run the full verify gate to zero, no commit, end PASS/FAIL + diff summary + gate tail.
 
-**Cross-review before close — always a different blade.** Codex work → opus-5 reviewer over that target's diff. Claude work → the adversarial companion:
+**Cross-review before close — always a different blade.** Codex work → a **different Codex blade** reviews that target's diff (gpt-5.5 work → gpt-5.6-terra reviewer); Opus judges no work but taste — never its own. Claude work → the adversarial companion:
 ```sh
 COMPANION=$(ls -d ~/.claude/plugins/cache/openai-codex/codex/*/scripts/codex-companion.mjs | sort -V | tail -1)
 node "$COMPANION" adversarial-review --wait --base <ref> --scope branch "<focus>"
 ```
-An errored review lane is not a clean pass — retry once, else close on the striker's gate, marked degraded. P0/P1 finding → redo with the next-smarter blade (gpt-5.6-terra → gpt-5.6-sol → opus-5 → fable-5 only under `--fable`), findings spliced in, re-reviewed. **Two falls → quarantine**; surface it, move on. Stop waves when: targets done · two zero-close waves · `--waves` reached.
+An errored review lane is not a clean pass — retry once, else close on the striker's gate, marked degraded. P0/P1 finding → redo with the next-smarter blade (gpt-5.5 → gpt-5.6-terra → gpt-5.6-sol → fable-5 only under `--fable`), findings spliced in, re-reviewed. **Two falls → quarantine**; surface it, move on. Stop waves when: targets done · two zero-close waves · `--waves` reached.
 
 ## Phase 2 — the last look
-One dual pass over the **whole** diff: the adversarial companion (scope branch) + one independent opus-5 (fable-5 under `--fable`) reviewer → dedup → P0–P3 survivors → ship/hold.
+One dual pass over the **whole** diff: the adversarial companion (scope branch) + one independent gpt-5.6-sol (fable-5 under `--fable`) reviewer → dedup → P0–P3 survivors → ship/hold.
 
 ## Phase 3 — the whisper (return)
 Fill Outcomes in the scroll, close the epic, update `sprint/CURRENT`, commit the kept diff — the blades never commit; the orchestrator does, unless the user forbade it. Speak once:
 
 ```
 盟 — the pact is kept.
-cut <n> · fell <m> · blades: <k> gpt-5.6-terra, <j> opus<, f fable> · escalated <e>
+cut <n> · fell <m> · blades: <k> gpt-5.5, <j> opus<, f fable> · escalated <e>
 <smoke-only: <s> — #<id>… await PO eyes (visual-gate-only); resolve at /sprint-review>
 last look: <P0/P1/P2/P3> — <ship|hold>
 diff: <files changed, +/-> — committed (or yours, if you forbade the commit).

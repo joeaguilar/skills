@@ -21,22 +21,26 @@ unsupervised. `Taste` = UI/UX, code quality, API design, copy.
 | gpt-5.6-sol | 5 | 9 | 6 |
 | gpt-5.6-terra | 6 | 8 | 5 |
 | gpt-5.6-luna | 7 | 8 | 4 |
-| gpt-5.5 | 9 | 7 | 5 |
+| gpt-5.5 | 9 | 8 | 5 |
 | haiku-4.5 | 7 | 3 | 5 |
 | sonnet-5 | 5 | 5 | 7 |
-| opus-5 | 7 | 8 | 8 |
+| opus-5 | 7 | 7 | 8 |
 | fable-5 | 2 | 9 | 9 |
 
-**opus-5 replaced opus-4.8 as the Opus rung on 2026-07-25.** Pricing is identical
-($5/$25 per MTok), so **cost stays 7**; intelligence goes **7 → 8** (Anthropic
-documents Opus 5 as a step-change over 4.8 on deep reasoning, agentic and
-long-horizon work); taste stays **8**, so the `> 7` taste bar and the
-opus-vs-fable split are unchanged. **fable-5 is still the capability ceiling** —
-Opus 5 is explicitly "half the cost of Fable 5", with Fable 5 remaining the
-highest-capability tier, which is why fable keeps intelligence 9 and the gated
-`taste-hero` rung. `opus-4.8` is still a live model (same price, still reachable)
-but has **no routing role here**; it survives only as Opus 5's refusal fallback —
-cyber-category refusals on `claude-opus-5` route to `claude-opus-4-8`.
+**Score history (2026-07-26, operator-dictated).** Opus 4.8 was a knowledge
+level 7; **Opus 5 is a knowledge level 7** — the 2026-07-25 promotion to 8 is
+reverted on operator evidence (the street-yeet A/B postmortem,
+`docs/postmortem-mission-street-yeet.md`). **Opus 5 is not effective at judging
+its own work** — never route review/judgment of Opus output back to Opus; the
+`ambiguous` (judgment/review) role is rebound to the Codex agents default below.
+**gpt-5.5 is the default for agents and keeps knowledge level 8 — it is in fact
+much smarter and much more capable.** Pricing on the Opus rung is unchanged
+($5/$25 per MTok, cost stays 7); taste stays **8**, so the `> 7` taste bar and
+the opus-vs-fable split are unchanged. **fable-5 is still the capability
+ceiling** and keeps intelligence 9 and the gated `taste-hero` rung. `opus-4.8`
+is still a live model (same price, still reachable) but has **no routing role
+here**; it survives only as Opus 5's refusal fallback — cyber-category refusals
+on `claude-opus-5` route to `claude-opus-4-8`.
 
 **Model names legal in skills** = the Scores table above, plus anything listed on
 an allowlist line. A skill naming anything else fails `models.sh check`. Legality
@@ -56,18 +60,21 @@ generalist**" never changes when terra replaces gpt-5.5.)
 
 | Role | Model | Meaning |
 |---|---|---|
-| generalist | gpt-5.6-terra | the default Codex generalist Claude spins up when needed |
-| bulk | gpt-5.6-terra | bulk / mechanical implementation, migrations, data transforms |
+| generalist | gpt-5.5 | the default for agents — the Codex generalist Claude spins up when needed |
+| bulk | gpt-5.5 | bulk / mechanical implementation, migrations, data transforms |
 | floor | gpt-5.5 | cheapest floor for the most trivial mechanical work |
-| ambiguous | opus-5 | judgment-heavy but not user-facing |
+| ambiguous | gpt-5.5 | judgment-heavy but not user-facing — incl. reviews/judging of Opus output (Opus never judges its own work) |
 | taste | opus-5 | user-facing / taste-critical default (taste must be > 7) |
 | taste-hero | fable-5 | hero / flagship taste surface — gated (`fable=on` / `--fable`) |
 | computer-use | gpt-5.6-terra | Codex real-UI runtime verification (the `codex-computer-use` skill) |
-| codex-default | gpt-5.6-terra | default `-m` for `codex exec` |
+| codex-default | gpt-5.5 | default `-m` for `codex exec` (pass it explicitly — config.toml may differ) |
 | never | haiku-4.5 | never used, any role |
 
 **Escalation ladder (non-taste)** — cheapest rung first, escalate a miss without asking
-until the fable rung (gated): `gpt-5.6-terra → gpt-5.6-sol → opus-5 → fable-5`.
+until the fable rung (gated): `gpt-5.5 → gpt-5.6-terra → gpt-5.6-sol → fable-5`.
+(opus-5 is no longer a non-taste escalation rung — intelligence 7 sits below the
+Codex rungs, and it is not effective at judging its own work; it remains the
+`taste` rung.)
 
 **Routing priority when axes conflict / for anything that ships:** intelligence > taste
 > cost. Cost is a tie-breaker only. No Codex generalist (terra/sol/luna/gpt-5.5) or
@@ -80,7 +87,7 @@ sonnet-5 clears the taste bar (> 7) — taste work is opus-5 or fable-5.
 | gpt-5.6-sol | Codex — `codex exec -m gpt-5.6-sol` (smart escalation rung) |
 | gpt-5.6-terra | Codex — `codex exec -m gpt-5.6-terra` (default generalist) |
 | gpt-5.6-luna | Codex — `codex exec -m gpt-5.6-luna` (cheaper terra-peer) |
-| gpt-5.5 | Codex — `~/.codex/config.toml` default; `codex exec` with no `-m` |
+| gpt-5.5 | Codex — `codex exec -m gpt-5.5` (agents default; pass `-m` explicitly — `~/.codex/config.toml` currently defaults to gpt-5.6-sol, so a bare `codex exec` does NOT run gpt-5.5) |
 | sonnet-5 | Agent/Workflow `model: 'sonnet'` |
 | opus-5 | Agent/Workflow `model: 'opus'` |
 | fable-5 | Agent/Workflow `model: 'fable'` |
@@ -102,7 +109,7 @@ inherits `~/.codex/config.toml`, which may name a level the target model rejects
 | gpt-5.6-terra | `medium` / `high` / `xhigh` (`high` is the standing default) | **Only use `ultra` if the user requested it, and only in a solo subagent run** — one Codex lane, nothing else in flight; never inside a parallel wave/fan-out | default generalist — free to route |
 | gpt-5.6-sol | `medium` / `high` / `xhigh` (`medium` is the standing default) | **Only use `ultra` if the user requested it, and only in a solo subagent run** — one Codex lane, nothing else in flight; never inside a parallel wave/fan-out | escalation rung — free to route |
 | gpt-5.6-luna | `medium` / `high` / `xhigh` | no ultra lane — work that seems to need luna-at-ultra routes to terra/sol instead | **Automated workflows only** (a router assigned it — a `route:` tag, a cost-sensitive C1 batch). **Never self-invoke**: don't pick luna on your own initiative, and never for risky or Novelty ≥ 1 work |
-| gpt-5.5 | `none`…`xhigh` (API **rejects** `ultra`/`max`) | rejected by the API | cheapest floor, C0/trivial only |
+| gpt-5.5 | `none`…`xhigh` (API **rejects** `ultra`/`max`) | rejected by the API | agents default + cheapest floor — free to route |
 
 Risky tasks (miss is costly, spec subtle, blast radius wide) never run below `high`
 on a Codex model and never route to luna; if a risky task seems to demand `ultra`

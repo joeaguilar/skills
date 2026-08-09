@@ -54,9 +54,9 @@ Sum (0–10) → tier → route:
 | Tier | Score | Route | Tags |
 |---|---|---|---|
 | **C0 trivial** | 0–1 | gpt-5.5 | `complexity:C0`, `route:gpt-5.5` |
-| **C1 routine** | 2–3 | gpt-5.6-terra (gpt-5.6-luna for cost-sensitive pattern-following batches) | `complexity:C1`, `route:gpt-5.6-terra` |
-| **C2 standard** | 4–5 | sonnet-5 if spec-complete build work; gpt-5.6-terra if mechanical-heavy | `complexity:C2`, `route:sonnet-5` |
-| **C3 complex** | 6–7 | gpt-5.6-sol if novelty-dominant; opus-5 if ambiguity/blast-radius-dominant | `complexity:C3`, `route:opus-5` |
+| **C1 routine** | 2–3 | gpt-5.5 (the agents default; gpt-5.6-terra or luna for pattern-following batches) | `complexity:C1`, `route:gpt-5.5` |
+| **C2 standard** | 4–5 | sonnet-5 if spec-complete build work; gpt-5.5 if mechanical-heavy | `complexity:C2`, `route:sonnet-5` |
+| **C3 complex** | 6–7 | gpt-5.6-sol if novelty-dominant; gpt-5.5 if ambiguity/blast-radius-dominant (the `ambiguous` role — Opus 5 is knowledge 7 and not effective at judging its own work) | `complexity:C3`, `route:gpt-5.6-sol` |
 | **C4 frontier** | 8–10 | fable-5 (gated) — recommend decomposition first | `complexity:C4`, `route:fable-5` |
 
 **Hard overrides (apply after scoring, absolute):**
@@ -64,12 +64,14 @@ Sum (0–10) → tier → route:
 1. Taste surface = 2 → opus-5 minimum, whatever the total. No GPT model or
    sonnet-5 clears the taste bar.
 2. Never haiku-4.5, any tier.
-3. gpt-5.5 takes C0 only — short, hard-gated runs (it has the highest
-   reward-hacking rate on long-horizon benchmarks).
+3. gpt-5.5 is the agents default (knowledge 8) — route it freely, but keep a
+   hard verify gate on every run: it has the highest reward-hacking rate on
+   long-horizon benchmarks, so a weakly-gated long-horizon run still needs a
+   gate added before routing there.
 4. gpt-5.6-luna never takes work with Novelty ≥ 1 — its novel reasoning
    underperforms its build scores.
 5. Sonnet-5 requires a complete spec with written acceptance criteria; if the
-   spec is incomplete, the issue is Ambiguity ≥ 1 and C2 routes to terra or
+   spec is incomplete, the issue is Ambiguity ≥ 1 and C2 routes to gpt-5.5 or
    the score lands C3.
 
 ## Phases
@@ -116,7 +118,7 @@ cheap run costs more than the routing delta. Note every bump and why.
 
 1. Print one grooming table: `ID | Title | H N A B T | Mod | Tier | Route | Note`.
    Notes carry bump reasons, missing gates, and sub-route choices (sonnet vs
-   terra, sol vs opus).
+   gpt-5.5, sol vs gpt-5.5).
 2. Unless `--dry`, apply tags:
    `itr update <id> --add-tag complexity:CN --add-tag route:<model>`
    (with `--re`, remove the old `complexity:`/`route:` tags first via

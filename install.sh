@@ -4,9 +4,16 @@ set -euo pipefail
 # Unified primitive installer for this repo.
 #
 # Dry-run by default. Existing real target dirs are backed up before replacement;
-# existing symlinks are replaced atomically with ln -sfn. Codex skills are the
-# exception: the installer keeps a real `.system` overlay and links custom skills
-# individually so product refreshes cannot mutate the source checkout.
+# existing links are replaced in place. Codex skills are the exception: the
+# installer keeps a real `.system` overlay and links custom skills individually
+# so product refreshes cannot mutate the source checkout.
+#
+# Windows (Git Bash/MSYS): `ln -s` silently degrades to a deep COPY unless
+# MSYS=winsymlinks:nativestrict is exported, which needs Developer Mode. A copy
+# looks installed but never receives repo updates. So on Windows, directories
+# are linked with NTFS junctions (mklink /J — no privileges needed, and Git
+# Bash sees them as symlinks: -L is true, readlink resolves) and files try a
+# native symlink, then a hardlink, then loudly fall back to copy.
 
 usage() {
   cat <<'USAGE'
@@ -179,6 +186,61 @@ primitive_required() {
   [ "$primitive" = "skills" ] || [ "$PRIMITIVE_SEL" != "all" ]
 }
 
+# --- portable links ---------------------------------------------------------
+
+on_windows() { case "$(uname -s)" in MINGW*|MSYS*|CYGWIN*) return 0 ;; *) return 1 ;; esac; }
+
+# remove_link TARGET — remove an existing link without touching what it points at.
+# On Windows a junction must be removed with rmdir; POSIX rm handles symlinks.
+remove_link() {
+  local target="$1"
+  if on_windows && [ -d "$target" ]; then
+    # MSYS_NO_PATHCONV stops MSYS mangling /switches; then plain /c is required
+    MSYS_NO_PATHCONV=1 cmd /c rmdir "$(cygpath -w "$target")"
+  else
+    rm "$target"
+  fi
+}
+
+# link_dir SOURCE TARGET — directory link: NTFS junction on Windows, symlink
+# elsewhere. TARGET must not exist. Dies if the result is not a real link
+# (i.e. if anything silently copied instead).
+link_dir() {
+  local source="$1" target="$2"
+  if on_windows; then
+    MSYS_NO_PATHCONV=1 cmd /c mklink /J "$(cygpath -w "$target")" "$(cygpath -w "$source")" >/dev/null
+  else
+    ln -s "$source" "$target"
+  fi
+  if [ ! -L "$target" ]; then
+    echo "FATAL: $target is not a link after linking (silent copy?) — refusing to continue" >&2
+    return 1
+  fi
+}
+
+# link_file SOURCE TARGET — file link. TARGET must not exist. On Windows tries
+# native symlink (needs Developer Mode), then hardlink, then copies with a loud
+# warning (a hardlink survives edits-in-place but is severed when git rewrites
+# the source inode; re-run install after big pulls).
+link_file() {
+  local source="$1" target="$2"
+  if on_windows; then
+    local ws wt
+    ws="$(cygpath -w "$source")"; wt="$(cygpath -w "$target")"
+    if MSYS_NO_PATHCONV=1 cmd /c mklink "$wt" "$ws" >/dev/null 2>&1; then
+      return 0
+    fi
+    if MSYS_NO_PATHCONV=1 cmd /c mklink /H "$wt" "$ws" >/dev/null 2>&1; then
+      echo "    note: hardlinked (no symlink privilege) — re-run install if git rewrites the source file"
+      return 0
+    fi
+    cp "$source" "$target"
+    echo "    WARNING: copied, not linked — enable Developer Mode (or export MSYS=winsymlinks:nativestrict) for real file links" >&2
+    return 0
+  fi
+  ln -s "$source" "$target"
+}
+
 # install_root PLATFORM PRIMITIVE SOURCE_DIR TARGET_DIR
 install_root() {
   local platform="$1" primitive="$2" source="$3" target="$4"
@@ -230,15 +292,13 @@ install_root() {
 
   mkdir -p "$parent"
   if [ -L "$target" ]; then
-    ln -sfn "$source" "$target"
+    remove_link "$target"
   elif [ -e "$target" ]; then
     mkdir -p "$BACKUP_ROOT"
     mv "$target" "$backup"
     echo "[$platform/$primitive] backed up existing root to $backup"
-    ln -s "$source" "$target"
-  else
-    ln -s "$source" "$target"
   fi
+  link_dir "$source" "$target"
   echo "[$platform/$primitive] linked $target -> $source"
 }
 
@@ -315,13 +375,11 @@ install_codex_skills() {
       continue
     fi
     if [ -L "$target_skill" ]; then
-      ln -sfn "$source_skill" "$target_skill"
+      remove_link "$target_skill"
     elif [ -e "$target_skill" ]; then
       mv "$target_skill" "$backup"
-      ln -s "$source_skill" "$target_skill"
-    else
-      ln -s "$source_skill" "$target_skill"
     fi
+    link_dir "$source_skill" "$target_skill"
   done < <(find "$source" -mindepth 1 -maxdepth 1 -type d | sort)
 
   if [ "$APPLY" -ne 1 ]; then
@@ -367,15 +425,13 @@ install_file() {
 
   mkdir -p "$parent"
   if [ -L "$target" ]; then
-    ln -sfn "$source" "$target"
+    rm "$target"
   elif [ -e "$target" ]; then
     mkdir -p "$BACKUP_ROOT"
     mv "$target" "$backup"
     echo "[$platform/config] backed up existing file to $backup"
-    ln -s "$source" "$target"
-  else
-    ln -s "$source" "$target"
   fi
+  link_file "$source" "$target"
   echo "[$platform/config] linked $target -> $source"
 }
 

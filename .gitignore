@@ -15,6 +15,7 @@ backups/
 
 # Local agent/tool state
 .codex/
+.playwright-mcp/
 .itr.db
 .itr.db-*
 .kgr-cache.json

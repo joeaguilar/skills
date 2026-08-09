@@ -507,6 +507,19 @@ skills:
     recommends: ["issue-tracker", "code-graph", "gate-runner", "sprint-planning", "backlog-execution", "sprint-review", "product-roadmap", "story-conventions"]
     unlocked_by: []
     position: { x: 92, y: 54 }
+  gauntlet:
+    path: "skills/gauntlet"
+    group: "autonomy"
+    tier: 4
+    icon: "GNT"
+    theme: "plasma"
+    title: "Gauntlet"
+    summary: "Drive a visual subsystem through goal-backed build, capture, critique, and deterministic closure."
+    provides: ["autonomous-orchestration"]
+    requires: ["issue-tracker"]
+    recommends: ["code-graph", "image-generation"]
+    unlocked_by: ["itr"]
+    position: { x: 92, y: 66 }
   run-the-rivers-dry:
     path: "skills/run-the-rivers-dry"
     group: "autonomy"

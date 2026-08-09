@@ -1,6 +1,6 @@
 ---
 name: gauntlet
-description: Run (or resume) a rubric-gated autonomous build/critique loop on a visual subsystem or a whole slice — one Workflow per iteration (Build → Capture → Critique), blind instrumented critics scored against RUBRIC.md, closure decided solely by `tools/gate.mjs`, captures pre-validated by `tools/measure.mjs`, routing reconciled via a mandatory route ledger. Trigger when the user types `/gauntlet`, or asks to "run the gauntlet loop", "rubric-gated build loop", "start a critique gauntlet", "resume the build/critique loop", or similar. Do NOT trigger for a single one-off review (use `/code-review`), for clearing a task backlog in parallel (use `/blitz`), or for a roadmap-bounded campaign (use `/proof-campaign`).
+description: Run (or resume) a rubric-gated autonomous build/critique loop on a visual subsystem or a whole slice — one Workflow per iteration (Build → Capture → Critique), blind instrumented critics (Opus + a cross-model Codex seat) scored against RUBRIC.md, closure decided solely by `tools/gate.mjs`, captures pre-validated by `tools/measure.mjs`, routing reconciled via a mandatory route ledger. Trigger when the user types `/gauntlet`, or asks to "run the gauntlet loop", "rubric-gated build loop", "start a critique gauntlet", "resume the build/critique loop", or similar. Do NOT trigger for a single one-off review (use `/code-review`), for clearing a task backlog in parallel (use `/blitz`), or for a roadmap-bounded campaign (use `/proof-campaign`).
 ---
 
 # gauntlet — rubric-gated build/critique loop
@@ -55,7 +55,8 @@ Run every check; a failure is fixed before any iteration starts. Never skip on `
 4. **Gate + measure exist — THE SKILL CREATES THEM.** If `tools/gate.mjs` or `tools/measure.mjs` is missing from the project, create it now by copying from this skill's bundled assets: `<skill>/assets/gate.mjs` and `<skill>/assets/measure.mjs`, where `<skill>` is the directory containing this SKILL.md (typically `~/.claude/skills/gauntlet/` or `<project>/.claude/skills/gauntlet/`; if unsure, glob for `**/skills/gauntlet/assets/gate.mjs`). They are zero-dependency ESM, Node ≥18. **NEVER regenerate either tool from memory or write your own** — the bundled copies are verified artifacts (they reproduce the Cyberfunk run's full closure record and critic-published pixel numbers exactly); a hand-rewritten gate is an unverified closure authority and voids every closure it grants. If the assets cannot be found, STOP and tell the user — do not improvise the tools. After copying: `mkdir critiques shots` if missing (gate exits 2 on a missing dir, 0 with a valid empty report on an empty one), then prove both runnable — `node tools/gate.mjs --json` exit 0 and `node tools/measure.mjs --help` exit 0 (use `assert` against a real shot once the capture rig produces one). Commit the created tools before iteration 1.
 5. **itr initialized**: `itr stats` succeeds (`.itr.db` present). Residuals are filed here, not in prose.
 6. **Route ledger table present in STATUS.md** (format in Phase 4). Create the empty table if missing.
-7. Record the cap (and bar, if not 8) in the STATUS.md `Gate flags:` line (e.g. `Gate flags: --cap 40 --bar 9`). Running `gate.mjs --cap N` once records nothing — the flag is per-invocation, so the STATUS.md line is the record and every subsequent gate call carries it.
+7. **Codex companion present** (powers the cross-model critic seat, Phase 2): `COMPANION=$(ls -d ~/.claude/plugins/cache/openai-codex/codex/*/scripts/codex-companion.mjs 2>/dev/null | sort -V | tail -1)` non-empty and `node` runnable. Missing → `/codex:setup` fixes it; proceeding anyway is legal but is a DEGRADED all-Claude judging run — record `Judging: all-claude (companion missing)` in STATUS.md now, and every critique ledger row from then on carries `SANDBOX-DOWN`.
+8. Record the cap (and bar, if not 8) in the STATUS.md `Gate flags:` line (e.g. `Gate flags: --cap 40 --bar 9`). Running `gate.mjs --cap N` once records nothing — the flag is per-invocation, so the STATUS.md line is the record and every subsequent gate call carries it.
 
 ---
 
@@ -74,7 +75,7 @@ One builder per subsystem per iteration (files are shared; parallel builders on 
 Shoot the iteration's shots, then run `node tools/measure.mjs assert <every png> --w <W> --h <H> --json` **before any critic spawns**. A failed assert (wrong size, blank frame, truncated file, mid-transition crossfade) means the CAPTURE RIG is broken — repair the rig and re-shoot; **never spawn a critic on a bad capture**. The prior run's rig waited 800ms against a 1200ms crossfade and critics scored mid-transition frames for multiple rounds before anyone noticed.
 
 ### Critique phase
-See Phase 2. Regular rounds: 1 critic. Confirmation rounds (the round that could produce the second consecutive all-≥8): a 3-critic panel.
+See Phase 2. Regular rounds: 1 critic, **alternating families by iteration parity** — odd iter = Opus critic, even iter = Codex seat (deterministic, so the ledger can be reconciled without judgment calls). Confirmation rounds (the round that could produce the second consecutive all-≥8): a 3-critic panel with the does-it-reproduce seat on Codex.
 
 ---
 
@@ -88,13 +89,22 @@ See Phase 2. Regular rounds: 1 critic. Confirmation rounds (the round that could
 
 **Panel on confirmation rounds.** When `gate.mjs --json` shows a subsystem one clean round from closure, run 3 critics with distinct lenses in parallel (inside the Workflow's Critique phase):
 
-| Lens | Focus |
-|---|---|
-| palette / composition | palette_lighting, scene_composition, parallax_depth |
-| readability / animation | sprite_readability, animation_feel, ui_polish |
-| does-it-reproduce | re-derives the prior round's measured claims from fresh captures; scores only what reproduces |
+| Lens | Seat | Focus |
+|---|---|---|
+| palette / composition | Opus | palette_lighting, scene_composition, parallax_depth |
+| readability / animation | Opus | sprite_readability, animation_feel, ui_polish |
+| does-it-reproduce | **Codex** | re-derives the prior round's measured claims from fresh captures; scores only what reproduces |
 
 Per-axis score = median of the three (2-of-3 agreement). All three verdicts are validated and committed; the merged verdict is the file `gate.mjs` reads. One Opus opinion closing a subsystem is the exact gameability the panel exists to prevent (forensics §4.2 fix 1).
+
+**The cross-model seat.** A single-family jury converges on the same rabbit holes — correlated blind spots survive any number of same-model critics, which is why the seat exists. The Codex seat is a critic like any other, run through the codex plugin's companion runtime:
+
+```bash
+COMPANION=$(ls -d ~/.claude/plugins/cache/openai-codex/codex/*/scripts/codex-companion.mjs 2>/dev/null | sort -V | tail -1)
+node "$COMPANION" task "<the blind critic prompt>"        # read-only: NO --write, model/effort unset
+```
+
+Same contract, no exceptions: the prompt is EXACTLY the blind critic prompt (rubric contents, shot paths, prior critique path, the `measure.mjs` command block) — Codex runs `measure.mjs` itself in its sandbox and must cite commands and outputs like any critic; it learns nothing about closure mechanics or round significance. Instruct it that stdout must be the critique JSON alone. You (clerk) write that stdout to `critiques/<subsystem>_iter<N>.json` only after `gate.mjs --validate` passes — transcription is clerking; editing it is score laundering. On validation rejection, re-invoke `task` fresh with the validator's error appended, same as respawning any critic. Companion invocation fails or is absent → the seat reroutes to Opus AND the ledger row records it (`planned=codex, actual=opus, SANDBOX-DOWN`) — the reroute is legal, the silent all-Claude panel is not.
 
 **Constraint caps.** When a critic proves a constraint (not effort) bounds an axis, append `--waive <subsystem>:<axis>` to the STATUS.md `Gate flags:` line AND append the evidence to RUBRIC.md "Known caps". `gate.mjs` persists nothing — the waiver only exists on gate calls that carry the flag, which is why the `Gate flags:` line rides every invocation. Waivers without a cited measurement are invalid. (Null `performance` is the one axis live_checks.json coverage auto-waives; everything else needs this explicit flag.)
 
@@ -150,7 +160,8 @@ Reason codes: `SANDBOX-DOWN`, `TOOL-MISSING`, `RATE-LIMIT`, `TASTE-REQUIRED` (me
 
 | Role | Model | Notes |
 |---|---|---|
-| Critic (all lenses) | Opus-class, high effort | Taste is the product; never downgrade. |
+| Critic (taste lenses) | Opus-class, high effort | Taste is the product; never downgrade below flagship-class of either family. |
+| Critic (cross-model seat) | Codex via companion `task`, read-only | Even-parity regular rounds + the does-it-reproduce panel seat. Different family, different blind spots — the anti-rabbit-hole seat. Failure → Opus + `SANDBOX-DOWN` ledger row. |
 | Visual-polish builder fixes | Opus-class | Only builder role that earns Opus. |
 | Mechanical scaffolds, capture glue, serve/shoot plumbing | Sonnet-class | Keep mechanical work OFF the orchestrator — 170 orchestrator PowerShell calls is why context filled last run. |
 | Builders (default) | Session model | |
@@ -172,6 +183,8 @@ Reason codes: `SANDBOX-DOWN`, `TOOL-MISSING`, `RATE-LIMIT`, `TASTE-REQUIRED` (me
 - Don't tell a critic anything about closure mechanics or round significance.
 - Don't spawn a critic on shots that haven't passed `measure.mjs assert`.
 - Don't hand-edit scores, critique JSONs, or STATUS score tables — regenerate from `gate.mjs`.
+- Don't run an all-Claude round or panel while the companion is available — the cross-model seat is part of the honesty chain, and skipping it without a `SANDBOX-DOWN` ledger row is a routing defect.
+- Don't tell the Codex seat anything the blind contract withholds from Claude critics — cross-model does not mean cross-briefed.
 - Don't declare closure yourself — only `gate.mjs --check` exit 0 plus a reconciled ledger closes a subsystem.
 - Don't invoke `gate.mjs` without the recorded `Gate flags:` line — the tool is stateless, and a flagless call silently drops every waiver and the cap.
 - Don't park residuals in prose — file them to itr at critique time.

@@ -1,0 +1,6 @@
+interface:
+  display_name: "Gauntlet"
+  short_description: "Rubric-gated visual build and critique"
+  default_prompt: "Use $gauntlet to improve this visual subsystem until the deterministic gate closes or reaches a declared terminal outcome."
+policy:
+  allow_implicit_invocation: false

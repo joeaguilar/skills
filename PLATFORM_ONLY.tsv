@@ -131,8 +131,6 @@ claude	commands	tdd_process.md
 claude	skills	scrum
 claude	skills	old-mission-skill-ab
 
-# gauntlet drives the Claude Workflow tool (no Codex counterpart); unity-bridge was
-# locally authored for the Claude editor bridge — port to Codex wording when wanted,
-# then graduate.
-claude	skills	gauntlet
+# unity-bridge was locally authored for the Claude editor bridge — port to Codex
+# wording when wanted, then graduate.
 claude	skills	unity-bridge

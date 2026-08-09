@@ -21,7 +21,7 @@ Snapshot: 2026-07-09, current working tree under `codex/`.
 - `codex/scripts/audit-installed-skills.sh` detects root symlinks, duplicate
   providers, and differing legacy payloads.
 - Optional primitive roots are present for `codex/agents` and `codex/commands`.
-- Current registry validates 54 primitives: 35 skills, 17 agents, and 2 commands.
+- Current registry validates 55 primitives: 36 skills, 17 agents, and 2 commands.
 - Codex validation enforces payload-to-registry coverage, so an installed skill
   cannot silently disappear from the explorer registry.
 - The two primitive audit commands both provide `primitive-audit`, so provider routing is covered by a real registry path.

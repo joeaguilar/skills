@@ -1,0 +1,19 @@
+{
+  "verdict_X_vs_Y": "worse",
+  "meaningful": true,
+  "one_line": "ARM_Y delivers a visibly more polished, audio-enhanced game with the same green build in less time and without ARM_X's player-irrelevant process paperwork.",
+  "evidence": [
+    "Both builds are green, but ARM_Y used 608s versus ARM_X's 833s (ARM_Y/metrics.md, ARM_X/metrics.md).",
+    "ARM_Y adds landing particles and jump/landing/game-over audio in the playable game (ARM_Y/app/src/game.ts); ARM_X explicitly shipped without sound (ARM_X/app/missions/sky-hop/debrief.md).",
+    "ARM_Y's screenshot shows a more composed fixed-aspect game view with moon, star field, layered skyline, roof-window detail, and clear start overlay (ARM_Y/screenshot.png); ARM_X's presentation is simpler (ARM_X/screenshot.png).",
+    "ARM_X spent 120 LOC on mission contracts, premise, and debrief documents that do not serve the player (ARM_X/metrics.md, ARM_X/app/missions/sky-hop/); ARM_Y has 0 process/doc LOC (ARM_Y/metrics.md).",
+    "Both source implementations cover the requested core loop\u2014procedural roofs, score/speed ramp, squash/stretch, game over, and restart (ARM_X/app/src/main.ts, ARM_Y/app/src/game.ts)."
+  ],
+  "candidate": "p1",
+  "incumbent": "base",
+  "blind_mapping": {
+    "X": "base",
+    "Y": "p1"
+  },
+  "verdict_candidate_vs_incumbent": "better"
+}

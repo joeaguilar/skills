@@ -128,3 +128,5 @@ claude	skills	mission
 # --- Claude-only commands (intentional unless a Codex feature gap appears) ---
 # tdd_process is the quick-reference companion to the tdd-coach skill; kept deliberately.
 claude	commands	tdd_process.md
+claude	skills	scrum
+claude	skills	old-mission-skill-ab

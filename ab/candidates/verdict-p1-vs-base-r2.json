@@ -1,0 +1,19 @@
+{
+  "verdict_X_vs_Y": "better",
+  "meaningful": false,
+  "one_line": "ARM_X is slightly more complete and better tuned, but both arms deliver comparable playable games.",
+  "evidence": [
+    "Both metrics files report clean builds: ARM_X/metrics.md and ARM_Y/metrics.md.",
+    "ARM_X/app/src/game.ts starts running immediately, persists a best score, and scales gap generation with scroll speed; ARM_Y/app/src/main.ts requires an initial start press and uses fixed 60\u2013150px gaps.",
+    "ARM_X/app/src/game.ts provides landing squash plus a glow flash; ARM_Y/app/src/main.ts provides squash plus dust particles, so both meet the requested feel/polish bar.",
+    "ARM_X/screenshot.png shows a functional scored game-over/restart screen; ARM_Y/screenshot.png shows a functional start screen and rooftop scene.",
+    "ARM_X spent 155 LOC on process documentation under ARM_X/app/missions/, while ARM_Y has no process-doc residue and nearly identical player-facing code LOC (381 vs 384 per metrics.md)."
+  ],
+  "candidate": "p1-r2",
+  "incumbent": "base-r2",
+  "blind_mapping": {
+    "X": "base-r2",
+    "Y": "p1-r2"
+  },
+  "verdict_candidate_vs_incumbent": "worse"
+}

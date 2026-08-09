@@ -200,9 +200,20 @@ function Render-Rl($pct, $at, [string]$label) {
 $rl_parts = @()
 $p = Render-Rl $rl_5h_pct $rl_5h_at '5h'; if ($p) { $rl_parts += $p }
 $p = Render-Rl $rl_7d_pct $rl_7d_at '7d'; if ($p) { $rl_parts += $p }
-$line2 = ''
-if     ($rl_parts.Count -eq 1) { $line2 = $rl_parts[0] }
-elseif ($rl_parts.Count -ge 2) { $line2 = "$($rl_parts[0]) $DIM|$RESET $($rl_parts[1])" }
+
+# Any extra windows the harness starts emitting (e.g. a per-model weekly like
+# seven_day_fable) render automatically with a label derived from the key.
+$rl_obj = G $data 'rate_limits' $null
+if ($rl_obj) {
+  foreach ($prop in $rl_obj.PSObject.Properties) {
+    if ($prop.Name -in @('five_hour', 'seven_day')) { continue }
+    $label = $prop.Name -replace '^seven_day', '7d' -replace '^five_hour', '5h' -replace '_', '-'
+    $p = Render-Rl ([string](G $prop.Value 'used_percentage' '')) ([string](G $prop.Value 'resets_at' '')) $label
+    if ($p) { $rl_parts += $p }
+  }
+}
+
+$line2 = ($rl_parts | Where-Object { $_ }) -join " $DIM|$RESET "
 
 # ───── Line 3: itr ─────
 $line3 = ''

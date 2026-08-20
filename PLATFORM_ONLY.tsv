@@ -143,3 +143,9 @@ claude	skills	typo
 # THIS ecosystem's next-work surfaces; start reads whatever conventions a shared repo documents).
 # Claude-only for the same frontmatter reason: it relies on `disable-model-invocation`.
 claude	skills	start
+
+# crucible is the generic sibling of gauntlet: it depends on the Workflow tool (no Codex
+# equivalent), the ultracode session toggle, and the Codex-companion critic seat driven from
+# inside Claude Code — same harness lineage as crossfire-*. Graduate when a goal-backed Codex
+# port lands, as gauntlet just did.
+claude	skills	crucible

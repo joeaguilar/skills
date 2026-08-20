@@ -134,3 +134,12 @@ claude	skills	old-mission-skill-ab
 # unity-bridge was locally authored for the Claude editor bridge — port to Codex
 # wording when wanted, then graduate.
 claude	skills	unity-bridge
+
+# typo is a micro-skill for flagging user-prompt typos; it depends on the Claude Code
+# `user-invocable: false` frontmatter key (model-invoked only, no slash command), which has
+# no Codex equivalent — a port would be user-callable, the opposite of the design.
+claude	skills	typo
+# start is the generic, convention-discovering counterpart to whats-next (whats-next encodes
+# THIS ecosystem's next-work surfaces; start reads whatever conventions a shared repo documents).
+# Claude-only for the same frontmatter reason: it relies on `disable-model-invocation`.
+claude	skills	start

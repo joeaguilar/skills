@@ -149,3 +149,7 @@ claude	skills	start
 # inside Claude Code — same harness lineage as crossfire-*. Graduate when a goal-backed Codex
 # port lands, as gauntlet just did.
 claude	skills	crucible
+
+# queue-up is a session-staging micro-skill (`.claude/queue.md` sheath; --now rides Claude Code's
+# in-turn message queueing). Port to Codex wording when wanted, then graduate.
+claude	skills	queue-up

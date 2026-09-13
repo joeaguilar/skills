@@ -35,8 +35,8 @@ Do not expect byte-for-byte parity.
 
 - `claude/skills/`: Claude skill sources.
 - `claude/agents/`, `claude/commands/`: Claude primitive roots.
-- `claude/settings.json`: canonical Claude config payload for the optional
-  `config` primitive.
+- `claude/settings.json`: gitignored local slot for `~/.claude/settings.json`,
+  adopted from the live file on the first `config` install and then linked.
 - `codex/skills/`: Codex skill ports plus `.system` Codex system skills.
 - `codex/agents/`, `codex/commands/`: Codex primitive roots.
 - `codex/registry/`: primitive metadata, capabilities, dependencies, and

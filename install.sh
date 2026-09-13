@@ -41,7 +41,8 @@ Options:
                        behavior). `workflows` is Claude-only (no Workflow tool
                        on Codex) and is skipped as optional for codex under
                        --all-primitives. `config` links individual home files
-                       (claude: settings.json + statusline.sh) rather than a
+                       (claude: CLAUDE.md, MODELS.md, COMPLEXITY.md,
+                       settings.json, statusline.sh) rather than a
                        directory root; it is opt-in and is NOT included in
                        --all-primitives.
   --primitives LIST    Comma-separated primitive roots.
@@ -396,7 +397,10 @@ install_file() {
     return 1
   fi
 
-  if [ -L "$target" ] && [ "$(readlink "$target")" = "$source" ]; then
+  # Already linked: a symlink that points at the source, or (when link_file fell
+  # back to a hard link because symlinks need a privilege) the same inode.
+  if { [ -L "$target" ] && [ "$(readlink "$target")" = "$source" ]; } \
+     || { [ ! -L "$target" ] && [ -e "$target" ] && [ "$target" -ef "$source" ]; }; then
     echo "[$platform/config] already linked: $target -> $source"
     return 0
   fi
@@ -435,20 +439,57 @@ install_file() {
   echo "[$platform/config] linked $target -> $source"
 }
 
+# adopt_local_source PLATFORM SOURCE TARGET — seed an empty, gitignored config
+# slot from the live home file. claude/settings.json is deliberately untracked
+# (machine-specific: absolute statusline path, harness-generated auto-mode
+# profile), so a fresh clone or sync has no source for it. If the slot is empty
+# and a real (non-link) file exists at the target, copy it into the slot so
+# install_file can then link the two. Honors the dry run.
+adopt_local_source() {
+  local platform="$1" source="$2" target="$3"
+  [ -f "$source" ] || [ -L "$source" ] && return 0
+  if [ ! -f "$target" ] || [ -L "$target" ]; then
+    return 0
+  fi
+  echo "[$platform/config] plan:"
+  echo "    scope:  $SCOPE_SEL"
+  echo "    source: $source (missing; gitignored local slot)"
+  echo "    target: $target"
+  echo "    action: adopt the live file into the slot (copy target -> source), then link"
+  if [ "$APPLY" -ne 1 ]; then
+    echo "[$platform/config] dry run only. Re-run with --apply to make this change."
+    return 0
+  fi
+  mkdir -p "$(dirname "$source")"
+  cp -p "$target" "$source"
+  echo "[$platform/config] adopted $target -> $source"
+}
+
 # install_config PLATFORM — link known home config files into the platform home.
-# Claude manages settings.json + statusline.sh; codex has no managed config files yet.
+# Claude manages the global CLAUDE.md (source: claude/global-CLAUDE.md — named so
+# Claude Code never auto-loads it as a nested memory file inside this repo),
+# MODELS.md + COMPLEXITY.md (so the routing pointer in the global CLAUDE.md
+# resolves from any project), settings.json (a gitignored local slot, adopted
+# from the live file on first install — see adopt_local_source), and
+# statusline.sh; codex has no managed config files yet. Each file is linked
+# independently: one missing source is reported and does not block the others.
 install_config() {
-  local platform="$1" home
+  local platform="$1" home rc=0
   home="$(target_root "$platform")"
   case "$platform" in
     claude)
-      install_file claude "$REPO_DIR/claude/settings.json" "$home/settings.json"
-      install_file claude "$REPO_DIR/statusline.sh"        "$home/statusline.sh"
+      install_file claude "$REPO_DIR/claude/global-CLAUDE.md" "$home/CLAUDE.md"     || rc=1
+      install_file claude "$REPO_DIR/claude/MODELS.md"        "$home/MODELS.md"     || rc=1
+      install_file claude "$REPO_DIR/claude/COMPLEXITY.md"    "$home/COMPLEXITY.md" || rc=1
+      adopt_local_source claude "$REPO_DIR/claude/settings.json" "$home/settings.json"
+      install_file claude "$REPO_DIR/claude/settings.json"    "$home/settings.json" || rc=1
+      install_file claude "$REPO_DIR/statusline.sh"           "$home/statusline.sh" || rc=1
       ;;
     codex)
       echo "[codex/config] no managed config files defined; skipping"
       ;;
   esac
+  return $rc
 }
 
 # restore_root PLATFORM PRIMITIVE TARGET_DIR BACKUP_PATH

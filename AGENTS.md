@@ -11,7 +11,7 @@ This repository holds parallel installable primitive trees for **Claude** and **
 - `codex/agents/`, `codex/commands/`: optional Codex primitive roots. Install them when present; skip cleanly when absent.
 - `codex/PARITY.tsv`: per-skill baseline (claude `SKILL.md` blob each Codex port was reconciled against). Used by `validate-skills.sh` to flag stale ports.
 - `PLATFORM_ONLY.tsv` (repo root): intentional one-tree-only primitives (`platform  root  name`), exempted from cross-tree parity in `validate-skills.sh`. Drift is legitimate in both directions — Claude carries legacy/native commands not yet ported; Codex carries skills Claude can't run (e.g. image generation). Listed agents/commands payloads also skip the frontmatter lint (imported as-is).
-- `claude/settings.json`: canonical `~/.claude/settings.json`, linked by the installer's opt-in `config` primitive (Claude-only; Codex `config` is a no-op).
+- `claude/settings.json`: gitignored local slot for `~/.claude/settings.json` (machine-specific), adopted from the live file on first run and then linked by the installer's opt-in `config` primitive (Claude-only; Codex `config` is a no-op).
 - `codex/backups/`, `codex/registry/`, `codex/explorer/`, `codex/scripts/`: backups, skill-tree registry + capability metadata, the static explorer UI, and operational scripts.
 - `install.sh`: unified primitive installer. Global installs link roots into `~/.claude/<primitive>` and/or `~/.codex/<primitive>`; local installs link roots into a target project's `.claude/<primitive>` and/or `.codex/<primitive>`.
 - `validate-skills.sh`: cross-tree parity + drift validator (calls `codex/scripts/validate-codex-skills.sh`).

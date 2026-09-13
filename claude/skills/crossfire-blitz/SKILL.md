@@ -43,6 +43,7 @@ Every model score below is **higher = better**; `cost` is what the user pays, so
 
 | Model | Cost | Intelligence | Taste | Reached via |
 |---|---|---|---|---|
+| gpt-6-astra | 3 | 9 | 8 | Codex — `codex exec -m gpt-6-astra -c model_reasoning_effort="high"` (top Codex rung: Fable-level intelligence, clears the taste bar; the cross-model judge of Claude output and the writer when code must be right first time — 2.5× sol per token, so never a bulk-wave seat). |
 | gpt-5.6-sol | 5 | 9 | 6 | Codex — `codex exec -m gpt-5.6-sol` (the smart Codex escalation rung). |
 | gpt-5.6-terra | 6 | 8 | 5 | Codex — a `sonnet` wrapper agent running `codex exec -C <dir> -m gpt-5.6-terra -c model_reasoning_effort="high"` (implementation), `/codex:adversarial-review` runtime (review). **First escalation rung above the gpt-5.5 generalist.** |
 | gpt-5.6-luna | 7 | 8 | 4 | Codex — `codex exec -m gpt-5.6-luna` (cheaper terra-peer, lower taste). |

@@ -18,6 +18,7 @@ unsupervised. `Taste` = UI/UX, code quality, API design, copy.
 
 | Model | Cost | Intelligence | Taste |
 |---|---|---|---|
+| gpt-6-astra | 3 | 9 | 8 |
 | gpt-5.6-sol | 5 | 9 | 6 |
 | gpt-5.6-terra | 6 | 8 | 5 |
 | gpt-5.6-luna | 7 | 8 | 4 |
@@ -41,6 +42,22 @@ ceiling** and keeps intelligence 9 and the gated `taste-hero` rung. `opus-4.8`
 is still a live model (same price, still reachable) but has **no routing role
 here**; it survives only as Opus 5's refusal fallback — cyber-category refusals
 on `claude-opus-5` route to `claude-opus-4-8`.
+
+**Score history (2026-09-13, gpt-6-astra added).** OpenAI shipped GPT-6 Astra on
+2026-09-03 and it is now the `~/.codex/config.toml` default. Independent numbers put
+it **level with fable-5 on intelligence** (Artificial Analysis Intelligence Index tied;
+Coding Agent Index 67.0 vs 67.2; Astra ahead on Terminal-Bench 4.0 59% vs 52% and on
+computer use, Fable ahead on Humanity's Last Exam and long-context recall) → **9**.
+List price is identical to Fable ($10/$50 per MTok) but Astra uses far fewer tokens
+per task (~$1.67 vs $3.76 on reasoning benchmarks) and runs on the Codex plan
+allowance, at 2.5× the sol rate → **cost 3** (one rung cheaper than Fable, two dearer
+than sol). No published UI/UX taste benchmark; reviewers put its front-end work
+"level with or slightly behind" Fable and Opus 5 and it wins on professional
+artifacts (BenchCAD 95.9% vs 84.3%) → **taste 8**, clearing the `> 7` bar. It is the
+first OpenAI model rated **Critical** for cyber under the Preparedness Framework —
+offensive-security tasks are declined; do not route red-team work to it. Reachable
+only via Codex (`codex exec -m gpt-6-astra`). Effort: `low`…`xhigh` (`none` is
+rejected; `max` is Responses-API only).
 
 **Model names legal in skills** = the Scores table above, plus anything listed on
 an allowlist line. A skill naming anything else fails `models.sh check`. Legality
@@ -67,27 +84,31 @@ generalist**" never changes when terra replaces gpt-5.5.)
 | taste | opus-5 | user-facing / taste-critical default (taste must be > 7) |
 | taste-hero | fable-5 | hero / flagship taste surface — gated (`fable=on` / `--fable`) |
 | computer-use | gpt-5.6-terra | Codex real-UI runtime verification (the `codex-computer-use` skill) |
+| reviewer | *cross-model* | any review / critique / judge seat — **never the model that wrote the work**. Codex (astra/sol/terra/gpt-5.5) or opus-5 wrote it → fable-5 (Fable's standing job is plan + review, not writing code) or gpt-5.6-sol for cheap passes; a Claude model wrote it → gpt-6-astra when quality matters, gpt-5.6-sol / gpt-5.6-terra otherwise |
 | codex-default | gpt-5.5 | default `-m` for `codex exec` (pass it explicitly — config.toml may differ) |
 | never | haiku-4.5 | never used, any role |
 
 **Escalation ladder (non-taste)** — cheapest rung first, escalate a miss without asking
-until the fable rung (gated): `gpt-5.5 → gpt-5.6-terra → gpt-5.6-sol → fable-5`.
+until the fable rung (gated): `gpt-5.5 → gpt-5.6-terra → gpt-5.6-sol → gpt-6-astra → fable-5`.
+(gpt-6-astra sits one rung below Fable: same intelligence, one rung cheaper, and it
+spends Codex allowance rather than Fable budget — reach it before Fable for code.)
 (opus-5 is no longer a non-taste escalation rung — intelligence 7 sits below the
 Codex rungs, and it is not effective at judging its own work; it remains the
 `taste` rung.)
 
 **Routing priority when axes conflict / for anything that ships:** intelligence > taste
 > cost. Cost is a tie-breaker only. No Codex generalist (terra/sol/luna/gpt-5.5) or
-sonnet-5 clears the taste bar (> 7) — taste work is opus-5 or fable-5.
+sonnet-5 clears the taste bar (> 7) — taste work is opus-5, gpt-6-astra, or fable-5.
 
 ## Reach — how to invoke each model
 
 | Model | Reach |
 |---|---|
+| gpt-6-astra | Codex — `codex exec -m gpt-6-astra` (top Codex rung; code writer + cross-model judge) |
 | gpt-5.6-sol | Codex — `codex exec -m gpt-5.6-sol` (smart escalation rung) |
 | gpt-5.6-terra | Codex — `codex exec -m gpt-5.6-terra` (default generalist) |
 | gpt-5.6-luna | Codex — `codex exec -m gpt-5.6-luna` (cheaper terra-peer) |
-| gpt-5.5 | Codex — `codex exec -m gpt-5.5` (agents default; pass `-m` explicitly — `~/.codex/config.toml` currently defaults to gpt-5.6-sol, so a bare `codex exec` does NOT run gpt-5.5) |
+| gpt-5.5 | Codex — `codex exec -m gpt-5.5` (agents default; pass `-m` explicitly — `~/.codex/config.toml` currently defaults to **gpt-6-astra at effort high**, so a bare `codex exec` runs the most expensive Codex model, not gpt-5.5) |
 | sonnet-5 | Agent/Workflow `model: 'sonnet'` |
 | opus-5 | Agent/Workflow `model: 'opus'` |
 | fable-5 | Agent/Workflow `model: 'fable'` |
@@ -106,6 +127,7 @@ inherits `~/.codex/config.toml`, which may name a level the target model rejects
 
 | Model | Allowed effort | `ultra` | Invocation rule |
 |---|---|---|---|
+| gpt-6-astra | `low` / `medium` / `high` / `xhigh` (`high` is the standing default; `none` is rejected) | `max` exists on the Responses API only — **only if the user requested it, and only in a solo subagent run**; never inside a parallel wave/fan-out | top rung — route for code that must be right the first time and as the cross-model judge of Claude output; 2.5× sol per token, so not for bulk waves. Declines offensive-security work (Critical cyber rating) |
 | gpt-5.6-terra | `medium` / `high` / `xhigh` (`high` is the standing default) | **Only use `ultra` if the user requested it, and only in a solo subagent run** — one Codex lane, nothing else in flight; never inside a parallel wave/fan-out | default generalist — free to route |
 | gpt-5.6-sol | `medium` / `high` / `xhigh` (`medium` is the standing default) | **Only use `ultra` if the user requested it, and only in a solo subagent run** — one Codex lane, nothing else in flight; never inside a parallel wave/fan-out | escalation rung — free to route |
 | gpt-5.6-luna | `medium` / `high` / `xhigh` | no ultra lane — work that seems to need luna-at-ultra routes to terra/sol instead | **Automated workflows only** (a router assigned it — a `route:` tag, a cost-sensitive C1 batch). **Never self-invoke**: don't pick luna on your own initiative, and never for risky or Novelty ≥ 1 work |

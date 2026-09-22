@@ -52,8 +52,8 @@ Sum the five signals (0–10), apply the verifiability modifier, then route:
 | **C0 — trivial** | 0–1 | gpt-5.5 (`codex exec`) | floor | `complexity:C0`, `route:gpt-5.5` |
 | **C1 — routine** | 2–3 | gpt-5.5 (the agents default; terra/luna for pattern-following batches) | bulk | `complexity:C1`, `route:gpt-5.5` |
 | **C2 — standard** | 4–5 | **sonnet-5** if spec-complete build work; gpt-5.5 if mechanical-heavy | — / bulk | `complexity:C2`, `route:sonnet-5` |
-| **C3 — complex** | 6–7 | **gpt-5.6-sol** if novelty-dominant; **gpt-5.5** if ambiguity/blast-radius-dominant (the `ambiguous` role) | — / ambiguous | `complexity:C3`, `route:gpt-5.6-sol` |
-| **C4 — frontier** | 8–10 | **fable-5** (gated: `fable=on` / `--fable`) — but try to slice first | taste-hero | `complexity:C4`, `route:fable-5` |
+| **C3 — complex** | 6–7 | **gpt-6-sol** if novelty-dominant; **gpt-5.5** if ambiguity/blast-radius-dominant (the `ambiguous` role) | — / ambiguous | `complexity:C3`, `route:gpt-6-sol` |
+| **C4 — frontier** | 8–10 | **gpt-6-astra** to build it; **fable-5.1** (gated: `fable=on` / `--fable`) to plan the slicing and review — try to slice first | — / planner | `complexity:C4`, `route:gpt-6-astra` |
 
 ### C0 — trivial / mechanical → gpt-5.5
 
@@ -95,33 +95,38 @@ sweep), gpt-5.5 remains the better per-dollar route.
 ### C3 — complex → fork on the dominant signal
 
 - **Novelty-dominant** (algorithm design, perf optimization, puzzle-shaped
-  debugging): **gpt-5.6-sol at high reasoning effort**. ARC-AGI-2 leader —
-  92.5% @ $1.44/task, ~7–10× cheaper than the Pro/Deep-Think tier for the same
-  or better score. This is the "requires GPT" tier: novel reasoning per dollar
-  is where the GPT-5.6 line is untouchable.
+  debugging): **gpt-6-sol at high reasoning effort**. Its predecessor
+  gpt-5.6-sol led ARC-AGI-2 at 92.5% @ $1.44/task, ~7–10× cheaper than the
+  Pro/Deep-Think tier for the same or better score. gpt-6-sol succeeds it
+  (2026-09-22) and is not yet on the board. This is the "requires GPT" tier:
+  the GPT line leads on novel reasoning per dollar.
 - **Ambiguity- or blast-radius-dominant** (judgment across a coupled codebase,
   underspecified requirements, risky refactor): **gpt-5.5** (the `ambiguous`
-  role). This routed to opus-5 until 2026-07-26; the operator decree sets
-  Opus 5 at knowledge 7 — the same level as Opus 4.8 — and records that it is
-  not effective at judging its own work, while the benchmark snapshot below
-  never measured opus-5 at all (the old citations were 4.7/4.8-era numbers).
-  opus-5 still takes the work when the taste override below forces it.
-- **Taste=2 always forces opus-5 minimum** regardless of the other signals
-  (MODELS.md taste bar: > 7 — no GPT model or sonnet-5 clears it).
+  role). This routed to Opus until 2026-07-26, when the operator decree set
+  Opus 5 at knowledge 7 and recorded that Opus is not effective at judging its
+  own work. opus-5.5 (2026-09-22) is knowledge 8, level with gpt-5.5, so the
+  binding stays with gpt-5.5. opus-5.5 still takes the work when the taste
+  override below forces it.
+- **Taste=2 always forces opus-5.5 minimum** regardless of the other signals
+  (MODELS.md taste bar: > 7 — gpt-6-sol, the other Codex generalists and sonnet-5
+  don't clear it; gpt-6-astra does).
 
-### C4 — frontier → fable-5, but slice first
+### C4 — frontier → slice first, astra builds, fable-5.1 plans and reviews
 
 Multi-hour autonomous builds, hardest debugging, hero taste surfaces. Fable 5
-is #1 everywhere it appears: FrontierSWE (90% dominance, with a large gap to
+was #1 everywhere it appeared: FrontierSWE (90% dominance, with a large gap to
 #2), Vibe Code (90.4%), SWE-Marathon (~29.9% preliminary). But even Fable
-passes under a third of true long-horizon tasks — so the groomer's first move
+passes under a third of true long-horizon tasks. So the groomer's first move
 on a C4 is **decompose it into C1–C2 children with dependencies
-(`itr depend`)**, and only route the irreducible core to Fable. Fable stays
-gated per MODELS.md (`fable=on` / `--fable`).
+(`itr depend`)**. fable-5.1 is the right seat for that decomposition, since it
+is saved for planning and review. The irreducible core that still has to be
+written routes to **gpt-6-astra** (same intelligence, one cost rung cheaper,
+Codex allowance), with fable-5.1 as its reviewer. Fable stays gated per
+MODELS.md (`fable=on` / `--fable`).
 
 ## Hard overrides (apply after scoring)
 
-1. **Taste-critical → opus-5 or fable-5, always** — Vibe Code's UI-tested
+1. **Taste-critical → opus-5.5, gpt-6-astra, or fable-5.1, always** — Vibe Code's UI-tested
    board has Anthropic in the top four spots; the MODELS.md taste bar stands.
 2. **Never haiku-4.5, any tier** — 4.0% ARC-AGI-2, 11.4% Vibe Code. Confirmed.
 3. **gpt-5.5 requires a hard verify gate, always** — highest reward-hacking
@@ -132,10 +137,11 @@ gated per MODELS.md (`fable=on` / `--fable`).
    hacking but the highest poor-self-verification share (~20% for Opus 4.7 on
    SWE-Marathon). Pair Claude execution with a non-Claude reviewer (the
    `crossfire` pattern) before close. Confirmed by operator decree 2026-07-26:
-   **Opus 5 is not effective at judging its own work** — Opus never reviews
-   its own output; the review/`ambiguous` role is bound to gpt-5.5.
+   **Opus is not effective at judging its own work** (carried to opus-5.5) —
+   Opus never reviews its own output; the review/`ambiguous` role is bound to
+   gpt-5.5.
 5. **Escalation ladder** (MODELS.md): a miss escalates
-   `gpt-5.5 → gpt-5.6-terra → gpt-5.6-sol → fable-5 (gated)` without asking.
+   `gpt-5.5 → gpt-5.6-terra → gpt-6-sol → gpt-6-astra → fable-5.1 (gated)` without asking.
    A sonnet-5 miss enters the ladder at its head. On escalation, re-tag:
    `--remove-tag route:X --add-tag route:Y --add-tag escalated:from-X`.
 
@@ -183,7 +189,10 @@ update this table and any tier reasoning that no longer holds.
 |---|---|---|---|---|
 | fable-5 | 90% (#1) | ~29.9% (partial) | — | 90.4%, $12.51 (#1) |
 | opus-4.8 | 75% (#2) | 26.0% (#1 full) | 72.1%, $2.74 | 82.7%, $5.09 (#2) |
-| opus-5 | — | — | — | — |
+| fable-5.1 | — | — | — | — |
+| opus-5.5 | — | — | — | — |
+| gpt-6-astra | — | — | — | — |
+| gpt-6-sol | — | — | — | — |
 | sonnet-5 | — | — | — | 81.3%, $38.08 (#3) |
 | gpt-5.6-sol | — | — | 92.5%, $1.44 (#1) | 80.5%, $33.40 (#4) |
 | gpt-5.6-terra | — | — | 83.9%, $1.09 | 67.8%, $10.82 |
@@ -194,9 +203,10 @@ update this table and any tier reasoning that no longer holds.
 (FrontierSWE and SWE-Marathon don't list the GPT-5.6 line or sonnet-5 yet;
 absence is absence of data, not a zero score.)
 
-**opus-5 is unmeasured here — that row is empty on purpose.** The taste override
-above still routes to opus-5, but this snapshot predates it (fetched 2026-07-11; opus-5 adopted
-2026-07-25). The **opus-4.8 row is kept deliberately**: it is real measured data,
-and it is the closest available proxy for the Opus rung until these are re-pulled.
-Do not relabel it as opus-5 — that would invent benchmark numbers. Fill the opus-5
-row on the next refresh.
+**The 2026-09-22 generation (opus-5.5, fable-5.1, gpt-6-sol, gpt-6-astra) is
+unmeasured here. Those rows are empty on purpose.** This snapshot predates them,
+and the routes above use them anyway. The **fable-5, opus-4.8 and gpt-5.6-sol rows
+are kept deliberately**: they are real measured data for the predecessors, and
+the closest available proxies for their rungs until these boards are re-pulled.
+Do not relabel them as their successors, because that would invent benchmark
+numbers. Fill the new rows on the next refresh. (opus-5 was never measured either.)

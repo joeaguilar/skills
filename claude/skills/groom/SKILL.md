@@ -1,6 +1,6 @@
 ---
 name: groom
-description: Complexity-score an itr backlog and route each issue to the cheapest capable model class (gpt-5.5 / gpt-5.6-terra / sonnet-5 / gpt-5.6-sol / opus-5 / fable-5) by tagging it `complexity:CN` + `route:<model>`. Trigger when the user types /groom, or asks to "groom the backlog by complexity", "complexity-score the backlog", "which tickets can go to Sonnet/GPT/Opus", "route the backlog to models", "assign models to tickets", or "triage issues by difficulty". Do NOT trigger for filing new issues (use the itr skill), sprint planning/grooming a spec into stories (use /sprint), executing the routed backlog (use /blitz or /crossfire-blitz), or reprioritizing/closing issues.
+description: Complexity-score an itr backlog and route each issue to the cheapest capable model class (gpt-5.5 / gpt-5.6-terra / sonnet-5 / gpt-6-sol / opus-5.5 / fable-5.1) by tagging it `complexity:CN` + `route:<model>`. Trigger when the user types /groom, or asks to "groom the backlog by complexity", "complexity-score the backlog", "which tickets can go to Sonnet/GPT/Opus", "route the backlog to models", "assign models to tickets", or "triage issues by difficulty". Do NOT trigger for filing new issues (use the itr skill), sprint planning/grooming a spec into stories (use /sprint), executing the routed backlog (use /blitz or /crossfire-blitz), or reprioritizing/closing issues.
 ---
 
 # groom — complexity-score and model-route an itr backlog
@@ -56,13 +56,14 @@ Sum (0–10) → tier → route:
 | **C0 trivial** | 0–1 | gpt-5.5 | `complexity:C0`, `route:gpt-5.5` |
 | **C1 routine** | 2–3 | gpt-5.5 (the agents default; gpt-5.6-terra or luna for pattern-following batches) | `complexity:C1`, `route:gpt-5.5` |
 | **C2 standard** | 4–5 | sonnet-5 if spec-complete build work; gpt-5.5 if mechanical-heavy | `complexity:C2`, `route:sonnet-5` |
-| **C3 complex** | 6–7 | gpt-5.6-sol if novelty-dominant; gpt-5.5 if ambiguity/blast-radius-dominant (the `ambiguous` role — Opus 5 is knowledge 7 and not effective at judging its own work) | `complexity:C3`, `route:gpt-5.6-sol` |
-| **C4 frontier** | 8–10 | fable-5 (gated) — recommend decomposition first | `complexity:C4`, `route:fable-5` |
+| **C3 complex** | 6–7 | gpt-6-sol if novelty-dominant; gpt-5.5 if ambiguity/blast-radius-dominant (the `ambiguous` role — opus-5.5 is only level with gpt-5.5 at knowledge 8, and Opus is not effective at judging its own work) | `complexity:C3`, `route:gpt-6-sol` |
+| **C4 frontier** | 8–10 | recommend decomposition first (fable-5.1 plans the slicing, gated); the irreducible core goes to gpt-6-astra, with fable-5.1 reviewing | `complexity:C4`, `route:gpt-6-astra` |
 
 **Hard overrides (apply after scoring, absolute):**
 
-1. Taste surface = 2 → opus-5 minimum, whatever the total. No GPT model or
-   sonnet-5 clears the taste bar.
+1. Taste surface = 2 → opus-5.5 minimum, whatever the total. Only opus-5.5,
+   gpt-6-astra and fable-5.1 clear the taste bar; gpt-6-sol, the other Codex
+   generalists and sonnet-5 do not.
 2. Never haiku-4.5, any tier.
 3. gpt-5.5 is the agents default (knowledge 8) — route it freely, but keep a
    hard verify gate on every run: it has the highest reward-hacking rate on

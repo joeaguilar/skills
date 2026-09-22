@@ -51,7 +51,7 @@ A run may **downshift** FULL→LEAN mid-walk (council verdict or operator verb);
 - **Orchestrator** = sole git committer, lease warden, and — in LEAN — the only judge.
 - **Link agents** — one per link, `isolation: worktree`, execute + verify their scope, never touch git state on main.
 - **Reviewers** — fresh context per link, adversarial, session model. Walker never self-grades.
-- **Council seats** (FULL only) — 3 fresh contexts per premise decision, `codex exec -m gpt-5.5` via a thin wrapper agent (the `ambiguous` role in MODELS.md); evidence seat MAY run gpt-5.6-sol when the Codex plugin is authenticated.
+- **Council seats** (FULL only) — 3 fresh contexts per premise decision, `codex exec -m gpt-5.5` via a thin wrapper agent (the `ambiguous` role in MODELS.md); evidence seat MAY run gpt-6-sol when the Codex plugin is authenticated.
 
 Artifacts (target repo). LEAN: `missions/CURRENT` + itr + git only. FULL adds:
 

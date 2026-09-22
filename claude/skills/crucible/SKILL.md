@@ -186,7 +186,7 @@ mutation in the tree.
 respawn the critic with the validator's error appended — hand-patching the JSON yourself is score laundering.
 
 **Seats.** Regular rounds: 1 critic, alternating families by iteration parity (odd = Opus seat, even = Codex
-seat) so the ledger reconciles without judgment calls. **A round whose builder ran on `opus-5` must be
+seat) so the ledger reconciles without judgment calls. **A round whose builder ran on `opus-5.5` must be
 critiqued by the Codex seat** — MODELS.md is explicit that Opus is not effective at judging its own work.
 Confirmation rounds (the round that could produce the second consecutive all-≥bar): a **3-critic panel** —
 correctness/error-handling lens, design/maintainability lens, and a **does-it-reproduce seat on Codex** that
@@ -285,12 +285,12 @@ transcript, or any dispatch missing a row, reopens bookkeeping. Gate exit 0 + cl
 | Role | Model | Notes |
 |---|---|---|
 | Builder (default) | gpt-5.5 | The generalist does implementation work; keeps the Opus critic seat honest. |
-| Builder (taste-critical) | opus-5 | Only for user-facing/taste surfaces. That round's critique MUST use the Codex seat. |
+| Builder (taste-critical) | opus-5.5 | Only for user-facing/taste surfaces. That round's critique MUST use the Codex seat. |
 | Test-author (blind) | gpt-5.5 | Behavior-driven assertions are generalist work; a different family from the builder by default. |
-| Critic (regular, odd iters) | opus-5 | Taste and design judgment — never over an `opus-5` builder's own output. |
+| Critic (regular, odd iters) | opus-5.5 | Taste and design judgment — never over an `opus-5.5` builder's own output. |
 | Critic (cross-model seat, even iters + panel) | Codex via companion `task`, read-only | Different family, different blind spots. Failure → Opus + `SANDBOX-DOWN` row. |
 | Spec / Evidence / merge clerking | sonnet-5 | Mechanical stages stay off the flagship rungs and off your context. |
-| Escalation on a missed round | gpt-5.6-terra → gpt-5.6-sol → fable-5 | Non-taste ladder per MODELS.md; record the escalation in the ledger. |
+| Escalation on a missed round | gpt-5.6-terra → gpt-6-sol → fable-5.1 | Non-taste ladder per MODELS.md; record the escalation in the ledger. |
 
 ## Principles
 
@@ -310,7 +310,7 @@ transcript, or any dispatch missing a row, reopens bookkeeping. Gate exit 0 + cl
 - Don't score `test_quality` without a mutation experiment, and don't leave a mutation in the tree.
 - Don't spawn a critic on a broken rig, on missing evidence, or on a failed layer 1.
 - Don't tell a critic anything about closure mechanics, the bar, or round significance — and don't hand the Codex seat anything Claude critics are denied.
-- Don't run an all-Claude panel while the companion is available, and don't route a critique of `opus-5` output to `opus-5`.
+- Don't run an all-Claude panel while the companion is available, and don't route a critique of `opus-5.5` output to `opus-5.5`.
 - Don't invoke `gate.mjs` without the recorded `Gate flags:` line — the tool is stateless, and a flagless call silently drops every waiver and the cap.
 - Don't declare closure yourself — only `gate.mjs --check` exit 0 plus a reconciled ledger closes a target.
 - Don't hand-edit scores, critique JSONs, evidence reports, or STATUS score tables — regenerate them.

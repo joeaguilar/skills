@@ -18,15 +18,15 @@ unsupervised. `Taste` = UI/UX, code quality, API design, copy.
 
 | Model | Cost | Intelligence | Taste |
 |---|---|---|---|
-| gpt-6-astra | 3 | 9 | 8 |
-| gpt-5.6-sol | 5 | 9 | 6 |
+| gpt-6-astra | 3 | 9 | 9 |
+| gpt-6-sol | 5 | 9 | 7 |
 | gpt-5.6-terra | 6 | 8 | 5 |
 | gpt-5.6-luna | 7 | 8 | 4 |
 | gpt-5.5 | 9 | 8 | 5 |
 | haiku-4.5 | 7 | 3 | 5 |
 | sonnet-5 | 5 | 5 | 7 |
-| opus-5 | 7 | 7 | 8 |
-| fable-5 | 2 | 9 | 9 |
+| opus-5.5 | 7 | 8 | 8 |
+| fable-5.1 | 2 | 9 | 9 |
 
 **Score history (2026-07-26, operator-dictated).** Opus 4.8 was a knowledge
 level 7; **Opus 5 is a knowledge level 7** — the 2026-07-25 promotion to 8 is
@@ -59,6 +59,26 @@ offensive-security tasks are declined; do not route red-team work to it. Reachab
 only via Codex (`codex exec -m gpt-6-astra`). Effort: `low`…`xhigh` (`none` is
 rejected; `max` is Responses-API only).
 
+**Score history (2026-09-22, generation swap, operator-dictated).** Three successors
+replace their predecessors in every routing role, and the old names leave the Scores table:
+- **gpt-6-sol replaces gpt-5.6-sol.** The Codex generalist with more taste than 5.6-sol
+  (Codex's own catalog now lists 5.6-sol as the "older coding model") → **5 / 9 / 7**.
+  Taste 7 still does **not** clear the `> 7` bar, so sol is still not a taste rung.
+- **opus-5.5 replaces opus-5.** The Opus-quality output you expect, closer to fable-5 than
+  opus-5 was → intelligence **8** (up from 7), taste **8**. List price dropped to $4/$20
+  per MTok (from $5/$25), but thinking can't be turned off and its default effort is
+  `medium` → cost stays **7**. It keeps the `taste` role. It is still not a non-taste
+  escalation rung (intelligence 8 is level with gpt-5.5 and below sol/astra), and **Opus
+  still never judges its own work**. That rule carries over from opus-5 and matches the
+  global reviewer ≠ writer rule.
+- **fable-5.1 replaces fable-5.** A frontier-class model with high taste, and the same
+  $10/$50 list price as fable-5 → **2 / 9 / 9**. **Save it for planning and review.** It
+  does not write code. It keeps the gated `taste-hero` rung and the top of the escalation
+  ladder, and takes the new `planner` role.
+- **gpt-6-astra: taste 8 → 9.** It is now rated high-taste with excellent writing. It
+  ties fable-5.1 on intelligence and taste at one cost rung cheaper, so it is the
+  high-quality writer and fable-5.1 is the planner/judge.
+
 **Model names legal in skills** = the Scores table above, plus anything listed on
 an allowlist line. A skill naming anything else fails `models.sh check`. Legality
 deliberately does **not** come from prose mentions in this file — otherwise a
@@ -81,55 +101,58 @@ generalist**" never changes when terra replaces gpt-5.5.)
 | bulk | gpt-5.5 | bulk / mechanical implementation, migrations, data transforms |
 | floor | gpt-5.5 | cheapest floor for the most trivial mechanical work |
 | ambiguous | gpt-5.5 | judgment-heavy but not user-facing — incl. reviews/judging of Opus output (Opus never judges its own work) |
-| taste | opus-5 | user-facing / taste-critical default (taste must be > 7) |
-| taste-hero | fable-5 | hero / flagship taste surface — gated (`fable=on` / `--fable`) |
+| taste | opus-5.5 | user-facing / taste-critical default (taste must be > 7) |
+| taste-hero | fable-5.1 | hero / flagship taste surface — gated (`fable=on` / `--fable`) |
+| planner | fable-5.1 | planning / spec / decomposition seats. Fable's standing job is plan + review, not writing code, so spend it here and on the reviewer seat |
 | computer-use | gpt-5.6-terra | Codex real-UI runtime verification (the `codex-computer-use` skill) |
-| reviewer | *cross-model* | any review / critique / judge seat — **never the model that wrote the work**. Codex (astra/sol/terra/gpt-5.5) or opus-5 wrote it → fable-5 (Fable's standing job is plan + review, not writing code) or gpt-5.6-sol for cheap passes; a Claude model wrote it → gpt-6-astra when quality matters, gpt-5.6-sol / gpt-5.6-terra otherwise |
+| reviewer | *cross-model* | any review / critique / judge seat — **never the model that wrote the work**. If Codex (astra/sol/terra/gpt-5.5) or opus-5.5 wrote it → fable-5.1, or gpt-6-sol for cheap passes. If a Claude model wrote it → gpt-6-astra when quality matters, gpt-6-sol / gpt-5.6-terra otherwise |
 | codex-default | gpt-5.5 | default `-m` for `codex exec` (pass it explicitly — config.toml may differ) |
 | never | haiku-4.5 | never used, any role |
 
 **Escalation ladder (non-taste)** — cheapest rung first, escalate a miss without asking
-until the fable rung (gated): `gpt-5.5 → gpt-5.6-terra → gpt-5.6-sol → gpt-6-astra → fable-5`.
+until the fable rung (gated): `gpt-5.5 → gpt-5.6-terra → gpt-6-sol → gpt-6-astra → fable-5.1`.
 (gpt-6-astra sits one rung below Fable: same intelligence, one rung cheaper, and it
-spends Codex allowance rather than Fable budget — reach it before Fable for code.)
-(opus-5 is no longer a non-taste escalation rung — intelligence 7 sits below the
-Codex rungs, and it is not effective at judging its own work; it remains the
+spends Codex allowance rather than Fable budget, so reach it before Fable for code.)
+(opus-5.5 is not a non-taste escalation rung. Its intelligence 8 is level with gpt-5.5
+and below the sol/astra rungs, and Opus never judges its own work. It remains the
 `taste` rung.)
 
 **Routing priority when axes conflict / for anything that ships:** intelligence > taste
 > cost. Cost is a tie-breaker only. No Codex generalist (terra/sol/luna/gpt-5.5) or
-sonnet-5 clears the taste bar (> 7) — taste work is opus-5, gpt-6-astra, or fable-5.
+sonnet-5 clears the taste bar (> 7); gpt-6-sol's taste 7 still falls short. Taste work goes
+to opus-5.5, gpt-6-astra, or fable-5.1.
 
 ## Reach — how to invoke each model
 
 | Model | Reach |
 |---|---|
-| gpt-6-astra | Codex — `codex exec -m gpt-6-astra` (top Codex rung; code writer + cross-model judge) |
-| gpt-5.6-sol | Codex — `codex exec -m gpt-5.6-sol` (smart escalation rung) |
+| gpt-6-astra | Codex — `codex exec -m gpt-6-astra` (top Codex rung; high-taste code/prose writer + cross-model judge) |
+| gpt-6-sol | Codex — `codex exec -m gpt-6-sol` (smart escalation rung + cheap cross-model reviewer) |
 | gpt-5.6-terra | Codex — `codex exec -m gpt-5.6-terra` (default generalist) |
 | gpt-5.6-luna | Codex — `codex exec -m gpt-5.6-luna` (cheaper terra-peer) |
-| gpt-5.5 | Codex — `codex exec -m gpt-5.5` (agents default; pass `-m` explicitly — `~/.codex/config.toml` currently defaults to **gpt-6-astra at effort high**, so a bare `codex exec` runs the most expensive Codex model, not gpt-5.5) |
+| gpt-5.5 | Codex — `codex exec -m gpt-5.5` (agents default; pass `-m` explicitly — `~/.codex/config.toml` currently defaults to **gpt-6-astra at effort ultra**, so a bare `codex exec` runs the most expensive Codex model at its most expensive effort, not gpt-5.5) |
 | sonnet-5 | Agent/Workflow `model: 'sonnet'` |
-| opus-5 | Agent/Workflow `model: 'opus'` |
-| fable-5 | Agent/Workflow `model: 'fable'` |
+| opus-5.5 | Agent/Workflow `model: 'opus'` (`claude-opus-5-5`) |
+| fable-5.1 | Agent/Workflow `model: 'fable'` (`claude-fable-5-1`) |
 
-Codex generalists (gpt-5.5, gpt-5.6-*) are reachable **only via Codex** — the
+Codex generalists (gpt-5.5, gpt-5.6-*, gpt-6-*) are reachable **only via Codex** — the
 Agent/Workflow `model:` param takes Claude models only. Inside workflows/subagents,
 wrap Codex in a thin `sonnet` agent whose Bash call is `codex exec -m <model>`, and
 label the wrapper with the real worker (`gpt-5.6-terra:...`) so the roster shows which
 Codex model actually ran. See the `crossfire-blitz` skill for the full mechanics.
 
-## Codex 5.6 effort & invocation rules
+## Codex effort & invocation rules
 
 Pin `-c model_reasoning_effort="…"` on **every** `codex exec` — a bare invocation
 inherits `~/.codex/config.toml`, which may name a level the target model rejects
-(gpt-5.5 hard-fails on `ultra`/`max`) or a level these rules don't grant.
+(gpt-5.5 hard-fails on `ultra`/`max`; config.toml currently says `ultra`) or a level
+these rules don't grant.
 
 | Model | Allowed effort | `ultra` | Invocation rule |
 |---|---|---|---|
-| gpt-6-astra | `low` / `medium` / `high` / `xhigh` (`high` is the standing default; `none` is rejected) | `max` exists on the Responses API only — **only if the user requested it, and only in a solo subagent run**; never inside a parallel wave/fan-out | top rung — route for code that must be right the first time and as the cross-model judge of Claude output; 2.5× sol per token, so not for bulk waves. Declines offensive-security work (Critical cyber rating) |
+| gpt-6-astra | `low` / `medium` / `high` / `xhigh` (`high` is the standing default; `none` is rejected) | `max` / `ultra` (ultra = automatic task delegation) — **only if the user requested it, and only in a solo subagent run**; never inside a parallel wave/fan-out | top rung — route for code that must be right the first time, for high-taste prose, and as the cross-model judge of Claude output; 2.5× sol per token, so not for bulk waves. Declines offensive-security work (Critical cyber rating) |
+| gpt-6-sol | `low` / `medium` / `high` / `xhigh` (`medium` is the standing default) | `max` / `ultra` — **only if the user requested it, and only in a solo subagent run**. That means one Codex lane with nothing else in flight, never inside a parallel wave/fan-out | escalation rung + cheap cross-model reviewer — free to route |
 | gpt-5.6-terra | `medium` / `high` / `xhigh` (`high` is the standing default) | **Only use `ultra` if the user requested it, and only in a solo subagent run** — one Codex lane, nothing else in flight; never inside a parallel wave/fan-out | default generalist — free to route |
-| gpt-5.6-sol | `medium` / `high` / `xhigh` (`medium` is the standing default) | **Only use `ultra` if the user requested it, and only in a solo subagent run** — one Codex lane, nothing else in flight; never inside a parallel wave/fan-out | escalation rung — free to route |
 | gpt-5.6-luna | `medium` / `high` / `xhigh` | no ultra lane — work that seems to need luna-at-ultra routes to terra/sol instead | **Automated workflows only** (a router assigned it — a `route:` tag, a cost-sensitive C1 batch). **Never self-invoke**: don't pick luna on your own initiative, and never for risky or Novelty ≥ 1 work |
 | gpt-5.5 | `none`…`xhigh` (API **rejects** `ultra`/`max`) | rejected by the API | agents default + cheapest floor — free to route |
 

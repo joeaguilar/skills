@@ -65,6 +65,39 @@ Global installs link roots such as `~/.claude/skills`, `~/.claude/agents`, `~/.c
 - **Verbose** for coached, step-by-step skills (`sprint`, `blitz`, `sprint-review`, `roadmap`, `story-style`). The prose *is* the product. Don't compress.
 - **Caveman-compressed** for autonomous skills loaded every run (`overdrive`). Compress prose; preserve commands/thresholds/tables/guardrails byte-for-byte. Method: **`COMPRESSION.md`**.
 
+## Machine setup (every machine that commits here)
+
+Two **global** git settings live outside this repo, and one machine has already
+missed both: the 2026-09-26 audit found 16 commits on `main` authored as
+`me <me@josefaguilar.com>` — 11 between 2026-07-04 and 2026-08-08, then 5 pushed
+to GitHub only on 2026-08-09..25, one with a message the hooks here reject. That
+history was not rewritten (it is published on both remotes); the fix is per
+machine, before the next commit:
+
+1. **Identity** — every commit is authored *and* committed as
+   `Josef Aguilar <joeaguilar@users.noreply.github.com>`, never `me@josefaguilar.com`:
+   ```sh
+   git config --global user.name "Josef Aguilar"
+   git config --global user.email joeaguilar@users.noreply.github.com
+   git config --show-origin user.email   # must come from the global file; no --local override
+   ```
+   Audit every repo on the machine with the `git-identity-check` skill (read-only;
+   it never rewrites history).
+2. **Hooks** — the commit gates are the separate githooks repo, installed once per
+   machine through a global `core.hooksPath`; this repo's `.githooks/pre-commit` is
+   only the repo-local delegate that global hook calls:
+   ```sh
+   git clone ssh://git@10.0.0.85:2222/blue/githooks.git ~/AI_Projects/githooks
+   ~/AI_Projects/githooks/setup.sh       # runs: git config --global core.hooksPath ~/AI_Projects/githooks/hooks
+   git config --global core.hooksPath    # verify it is set
+   ```
+   They enforce Conventional Commits (`type(scope): summary` — `feat:queue-up skill`
+   is rejected, `feat: queue-up skill` passes), secret/whitespace/size checks, and
+   this repo's frontmatter gate (`validate-skills.sh --frontmatter-only`).
+3. **Remotes** — `origin` (GitHub) and `gitea` both carry `main`. `git fetch --all`
+   and merge before pushing, then push to **both**. Pushing to one remote only is how
+   the August commits diverged; merge `ffad83a` (2026-09-26) reconciled them.
+
 ## Working here
 
 - **Install/relink:** `./install.sh claude` (or `codex`/`both`). Dry-run by default; `--apply` to act; `--restore` to roll back. Use `--all-primitives` for `skills`, `agents`, `commands`, and `workflows`; use `--local /path/to/project` for project-scoped installs. `workflows` is Claude-only — selecting it (or `--all-primitives`) for `codex` is a no-op since `codex/workflows/` doesn't exist and isn't expected to. The opt-in `config` primitive (`--primitive config` or `--primitives …,config`) links individual home files instead of a directory root — for Claude, `settings.json` + `statusline.sh` into `~/.claude/`; for Codex it is a no-op. It is **not** part of `--all-primitives`.

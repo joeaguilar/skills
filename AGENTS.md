@@ -31,6 +31,22 @@ This repository holds parallel installable primitive trees for **Claude** and **
 - Keep primitive enablement state out of canonical roots like `codex/skills/`, `codex/agents/`, and `codex/commands/`; local project state belongs in `.codex/project-primitives.json` inside the target project. Legacy `.codex/project-skills.json` is still read for compatibility.
 - Preserve the separation between canonical primitive payloads and UI state. The explorer should never rewrite `SKILL.md`, agent markdown, or command markdown.
 
+## Machine Setup (before the first commit on a machine)
+
+Two global git settings are not in this repo, and a machine that lacks them has
+already shipped 16 mis-authored commits to `main` (see `CLAUDE.md` → "Machine
+setup" for the audit). Per machine, once:
+
+- **Identity:** `git config --global user.name "Josef Aguilar"` and
+  `git config --global user.email joeaguilar@users.noreply.github.com`; confirm with
+  `git config --show-origin user.email` (global file, no `--local` override).
+- **Hooks:** `git clone ssh://git@10.0.0.85:2222/blue/githooks.git ~/AI_Projects/githooks`
+  then `~/AI_Projects/githooks/setup.sh` (sets the global `core.hooksPath`). This
+  installs the Conventional Commits gate and the delegate that runs this repo's
+  `.githooks/pre-commit` frontmatter check.
+- **Remotes:** `main` lives on both `origin` (GitHub) and `gitea`; fetch and merge
+  before pushing, then push to both.
+
 ## Key Commands
 
 Install / link primitive roots. Dry-run is the default; pass `--apply` to act. Existing skill-only commands still work:

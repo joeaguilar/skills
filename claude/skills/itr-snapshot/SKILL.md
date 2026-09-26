@@ -50,8 +50,11 @@ database that still carries such stale edges exports them, a restored clone
 does not, so the check ignores a `blocked_by` entry whenever its blocker is
 resolved on that side. Three of four repos this was first applied to carried
 such edges (2, 1 and 12); wisphive had none, which is why its round-trip was
-byte-clean and the others were not. `itr doctor --fix` or `itr undepend` can
-clear them from the live database, but that is the tracker owner's call.
+byte-clean and the others were not. The check prints a `NOTE:` with the count
+it ignored so the pending pruning stays visible; `itr doctor --fix` clears
+them from the live database, but that is the tracker owner's call. Edges added
+*after* the blocker was resolved come back until itr refuses them (itr#293 in
+itr's own tracker).
 
 ## Procedure
 

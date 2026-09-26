@@ -105,10 +105,16 @@ clear them from the live database, but that is the tracker owner's call.
    restore, normalization, drift by note and by new issue, pull-replaces-edit,
    local-only issue survives restore with an explanatory NOTE, failed export
    leaves the snapshot untouched, skip/strict/usage exits.
-6. **Commit** with Conventional Commits (`chore(itr): track the issue tracker
-   as a diffable JSONL snapshot …`), staging only the pieces above. Do not
-   push unless the user asked for the remotes to be updated; list the push
-   command instead.
+6. **Commit only behind the green gate.** Chain the battery, the issue
+   close and the commit with `&&` (or check `gatr last` for `exit=0` first),
+   and write "battery ALL PASS" into the commit message and close reason only
+   after seeing it. A pre-written claim behind a `;` separator shipped three
+   false "passed" commits the first time this skill was fanned across repos.
+   Apply the procedure to ONE repo end-to-end before fanning out, so a
+   data-dependent failure shows up once. Conventional Commits, subject ≤ 72
+   chars (`chore(itr): track the tracker as a JSONL snapshot (itr#N)`), stage
+   only the pieces above. Do not push unless the user asked for the remotes
+   to be updated; list the push command instead.
 
 ## Rules the docs must carry
 

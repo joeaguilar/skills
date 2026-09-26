@@ -131,9 +131,26 @@ claude	commands	tdd_process.md
 claude	skills	scrum
 claude	skills	old-mission-skill-ab
 
-# gauntlet drives the Claude Workflow tool (no Codex counterpart); unity-bridge was
-# locally authored for the Claude editor bridge — port to Codex wording when wanted,
-# then graduate.
-claude	skills	gauntlet
+# unity-bridge was locally authored for the Claude editor bridge — port to Codex
+# wording when wanted, then graduate.
 claude	skills	unity-bridge
+
+# typo is a micro-skill for flagging user-prompt typos; it depends on the Claude Code
+# `user-invocable: false` frontmatter key (model-invoked only, no slash command), which has
+# no Codex equivalent — a port would be user-callable, the opposite of the design.
+claude	skills	typo
+# start is the generic, convention-discovering counterpart to whats-next (whats-next encodes
+# THIS ecosystem's next-work surfaces; start reads whatever conventions a shared repo documents).
+# Claude-only for the same frontmatter reason: it relies on `disable-model-invocation`.
+claude	skills	start
+
+# crucible is the generic sibling of gauntlet: it depends on the Workflow tool (no Codex
+# equivalent), the ultracode session toggle, and the Codex-companion critic seat driven from
+# inside Claude Code — same harness lineage as crossfire-*. Graduate when a goal-backed Codex
+# port lands, as gauntlet just did.
+claude	skills	crucible
+
+# queue-up is a session-staging micro-skill (`.claude/queue.md` sheath; --now rides Claude Code's
+# in-turn message queueing). Port to Codex wording when wanted, then graduate.
+claude	skills	queue-up
 claude	skills	itr-snapshot

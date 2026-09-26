@@ -68,7 +68,7 @@ while IFS= read -r skill_md; do
   fi
 
   case "$rel" in
-    blitz|bootstrap-project-docs|dual-blitz|itr|overdrive|roadmap|run-the-rivers-dry|shell-prompt|sprint|sprint-review|story-style)
+    blitz|bootstrap-project-docs|dual-blitz|gauntlet|itr|overdrive|roadmap|run-the-rivers-dry|shell-prompt|sprint|sprint-review|story-style)
       if ! grep -Eq '^[[:space:]]+allow_implicit_invocation:[[:space:]]+false[[:space:]]*$' "$skill_dir/agents/openai.yaml"; then
         echo "ERROR: $rel must disable implicit invocation because it performs durable or high-autonomy writes"
         status=1

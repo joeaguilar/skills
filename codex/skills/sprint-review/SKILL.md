@@ -97,7 +97,7 @@ Announce: `Phase 0 — Preflight`.
 
 ---
 
-## Phase 1 — Scope confirm (BLOCKING — Gate 1)
+## Phase 1 — Scope confirm (Gate 1)
 
 Announce: `Phase 1 — Scope confirm`.
 
@@ -124,7 +124,7 @@ Will execute:
 Proceed? (or specify a different sprint)
 ```
 
-**Wait** for explicit approval. Accept overrides ("review sprint-2 instead", "skip retro this run"). Do not proceed without confirmation.
+Reuse an explicitly selected sprint and review scope. Ask only when the target is ambiguous or the user requested a scope checkpoint; otherwise continue the read-only review.
 
 ---
 
@@ -169,7 +169,9 @@ Coach: *"Demo is per-story so the PO actually looks at each one. Skipping this i
 
 **Requirement-coverage check (do this first).** Re-read the PO's original request text — the conversation, spec, or brief that seeded this sprint — not the agent's or plan's summary of it. Confirm every explicit user request maps to an `itr` issue in scope, and verify each story against that original wording. A request that never became an issue is a silently-dropped requirement; a story that satisfies the summary but not the original ask is drift. Flag either for triage at Gate 2. Summaries paraphrase away detail — the original text is the source of truth.
 
-For each closed (or quarantined) story, in priority order:
+Include every open `visual-gate-only` and `awaiting PO visual smoke` story in the Demo. Show its runtime evidence and drive the documented flow where available; record accept, reject, conditional, or explicit carryover if the PO cannot review now. Do not silently omit it because it was excluded from implementation waves. A screenshot does not replace a required PO verdict. Hold tracker changes until Gate 2 as usual.
+
+For each closed or quarantined story, plus every open story pending human visual acceptance, in priority order:
 
 1. **Print the story card:**
 
@@ -206,13 +208,13 @@ For each closed (or quarantined) story, in priority order:
    Decision for itr#101: accept / reject / conditional?
    ```
 
-   - **accept** → record acceptance, move on.
+   - **accept** → record acceptance; for an open story awaiting human smoke, queue its close for Phase 8 only when its other AC and verify gate have passed.
    - **reject** → drafts a carryover issue (held until Gate 2). Ask PO for one-line reason; bake into the carryover body.
    - **conditional** → drafts a follow-up issue (held until Gate 2). Ask PO for one-line condition (e.g. "ship as-is, but add metrics in next sprint"). Bake into the follow-up body.
 
 3. **Collect any free-form bugs the PO mentions during this story.** Hold for the triage list.
 
-After every story is reviewed, print a per-story summary table.
+After every story is reviewed, print a per-story summary table. For pending-human stories, record explicit carryover rather than inferred acceptance when no verdict is available; reuse the existing issue where possible instead of filing a duplicate.
 
 ---
 
@@ -294,7 +296,7 @@ Hold all drafts. Do not file yet.
 
 ---
 
-## Phase 7 — Final review (BLOCKING — Gate 2)
+## Phase 7 — Final review (Gate 2)
 
 Announce: `Phase 7 — Final review`.
 
@@ -315,11 +317,12 @@ Will write:
   4. Close sprint epic itr#<id> as <accepted | partially-accepted | rejected>
   5. Update sprint/CURRENT — repoint to next-highest open sprint or remove if none remain
   6. Update docs/ROADMAP.md via $roadmap --update (non-blocking; skipped if absent)
+  7. Close accepted human-smoke stories whose other requirements passed; retain pending acceptance/carryover
 
 Approve, amend, or abort?
 ```
 
-**Wait** for explicit approval. Accept edits ("drop the retro action item about #3", "don't close the epic, leave it open"). Reprint until the PO approves. If `--dry-run`, print this and stop here without writing anything.
+Present the concrete changes. Apply them when already authorized and supported by recorded acceptance; ask only for new issue scope, an unresolved verdict, or a requested final approval. If `--dry-run`, stop here without writes.
 
 ---
 
@@ -329,13 +332,15 @@ Announce: `Phase 8 — Applying changes`.
 
 Order matters — file new issues first so the artifact can reference real IDs:
 
+Include queued closes of accepted human-smoke stories in the Gate 2 write preview, then apply them here after approval. Preserve unresolved acceptance as open/carryover and include it in the goal-achievement and epic-closure decision.
+
 1. **File the triage issues.** Defer to the `itr` skill (`itr add` per item, or `itr batch add` if more than ~3). Capture every new ID. On partial failure: retry once per item; if retry fails, surface the failed payloads to the user and resume from where it stopped (no rollback) — same pattern as `$sprint` Phase 5.
 
 2. **Update `sprint/{folder}/plan.md` in-place.** Fill the empty Outcomes / Demo / Retro sections with the data from Phases 2, 3, and 5. Preserve everything else in the file. Schema for these sections is below.
 
 3. **Write `sprint/{folder}/retro-<date>.md`** if Retro ran. Schema below. If a retro file with that date already exists, append `-2`, `-3`, etc.
 
-4. **Close the sprint epic.** Use the `itr` close command (defer to `itr agent-info` for exact syntax) with a short closing note: `Reviewed <date>. Outcome: <yes|partial|no>. <accepted>/<total> stories accepted.`
+4. **Close the sprint epic only when acceptance permits it.** Goal-critical pending acceptance keeps it open unless the PO explicitly approved a scope/carryover decision at Gate 2. Otherwise use the `itr` close command (defer to `itr agent-info` for exact syntax) with a short closing note: `Reviewed <date>. Outcome: <yes|partial|no>. <accepted>/<total> stories accepted.`
 
 5. **Update `sprint/CURRENT`.** Query `itr` for any remaining open `sprint-N` epics:
    - If at least one open: rewrite `CURRENT` with the highest-numbered open sprint's folder name.
@@ -364,12 +369,12 @@ Announce: `Phase 9 — Sprint reviewed`.
 Print:
 
 ```
-Sprint-N reviewed and closed.
+Sprint-N reviewed — <closed | open; acceptance/carryover pending>.
 
   Goal:                <one sentence>
   Achievement:         yes | partial | no
   Acceptance:          <accepted>/<total> stories accepted
-  Epic:                itr#<id> (closed)
+  Epic:                itr#<id> (<actual state>)
   Folder:              sprint/sprint-N-YYYY-MM-DD-<slug>/
   Plan:                sprint/{folder}/plan.md (updated)
   Retro:               sprint/{folder}/retro-<date>.md (or "Retro skipped — clean sprint")
@@ -415,14 +420,14 @@ Before Phase 8 writes review or retro artifacts, read `references/review-artifac
 - **Triage flows through `itr`.** Don't reinvent issue creation here; the `itr` skill already reads `STORY_STYLE.md` for project conventions.
 - **The artifact is the durable record.** `sprint/{folder}/plan.md` ends the day with all four sections filled (or Retro marked skipped). `sprint/{folder}/retro-{date}.md` captures the per-retro process learnings; the cross-sprint view comes from listing `sprint/sprint-*/retro-*.md`.
 - **Closing the epic flips the in-flight signal.** Future `$sprint` runs will warn (but not refuse) about stacked sprints; closing makes the next planning session cleaner.
-- **Two BLOCKING gates, no more.** Gate 1 confirms scope; Gate 2 approves the full picture before any writes. PO acceptance per story is inline, not a gate.
+- **Resolve decisions once.** Reuse selected scope and recorded acceptance. Preview writes together; do not request the same permission again.
 
 ---
 
 ## Don't
 
-- Don't proceed past Gate 1 without scope confirmation.
-- Don't proceed past Gate 2 without explicit approval of the full triage list and epic closure.
+- Don't review an ambiguous sprint target without resolving it.
+- Don't infer missing human acceptance or create follow-up scope outside existing authorization.
 - Don't write to `itr`, the plan artifact, the retro file, or `sprint/CURRENT` before Gate 2.
 - Don't close the sprint epic if any goal-critical story is open without an explicit carryover decision from the PO.
 - Don't silently invent a fresh `sprint/{folder}/plan.md`; confirm with the user first.

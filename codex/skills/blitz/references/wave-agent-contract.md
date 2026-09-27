@@ -22,7 +22,7 @@ Task body:
 Files you OWN (only edit these):
 {owned file list}
 
-Files you must NOT touch (owned by neighbor subagents in this wave):
+Files you must NOT touch (neighbor ownership and unrelated pre-existing edits):
 {neighbor file list}
 
 Neighbor warnings (semantic conflicts to avoid):
@@ -30,38 +30,28 @@ Neighbor warnings (semantic conflicts to avoid):
 
 Working directory: {repo path}
 
-Prohibited commands — DO NOT run any of these under any circumstances:
+Check existing owned paths and named symbols before editing; explicitly NEW files
+may be absent. Report a moved/ambiguous target or additional required write path
+before using it. Do not silently expand ownership.
 
-  - DO NOT run `cargo fmt` — it operates crate-wide regardless of file args.
-    Even `cargo fmt -- path/to/owned_file.rs` reformats the ENTIRE crate, wiping
-    neighbor subagents' in-flight edits. Wiped neighbor edits in sprint-1
-    W1.intervention-2 (~20min recovery via `git fsck --unreachable` blobs).
-  - DO NOT run any other write-mode formatter, regardless of file args — same
-    project-wide footgun pattern as `cargo fmt`:
-      * `npm run format`, `npm run fmt`, `prettier --write`, `prettier -w`
-      * `ruff format` (without `--check`), `black .`, `black <file>`
-      * `gofmt -w`, `goimports -w`
-      * Any wrapper script that shells out to the above
-
-  READ-ONLY check variants ARE SAFE — they inspect without modifying and are
-  expected as part of the verify gate:
-      * `cargo fmt --check`            — safe (read-only)
-      * `prettier --check`, `npm run format:check` — safe (read-only)
-      * `ruff format --check`          — safe (read-only)
-      * `gofmt -l` (lists drift, no write) — safe (read-only)
-
-  If the verify gate's read-only check reports formatting drift OUTSIDE your
-  owned files, do NOT auto-fix it with a write-mode formatter — surface the
-  drift in your final report and let the orchestrator triage. Inside your
-  owned files, hand-edit the offending lines instead of reaching for a
-  write-mode formatter.
+Formatting and lint:
+  - Run the configured read-only format and lint checks, including test targets
+    where applicable. Keep Rust's `--all-targets` when scoping Clippy to a package.
+  - Fix only owned files. A formatter with verified file-scoped behavior (such as
+    `prettier --write <owned-file>` or `gofmt -w <owned-file>`) is allowed. Confirm
+    its configuration/wrapper cannot expand the write set. Avoid crate/repo-wide
+    formatting, code generation, or recursive module formatting during the wave;
+    hand-edit when the tool's write boundary is uncertain.
+  - Report outside-scope failures instead of repairing neighbor or user files.
+  - Report check results; checks already included in the verify gate need not
+    run a second time just to produce separate status lines.
 
 When you finish editing, run the full-repo verify gate from the repo root:
   {verify command}
 
 Run it in the foreground and wait for it to finish in this same turn. Do not launch it as a background task and then end your turn, and do not defer the close to a later turn. The gate result and the close command below must both happen before you yield. A subagent that backgrounds the gate and stops leaves its task stranded: the orchestrator then has to inspect the work and close it.
 
-It MUST exit zero. The full-repo gate is intentional — if another wave subagent left a temporary error in code outside your owned files, attempt to fix it; your verify run is also their safety net. If after best effort the gate is still red on something clearly outside your scope, stop and report.
+It MUST exit zero before closing. If another worker's in-flight code makes the gate red, report the exact failure and your completed work. Never repair outside your owned files. The orchestrator will coordinate the repair or run the gate after the other writer finishes.
 
 Runtime-evidence gate — UI-touching / user-visible / behavioral diffs ONLY:
   A green verify gate is NOT enough to close a change a user can see or feel. If
@@ -69,6 +59,11 @@ Runtime-evidence gate — UI-touching / user-visible / behavioral diffs ONLY:
   runtime evidence before closing: drive the actual flow end-to-end and/or take a
   Playwright screenshot. If your change "wrote a value", exercise the READ site
   and prove it consumes the value; don't stop at confirming the write.
+
+  Cover each entry point/mode named by the AC, including its read/restore path.
+  If a test-only task changes production source, identify those sites and the
+  behavior change explicitly. Do not change shipping behavior just to improve
+  a coverage score; report any necessary scope change before implementing it.
 
   Pure non-UI work — refactors, backend-only logic, docs, config with no
   user-visible surface — is EXEMPT: the verify gate is its close gate. Do not
@@ -79,18 +74,16 @@ Visual Gate PO-smoke gate — stories whose AC contains a Visual Gate block ONLY
   Visual Gate block, you MUST NOT self-close on green gate plus your own
   screenshot alone. Instead:
     1. Capture your runtime evidence as above (drive the flow / screenshot).
-    2. Report your work as CLOSE-PENDING, not closed: describe the visual change
-       in observational terms keyed to the AC's LOOK AT / EXPECTED lines, and
-       explicitly ask the PO to run the project's visual smoke path documented in
-       the AC or project instructions (for example, `cargo native` when that is
-       the project's smoke command).
-    3. Do NOT run the close command yet. Wait for PO confirmation within the wave
-       window.
-    4. If the PO confirms: run the close command.
-    5. If the PO is unavailable within the wave window: QUARANTINE the task
-       (leave it open, report `awaiting PO visual smoke`). Do NOT self-close.
-       The orchestrator's Phase 7 treats this as a soft quarantine — the wave
-       still proceeds and the story resolves at `$sprint-review` under PO eyes.
+    2. Return CLOSE-PENDING to the orchestrator with evidence keyed to LOOK AT /
+       EXPECTED and the documented smoke command. Leave the issue open as
+       `awaiting PO visual smoke`; do not wait idle for a human inside the worker.
+    3. The orchestrator gathers PO acceptance in the review step and owns the
+       deferred close. Your screenshot does not substitute for required approval.
+
+Report concrete out-of-scope bugs/gaps with evidence and impact. File them only
+when the run's tracker policy authorizes it, checking duplicates first; otherwise
+return them for orchestrator triage. Do not make unrelated issue creation a new
+condition for closing the assigned task.
 
 Only after the gate is fully green (and, for UI/behavioral diffs, runtime evidence is captured; and, for Visual-Gate stories, the PO has confirmed the smoke):
   - Close this task in the tracker: {close command}

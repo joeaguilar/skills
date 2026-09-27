@@ -74,7 +74,7 @@ Announce: `Phase 0 — Preflight`.
    - **In spec but not in roadmap** → new section since last update.
    - **In roadmap but not in spec** → orphan candidate (section was removed or restructured).
 
-   Hold all drift candidates in memory; surface them at Phase 1 for PO reconciliation. **Do not silently re-match** — every drift must be PO-confirmed before the roadmap rewrites the cell.
+   Hold all drift candidates in memory; surface them at Phase 1 for PO reconciliation. Reconcile an unambiguous rename from evidence and record it; ask only when the match or scope is uncertain. Preserve explicit PO overrides.
 
 5. **Detect sprint history.** List `sprint/sprint-*/` folders; for each, read `plan.md` and extract the Outcomes table. The Outcomes table is the primary status-inference signal in Phase 2. If a sprint folder exists but its Outcomes is empty (sprint planned but not yet reviewed), note `unreviewed` and exclude from status inference — its in-flight stories are still in `itr` and will be picked up via the linked-itr signal instead.
 
@@ -115,7 +115,7 @@ Announce: `Phase 0 — Preflight`.
 
 ---
 
-## Phase 1 — Scope confirm (BLOCKING — Gate 1)
+## Phase 1 — Scope confirm (Gate 1)
 
 Announce: `Phase 1 — Scope confirm`.
 
@@ -188,7 +188,7 @@ Coach: *"Before we walk every section, we agree on the section list itself. Mis-
    Approve, regroup, or restrict scope?
    ```
 
-   **Wait** for explicit approval. Accept overrides ("merge §A.7 and §A.8", "drop §B from this run", "restrict to §A.popup"). Do not proceed past Gate 1 with an unconfirmed section list.
+   Reuse an already-selected scope. Ask about ambiguous grouping or release boundaries; otherwise proceed with the requested map and show assumptions.
 
 ---
 
@@ -200,7 +200,7 @@ Coach: *"Status drift is the silent killer of roadmaps. Confirming each row now 
 
 For each section in the confirmed list, in order:
 
-1. **Codex drafts a row** from spec + sprint history + `itr` state. The status inference uses **linked-itr-primary, title-fallback, always-PO-confirmed**:
+1. **Codex drafts a row** from spec + sprint history + `itr` state. The status inference uses **linked-itr-primary, title-fallback, evidence-qualified**:
 
    - **Title** — from the spec heading (or PO-confirmed phrasing in spec-less mode).
    - **Linked itr** — primary signal. Issues identified by:
@@ -214,7 +214,7 @@ For each section in the confirmed list, in order:
    - **Draft notes** — one line summarizing the inference: `linked: itr#34 (closed sprint-2), #37 (open), #38 (open); spec rows 3-7 unlinked`.
 
 2. **Present to PO with adaptive depth:**
-   - **Fast path** (clean state — no sprint history, no `itr` coverage, draft status `❌`, no title-keyword candidates): one-shot confirmation. *"§A.11 Group vocabulary: ❌, no coverage, no linked issues, no fuzzy matches. Confirm?"*
+   - **Fast path:** group unchanged or unambiguous rows in one summary. Missing tracker coverage is missing evidence, not proof the feature is absent; inspect the implementation when that changes the status.
    - **Slow path** (any inference signal): alignment-style. Show the full inference trace:
 
      ```
@@ -227,7 +227,7 @@ For each section in the confirmed list, in order:
        Confirm, edit, or override?
      ```
 
-3. **Capture PO edits** to title, status, linked issues, notes. Don't argue — the PO has context Codex doesn't. **If PO status disagrees with inference**, record the divergence in the note as a sentinel-trailing comment (`<!-- po:override -->`) so future runs know not to silently re-infer.
+3. **Capture PO edits** to title, status, linked issues, notes. Investigate a conflict with concrete evidence and distinguish the user's product decision from an unverified implementation claim. **If PO status disagrees with inference**, record the divergence in the note as a sentinel-trailing comment (`<!-- po:override -->`) so future runs know not to silently re-infer.
 
 4. **In `--update` mode**, the change-detection predicate for "should we re-interview this row?" is:
    - Any linked itr issue's status changed since the roadmap's `_Last updated_` timestamp, OR
@@ -275,7 +275,7 @@ Coach: *"Dependency edges are how trajectory survives contact with reality. Wide
    - **kgr import edges** (if available) — sections owning files that import each other.
    - **Heuristic primitives** — sections whose name implies they are consumed by multiple surfaces (e.g. "WindowPicker", "Logger", "Auth", "Schema").
 
-2. **PO confirms or corrects each proposed edge.** Fast path for obvious edges (storage → chonks); slow path for ambiguous ones.
+2. **Present material or ambiguous dependency choices together.** Keep evidence-backed edges without a separate question for each one; preserve settled PO decisions.
 
 3. **Flag wide dependencies (4+ consumers) explicitly.** These are the sections that must land early in any trajectory to unblock downstream work. Surface them in the artifact's `Cross-cutting` section.
 
@@ -354,7 +354,7 @@ Coach: *"A trajectory is a planning aid, not a commitment. The next `$sprint` re
 
 ---
 
-## Phase 7 — Stub filing (BLOCKING — Gate 2 preview)
+## Phase 7 — Stub filing preview
 
 Announce: `Phase 7 — Stub filing`.
 
@@ -376,12 +376,11 @@ Coach: *"Sections with status ❌ and no linked itr issues are invisible to `$sp
      §A.12  Theme switcher         → existing stub itr#201
    ```
 
-2. **Ask the PO** with a multiple-choice prompt:
-   - **File all** — default for `--update` runs (steady state, low volume).
-   - **File none** — defer all to a future cycle.
-   - **Pick which** — default for first run (initial volume is heavy; PO picks selectively).
-
-   On **pick which**, walk the candidate list with per-item yes/no.
+2. **Reuse the requested filing scope.** If the user already chose all, none, or
+   specific sections, apply that choice. Otherwise show the candidate list and
+   ask which to include; accept a batch selection rather than requiring a prompt
+   for every row. Do not infer permission to create an unlimited backlog from a
+   roadmap-only request.
 
 3. **Draft each stub issue** using `STORY_STYLE.md` conventions (defer to `itr` skill):
    - **Title** — from spec section title.
@@ -390,7 +389,7 @@ Coach: *"Sections with status ❌ and no linked itr issues are invisible to `$sp
    - **Kind** — `task`.
    - **Tags** — `roadmap-stub, needs-sprint, product-backlog, risk:<tier-from-size>` (XL→high, L→med, S/M→low).
 
-4. **Print the full stub list** for PO approval before Gate 2:
+4. **Print the full stub list** alongside the roadmap for final review:
 
    ```
    Will file at Gate 2:
@@ -403,7 +402,7 @@ Coach: *"Sections with status ❌ and no linked itr issues are invisible to `$sp
 
 ---
 
-## Phase 8 — Final review (BLOCKING — Gate 2)
+## Phase 8 — Final review (Gate 2)
 
 Announce: `Phase 8 — Final review`.
 
@@ -426,7 +425,7 @@ Will write:
 Approve, amend, or abort?
 ```
 
-**Wait** for explicit approval. Accept edits ("drop the trajectory section", "don't file stub #3", "change §A.16 from L to M"). Reprint until the PO approves. If `--dry-run`, print this and stop here without writing anything.
+Show the concrete roadmap and any proposed issue writes. Reuse existing authorization for the requested update; ask only for unsettled product decisions, new issue scope, or a final review the user requested. If `--dry-run`, stop here without writes.
 
 **Feature-complete celebration:** if every section in the confirmed list is ✅, print one extra line before the prompt:
 
@@ -529,7 +528,7 @@ Before Phase 9 writes `docs/ROADMAP.md`, read `references/roadmap-artifact-and-i
 - **Bridge, not authority.** The roadmap is connecting tissue between spec and `itr`. The spec defines scope; `itr` defines live work; the roadmap maps one to the other. It doesn't override either.
 - **Read-once-per-sprint cadence.** The roadmap is consulted by every `$sprint` Phase 0 and updated by every `$sprint-review` Phase 8. Manual `$roadmap` runs are rare — for fresh drafts or spec changes.
 - **Per-section PO confirmation is the only non-negotiable interaction.** Every other coach line, every other proposal — those are surface, not gate. The per-section walk is what makes the artifact load-bearing.
-- **Two BLOCKING gates, no more.** Gate 1 confirms scope/section list; Gate 2 approves the full picture before any writes. Per-section walks in Phase 2 are inline, not gates.
+- **Reuse settled decisions.** Scope and final draft are checkpoints for material product choices, not compulsory duplicate permission prompts. Group clear status updates; discuss uncertainty.
 - **Trajectory is opt-in.** Drafting a sprint plan in the roadmap risks commitment-shaped output. Default is no trajectory; `$sprint` re-derives ordering each cycle.
 - **Stubs are how spec sections become pullable.** `$sprint` can't pull a section that has no `itr` presence. Phase 7 creates that presence — selectively on first run, comprehensively on `--update`.
 - **The artifact is the durable record.** `docs/ROADMAP.md` ends each cycle with the current map. Reading it tells anyone — Codex or human — where the project stands without re-deriving from sprint history.
@@ -540,9 +539,9 @@ Before Phase 9 writes `docs/ROADMAP.md`, read `references/roadmap-artifact-and-i
 ## Don't
 
 - Don't proceed past Gate 1 without an approved section list.
-- Don't proceed past Gate 2 without explicit approval of stubs + artifact + boundary.
+- Don't write unsettled release boundaries or unrequested issue scope as accepted decisions.
 - Don't write to `itr` or the artifact before Gate 2.
-- Don't infer a status without surfacing the inference for PO confirmation.
+- Show the evidence behind inferred status and preserve PO overrides; ask when material uncertainty remains.
 - Don't draft a trajectory unless the PO opted in at Phase 6.
 - Don't overwrite an existing `docs/ROADMAP.md` without confirming fresh vs update mode at Phase 0.
 - Don't silently overwrite PO manual edits in `--update` mode. The `<!-- auto -->` sentinel is the contract: refresh sentineled cells; preserve un-sentineled and `<!-- po:override -->` cells verbatim.

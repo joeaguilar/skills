@@ -104,15 +104,16 @@ Announce: `Phase 0 — Intake & preflight`.
 
    3. For each unique ID, run `itr get <id> -f json --fields id,status`. If `status == "open"`, the ticket is a **stale-closure candidate**: a commit claims it's done but `itr` still has it open.
 
-   4. If any candidates surface, include them in the Phase 0 summary print (step 9 below) under a `Stale tickets:` line, and **pause for PO direction**. Offer exactly three choices:
+   4. For each candidate, read its acceptance criteria and inspect the referenced
+      change plus current code/checks. A commit message is a lead, not proof of
+      completion. Distinguish fully satisfied, partial, reverted, and mistaken-ID
+      cases. Summarize the evidence under `Stale tickets:` in the intake summary.
 
-      - **(a) Close them now.** Run `itr close <id> "Stale closure: shipped in <commit-sha> (<commit-subject>); detected by $sprint preflight on <date>."` for each. Then continue to Phase 1.
-      - **(b) Include them in the sprint as no-op closures.** File them as Sprint Backlog stories whose AC is "Verify shipped in <commit-sha>; close as no-op." This matches the sprint-1 pattern where a Codex worker agent organically caught and closed the duplicate. Useful when the PO wants the bookkeeping to flow through the normal sprint workflow.
-      - **(c) Skip preflight and proceed.** Note the candidates in the artifact's Open Assumptions log and continue without action. Use when the PO knows the commits don't actually close the tickets (e.g. partial fix, wrong ID typo).
-
-   5. If no candidates surface, the `Stale tickets:` line in the summary reads `none`. Do not pause.
-
-   **Self-test (manual, for skill authors):** to validate this step end-to-end, create a synthetic stale ticket in a scratch repo — open an `itr` ticket, then commit any file with `closes #<that-id>` in the message, then re-run `$sprint`. The preflight should surface the ticket and offer the three choices. A repo with zero matching commits, or zero open referenced IDs, should produce `Stale tickets: none`. No automated test exists for skill templates; the verify path is re-read of this file + the synthetic-repo exercise above.
+   5. Reconcile proven closures within the user's existing tracker authorization;
+      otherwise include the proposed closures with the final backlog review.
+      Keep partial or uncertain work visible. Ask only for a material unresolved
+      acceptance/scope decision, and continue independent planning. Do not add
+      no-op stories solely to route bookkeeping through an implementation worker.
 
 9. **Detect `docs/ROADMAP.md`** (the cross-sprint product map built by `$roadmap`). Resolution order: `docs/ROADMAP.md` → `./ROADMAP.md` (spec-less projects). If found:
 
@@ -127,7 +128,9 @@ Announce: `Phase 0 — Intake & preflight`.
 
    If `docs/ROADMAP.md` is absent: include the one-line `Roadmap: absent — run $roadmap to map cross-sprint scope.` surface in the Phase 0 summary. Do not pause — this is a surface, not a gate.
 
-10. **Print the Phase 0 summary** so the user can see the resolved context:
+10. **Surface open retro actions.** Read the project's actual process-improvement tags and list relevant open items alongside roadmap candidates. Recommend scheduling, retaining with a reason/revisit point, or closing an obsolete item. Carry the choices into the existing goal/backlog discussion; do not force closure merely because this sprint cannot fit an item, or add a separate approval gate. Record agreed tracker updates for the filing phase.
+
+11. **Print the Phase 0 summary** so the user can see the resolved context:
 
     ```
     Sprint preflight
@@ -139,6 +142,7 @@ Announce: `Phase 0 — Intake & preflight`.
       Sprint number: sprint-N (auto-incremented from sprint/ folders)
       In-flight:     none | sprint-K reviewed, awaiting new-sprint increment | sprint-K still open per sprint/CURRENT (warning, not blocking)
       Stale tickets: none | #<id> (<title>) — closed in <sha> "<subject>"; choose (a) close now / (b) include as no-op / (c) skip
+      Retro items:   none | <IDs and recommended disposition for the backlog discussion>
     ```
 
     If `Stale tickets:` is non-empty, wait for the PO choice (a/b/c) before proceeding. If empty, no confirmation needed — this is a transparency print, not a gate. Proceed straight to Phase 1.
@@ -147,7 +151,7 @@ Announce: `Phase 0 — Intake & preflight`.
 
 ---
 
-## Phase 1 — Sprint Goal & Gate 1 (BLOCKING)
+## Phase 1 — Sprint Goal & Gate 1
 
 Announce: `Phase 1 — Sprint Goal`.
 
@@ -184,7 +188,7 @@ Coach: *"The Sprint Goal is the single sentence that explains why this Sprint ex
    Approve, edit, or amend? (we cannot draft the backlog until the goal is locked)
    ```
 
-   **Wait** for explicit approval. Accept edits and reprint. Do not proceed to Phase 2 with an unconfirmed goal.
+   Reuse a goal and non-goals already approved in the request or conversation. If they are unresolved or the user requested coached review, gather that decision before dependent planning; otherwise proceed.
 
 ---
 
@@ -204,6 +208,9 @@ Coach: *"Now I'll decompose the spec into stories sized to be completed by one `
    - If kgr is present, use `kgr refs <symbol>` and `kgr query --who-imports <file>` to identify the file set.
    - Otherwise, grep for entry points referenced in the spec.
    - Files only go into `--files` when you're confident; ambiguous cases stay blank and `$blitz`'s planner agent will fill them later.
+   - Normalize paths within the declared repository. Verify existing files and named symbols against the current tree; mark intended new files as NEW. Reconcile plan and issue-body paths from code evidence, recording agreed corrections during filing. Do not turn a recoverable path spelling or rename into an extra user gate.
+   - Include shared docs, registries, and directory claims in the ownership map. Record API publisher/consumer dependencies and shared-file contention; use a prep story or dependency when consumers require the shared contract first.
+   - For persisted domain state, trace save/load, undo/redo, and relevant reconstruction/read paths. Include affected paths in one coherent story or explicit dependent stories that keep intermediate behavior valid; require a round-trip check across the affected boundary.
    - **If a story's acceptance criterion is user-visible** ("user sees X", "surface a warning", "show a notice"), the ownership set must include the UI/surface file that *renders* it — not just the data-layer file that *produces* it. A data-layer change behind an unowned render site ships a dead path and forces the `$blitz` worker agent to skip the AC or reach outside its files. If data and surface naturally belong to different worker agents, split into a data-layer story + a UI-hookup story (`--blocked-by` the data-layer one). *(sprint-4 retro: #407 declared `bg-io` only; its "user sees a warning" AC needed a `bg-app` render site, forcing a `$blitz` orchestrator intervention.)*
 
 3. **Infer dependencies (`--blocked-by`) conservatively:**
@@ -224,6 +231,10 @@ Coach: *"Now I'll decompose the spec into stories sized to be completed by one `
    - Project verify gate (tests, lint, typecheck, format) is green.
    - Behavior is observable to the user (or to the next dependent story).
    - Docs/README updated when user-facing behavior changes.
+   - Enumerate and verify the behavior's in-scope entry points/modes, including read/restore paths.
+   - Test-only work that must change production behavior declares that scope change and verifies it; improved coverage alone does not justify it.
+
+   If project policy requires reviewer signoff, specify that it must be recorded before the first issue close. Do not introduce a reviewer requirement where none exists.
 
    This will be appended to every story's acceptance criteria in Phase 5.
 
@@ -241,83 +252,32 @@ Do not file anything yet. Hold the draft in memory.
 
 Announce: `Phase 3 — Alignment` and explain: *"Before we file anything, we stress-test the draft. The Product Owner gets to push back on anything I drafted."*
 
-### Step 0 — Empty-AC detection (BLOCKING)
+### Acceptance before filing
 
-Run this step **before** any of the four alignment topic clusters below. It exists because adopting a stale ticket with empty `acceptance` can otherwise slip past alignment and reach `$blitz` un-AC'd. (This mirrors the project-level constraint: `STORY_STYLE.md` says *"AC is required on every ticket. Empty `acceptance` is not acceptable closure-ready state."* — this step extends that rule into `$sprint` enforcement so it can't be bypassed by adopting a stale ticket.)
+Draft missing acceptance criteria from the original requirements and code evidence.
+Keep them in the in-memory draft until the filing phase. Ask only where an
+unresolved choice changes the expected behavior; hold the affected story rather
+than blocking independent planning. Do not file a story with empty acceptance.
 
-1. **Scan the candidate Sprint Backlog** for any story whose `acceptance` field is empty or whitespace. Use the ticket data already pulled by Phase 0 (step 8 stashes it explicitly) — do **not** refetch.
+For visual work, identify the interaction, expected rendered result, and practical
+runtime evidence. Require the `LOOK AT / IGNORE / EXPECTED / CONFOUNDERS` format
+only when the user or applicable project instructions require it. Otherwise a
+clear observable criterion and screenshot/interaction check are sufficient.
+Draft the checks yourself rather than requiring the user to write every block.
 
-2. **For each empty-AC story, surface it explicitly to the PO**, one at a time:
-
-   ```
-   Story #N (<title>) has no acceptance criteria.
-   Draft now or defer (defer = remove from sprint).
-   ```
-
-3. **If the PO drafts AC inline:** capture it verbatim. Confirm by reprinting:
-
-   ```
-   Drafting AC for story #N:
-     - <bullet 1>
-     - <bullet 2>
-     ...
-
-   Confirm, edit, or replace?
-   ```
-
-   On confirmation, **write the AC to the story** with:
-
-   ```
-   itr update <id> --acceptance "<the drafted AC, multi-line ok>"
-   ```
-
-   Use the `--acceptance` flag directly. Do **not** route through `itr update --context` or any other body-field workaround — `--acceptance` is the canonical surface and is confirmed available in current `itr` (`itr update --help`).
-
-4. **If the PO defers:** move the story to spillover (tag `product-backlog,needs-sprint`) and drop it from the in-memory Sprint Backlog. Note the deferral in the Open Assumptions log so `$sprint-review` can revisit.
-
-5. **Do not proceed to the four alignment topic clusters below until every in-sprint story has non-empty `acceptance`.** This is BLOCKING; the Phase 4 Gate 2 sanity check will refuse to proceed if any in-sprint story still has empty AC, so resolving it here is the cheaper path.
-
-### Step 0b — Visual Gate AC detection (BLOCKING)
-
-Run this immediately after Step 0, before the alignment clusters. It exists because visual or rendering stories that ship with only a green verify gate can still regress the actual pixels. When project instructions (`AGENTS.md`, `CODEX.md`, or `CLAUDE.md`) require a structured Visual Gate, enforce it at planning time so an un-gated visual story cannot reach `$blitz`.
-
-1. **Flag every visual-scope story.** A story is visual-scope if it is tagged `visual`, `ui`, or `render`, or its declared `files` touch rendering-related paths such as `src/screens/**`, `src/render/**`, `src/ui/**`, shaders, post-processing, view, draw, canvas, layout, or app-scaling files. Use the ticket data already in memory — do **not** refetch.
-
-2. **Inspect each flagged story's `acceptance` for the Visual Gate block.** It must contain all four labels: `LOOK AT`, `IGNORE`, `EXPECTED`, `CONFOUNDERS`. A story with visual scope but no such block fails the check.
-
-3. **Surface each failing story to the PO**, one at a time:
-
-   ```
-   Story #N is visual but AC doesn't use the LOOK AT / IGNORE / EXPECTED / CONFOUNDERS block. Draft now or defer.
-   ```
-
-4. **If the PO drafts the Visual Gate inline:** capture it verbatim using the canonical format from the project instructions when present, otherwise use this base format:
-
-   ```
-   Visual gate:
-     LOOK AT:     <specific element, location, observable behavior>
-     IGNORE:      <known-deferred items + their ticket #s>
-     EXPECTED:    <success criteria in observational terms>
-     CONFOUNDERS: <bugs in adjacent systems that may surface but are out of scope>
-   ```
-
-   Confirm by reprinting, then **write it into the story's AC** with the canonical flag (append to, or merge with, existing AC bullets):
-
-   ```
-   itr update <id> --acceptance "<full AC including the Visual gate block>"
-   ```
-
-   Use `--acceptance` directly, as in Step 0 — not `--context` or any body-field workaround.
-
-5. **If the PO defers:** move the story to spillover (tag `product-backlog,needs-sprint`) and drop it from the in-memory Sprint Backlog. Note the deferral in the Open Assumptions log so `$sprint-review` can revisit.
-
-6. **Do not proceed to the alignment clusters until every visual-scope in-sprint story has a Visual Gate block.** BLOCKING; the Phase 4 Gate 2 check re-verifies this, so resolving it here is cheaper.
+Tag `visual-gate-only` only when the entire remaining deliverable explicitly
+requires the PO's verdict. Such tasks stay out of implementation waves and appear
+in review for accept/reject/carryover. Implementation plus human smoke remains
+executable, with only its final close deferred. Do not turn every UI ticket into
+a mandatory human acceptance task.
 
 ### Alignment topic clusters
 
 Invoke the `$alignment` interview pattern (`request_user_input` for simple choices when available, freeform user questions for nuanced ones) on these four topic clusters, in order. For each, present your recommendation alongside the question.
 
 1. **Goal + non-goals + scope boundaries.** Re-confirm the goal still holds against the drafted stories. Surface any drafted story that doesn't visibly serve the goal.
+
+   Resolve material ambiguity around fallbacks, optional modes, and edge cases in this existing alignment step. Use settled user requirements where available; ask only about branches that change scope or acceptance. Record each agreed inclusion or deferral, with a linked issue when one exists.
 
 2. **Definition of Done (sprint + per-story).** Confirm the sprint-level DoD checklist. For any story whose AC reads as a judgment call rather than an observable outcome, flag it: *"This AC isn't checkable by an agent — can we make it observable?"*
 
@@ -331,25 +291,13 @@ If the PO substantially changes the goal during alignment, **return to Phase 1 G
 
 ---
 
-## Phase 4 — Confirm draft & Gate 2 (BLOCKING)
+## Phase 4 — Confirm draft & Gate 2
 
 Announce: `Phase 4 — Final review before filing`.
 
-**Sanity check — every in-sprint story has non-empty AC.** Before printing the draft for PO approval, re-scan the in-memory Sprint Backlog for any story with empty or whitespace `acceptance`. If any story still has empty AC (somehow slipped past Phase 3 Step 0), **refuse Gate 2** with a one-line block:
-
-```
-Story #N has no AC. Return to Phase 3 to draft or defer.
-```
-
-**Sanity check — every visual-scope story has a Visual Gate block.** In the same re-scan, for any story flagged visual-scope by Phase 3 Step 0b (tagged `visual`/`ui`/`render` or touching rendering paths), confirm its `acceptance` contains all four Visual Gate labels (`LOOK AT`, `IGNORE`, `EXPECTED`, `CONFOUNDERS`). If any visual-scope story still lacks the block (somehow slipped past Step 0b), **refuse Gate 2** with a one-line block:
-
-```
-Story #N is visual but has no Visual Gate block. Return to Phase 3 Step 0b to draft or defer.
-```
-
-Phase 4 cannot proceed past either check. Resume the draft once the PO has drafted AC / the Visual Gate (Phase 3 path: `itr update <id> --acceptance "..."`) or moved the story to spillover.
-
-Once the sanity check passes, print the full draft so the PO can see exactly what will hit `itr`:
+Check that each story has observable acceptance, bounded ownership, and any
+visual review explicitly required by the project. Resolve gaps in the draft;
+ask the user only for choices that cannot be derived from settled requirements.
 
 ```
 Sprint-N — <Sprint Goal>
@@ -383,7 +331,7 @@ Will write:
 Approve, amend, or abort?
 ```
 
-**Wait** for explicit approval. Accept edits ("drop story 4", "move 7 to spillover", "story 2 needs `--blocked-by #1`") and reprint until the PO approves. If `--dry-run`, print this and stop here.
+Show the concrete draft. Honor a requested review gate; otherwise apply an already-authorized backlog plan without asking again. Resolve new scope choices before filing. If `--dry-run`, print and stop without writes.
 
 ---
 
@@ -516,7 +464,7 @@ Before Phase 2 drafts stories, read `references/story-template-and-multirepo.md`
 
 - **Planning only.** The skill never executes work. The Increment is `$blitz`'s job.
 - **The Sprint Goal is the yardstick.** Every story decision (in-sprint vs spillover, prioritization, cut/keep) is justified against the goal.
-- **Two BLOCKING gates, no more.** Gate 1 locks the goal; Gate 2 confirms the draft before any `itr` write. After that the skill files autonomously.
+- **Decision checkpoints, not repeated permission.** Resolve the goal and concrete backlog using existing decisions and authorization; retain coached review when the user requests it.
 - **File ownership is hand-off currency.** Declared `--files` are gifts to `$blitz`'s wave planner. Conservative when uncertain.
 - **Spillover is a feature.** Surfacing what *won't* fit is as valuable as picking what will. Nothing gets lost — every deferred item lands in `itr`.
 - **Coaching is structured output.** The phase headers and Scrum vocabulary make the workflow legible. Verbose is fine; opaque is not.
@@ -526,7 +474,7 @@ Before Phase 2 drafts stories, read `references/story-template-and-multirepo.md`
 ## Don't
 
 - Don't proceed past Gate 1 without a confirmed Sprint Goal.
-- Don't proceed past Gate 2 without an explicit user approval of the draft.
+- Don't file an unresolved scope choice as if the user had accepted it.
 - Don't write to `itr` before Gate 2.
 - Don't invoke `$blitz` automatically — the user runs it after reviewing the filed sprint.
 - Don't roll back partially-filed sprints. On `itr` failure, retry once, then surface and resume.

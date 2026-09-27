@@ -79,6 +79,15 @@ replace their predecessors in every routing role, and the old names leave the Sc
   ties fable-5.1 on intelligence and taste at one cost rung cheaper, so it is the
   high-quality writer and fable-5.1 is the planner/judge.
 
+**Availability (2026-09-26, operator-dictated): gpt-6-sol is unavailable.** On this
+machine's Codex login, `codex exec -m gpt-6-sol` fails with "The 'gpt-6-sol' model is not
+supported when using Codex with a ChatGPT account." It keeps its Scores row so skills that
+name it stay legal, but it holds **no routing role** until that changes. Its seats fall
+through: the cheap cross-model reviewer becomes gpt-5.6-terra (gpt-5.5 when terra wrote
+the work), and the escalation ladder skips its rung. gpt-5.5, gpt-5.6-terra, gpt-5.6-luna,
+and gpt-6-astra answered `codex exec` the same day. To restore sol, delete this paragraph
+and the "unavailable" marks below, then re-add it to the reviewer row and the ladder.
+
 **Model names legal in skills** = the Scores table above, plus anything listed on
 an allowlist line. A skill naming anything else fails `models.sh check`. Legality
 deliberately does **not** come from prose mentions in this file — otherwise a
@@ -105,12 +114,13 @@ generalist**" never changes when terra replaces gpt-5.5.)
 | taste-hero | fable-5.1 | hero / flagship taste surface — gated (`fable=on` / `--fable`) |
 | planner | fable-5.1 | planning / spec / decomposition seats. Fable's standing job is plan + review, not writing code, so spend it here and on the reviewer seat |
 | computer-use | gpt-5.6-terra | Codex real-UI runtime verification (the `codex-computer-use` skill) |
-| reviewer | *cross-model* | any review / critique / judge seat — **never the model that wrote the work**. If Codex (astra/sol/terra/gpt-5.5) or opus-5.5 wrote it → fable-5.1, or gpt-6-sol for cheap passes. If a Claude model wrote it → gpt-6-astra when quality matters, gpt-6-sol / gpt-5.6-terra otherwise |
+| reviewer | *cross-model* | any review / critique / judge seat — **never the model that wrote the work**. If Codex (astra/terra/gpt-5.5) or opus-5.5 wrote it → fable-5.1, or for cheap passes gpt-5.6-terra (gpt-5.5 when terra wrote it). If a Claude model wrote it → gpt-6-astra when quality matters, gpt-5.6-terra otherwise. (gpt-6-sol is unavailable — see Availability) |
 | codex-default | gpt-5.5 | default `-m` for `codex exec` (pass it explicitly — config.toml may differ) |
 | never | haiku-4.5 | never used, any role |
 
 **Escalation ladder (non-taste)** — cheapest rung first, escalate a miss without asking
-until the fable rung (gated): `gpt-5.5 → gpt-5.6-terra → gpt-6-sol → gpt-6-astra → fable-5.1`.
+until the fable rung (gated): `gpt-5.5 → gpt-5.6-terra → gpt-6-astra → fable-5.1`.
+(The gpt-6-sol rung between terra and astra is skipped while sol is unavailable.)
 (gpt-6-astra sits one rung below Fable: same intelligence, one rung cheaper, and it
 spends Codex allowance rather than Fable budget, so reach it before Fable for code.)
 (opus-5.5 is not a non-taste escalation rung. Its intelligence 8 is level with gpt-5.5
@@ -127,7 +137,7 @@ to opus-5.5, gpt-6-astra, or fable-5.1.
 | Model | Reach |
 |---|---|
 | gpt-6-astra | Codex — `codex exec -m gpt-6-astra` (top Codex rung; high-taste code/prose writer + cross-model judge) |
-| gpt-6-sol | Codex — `codex exec -m gpt-6-sol` (smart escalation rung + cheap cross-model reviewer) |
+| gpt-6-sol | **Unavailable** — `codex exec -m gpt-6-sol` is rejected on this Codex login (ChatGPT account); no routing role until that changes (see Availability) |
 | gpt-5.6-terra | Codex — `codex exec -m gpt-5.6-terra` (default generalist) |
 | gpt-5.6-luna | Codex — `codex exec -m gpt-5.6-luna` (cheaper terra-peer) |
 | gpt-5.5 | Codex — `codex exec -m gpt-5.5` (agents default; pass `-m` explicitly — `~/.codex/config.toml` currently defaults to **gpt-6-astra at effort ultra**, so a bare `codex exec` runs the most expensive Codex model at its most expensive effort, not gpt-5.5) |
@@ -151,9 +161,9 @@ these rules don't grant.
 | Model | Allowed effort | `ultra` | Invocation rule |
 |---|---|---|---|
 | gpt-6-astra | `low` / `medium` / `high` / `xhigh` (`high` is the standing default; `none` is rejected) | `max` / `ultra` (ultra = automatic task delegation) — **only if the user requested it, and only in a solo subagent run**; never inside a parallel wave/fan-out | top rung — route for code that must be right the first time, for high-taste prose, and as the cross-model judge of Claude output; 2.5× sol per token, so not for bulk waves. Declines offensive-security work (Critical cyber rating) |
-| gpt-6-sol | `low` / `medium` / `high` / `xhigh` (`medium` is the standing default) | `max` / `ultra` — **only if the user requested it, and only in a solo subagent run**. That means one Codex lane with nothing else in flight, never inside a parallel wave/fan-out | escalation rung + cheap cross-model reviewer — free to route |
+| gpt-6-sol | `low` / `medium` / `high` / `xhigh` (`medium` is the standing default) | `max` / `ultra` — **only if the user requested it, and only in a solo subagent run**. That means one Codex lane with nothing else in flight, never inside a parallel wave/fan-out | **unavailable — do not route** (see Availability); when restored: escalation rung + cheap cross-model reviewer |
 | gpt-5.6-terra | `medium` / `high` / `xhigh` (`high` is the standing default) | **Only use `ultra` if the user requested it, and only in a solo subagent run** — one Codex lane, nothing else in flight; never inside a parallel wave/fan-out | default generalist — free to route |
-| gpt-5.6-luna | `medium` / `high` / `xhigh` | no ultra lane — work that seems to need luna-at-ultra routes to terra/sol instead | **Automated workflows only** (a router assigned it — a `route:` tag, a cost-sensitive C1 batch). **Never self-invoke**: don't pick luna on your own initiative, and never for risky or Novelty ≥ 1 work |
+| gpt-5.6-luna | `medium` / `high` / `xhigh` | no ultra lane — work that seems to need luna-at-ultra routes to terra instead (sol is unavailable) | **Automated workflows only** (a router assigned it — a `route:` tag, a cost-sensitive C1 batch). **Never self-invoke**: don't pick luna on your own initiative, and never for risky or Novelty ≥ 1 work |
 | gpt-5.5 | `none`…`xhigh` (API **rejects** `ultra`/`max`) | rejected by the API | agents default + cheapest floor — free to route |
 
 Risky tasks (miss is costly, spec subtle, blast radius wide) never run below `high`

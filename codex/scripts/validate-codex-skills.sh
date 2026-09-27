@@ -22,7 +22,19 @@ validate_yaml_frontmatter() {
       sed 's/^/  /' "$err"
       status=1
     fi
-  elif grep -nE '^[A-Za-z_][A-Za-z0-9_-]*:[[:space:]].*:[[:space:]]' "$tmp" > "$err"; then
+  elif awk '
+    /^[A-Za-z_][A-Za-z0-9_-]*:[[:space:]]/ {
+      value = $0
+      sub(/^[^:]+:[[:space:]]*/, "", value)
+      first = substr(value, 1, 1)
+      if (first != "\"" && first != sprintf("%c", 39) &&
+          first != "|" && first != ">" && value ~ /:[[:space:]]/) {
+        print NR ":" $0
+        found = 1
+      }
+    }
+    END { exit !found }
+  ' "$tmp" > "$err"; then
     echo "ERROR: $rel has likely invalid YAML frontmatter; quote scalar values containing ': ':"
     sed 's/^/  /' "$err"
     status=1

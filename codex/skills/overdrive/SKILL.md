@@ -77,7 +77,7 @@ Phase 3  Wave-pack ................... conflict graph → disjoint-file waves, t
 ─ loop while open tickets remain ───────────────────────────────────────────────
 Phase 4  Spawn wave ................. static file audit → swarm arms (same branch, no commits)
 Phase 5  Monitor & self-heal ........ unblock, re-plan failures, quarantine after K attempts
-Phase 6  Wave gate & commit ......... full-repo verify (flaky double-check) → ONE commit
+Phase 6  Wave gate & commit ......... full-repo verify and failure diagnosis → ONE commit
 Phase 7  Visual smoke gate .......... accept → next wave | reject → rollback + iterate
 ─ stop: backlog empty · only-quarantined · 2 zero-waves · blocking-quarantine · max-waves · time-budget ─
 Phase 8  Finalize ................... fill plan.md, adaptive retro, triage, close epic, report
@@ -107,7 +107,7 @@ Announce `Phase 0 — Preflight & baseline`. Terse logging throughout.
 
 4. **Sprint number & folder.** Execute mode + valid `sprint/CURRENT` → reuse that folder + `sprint-{N}` (continuing; don't allocate new). Else: max `sprint-{N}` under `sprint/` +1 (fallback max `sprint-N` tag +1; else `sprint-1`). Slug = `--name`, else 2–4 keywords from goal (plan) / input (execute), `[a-z0-9-]`, cap 32. Folder = `sprint-{N}-{YYYY-MM-DD}-{slug}`; collision → append `-{HHMM}`.
 
-5. **Stale-ticket sweep (inherited from `$sprint`).** `git log --grep='closes\? #'` / `fixes\? #` / `resolves\? #` over the last 30 days; for each referenced ID still `open` in `itr`, it shipped but never closed. **Autonomously exclude** these from scope and log them under `run.md` → `Stale (excluded)`. (Autonomous skill — don't pause for the three-way choice `$sprint` offers; excluding is the safe default since the commit already shipped the work.)
+5. **Stale-ticket sweep.** Treat closing keywords in git history as candidates, not proof. Compare the issue AC with the current implementation and recorded verification before closing or excluding it. Keep partial or ambiguous work in scope and log the evidence; do not silently drop it because a commit mentions its ID.
 
 6. **Git safety & baseline** (load-bearing — makes rollback safe). Orchestrator commits, so the tree must be sane. Never hide or rewrite pre-existing work to manufacture a clean baseline:
    - **Not a repo** → **hard stop**: print `overdrive needs a git repo — run \`git init\` and retry (per-wave commits are load-bearing).` No auto-init.
@@ -117,7 +117,7 @@ Announce `Phase 0 — Preflight & baseline`. Terse logging throughout.
    - **Dirty tree** → stop before tracker writes, agents, branch switches, or commits. Offer: continue after the user commits/stashes the work, run `--dry-run`, or use an explicitly approved isolated-worktree workflow. Never auto-stash user work.
    - `BASELINE_SHA = git rev-parse HEAD`. Record `run.md`. Verify clean: `git diff-index --quiet HEAD --` exit 0 — else surface + stop (never swarm a dirty tree).
 
-7. **Config & verify gate.** `concurrency` (cap 5, clamp+warn), `max-waves`, `max-retries` (2), `time-budget`, `--auto`/`--trust`. **`--auto` backstop:** `--auto` + neither `--time-budget` nor `--max-waves` → set `max-waves = 2 × open-ticket-count`, warn `Auto with no cap — backstopping at <N> waves; override with --max-waves/--time-budget.` Auto-detect verify gate/repo unless `--verify`:
+7. **Config & verify gate.** `concurrency` (cap at the smaller of 5 and available harness worker slots), `max-waves`, `max-retries` (2), `time-budget`, `--auto`/`--trust`. **`--auto` backstop:** `--auto` + neither `--time-budget` nor `--max-waves` → set `max-waves = 2 × open-ticket-count`, warn `Auto with no cap — backstopping at <N> waves; override with --max-waves/--time-budget.` Auto-detect verify gate/repo unless `--verify`:
 
    | File | Default verify gate |
    |---|---|
@@ -170,7 +170,9 @@ Announce `Phase 1 — Plan`. **Skipped in execute mode.** No approval gate (want
 
 Announce `Phase 2 — Pre-plan`. Blitz discovers files at run time; overdrive bakes them at plan time → arms not explorers. Conflicts found now (cheap), faster agents, tighter waves.
 
-1. **Fan out pre-plan agents over every open ticket** (parallel, read-only). Use Codex worker subagents suited to codebase exploration, one agent per ticket or batched in groups when needed. Each reads body+AC, searches (`kgr refs`/`kgr query --who-imports`, else grep), returns:
+Before assigning pre-plan agents, separate tasks whose only remaining deliverable explicitly requires PO visual acceptance. Keep these open as `visual-gate-only` and list them in `run.md` for Phase 7/8; they need no implementation worker or retry. A UI tag, screenshot requirement, or empty file list alone is not sufficient. If a pre-plan discovers this condition, move that task to the same pending-acceptance list. In `--dry-run`, record the classification only in the preview.
+
+1. **Fan out pre-plan agents over executable open tickets** (parallel, read-only). Use Codex worker subagents suited to codebase exploration, one agent per ticket or batched in groups when needed. Each reads body+AC, searches (`kgr refs`/`kgr query --who-imports`, else grep), returns:
 
    ```json
    { "ticket_id": N, "files": ["src/a.rs", "src/b.rs"], "confidence": "high|medium|low",
@@ -183,7 +185,7 @@ Announce `Phase 2 — Pre-plan`. Blitz discovers files at run time; overdrive ba
 
 2. **Write baked plan back to ticket** (arm reads from tracker, not orchestrator memory): `itr update <id> --files "<csv>"` + plan + neighbors into body/context (exact field per `agent-info` — `--context` or body flag). Tracker-persisted = crash-recoverable: re-run `--backlog` resumes (closed stay closed; open carry their plan).
 
-3. **Cycle detection on `blocked-by`** (DFS). Cycle → **autonomously break**: drop lowest-confidence edge in the ring (tie → drop edge whose *source* ticket has highest ID), **re-derive topo order**, log `Cycle broken: #A→#B→#A, dropped #B→#A (low confidence)` → `run.md`. No ask.
+3. **Cycle detection on `blocked-by`.** Check inferred edges against the code and requirements. Correct an edge only when evidence shows it is wrong. Do not break a real dependency by lowest confidence or ticket number merely to make scheduling succeed. Hold the affected cycle for a design decision and continue independent tasks.
 
 4. **Low-confidence flags.** `confidence: low` kept but flagged in wave log; if it later quarantines, retro notes "low-confidence file ownership" as likely cause.
 
@@ -191,11 +193,13 @@ Announce `Phase 2 — Pre-plan`. Blitz discovers files at run time; overdrive ba
 
 ## Phase 3 — Wave-pack (autonomous)
 
-Announce `Phase 3 — Wave-pack`. **Eligible pool = currently-open tickets minus any tagged `quarantined-sprint-N`** — quarantined never re-enter (this exclusion = termination). Same filter every re-derive (Phase 4).
+Announce `Phase 3 — Wave-pack`. **Eligible pool = currently-open tickets minus `quarantined-sprint-N`, confirmed `visual-gate-only`, and implementation-complete `awaiting PO visual smoke` tasks.** Keep pending human acceptance separate from quarantine and closed states. Apply this filter every time the queue is rebuilt, including resume. If the pool is empty, proceed directly to Phase 8 without an empty worker wave. Exclusion from execution does not mean acceptance passed.
 
 1. **Conflict graph.** From eligible pool, file → owning tickets. File owned by ≥2 = conflict edge (can't share a wave). Add semantic edges from `semantic_neighbors`.
 
 2. **Greedy bin-pack** respecting: topo order of `blocked-by` (ticket after its blockers' waves), no intra-wave file conflict, wave ≤ `concurrency`.
+
+Hold dependents whose remaining blocker is human acceptance; do not drop that dependency or charge implementation retries for it. Continue independent ready tasks. If none are ready, move to Phase 8 with the pending verdict and its blocked dependents recorded.
 
 3. **Write** `sprint/{folder}/overdrive/wave-plan.md` (waves, owned files, neighbors, conflicts + split). Print one-screen summary. No gate. (`--dry-run` stops here.)
 
@@ -203,11 +207,11 @@ Announce `Phase 3 — Wave-pack`. **Eligible pool = currently-open tickets minus
 
 ## Phase 4 — Spawn the wave (autonomous)
 
-Announce `Phase 4 — Wave N`. **Re-derive each cycle from eligible pool = open minus `quarantined-sprint-N`** (re-run Phase 3 bin-pack on it). Newly-closed drop out, new tickets enter, quarantined stay excluded — exclusion is load-bearing for termination.
+Announce `Phase 4 — Wave N`. **Re-derive the eligible pool using Phase 3's full filter** before bin-packing. Newly-closed drop out, new executable tickets enter, and quarantine/pending human acceptance remain excluded. Do not repeatedly dispatch a task whose implementation is already verified and whose only remaining step is a PO verdict.
 
 1. **Pre-wave SHA** = prior wave's commit, or `BASELINE_SHA` for wave 1. Rollback target.
 
-2. **Static file audit** (vs pre-plan staleness): per ticket, confirm owned files exist + don't now collide with a wave-neighbor (prior wave may have moved code). Real collision → **defer to next cycle** (don't launch a known conflict), **increment attempt counter, quarantine instead if counter > `max-retries`** (can't defer forever). Scan owned dirs for stale `*.tmp`/lock → remove.
+2. **Static file audit.** Verify existing files/symbols and allow paths explicitly marked NEW. Recheck directory and shared-file claims against live neighbors. Defer a real collision for re-planning within the retry limit. Do not delete temporary or lock files solely because they look stale; identify their owner and purpose first.
 
 3. **Spawn one arm/ticket in parallel** using the active Codex subagent/background-session mechanism and the **Per-arm template** below. Same branch/shared tree; never commit/push/branch/worktree (shared tree powers self-healing). **Per-arm timeout** = `min(time-budget-remaining / (2 × concurrency), 30m)`; exceed without reporting → interrupt, log `Interventions`, treat as verify failure (re-plan) so one hung arm can't stall the wave or drain budget.
 
@@ -217,7 +221,7 @@ Announce `Phase 4 — Wave N`. **Re-derive each cycle from eligible pool = open 
 
 Event-driven, no polling. Mid-edit LSP noise ignored until an arm reports.
 
-- **Permission / missing-dep fail** → orchestrator fixes (edit manifest, install tool, grant path), logs `Interventions`, resumes the arm through the active Codex background-session follow-up mechanism.
+- **Permission / missing-dep fail** → resolve routine setup within existing authorization, without bypassing denials or editing a live owner's shared file. Serialize any shared repair, log `Interventions`, and resume the arm through the active Codex follow-up mechanism. Surface any permission that genuinely requires the user.
 - **Verify-gate fail reported by an arm** → **re-plan, don't just retry.** Fresh pre-plan agent sees failure tail + ticket → new plan/file set. Then, **incrementing the attempt counter either way:**
   - New file set within already-owned files (no new conflict) → respawn fresh arm **in the same wave window**.
   - Needs a neighbor's file → **defer to next cycle** (re-pack) → stays conflict-free.
@@ -229,18 +233,17 @@ Event-driven, no polling. Mid-edit LSP noise ignored until an arm reports.
 
 ## Phase 6 — Wave gate & commit (autonomous)
 
-Announce `Phase 6 — Wave N gate`. Once every arm is terminal (closed/quarantined):
+Announce `Phase 6 — Wave N gate`. Once every arm has returned (closed, quarantined, or implementation complete awaiting PO smoke):
 
 1. **Full-repo verify gate** from each repo root.
-2. **Flaky double-check** before trusting red: red → re-run up to **2 more times** on the unchanged tree. Green on a re-run → flaky, log `flaky gate detected` → `Interventions`, treat green. Consistently red → real.
+2. **Investigate a red gate.** Read the failure and reproduce it with the narrowest meaningful check. A targeted rerun can test a suspected flake, but a later green run does not erase an unexplained earlier failure. Fix or record the unresolved flake explicitly; do not turn repeated retries into evidence of correctness.
 3. **Red on a slice no arm owned** → diagnose; small+obvious fix → apply+log; otherwise restore only the wave-owned paths from the pre-wave SHA, preserve a diagnostic patch in the wave artifact, re-plan implicated tickets, and re-run the wave. Never use repository-wide reset or clean commands. Any unowned change is a hard stop for user direction. Counts against the **shared per-wave rework budget** (box). Never commit red.
 4. **Contract check** (kgr only): for symbols the wave *removed* from `api_surface`, `kgr query --who-imports <symbol>`; still-open ticket importing a removed symbol → log `contract-warning` + neighbor note for next cycle. Non-blocking.
-5. **Commit (single committer).** Green → inspect `git status` and stage only declared wave-owned files plus the wave's tracker/artifact files. Never use `git add -A`. Follow repository identity and commit-message rules; when none exist, use Conventional Commits with an imperative subject no longer than 72 characters. Every Codex-created commit uses the exact Codex trailer:
+5. **Commit (single committer).** Green → inspect `git status` and stage only declared wave-owned files plus the wave's tracker/artifact files. Never use `git add -A`. Follow repository identity and commit-message rules; when none exist, use Conventional Commits with an imperative subject no longer than 72 characters. Use an attribution trailer only when the user or repository requires it; the following message is an example:
    ```
    git add -- <owned-file>... sprint/<folder>/overdrive/wave-N.md sprint/<folder>/overdrive/run.md
    git commit -m "<type>(<scope>): complete overdrive wave N" \
-              -m "Closes itr#a, itr#b, itr#c. Verification: <one-line gate summary>." \
-              -m "Co-Authored-By: Codex <codex@openai.com>"
+              -m "Closes itr#a, itr#b, itr#c. Verification: <one-line gate summary>."
    ```
    **Verify landed:** `WAVE_N_SHA = git rev-parse HEAD` must differ from pre-wave SHA *and* `git diff-index --quiet HEAD --` exit 0 (hook can silently abort). Fail either → stop+surface, don't launch wave N+1 on an uncommitted tree. The body line `Closes itr#…` is the parseable bridge from the commit to the tickets; review tooling must parse that trailer-like body line rather than depend on a nonstandard subject.
 
@@ -264,7 +267,7 @@ Announce `Phase 7 — Wave N smoke`. **Only human ask in the loop.** `--auto`/`-
    ```
    Any check yellow/partial → highlight + offer three verdicts.
 
-2. **Run visual smoke** the project way (project `/run` skill, `npm run dev` + screenshot, CLI invocation). Show result.
+2. **Run visual smoke** the project way (project `/run` skill, `npm run dev` + screenshot, CLI invocation). Show result. Include relevant held `visual-gate-only` and `awaiting PO visual smoke` tasks against their AC: explicit acceptance plus all other checks passing permits close; rejection or unavailable review remains open for carryover. Under `--auto`, collect these at Phase 8 instead. Never infer their acceptance from a generic wave verdict that did not cover them.
 
 3. **Verdict:**
    - **accept** → log verdict+timestamp; reset rework budget; next cycle.
@@ -276,13 +279,13 @@ Announce `Phase 7 — Wave N smoke`. **Only human ask in the loop.** `--auto`/`-
 ```
 1. Run `git status --porcelain`. If any post-commit change exists, stop and ask the user to preserve or resolve it; do not stash, reset, or clean it automatically.
 2. Confirm the rejected wave commit is the current `HEAD` and matches the SHA recorded in `wave-N.md`.
-3. Run `git revert --no-commit <wave-N-SHA>` so history remains published-history-safe. If the revert conflicts, stop and surface the exact paths. Commit the prepared revert using the repository's identity/message rules and the exact Codex trailer.
+3. Run `git revert --no-commit <wave-N-SHA>` so history remains published-history-safe. If the revert conflicts, stop and surface the exact paths. Commit the prepared revert using the repository's identity/message rules and repository-required attribution.
 4. Verify the revert commit landed and `git diff-index --quiet HEAD --` exits 0. Otherwise report `revert incomplete — resolve manually` and stop.
 5. Reopen tickets THIS wave CLOSED (from wave-N.md → Closed:; never reopen quarantined):
    itr update <id> --status open     (syntax per agent-info; resyncs itr to rolled-back git)
 6. Log rollback + reason → wave-N.md → Interventions.
 ```
-The revert commit must follow the same repository identity, message, and Codex-trailer rules as every other Codex-created commit. Never use `git reset --hard` or broad `git clean` as an overdrive rollback mechanism.
+The revert commit must follow the same repository identity, message, and attribution rules as every other Codex-created commit. Never use `git reset --hard` or broad `git clean` as an overdrive rollback mechanism.
 
 ---
 
@@ -290,14 +293,14 @@ The revert commit must follow the same repository identity, message, and Codex-t
 
 Check **once/cycle, right after a wave is accepted (or auto-accepted), before re-deriving the next plan.** Re-query open tickets, test:
 
-- **Backlog empty** (no open remain; quarantined are tagged out) → success → Phase 8.
+- **No executable work remains** (Phase 3's eligible pool is empty) → Phase 8. Report pending human acceptance and quarantine separately; this stops dispatch, not the completion assessment.
 - **Only quarantined remain** (every open ticket tagged `quarantined-sprint-N`) → exhausted → Phase 8.
 - **Poisoned** — `consecutive-zero` counter: after each accepted wave, +1 if it closed zero else reset 0. Reaches **2** *and* no attempt in flight (no re-plan/defer pending) → stop → Phase 8. Mid-attempt = progress (no false-trigger on slow sprint).
 - **Blocking quarantine** (quarantined ticket that still-open tickets are `blocked-by`) → stop launching dependents → Phase 8.
 - **`max-waves` reached** → Phase 8.
 - **`time-budget` elapsed** → finish in-flight wave (never kill mid-edit), no more → Phase 8.
 
-**Why it always terminates:** every ticket ends `closed` or `quarantined` — re-plan retries + collision-defers share one bounded counter (Phase 5), the rework budget bounds rollback/reject (Phase 6 box), four circuit-breakers cap the outer loop. No uncounted retry/defer/reject path.
+**Why execution terminates:** each ticket closes, is quarantined after bounded retries, or waits outside the worker queue for explicit human acceptance. Re-plan retries and collision deferrals share the Phase 5 counter; the rework budget and outer circuit breakers bound execution. Pending acceptance is reported honestly rather than retried as implementation.
 
 ---
 
@@ -305,11 +308,13 @@ Check **once/cycle, right after a wave is accepted (or auto-accepted), before re
 
 Announce `Phase 8 — Finalize`.
 
+Review all held human-acceptance tasks, including a run that dispatched no waves. Reuse Phase 7's per-task acceptance rules. If the PO is unavailable, preserve the open status, evidence, and next review action; finish the execution report with acceptance pending. Required acceptance does not disappear under `--auto` or an exhausted worker queue. A goal-critical pending verdict keeps the epic open unless the user explicitly accepts a scope/carryover change. Do not report overall completion or mark an active goal complete while its required acceptance is outstanding.
+
 1. **`--auto`/`--trust` end-of-run gate.** Per-wave gates skipped → do the **one** smoke now over the whole increment: full run report + combined smoke.
    - **accept** → close-out.
-   - **reject from wave M onward** → require a clean worktree, then prepare auditable reverts in reverse order, wave N through M, using `git revert --no-commit <sha>` and one repository-compliant revert commit with the exact Codex trailer. A conflict or any unrelated worktree change is a hard stop for user direction; never stash, reset, or clean it automatically. **Reopen exactly what waves M…N CLOSED** — parse each `wave-{k}.md` `Closed:` line → `itr update <id> --status open`; **never reopen `quarantined-sprint-N`**. After **2** end-of-run rejects → orchestrator **autonomously** stops + reports kept-vs-discarded (no re-offer; re-run `$overdrive --backlog` to iterate). Mirrors bounded per-wave reject.
+   - **reject from wave M onward** → require a clean worktree, then prepare auditable reverts in reverse order, wave N through M, using `git revert --no-commit <sha>` and one repository-compliant revert commit with repository-required attribution. A conflict or any unrelated worktree change is a hard stop for user direction; never stash, reset, or clean it automatically. **Reopen exactly what waves M…N CLOSED** — parse each `wave-{k}.md` `Closed:` line → `itr update <id> --status open`; **never reopen `quarantined-sprint-N`**. After **2** end-of-run rejects → orchestrator **autonomously** stops + reports kept-vs-discarded (no re-offer; re-run `$overdrive --backlog` to iterate). Mirrors bounded per-wave reject.
 
-2. **Outcomes.** Plan-vs-actual table (every original ticket → final status), counts, completion rate, goal achievement (yes/partial/no — **quarantined ≠ accepted**), `git diff` not tied to a ticket. Read all `wave-*.md` for friction.
+2. **Outcomes.** Plan-vs-actual table (every original ticket → final status), counts, completion rate, goal achievement (yes/partial/no — **quarantined and acceptance-pending are not accepted**), `git diff` not tied to a ticket. Read all `wave-*.md` for friction.
 
 3. **Adaptive retro.** Required if any friction fired (quarantine · intervention · rollback/reject · bug · completion <80%); else skip. `--retro`/`--no-retro` override. When run: plan-vs-actual, friction log (root-cause each), 1–3 process-improvement items, agent-learnings → `## Retro` + standalone `sprint/{folder}/retro-{date}.md`.
 
@@ -321,11 +326,12 @@ Announce `Phase 8 — Finalize`.
 
 7. **Final report:**
    ```
-   overdrive complete — sprint-N
+   overdrive <complete | execution finished; acceptance pending | partial> — sprint-N
 
      Goal:         <one sentence>            Achievement: yes | partial | no
      Waves:        <W> run, <accepted> accepted, <rejected> rolled back
      Stories:      <closed>/<total> closed, <Q> quarantined, <S> spillover
+     Acceptance:   <pending IDs, evidence, and next PO review action | none pending>
      Commits:      <sha7>…<sha7> on <branch>   (one per accepted wave)
      Quarantined:  itr#.. (<reason>)  →  filed carryover itr#..
      Time:         <elapsed> / budget <T>      Interventions: <N>
@@ -378,9 +384,9 @@ Arms here are Codex subagent/background-session spawns, but when a cycle runs th
 - **Pre-plan the arms.** Conflicts are found at plan time (cheap), not mid-wave (expensive). Agents execute a baked plan; they don't explore.
 - **The orchestrator is the sole committer.** Agents share one branch and never touch git. One commit per accepted wave makes every wave an auditable revert checkpoint.
 - **Quarantine-and-continue guarantees termination.** A ticket gets K re-planned tries, then leaves the pool. The loop can't spin forever.
-- **The verify gate is the convergence point.** Each arm runs the full-repo gate and self-heals neighbors' leftovers. The orchestrator re-runs it (flaky double-checked) before committing.
+- **The verify gate is the convergence point.** Arms report outside-scope failures without editing neighbors. The orchestrator assigns integration repairs after writers finish and reruns the gate before committing.
 - **Revert safely.** Require a clean tree, revert only recorded wave commits, and reopen `itr` tickets to resync. Never hide or discard human files.
-- **Autonomous ≠ reckless.** Cycle detection, file audits, flaky double-checks, time budgets, and the concurrency cap are guardrails that need no human — they let the swarm protect itself.
+- **Diagnose before recovering.** Resolve cycles and failures from evidence, preserve file ownership, and respect the time budget and available concurrency.
 - **Same artifacts as the coached trio.** `plan.md` and the `itr` lifecycle are schema-identical, so a run is interchangeable with `$sprint`+`$blitz`+`$sprint-review`.
 
 ---

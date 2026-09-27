@@ -29,24 +29,25 @@ HARD RULES:
     sole committer; worktrees break the shared-tree self-healing.
   - Write files ATOMICALLY (write to a temp file, then move into place). Never leave a
     half-written file — a neighbor or the verify gate may read it.
-  - DO NOT run any write-mode formatter — it rewrites the whole project and wipes
-    neighbors' in-flight edits:
-      cargo fmt (even with a path arg) · prettier --write/-w · npm run format/fmt ·
-      ruff format (no --check) · black · gofmt -w · goimports -w · any wrapper of these.
-    READ-ONLY checks are SAFE and expected: cargo fmt --check · prettier --check ·
-    ruff format --check · gofmt -l. If a read-only check reports drift OUTSIDE your
-    owned files, surface it — do not auto-fix with a write-mode formatter. Inside your
-    files, hand-edit the offending lines.
+  - Run configured read-only format checks. A formatter with verified file-scoped
+    behavior may fix owned files using explicit paths. Do not run workspace-wide
+    wrappers, code generation, or recursive module formatting during a live wave.
+    Report drift outside your ownership for the orchestrator to assign after
+    writers finish; do not fix neighboring files.
 
 When done editing, run the full-repo verify gate from the repo root:
   {verify command}
 
-It MUST exit zero. The full-repo gate is intentional: if a neighbor left a temporary
-error outside your files, try to fix it — your run is also their safety net. If the gate
-stays red on something clearly outside your scope after best effort, STOP and report
-(do not guess-fix and risk a worse break).
+It MUST exit zero before closing. If a neighbor's in-flight code makes the gate red,
+report the failure and your completed work without editing outside your ownership.
+The orchestrator coordinates the repair and reruns the gate after writers finish.
 
-Only after the gate is fully green:
+For a task that explicitly requires PO visual acceptance, capture the runtime
+evidence but do not self-close. Return `awaiting PO visual smoke`, its AC, evidence,
+and the next review action. The orchestrator holds the issue outside the execution
+queue until Phase 7/8 receives the verdict. Do not wait idle for the PO in a worker.
+
+Only after the gate and all acceptance requirements that permit worker closure pass:
   - Close the ticket:  {close command, e.g. itr close {id} "<one-line outcome>"}
   - Report: one paragraph on what changed + the last 10 lines of the verify output.
 ```
@@ -60,6 +61,7 @@ Only after the gate is fully green:
 
 **Pre-wave SHA:** <sha>   **Commit:** <sha> (or "rolled back")   **Smoke:** accepted | rejected×K | auto
 **Closed:** itr#a, itr#b   **Quarantined:** itr#c
+**Awaiting PO visual smoke:** <IDs, or none; not closed or failed>
 
 ## Arms
 | Ticket | Files | Confidence | Outcome | Retries |
@@ -71,6 +73,9 @@ Only after the gate is fully green:
 
 ## Quarantine
 - itr#c — K attempts — last error: <tail> — likely cause: <low-confidence files | …>
+
+## Pending human acceptance
+- <ID — AC, runtime evidence, next review action, and eventual PO verdict>
 
 ## Contract warnings
 - <symbol removed, imported by still-open itr#d>

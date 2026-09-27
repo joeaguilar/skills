@@ -24,3 +24,7 @@ claude/settings.json
 # Externally-sourced skills: present on disk so the symlinked global set keeps
 # them, but not tracked here (forward-looking per-skill install will own these)
 claude/skills/impeccable/
+
+# Claude.ai skill-sync bucket (Anthropic-licensed, all rights reserved): kept on
+# disk for the synced install, never versioned in this public repo
+claude/skills/synced/

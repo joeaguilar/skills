@@ -290,7 +290,7 @@ transcript, or any dispatch missing a row, reopens bookkeeping. Gate exit 0 + cl
 | Critic (regular, odd iters) | opus-5.5 | Taste and design judgment — never over an `opus-5.5` builder's own output. |
 | Critic (cross-model seat, even iters + panel) | Codex via companion `task`, read-only | Different family, different blind spots. Failure → Opus + `SANDBOX-DOWN` row. |
 | Spec / Evidence / merge clerking | sonnet-5 | Mechanical stages stay off the flagship rungs and off your context. |
-| Escalation on a missed round | gpt-5.6-terra → gpt-6-sol → fable-5.1 | Non-taste ladder per MODELS.md; record the escalation in the ledger. |
+| Escalation on a missed round | gpt-5.6-terra → gpt-6-astra → fable-5.1 | Non-taste ladder per MODELS.md (gpt-6-sol's rung is skipped while it is unavailable); record the escalation in the ledger. |
 
 ## Principles
 

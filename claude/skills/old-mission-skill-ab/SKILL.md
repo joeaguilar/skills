@@ -42,7 +42,7 @@ Unsupplied flags → auto-detected in Phase 0.
 - **Orchestrator** = sole git committer, **the write gate**, FACTS writer, council convener, lease warden.
 - **Link agents** — one per link, spawned `isolation: worktree`, execute + verify, **never touch git state on main**.
 - **Reviewers** — fresh context per link, adversarial, session model. Walker never self-grades.
-- **Council seats** — 3 fresh contexts per premise decision, `codex exec -m gpt-5.5` via a thin wrapper agent (the `ambiguous` role in MODELS.md — Opus is not effective at judging its own work); evidence seat MAY run gpt-6-sol for cross-model diversity when the Codex plugin is authenticated.
+- **Council seats** — 3 fresh contexts per premise decision, `codex exec -m gpt-5.5` via a thin wrapper agent (the `ambiguous` role in MODELS.md — Opus is not effective at judging its own work); evidence seat MAY run gpt-5.6-terra for cross-model diversity when the Codex plugin is authenticated (gpt-6-sol is unavailable — MODELS.md, Availability).
 
 Artifacts (in the target repo):
 

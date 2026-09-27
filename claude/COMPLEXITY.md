@@ -52,7 +52,7 @@ Sum the five signals (0–10), apply the verifiability modifier, then route:
 | **C0 — trivial** | 0–1 | gpt-5.5 (`codex exec`) | floor | `complexity:C0`, `route:gpt-5.5` |
 | **C1 — routine** | 2–3 | gpt-5.5 (the agents default; terra/luna for pattern-following batches) | bulk | `complexity:C1`, `route:gpt-5.5` |
 | **C2 — standard** | 4–5 | **sonnet-5** if spec-complete build work; gpt-5.5 if mechanical-heavy | — / bulk | `complexity:C2`, `route:sonnet-5` |
-| **C3 — complex** | 6–7 | **gpt-6-sol** if novelty-dominant; **gpt-5.5** if ambiguity/blast-radius-dominant (the `ambiguous` role) | — / ambiguous | `complexity:C3`, `route:gpt-6-sol` |
+| **C3 — complex** | 6–7 | **gpt-6-astra** if novelty-dominant (gpt-6-sol's seat while sol is unavailable); **gpt-5.5** if ambiguity/blast-radius-dominant (the `ambiguous` role) | — / ambiguous | `complexity:C3`, `route:gpt-6-astra` |
 | **C4 — frontier** | 8–10 | **gpt-6-astra** to build it; **fable-5.1** (gated: `fable=on` / `--fable`) to plan the slicing and review — try to slice first | — / planner | `complexity:C4`, `route:gpt-6-astra` |
 
 ### C0 — trivial / mechanical → gpt-5.5
@@ -95,11 +95,14 @@ sweep), gpt-5.5 remains the better per-dollar route.
 ### C3 — complex → fork on the dominant signal
 
 - **Novelty-dominant** (algorithm design, perf optimization, puzzle-shaped
-  debugging): **gpt-6-sol at high reasoning effort**. Its predecessor
-  gpt-5.6-sol led ARC-AGI-2 at 92.5% @ $1.44/task, ~7–10× cheaper than the
-  Pro/Deep-Think tier for the same or better score. gpt-6-sol succeeds it
-  (2026-09-22) and is not yet on the board. This is the "requires GPT" tier:
-  the GPT line leads on novel reasoning per dollar.
+  debugging): **gpt-6-astra at high reasoning effort** while gpt-6-sol is
+  unavailable on this Codex login (MODELS.md, Availability). Astra is the next
+  rung up: the same intelligence 9, at cost 3 instead of sol's 5. Route back to
+  **gpt-6-sol at high reasoning effort** once it is reachable. The sol line
+  earned this tier: gpt-5.6-sol led ARC-AGI-2 at 92.5% @ $1.44/task, ~7–10×
+  cheaper than the Pro/Deep-Think tier for the same or better score. gpt-6-sol
+  succeeded it (2026-09-22) and is not yet on the board. This is the "requires
+  GPT" tier: the GPT line leads on novel reasoning per dollar.
 - **Ambiguity- or blast-radius-dominant** (judgment across a coupled codebase,
   underspecified requirements, risky refactor): **gpt-5.5** (the `ambiguous`
   role). This routed to Opus until 2026-07-26, when the operator decree set
@@ -141,7 +144,8 @@ MODELS.md (`fable=on` / `--fable`).
    Opus never reviews its own output; the review/`ambiguous` role is bound to
    gpt-5.5.
 5. **Escalation ladder** (MODELS.md): a miss escalates
-   `gpt-5.5 → gpt-5.6-terra → gpt-6-sol → gpt-6-astra → fable-5.1 (gated)` without asking.
+   `gpt-5.5 → gpt-5.6-terra → gpt-6-astra → fable-5.1 (gated)` without asking
+   (the gpt-6-sol rung between terra and astra is skipped while sol is unavailable).
    A sonnet-5 miss enters the ladder at its head. On escalation, re-tag:
    `--remove-tag route:X --add-tag route:Y --add-tag escalated:from-X`.
 

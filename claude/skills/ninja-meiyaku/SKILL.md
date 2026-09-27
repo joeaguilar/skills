@@ -79,10 +79,10 @@ One checkout, disjoint file ownership per wave, ≤5 strikes/wave, blocked after
 COMPANION=$(ls -d ~/.claude/plugins/cache/openai-codex/codex/*/scripts/codex-companion.mjs | sort -V | tail -1)
 node "$COMPANION" adversarial-review --wait --base <ref> --scope branch "<focus>"
 ```
-An errored review lane is not a clean pass — retry once, else close on the striker's gate, marked degraded. P0/P1 finding → redo with the next-smarter blade (gpt-5.5 → gpt-5.6-terra → gpt-6-sol → fable-5.1 only under `--fable`), findings spliced in, re-reviewed. **Two falls → quarantine**; surface it, move on. Stop waves when: targets done · two zero-close waves · `--waves` reached.
+An errored review lane is not a clean pass — retry once, else close on the striker's gate, marked degraded. P0/P1 finding → redo with the next-smarter blade (gpt-5.5 → gpt-5.6-terra → gpt-6-astra → fable-5.1 only under `--fable`), findings spliced in, re-reviewed. **Two falls → quarantine**; surface it, move on. Stop waves when: targets done · two zero-close waves · `--waves` reached.
 
 ## Phase 2 — the last look
-One dual pass over the **whole** diff: the adversarial companion (scope branch) + one independent gpt-6-sol (fable-5.1 under `--fable`) reviewer → dedup → P0–P3 survivors → ship/hold.
+One dual pass over the **whole** diff: the adversarial companion (scope branch) + one independent gpt-6-astra (fable-5.1 under `--fable`; gpt-6-sol unavailable) reviewer → dedup → P0–P3 survivors → ship/hold.
 
 ## Phase 3 — the whisper (return)
 Fill Outcomes in the scroll, close the epic, update `sprint/CURRENT`, commit the kept diff — the blades never commit; the orchestrator does, unless the user forbade it. Speak once:

@@ -24,7 +24,7 @@ those as compatibility providers rather than assuming they are portable.
   reports and strong drift control. Best for broad roadmap slices, product
   proof, and work where objective evidence matters more than raw velocity.
 - `$blitz`: execution-only backlog clearance with conflict-free waves and
-  two approval gates. Best for a prepared backlog or sprint where tasks already
+  scope and verification checkpoints. Best for a prepared backlog or sprint where tasks already
   have bounded file ownership and the user wants speed without commits.
 - `$dual-blitz`: two isolated main-agent lanes, each running an inner blitz.
   Best when a large backlog splits cleanly into two disjoint subsystems. Do not
@@ -34,6 +34,8 @@ those as compatibility providers rather than assuming they are portable.
   and rollback points. Best when the user wants end-to-end sprint clearance,
   accepts orchestrator commits and a clean or explicitly isolated worktree, and can provide visual smoke verdicts
   or use `--auto` with a real time/wave cap.
+- `$mission` (when available): build the smallest runnable core directly, then finish demonstrated gaps. Best for a project brief that needs working software early without a sprint backlog or council process.
+- `$feature-build` (when available): one bounded feature from a request/spec through implementation and verification, with coached review only when requested.
 - `$run-the-rivers-dry`: maximum-autonomy completion mode for hard, broad, or
   ambiguous problems. Best when the user asks Codex to go all-in and persist
   until proven complete. Use `--mortal` when the user wants normal prose.

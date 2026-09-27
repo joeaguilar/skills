@@ -41,6 +41,11 @@ will succeed; assume it failed and inspect why.
 6. **Harden when asked.** If the user asked to apply the pre-mortem, revise the
    plan with the guardrails. Otherwise deliver the ranked risk list.
 
+`--apply` means produce the revised plan, not implement mitigations in live code,
+infrastructure, or configuration. Return it inline unless the user requested a
+file (for example, `--out <path>` or an in-place plan edit). Keep assumptions and
+unresolved decisions visible in the revised plan.
+
 ## Failure Mode Shape
 
 For each mode, capture:

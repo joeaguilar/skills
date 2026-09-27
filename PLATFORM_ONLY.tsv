@@ -154,3 +154,7 @@ claude	skills	crucible
 # in-turn message queueing). Port to Codex wording when wanted, then graduate.
 claude	skills	queue-up
 claude	skills	itr-snapshot
+
+# gitea drives the user's self-hosted Gitea (SSH alias + REST API helper script).
+# Port to Codex wording when wanted, then graduate.
+claude	skills	gitea

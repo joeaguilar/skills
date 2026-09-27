@@ -1,0 +1,16 @@
+#!/bin/sh
+# Launcher for gitea.py. Probes for a Python 3.8+ that actually runs instead of
+# trusting PATH order: on Windows `python3` is often the Microsoft Store stub.
+dir=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
+# Git Bash rewrites args like `/repos/...` into `C:/Program Files/Git/repos/...`
+# on the way to python.exe; hand the script the root so it can undo that.
+if command -v cygpath >/dev/null 2>&1; then
+  GITEA_MSYS_ROOT=$(cygpath -m /) && export GITEA_MSYS_ROOT
+fi
+for py in python3 python py; do
+  if "$py" -c 'import sys; sys.exit(sys.version_info < (3, 8))' >/dev/null 2>&1; then
+    exec "$py" "$dir/gitea.py" "$@"
+  fi
+done
+echo "gitea: no working Python 3.8+ on PATH (tried python3, python, py)" >&2
+exit 127

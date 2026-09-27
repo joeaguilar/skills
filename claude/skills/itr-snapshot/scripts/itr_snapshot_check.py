@@ -36,20 +36,29 @@ edges exports them, but a clone restored from that export does not. The check
 therefore ignores a `blocked_by` entry whenever the blocker is resolved on that
 side; an edge from an open blocker is always compared.
 
-Requires itr >= 3.3.1 (two-pass import that restores forward references,
-events and relations). Older importers abort on forward references.
+Requires itr >= 3.4.0, enforced below. 3.3.1 brought the two-pass import that
+restores forward references, events and relations (older importers abort on
+forward references). 3.4.0 adds the critical database fixes: every writable
+open reconciles missing schema indexes/triggers (a database without
+`trg_issues_updated_at` otherwise keeps `updated_at` frozen), and a database
+stamped by a newer schema generation is refused instead of silently migrated
+by an older binary. --write and --restore refuse an older itr; the check
+treats it like a missing one (SKIP, or exit 1 under --strict).
 """
 
 from __future__ import annotations
 
 import json
 import os
+import re
 import subprocess
 import sys
 import tempfile
 from pathlib import Path
 
 SURROGATE_ID_LISTS = ("notes", "events", "relations")
+MIN_ITR = (3, 4, 0)
+ITR_UPDATE_HINT = "update it with `install.ps1 -Update`, `install.sh --update` or `itr upgrade`"
 
 
 # ── repo root ─────────────────────────────────────────────────────────────
@@ -76,9 +85,28 @@ def default_root() -> Path:
 def itr(root: Path, *args: str) -> subprocess.CompletedProcess | None:
     """Run itr in the repo root (walk-up + ITR_DB_PATH apply); None if absent."""
     try:
-        return subprocess.run(["itr", *args], cwd=root, capture_output=True, text=True)
+        # itr writes UTF-8; without an explicit encoding Windows decodes as
+        # cp1252 and the export's non-ASCII bytes crash the reader thread.
+        return subprocess.run(
+            ["itr", *args], cwd=root, capture_output=True, text=True, encoding="utf-8"
+        )
     except FileNotFoundError:
         return None
+
+
+def itr_version_problem(root: Path) -> str | None:
+    """None when itr runs and is at least MIN_ITR; otherwise why it can't be used."""
+    proc = itr(root, "--version")
+    if proc is None:
+        return "itr is not installed"
+    match = re.search(r"(\d+)\.(\d+)\.(\d+)", proc.stdout or "")
+    if proc.returncode != 0 or match is None:
+        return f"could not read `itr --version` ({(proc.stdout or proc.stderr or '').strip()!r})"
+    found = tuple(int(part) for part in match.groups())
+    if found < MIN_ITR:
+        need = ".".join(map(str, MIN_ITR))
+        return f"itr {'.'.join(map(str, found))} is older than the required {need} — {ITR_UPDATE_HINT}"
+    return None
 
 
 def run_export(root: Path) -> str | None:
@@ -175,6 +203,10 @@ def stale_edge_note(live: dict[int, dict]) -> None:
 
 def write_snapshot(root: Path, snapshot: Path) -> int:
     rel = snapshot.relative_to(root)
+    problem = itr_version_problem(root)
+    if problem:
+        print(f"ERROR: {problem} — {rel} left untouched")
+        return 2
     text = run_export(root)
     if text is None:
         print(f"ERROR: `itr export` did not run — {rel} left untouched")
@@ -190,7 +222,9 @@ def write_snapshot(root: Path, snapshot: Path) -> int:
     snapshot.parent.mkdir(parents=True, exist_ok=True)
     fd, tmp = tempfile.mkstemp(dir=snapshot.parent, prefix=".issues.", suffix=".jsonl.tmp")
     try:
-        with os.fdopen(fd, "w") as fh:
+        # UTF-8 and newline="" keep the snapshot byte-identical across OSes
+        # (no cp1252 encoding, no CRLF translation on Windows).
+        with os.fdopen(fd, "w", encoding="utf-8", newline="") as fh:
             fh.write(text)
         os.replace(tmp, snapshot)
     except BaseException:
@@ -208,8 +242,9 @@ def restore(root: Path, snapshot: Path) -> int:
     if not snapshot.exists():
         print(f"ERROR: {rel} does not exist — nothing to restore from")
         return 2
-    if itr(root, "--version") is None:
-        print("ERROR: itr is not installed")
+    problem = itr_version_problem(root)
+    if problem:
+        print(f"ERROR: {problem}")
         return 2
     if not db_available(root):
         override = os.environ.get("ITR_DB_PATH")
@@ -243,13 +278,17 @@ def check(root: Path, snapshot: Path, strict: bool) -> int:
     if not snapshot.exists():
         print(f"SKIP: {rel} does not exist yet — run the --write mode")
         return skip_rc
+    problem = itr_version_problem(root)
+    if problem:
+        print(f"SKIP: {problem}")
+        return skip_rc
     text = run_export(root)
     if text is None:
         print("SKIP: itr not runnable here (not installed, or no database found)")
         return skip_rc
     try:
         live = parse(text)
-        committed = parse(snapshot.read_text())
+        committed = parse(snapshot.read_text(encoding="utf-8"))
     except (ValueError, KeyError, json.JSONDecodeError) as exc:
         print(f"DRIFT: could not parse snapshot/export ({exc})")
         return 1

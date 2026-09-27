@@ -12,7 +12,7 @@ fresh clone has **no issues** while the repo's docs and commits reference
 test evidence: the live output stays gitignored, the reviewed snapshot is
 tracked.
 
-`itr export` (itr ≥ 3.3.1) is byte-deterministic, id-sorted JSONL — one line
+`itr export` (itr ≥ 3.4.0) is byte-deterministic, id-sorted JSONL — one line
 per issue bundling the issue row with its notes, audit events, blockers and
 relations — and `itr import` restores it into a fresh database with issue ids
 preserved. So the tracked file `.itr/issues.jsonl` is a faithful, greppable,
@@ -58,7 +58,12 @@ itr's own tracker).
 
 ## Procedure
 
-1. **Preflight the tool, not the story.** `itr --version` ≥ 3.3.1. If in
+1. **Preflight the tool, not the story.** `itr --version` ≥ 3.4.0 (3.3.1
+   brought the two-pass import; 3.4.0 adds the critical schema-reconcile and
+   newer-schema guard fixes). The bundled script enforces it: `--write` and
+   `--restore` refuse an older binary and name the update command. It also
+   decodes itr output and reads/writes the snapshot as UTF-8 with LF, which
+   Windows needs (cp1252 decoding otherwise crashes the export read). If in
    doubt, prove the round-trip on a scratch DB before touching the repo:
    `itr export > /tmp/s.jsonl; itr --db /tmp/rt.db init; itr --db /tmp/rt.db import --file /tmp/s.jsonl`
    must import every issue, note, event, dependency and relation (the

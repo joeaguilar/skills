@@ -37,7 +37,9 @@ If `ITR_AGENT` is unset, prefix filing commands with `ITR_AGENT=codex` for audit
 
 ## Bulk Filing
 
-When the user gives a list of issues, use `itr batch add` with a JSON array on stdin instead of one command per issue. The schema mirrors `itr add`; confirm exact field names with `itr agent-info`.
+When the user gives a list of issues, use `itr batch add` with a JSON array on stdin instead of one command per issue. The schema mirrors `itr add`; `parent` and `parent_id` both set the parent epic. Validate a payload without writing anything using `itr batch add --dry-run < payload.json`, which returns the same per-item verdicts, including resolved priority and kind defaults. Confirm exact field names with `itr agent-info`.
+
+This requires itr 3.4.0 or newer, which carries critical database fixes and `batch add --dry-run`. If `itr --version` reports an older release, update first with `install.ps1 -Update` on Windows, `install.sh --update`, or `itr upgrade`.
 
 ## Workflow
 
@@ -45,6 +47,8 @@ When the user gives a list of issues, use `itr batch add` with a JSON array on s
 2. Check for duplicates with `itr search "<key terms>" -f json --fields id,title,status`. If a likely match exists, ask whether to relate to it instead of creating a duplicate.
 3. File with JSON output and capture the new issue ID.
 4. Report the issue ID and a one-line summary. Do not dump full JSON.
+
+When filing from a failed build or test gate, do not rerun the gate or paste raw logs. If it ran through `gatr`, take the evidence from its record: `gatr last --json` gives the exit code and error and warning counts, `gatr errors` gives the exact error blocks to quote in `-c`, and the `log=` path goes in the context so the next owner can open the full log. If the gate did not run through `gatr`, run it once as `gatr run --tag <name> -- <cmd>` and file from that record.
 
 ## Guardrails
 

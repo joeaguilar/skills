@@ -1,0 +1,4 @@
+interface:
+  display_name: "Feature Build"
+  short_description: "Build one feature through its real user path"
+  default_prompt: "Use $feature-build to build one feature through its real user path."

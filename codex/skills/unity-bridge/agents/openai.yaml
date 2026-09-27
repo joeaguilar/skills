@@ -1,0 +1,4 @@
+interface:
+  display_name: "Unity Bridge"
+  short_description: "Compile and inspect an installed Unity bridge"
+  default_prompt: "Use $unity-bridge to compile and inspect an installed Unity bridge."

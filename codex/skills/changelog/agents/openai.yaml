@@ -1,0 +1,4 @@
+interface:
+  display_name: "Changelog"
+  short_description: "Write audience-aware notes from release evidence"
+  default_prompt: "Use $changelog to write audience-aware notes from release evidence."

@@ -90,7 +90,6 @@ claude	skills	shuriken-storm
 # Converted from imported agents — Claude chose skill over agent (interactive / on-demand / style
 # capabilities fit a skill better than an isolated subagent). Codex drift peers noted above.
 claude	skills	api-contract-designer
-claude	skills	changelog
 claude	skills	code-wizard
 claude	skills	css
 claude	skills	emoji-translator
@@ -98,14 +97,9 @@ claude	skills	tdd-coach
 # Tier-3 reviewers: native /code-review, /simplify, /security-review now do the review act, so
 # these keep their encoded standards / whole-codebase scope as skills (the asset) rather than
 # duplicating a review engine as an agent. (backend-security-auditor drift peer noted above.)
-claude	skills	code-audit
 claude	skills	cpp-review
-claude	skills	react-review
-claude	skills	security-audit
 # Orchestrator pile distilled into the non-sprint coached track (idea -> spec -> build), sized
 # below /sprint. Replaces 5 feature/PRD/orchestrator agents. (prd-task-generator drift peer above.)
-claude	skills	spec-writer
-claude	skills	feature-build
 # Architect-advisor agents -> skills: all 7 were design-from-requirements personas that interview
 # the user (an isolated subagent can't), so they fit a skill, not an agent. (5 drift peers above.)
 claude	skills	analytics-events
@@ -115,12 +109,6 @@ claude	skills	database-schema
 claude	skills	docker-compose
 claude	skills	microservices
 claude	skills	ml-integration
-# auto-versioning encodes the CI-based SemVer workflow; Claude forged first — graduate on its Codex port.
-claude	skills	auto-versioning
-# mission is the chain-based continuous-delivery skill (docs/chain-based-agentic-delivery.md);
-# leans on AskUserQuestion, worktree-isolated Agent spawns, and background lanes — port to Codex
-# wording when the design stabilizes, then graduate.
-claude	skills	mission
 
 # --- Claude-only agents (imported from ~/.claude/agents; awaiting Codex ports) ---
 # (none — every remaining Claude agent now has a Codex peer; see git history for the prior imports)
@@ -131,9 +119,6 @@ claude	commands	tdd_process.md
 claude	skills	scrum
 claude	skills	old-mission-skill-ab
 
-# unity-bridge was locally authored for the Claude editor bridge — port to Codex
-# wording when wanted, then graduate.
-claude	skills	unity-bridge
 
 # typo is a micro-skill for flagging user-prompt typos; it depends on the Claude Code
 # `user-invocable: false` frontmatter key (model-invoked only, no slash command), which has
@@ -154,6 +139,11 @@ claude	skills	crucible
 # in-turn message queueing). Port to Codex wording when wanted, then graduate.
 claude	skills	queue-up
 claude	skills	itr-snapshot
+
+# Provided externally on Codex; do not vendor another copy.
+claude	skills	impeccable
+# Unfinished Claude workflow draft; not a Codex translation candidate.
+claude	skills	heroic
 
 # gitea drives the user's self-hosted Gitea (SSH alias + REST API helper script).
 # Port to Codex wording when wanted, then graduate.

@@ -1,0 +1,4 @@
+interface:
+  display_name: "React Review"
+  short_description: "Review React behavior against the actual stack"
+  default_prompt: "Use $react-review to review React behavior against the actual stack."

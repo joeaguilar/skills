@@ -1,0 +1,4 @@
+interface:
+  display_name: "Code Audit"
+  short_description: "Prioritize whole-codebase issues with evidence"
+  default_prompt: "Use $code-audit to prioritize whole-codebase issues with evidence."

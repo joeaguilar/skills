@@ -1,0 +1,4 @@
+interface:
+  display_name: "Spec Writer"
+  short_description: "Ground a brief in testable requirements"
+  default_prompt: "Use $spec-writer to ground a brief in testable requirements."

@@ -1,0 +1,4 @@
+interface:
+  display_name: "Security Audit"
+  short_description: "Trace system threats and reachable security risks"
+  default_prompt: "Use $security-audit to trace system threats and reachable security risks."

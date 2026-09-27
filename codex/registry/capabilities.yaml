@@ -158,3 +158,21 @@ capabilities:
   spicy-code-roast:
     label: "Spicy Code Roast"
     description: "Explain code review findings with explicit opt-in topical roast humor."
+  feature-specification:
+    label: "Spec Writer"
+  feature-delivery:
+    label: "Feature Build"
+  core-first-delivery:
+    label: "Mission"
+  release-automation:
+    label: "Auto Versioning"
+  release-notes-authoring:
+    label: "Changelog"
+  codebase-audit:
+    label: "Code Audit"
+  system-security-audit:
+    label: "Security Audit"
+  react-review:
+    label: "React Review"
+  unity-editor-control:
+    label: "Unity Bridge"

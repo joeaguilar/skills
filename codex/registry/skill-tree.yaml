@@ -533,6 +533,123 @@ skills:
     recommends: ["autonomous-orchestration", "issue-tracker", "code-graph", "gate-runner", "product-roadmap", "story-conventions"]
     unlocked_by: []
     position: { x: 92, y: 78 }
+  spec-writer:
+    path: "skills/spec-writer"
+    group: "planning"
+    tier: 1
+    icon: "SPEC"
+    theme: "wind"
+    title: "Spec Writer"
+    summary: "Ground a brief in testable requirements"
+    provides: ["feature-specification"]
+    requires: []
+    recommends: []
+    unlocked_by: []
+    position: { x: 16, y: 108 }
+  feature-build:
+    path: "skills/feature-build"
+    group: "execution"
+    tier: 1
+    icon: "FEAT"
+    theme: "wind"
+    title: "Feature Build"
+    summary: "Build one feature through its real user path"
+    provides: ["feature-delivery"]
+    requires: []
+    recommends: []
+    unlocked_by: []
+    position: { x: 34, y: 108 }
+  mission:
+    path: "skills/mission"
+    group: "autonomy"
+    tier: 1
+    icon: "MSN"
+    theme: "wind"
+    title: "Mission"
+    summary: "Deliver a runnable core and finish proven gaps"
+    provides: ["core-first-delivery"]
+    requires: []
+    recommends: []
+    unlocked_by: []
+    position: { x: 52, y: 108 }
+  auto-versioning:
+    path: "skills/auto-versioning"
+    group: "foundations"
+    tier: 1
+    icon: "VER"
+    theme: "wind"
+    title: "Auto Versioning"
+    summary: "Configure CI version and release synchronization"
+    provides: ["release-automation"]
+    requires: []
+    recommends: []
+    unlocked_by: []
+    position: { x: 70, y: 108 }
+  changelog:
+    path: "skills/changelog"
+    group: "foundations"
+    tier: 1
+    icon: "LOG"
+    theme: "wind"
+    title: "Changelog"
+    summary: "Write audience-aware notes from release evidence"
+    provides: ["release-notes-authoring"]
+    requires: []
+    recommends: []
+    unlocked_by: []
+    position: { x: 88, y: 108 }
+  code-audit:
+    path: "skills/code-audit"
+    group: "protocols"
+    tier: 1
+    icon: "AUD"
+    theme: "wind"
+    title: "Code Audit"
+    summary: "Prioritize whole-codebase issues with evidence"
+    provides: ["codebase-audit"]
+    requires: []
+    recommends: []
+    unlocked_by: []
+    position: { x: 16, y: 130 }
+  security-audit:
+    path: "skills/security-audit"
+    group: "protocols"
+    tier: 1
+    icon: "SEC"
+    theme: "wind"
+    title: "Security Audit"
+    summary: "Trace system threats and reachable security risks"
+    provides: ["system-security-audit"]
+    requires: []
+    recommends: []
+    unlocked_by: []
+    position: { x: 34, y: 130 }
+  react-review:
+    path: "skills/react-review"
+    group: "protocols"
+    tier: 1
+    icon: "RCT"
+    theme: "wind"
+    title: "React Review"
+    summary: "Review React behavior against the actual stack"
+    provides: ["react-review"]
+    requires: []
+    recommends: []
+    unlocked_by: []
+    position: { x: 52, y: 130 }
+  unity-bridge:
+    path: "skills/unity-bridge"
+    group: "foundations"
+    tier: 1
+    icon: "UNT"
+    theme: "wind"
+    title: "Unity Bridge"
+    summary: "Compile and inspect an installed Unity bridge"
+    provides: ["unity-editor-control"]
+    requires: []
+    recommends: []
+    unlocked_by: []
+    position: { x: 70, y: 130 }
 primitives:
   primitive-architect-agent:
     type: "agent"
@@ -597,9 +714,9 @@ primitives:
     title: "Backend Security Auditor"
     summary: "Reviews backend APIs, authentication, authorization, and data handling for security risk."
     provides: ["backend-security-audit"]
-    requires: []
+    requires: ["system-security-audit"]
     recommends: ["code-graph"]
-    unlocked_by: []
+    unlocked_by: ["security-audit"]
     position: { x: 64, y: 28 }
   performance-test-engineer-agent:
     type: "agent"
@@ -743,9 +860,9 @@ primitives:
     title: "Changelog Curator"
     summary: "Creates changelogs, release notes, and stakeholder change summaries."
     provides: ["changelog-curation"]
-    requires: []
+    requires: ["release-notes-authoring"]
     recommends: ["issue-tracker"]
-    unlocked_by: []
+    unlocked_by: ["changelog"]
     position: { x: 64, y: 58 }
   user-guide-writer-agent:
     type: "agent"

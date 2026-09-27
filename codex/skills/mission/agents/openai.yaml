@@ -1,0 +1,4 @@
+interface:
+  display_name: "Mission"
+  short_description: "Deliver a runnable core and finish proven gaps"
+  default_prompt: "Use $mission to deliver a runnable core and finish proven gaps."

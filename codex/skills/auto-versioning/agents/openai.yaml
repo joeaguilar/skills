@@ -1,0 +1,4 @@
+interface:
+  display_name: "Auto Versioning"
+  short_description: "Configure CI version and release synchronization"
+  default_prompt: "Use $auto-versioning to configure CI version and release synchronization."

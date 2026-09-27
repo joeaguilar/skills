@@ -88,11 +88,14 @@ machine, before the next commit:
    it never rewrites history).
 2. **Hooks** — the commit gates are the separate githooks repo, installed once per
    machine through a global `core.hooksPath`; this repo's `.githooks/pre-commit` is
-   only the repo-local delegate that global hook calls:
+   only the repo-local delegate that global hook calls. Clone githooks **beside this
+   skills checkout** — same parent directory, so `<parent>/skills` and
+   `<parent>/githooks` sit side by side on every machine, whatever `<parent>` is there:
    ```sh
-   git clone ssh://git@10.0.0.85:2222/blue/githooks.git ~/AI_Projects/githooks
-   ~/AI_Projects/githooks/setup.sh       # runs: git config --global core.hooksPath ~/AI_Projects/githooks/hooks
-   git config --global core.hooksPath    # verify it is set
+   # from this repo's root
+   git clone ssh://git@10.0.0.85:2222/blue/githooks.git ../githooks
+   ../githooks/setup.sh                  # runs: git config --global core.hooksPath <parent>/githooks/hooks
+   git config --global core.hooksPath    # verify it points at the sibling githooks/hooks
    ```
    They enforce Conventional Commits (`type(scope): summary` — `feat:queue-up skill`
    is rejected, `feat: queue-up skill` passes), secret/whitespace/size checks, and

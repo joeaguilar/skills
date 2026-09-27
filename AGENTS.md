@@ -40,8 +40,9 @@ setup" for the audit). Per machine, once:
 - **Identity:** `git config --global user.name "Josef Aguilar"` and
   `git config --global user.email joeaguilar@users.noreply.github.com`; confirm with
   `git config --show-origin user.email` (global file, no `--local` override).
-- **Hooks:** `git clone ssh://git@10.0.0.85:2222/blue/githooks.git ~/AI_Projects/githooks`
-  then `~/AI_Projects/githooks/setup.sh` (sets the global `core.hooksPath`). This
+- **Hooks:** clone githooks beside this skills checkout so the two share a parent
+  directory — from the repo root, `git clone ssh://git@10.0.0.85:2222/blue/githooks.git ../githooks`
+  then `../githooks/setup.sh` (sets the global `core.hooksPath`). This
   installs the Conventional Commits gate and the delegate that runs this repo's
   `.githooks/pre-commit` frontmatter check.
 - **Remotes:** `main` lives on both `origin` (GitHub) and `gitea`; fetch and merge

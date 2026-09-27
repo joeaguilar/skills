@@ -104,6 +104,7 @@ Rules:
 - Keep file lists minimal. Include only files the task is expected to edit.
 - Mark low-confidence file sets as `parked:file-uncertain` unless the task can be safely bounded by a whole directory or subsystem that no other lane will touch.
 - Keep dependencies in the same lane when possible. If a dependency must cross lanes, put the dependent task in `parked:cross-lane-dependency`; do not rely on the two agents to coordinate.
+- Park tasks whose only remaining deliverable explicitly requires PO visual acceptance as `parked:visual-gate-only`. Check the AC: a UI tag or screenshot task alone is not enough. Keep implementation/evidence work in a lane when present, deferring only the human verdict.
 
 ## Phase 2 - Split Into Two Lanes
 
@@ -196,6 +197,7 @@ When both lane agents finish:
 
 - For a sprint-backed run, use `$sprint-review` to review the sprint. The lane artifacts provide the blitz-log evidence and friction notes.
 - For a non-sprint run, print a compact aggregate from both `Outcomes` sections and leave follow-up filing to `itr`.
+- Include every `parked:visual-gate-only` or `awaiting PO visual smoke` task in closeout. Present its evidence for PO acceptance, rejection, or explicit carryover through `$sprint-review` when available, otherwise direct review. Keep pending verdicts open; parked does not mean accepted.
 - Do not merge the two artifacts into a shared report while lane agents are still running.
 
 ## Principles

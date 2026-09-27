@@ -79,6 +79,21 @@ Stop only when one of these is true:
 
 When stopping before completion, leave a durable state summary: current status, blockers, attempted fixes, changed files, verification run, and the exact next action.
 
+### Human-only acceptance
+
+When a task's only remaining deliverable explicitly requires the PO's visual
+acceptance, keep it open as `visual-gate-only` or `awaiting PO visual smoke` and
+exclude it from worker/retry scheduling. Record the evidence, reviewer, and next
+action for direct review or an available `$sprint-review`. Continue independent
+agent-verifiable work; do not spend repeated attempts seeking a human verdict.
+
+UI work that Codex can test or inspect remains executable. A visual tag, screenshot
+requirement, or empty file list alone does not establish a human-only task.
+Required human acceptance remains incomplete until received or explicitly removed
+from scope by the user. Report `implementation complete; acceptance pending` when
+appropriate; do not call the full goal complete merely because the worker queue
+is empty. Follow any active goal tool's completion and blocked-state rules.
+
 ## Operating Loop
 
 1. **Preflight.** Read local instructions (`AGENTS.md`, `CODEX.md`, scoped docs), inspect git status, identify dirty user work, locate tracker state, detect verify gates, and check whether a Codex subagent mechanism is available.

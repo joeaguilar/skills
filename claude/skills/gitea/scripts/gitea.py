@@ -61,7 +61,7 @@ def run(cmd):
 
 
 def passthrough(cmd):
-    print("+ " + " ".join(cmd), file=sys.stderr)
+    note("+ " + " ".join(cmd))
     return subprocess.run(cmd).returncode
 
 
@@ -542,7 +542,7 @@ def cmd_pr(cfg, args):
                  (p.get("updated_at") or "")[:10], clip(p["title"], 70)) for p in prs]
         table(rows, ("PR", "STATE", "BRANCHES", "AUTHOR", "UPDATED", "TITLE"))
         if not rows:
-            print(f"no {args.state} PRs on {owner}/{name}")
+            print(f"no {'' if args.state == 'all' else args.state + ' '}PRs on {owner}/{name}")
         return 0
 
     if args.pr_cmd == "view":

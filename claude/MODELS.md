@@ -88,6 +88,15 @@ the work), and the escalation ladder skips its rung. gpt-5.5, gpt-5.6-terra, gpt
 and gpt-6-astra answered `codex exec` the same day. To restore sol, delete this paragraph
 and the "unavailable" marks below, then re-add it to the reviewer row and the ladder.
 
+**Routing note (2026-09-27, operator-dictated).** **gpt-6-astra may replace any
+gpt-5.6 model** (terra or luna) in any role, at the operator's discretion or when the
+5.6 seat is unavailable or misses. **gpt-5.5 is kept**: it writes clean code, but it is a
+bit outdated, so its knowledge lags. Its feedback is still valid input, but **nothing
+gpt-5.5 decides is acted on without a check** by another seat: a review verdict, a
+design choice, an API or library claim, a "this is impossible" — confirm it before
+routing work off it. It stays the bulk/floor writer and the cheap review seat; it is
+not a final judge.
+
 **Model names legal in skills** = the Scores table above, plus anything listed on
 an allowlist line. A skill naming anything else fails `models.sh check`. Legality
 deliberately does **not** come from prose mentions in this file — otherwise a
@@ -109,18 +118,18 @@ generalist**" never changes when terra replaces gpt-5.5.)
 | generalist | gpt-5.5 | the default for agents — the Codex generalist Claude spins up when needed |
 | bulk | gpt-5.5 | bulk / mechanical implementation, migrations, data transforms |
 | floor | gpt-5.5 | cheapest floor for the most trivial mechanical work |
-| ambiguous | gpt-5.5 | judgment-heavy but not user-facing — incl. reviews/judging of Opus output (Opus never judges its own work) |
+| ambiguous | gpt-5.5 | judgment-heavy but not user-facing — incl. reviews/judging of Opus output (Opus never judges its own work). Its verdicts are checked before they are acted on (see the 2026-09-27 routing note); escalate to gpt-6-astra when the decision is final |
 | taste | opus-5.5 | user-facing / taste-critical default (taste must be > 7) |
 | taste-hero | fable-5.1 | hero / flagship taste surface — gated (`fable=on` / `--fable`) |
 | planner | fable-5.1 | planning / spec / decomposition seats. Fable's standing job is plan + review, not writing code, so spend it here and on the reviewer seat |
-| computer-use | gpt-5.6-terra | Codex real-UI runtime verification (the `codex-computer-use` skill) |
-| reviewer | *cross-model* | any review / critique / judge seat — **never the model that wrote the work**. If Codex (astra/terra/gpt-5.5) or opus-5.5 wrote it → fable-5.1, or for cheap passes gpt-5.6-terra (gpt-5.5 when terra wrote it). If a Claude model wrote it → gpt-6-astra when quality matters, gpt-5.6-terra otherwise. (gpt-6-sol is unavailable — see Availability) |
+| computer-use | gpt-5.6-terra | Codex real-UI runtime verification (the `codex-computer-use` skill); gpt-6-astra may take the seat |
+| reviewer | *cross-model* | any review / critique / judge seat — **never the model that wrote the work**. If Codex (astra/terra/gpt-5.5) or opus-5.5 wrote it → fable-5.1, or for cheap passes gpt-5.6-terra (gpt-5.5 when terra wrote it). If a Claude model wrote it → gpt-6-astra when quality matters, gpt-5.6-terra otherwise; gpt-6-astra may stand in for any 5.6 seat. (gpt-6-sol is unavailable — see Availability) |
 | codex-default | gpt-5.5 | default `-m` for `codex exec` (pass it explicitly — config.toml may differ) |
 | never | haiku-4.5 | never used, any role |
 
 **Escalation ladder (non-taste)** — cheapest rung first, escalate a miss without asking
 until the fable rung (gated): `gpt-5.5 → gpt-5.6-terra → gpt-6-astra → fable-5.1`.
-(The gpt-6-sol rung between terra and astra is skipped while sol is unavailable.)
+(The gpt-6-sol rung between terra and astra is skipped while sol is unavailable, and the terra rung may be skipped straight to astra — 2026-09-27 routing note.)
 (gpt-6-astra sits one rung below Fable: same intelligence, one rung cheaper, and it
 spends Codex allowance rather than Fable budget, so reach it before Fable for code.)
 (opus-5.5 is not a non-taste escalation rung. Its intelligence 8 is level with gpt-5.5

@@ -20,6 +20,12 @@ Consider only workflows discovered in the current environment. The scanner may
 find compatibility-installed skills outside the canonical Codex tree; label
 those as compatibility providers rather than assuming they are portable.
 
+For model-routed compatibility workflows, check the installed provider's current
+model requirements and authentication before recommending it. Model renames in
+another platform's source do not establish availability in this Codex session;
+use the provider's supported models and fall back to an available Codex workflow
+when its requirements cannot be met.
+
 - `$proof-campaign` (when installed): roadmap-bounded, evidence-first campaign with async PO
   reports and strong drift control. Best for broad roadmap slices, product
   proof, and work where objective evidence matters more than raw velocity.

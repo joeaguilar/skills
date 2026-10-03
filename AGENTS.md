@@ -37,7 +37,7 @@ Two global git settings are not in this repo, and a machine that lacks them has
 already shipped 16 mis-authored commits to `main` (see `CLAUDE.md` → "Machine
 setup" for the audit). Per machine, once:
 
-- **Identity:** `git config --global user.name "Josef Aguilar"` and
+- **Identity:** `git config --global user.name "BlueSourBoy"` and
   `git config --global user.email joeaguilar@users.noreply.github.com`; confirm with
   `git config --show-origin user.email` (global file, no `--local` override).
 - **Hooks:** clone githooks beside this skills checkout so the two share a parent

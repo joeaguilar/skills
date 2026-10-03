@@ -52,7 +52,7 @@ Do not expect byte-for-byte parity.
 
 ## Before Committing From a New Machine
 
-Set the global git identity (`Josef Aguilar <joeaguilar@users.noreply.github.com>`)
+Set the global git identity (`BlueSourBoy <joeaguilar@users.noreply.github.com>`)
 and install the shared hooks beside this checkout, so `skills/` and `githooks/` share a
 parent directory (from the repo root: `git clone ssh://git@10.0.0.85:2222/blue/githooks.git
 ../githooks && ../githooks/setup.sh`) before the first commit,

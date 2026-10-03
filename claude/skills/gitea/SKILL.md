@@ -7,7 +7,7 @@ description: "Use the bundled `gitea` helper for anything that talks to the user
 
 `scripts/gitea` (next to this file) is a stdlib-only Python CLI. Git traffic goes over the SSH alias and needs no token; everything else goes through the REST API and needs one. It derives the server address, web/API URL, and default owner by itself (from `~/.ssh/config` and the SSH greeting), so never hardcode the IP or ports in commands you write.
 
-**Invoke** `<skill-dir>/scripts/gitea <subcommand>` from the Bash tool, where `<skill-dir>` is the base directory the runtime reports for this skill (fallback `~/.claude/skills/gitea`). Below it is written as `gitea`. Without `sh`, run `python <skill-dir>/scripts/gitea.py …` instead. **First use in a session:** `gitea doctor` — it checks SSH auth, server reachability, the token, the default owner, and which Gitea repo the cwd belongs to.
+**Invoke** `<skill-dir>/scripts/gitea <subcommand>` from the Bash tool, where `<skill-dir>` is the base directory the runtime reports for this skill (fallback `~/.claude/skills/gitea`). Below it is written as `gitea`. From PowerShell or cmd, which cannot run that sh launcher, run `<skill-dir>\scripts\gitea.cmd …` instead. **First use in a session:** `gitea doctor` — it checks SSH auth, server reachability, the token, the default owner, and which Gitea repo the cwd belongs to.
 
 ## Which subcommand answers what
 

@@ -20,6 +20,9 @@ set -uo pipefail
 #                     matches claude/MODELS.md (the source of truth), via
 #                     claude/scripts/models.sh check. Runs in every mode: a drifted
 #                     scores table ships wrong routing, so it blocks a commit.
+#   8. Shelf isolation — no skill name is both under claude/skills and under
+#                     claude/archived/skills or claude/wip/skills (the two
+#                     uninstalled shelves). Runs in every mode.
 #
 # --frontmatter-only: run only the frontmatter checks (3 + the payload lint of
 # 3b), skipping parity/staleness/deep checks. This is the pre-commit gate mode:
@@ -251,6 +254,25 @@ else
   done < <(grep -rl '盟約 MEIYAKU' "$CLAUDE_SKILLS" --include=SKILL.md 2>/dev/null | sort)
   [ "$oath_errs" -eq 0 ] && echo "  OK: $oath_copies oath copies match the DOJO.md canon"
 fi
+
+echo
+echo "== 8. Archived / WIP isolation (claude/archived, claude/wip stay out of the installed root) =="
+# Runs in every mode: claude/archived/skills and claude/wip/skills sit outside the
+# roots install.sh links, so nothing there is loaded. A name that is also under
+# claude/skills is a half-finished move, and the installed copy would win silently.
+shelf_errs=0
+for shelf in archived wip; do
+  [ -d "$REPO_DIR/claude/$shelf/skills" ] || continue
+  for d in "$REPO_DIR/claude/$shelf/skills"/*/; do
+    [ -d "$d" ] || continue
+    name="$(basename "$d")"
+    if [ -e "$CLAUDE_SKILLS/$name" ]; then
+      echo "  ERROR: '$name' is under claude/skills and claude/$shelf/skills -> keep one (see claude/$shelf/README.md)"
+      errors=$((errors+1)); shelf_errs=$((shelf_errs+1))
+    fi
+  done
+done
+[ "$shelf_errs" -eq 0 ] && echo "  OK: no archived or WIP skill is also installed"
 
 echo
 echo "== Summary: $errors error(s), $warns staleness warning(s) =="

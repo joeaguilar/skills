@@ -19,6 +19,9 @@ skills/                         (repo root)
 │                                      multi-agent orchestration scripts (the Workflow tool).
 │                                      No Codex counterpart — the Workflow tool doesn't exist
 │                                      there, so this root is exempt from parity checks.
+├── claude/archived/skills/<skill>/    retired Claude skills, kept unedited for reference. Outside the
+│                                      installed roots, so no session loads them (claude/archived/README.md)
+├── claude/wip/skills/<skill>/         unfinished drafts, likewise not installed (claude/wip/README.md)
 ├── claude/global-CLAUDE.md            canonical ~/.claude/CLAUDE.md (config primitive) — deliberately NOT
 │                                      named CLAUDE.md so Claude Code never auto-loads it inside this repo
 ├── claude/settings.json               local slot for ~/.claude/settings.json (config primitive) — gitignored,
@@ -110,6 +113,7 @@ machine, before the next commit:
 - **Validate after any skill change:** `./validate-skills.sh` — flags a skill present in one tree but not the other, any Codex port whose Claude source drifted past its `PARITY.tsv` baseline, and (§6) any skill whose inline model table drifted from `claude/MODELS.md`. Intentional one-tree-only primitives are exempted via `PLATFORM_ONLY.tsv` (see "Two ports"). `claude/workflows/` is exempt from cross-tree parity by design (see Layout), not via `PLATFORM_ONLY.tsv`.
 - **Model values:** `claude/MODELS.md` is the single source of truth for the cost/intelligence/taste scores and the role→model bindings skills route by (bulk/generalist/taste/floor/…). Edit it, then `./validate-skills.sh` §6 names every skill table that now disagrees. Skills route by **role**, so a model swap is usually a one-line binding edit. A skill can inject the live table into its own context with `` !`claude/scripts/models.sh table` `` (dynamic context injection — re-reads MODELS.md each run, so it can't drift).
 - Author Claude skills in `claude/skills/`; let `install.sh` link them — never author under `~/.claude`.
+- **Retire or park a skill, never delete it:** `git mv` it to `claude/archived/skills/` (replaced, or no longer a skill) or `claude/wip/skills/` (unfinished). Neither folder is an installed root, so nothing in them is loaded; each folder's README holds its table and rules, and `validate-skills.sh` §8 fails if a name is in both a shelf and `claude/skills`.
 
 ## Primitive tree (capability-first)
 

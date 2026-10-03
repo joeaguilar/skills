@@ -81,12 +81,15 @@ history was not rewritten (it is published on both remotes); the fix is per
 machine, before the next commit:
 
 1. **Identity** — every commit is authored *and* committed as
-   `Josef Aguilar <joeaguilar@users.noreply.github.com>`, never `me@josefaguilar.com`:
+   `BlueSourBoy <joeaguilar@users.noreply.github.com>`, never `me@josefaguilar.com`:
    ```sh
-   git config --global user.name "Josef Aguilar"
+   git config --global user.name "BlueSourBoy"
    git config --global user.email joeaguilar@users.noreply.github.com
-   git config --show-origin user.email   # must come from the global file; no --local override
+   git config --show-origin user.name    # both must come from the global file;
+   git config --show-origin user.email   # no --local override
    ```
+   The name changed on 2026-10-03; commits made before then keep the earlier one
+   and are not rewritten.
    Audit every repo on the machine with Git Pulse's identity audit, `/git-pulse identity`
    (a mod; read-only apart from a button that unsets a local override, and it never
    rewrites history). On a machine without the mod, run the four commands in

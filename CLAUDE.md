@@ -19,6 +19,10 @@ skills/                         (repo root)
 │                                      multi-agent orchestration scripts (the Workflow tool).
 │                                      No Codex counterpart — the Workflow tool doesn't exist
 │                                      there, so this root is exempt from parity checks.
+├── claude/mods/<mod>/                 Claude Code mods (function-hook plugins): `.claude-plugin/plugin.json`,
+│                                      `hooks/`, `types/`. Claude-only, like workflows/. install.sh does not
+│                                      link this root: its mods load once `claude/mods` is listed in
+│                                      `CLAUDE_CODE_PLUGIN_DIRS` (the `env` block of ~/.claude/settings.json)
 ├── claude/archived/skills/<skill>/    retired Claude skills, kept unedited for reference. Outside the
 │                                      installed roots, so no session loads them (claude/archived/README.md)
 ├── claude/wip/skills/<skill>/         unfinished drafts, likewise not installed (claude/wip/README.md)

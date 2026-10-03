@@ -1,0 +1,6 @@
+{
+  "name": "arcana",
+  "version": "0.2.0",
+  "description": "Shows arcana's capture state in the status line, a live feed of recorded writes and edits (/arcana feed), and a warning when another session has changed the file about to be edited. Records prompts and file mutations itself only when the settings hooks are not installed. /arcana off switches it off.",
+  "types": "./types/index.d.ts"
+}

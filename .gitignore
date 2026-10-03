@@ -21,6 +21,9 @@ backups/
 .kgr-cache.json
 claude/settings.json
 
+# Type declarations Claude Code writes beside a mod each time it loads it
+claude/mods/*/.claude-plugin/types/
+
 # Externally-sourced skills: present on disk so the symlinked global set keeps
 # them, but not tracked here (forward-looking per-skill install will own these)
 claude/skills/impeccable/

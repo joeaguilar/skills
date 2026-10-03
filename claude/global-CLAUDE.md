@@ -14,10 +14,6 @@
 - **Trust stated verification:** when the user says something already works, do
   not rerun the expensive step. If a check is inconclusive, write a different
   check instead of rerunning or reinterpreting the old one.
-- **Private documents:** audit findings, incident notes, and anything that names
-  private repos, personal details, or machine layout go in the folder named by the
-  `AI_PRIVATE` environment variable, never inside a git repo's working tree. If the
-  variable is unset, ask where to put the document instead of writing it into a repo.
 - **Typos:** when the user's prompt has a typo (not quoted, called out, or a real
   name), open the reply with one short line saying what you saw and what you read
   it as, every correction on that line, then answer normally. Missing apostrophes

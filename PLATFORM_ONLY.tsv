@@ -141,8 +141,9 @@ claude	skills	typo
 # port lands, as gauntlet just did.
 claude	skills	crucible
 
-# queue-up is a session-staging micro-skill (`.claude/queue.md` sheath; --now rides Claude Code's
-# in-turn message queueing). Port to Codex wording when wanted, then graduate.
+# queue-up adds the ask to the in-session TodoList. Its persistent `.claude/queue.md` controls
+# moved to the queue mod on 2026-10-03 (text kept in claude/archived/skills/queue-up-persistent).
+# Port to Codex wording when wanted, then graduate.
 claude	skills	queue-up
 claude	skills	itr-snapshot
 

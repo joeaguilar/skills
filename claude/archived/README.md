@@ -15,8 +15,10 @@ built from. Layout mirrors the installed roots: `claude/archived/skills/<name>/`
 | `skills/ponytail` | 2026-10-03 | `ponytail` mod: `/ponytail on\|off` adds the body as a system-prompt section | stays, Codex-only |
 | `skills/bootstrap-project-docs` | 2026-10-03 | `bootstrap-docs` mod: `/bootstrap-docs` writes the scaffold with no model turn | stays, Codex-only |
 | `skills/git-identity-check` | 2026-10-03 | Git Pulse 0.2.0: `/git-pulse identity [path…]` | stays, Codex-only |
+| `skills/queue-up-persistent` | 2026-10-03 | `queue` mod: `/queue` stages, shows, drops and clears with no model turn; `--run`, `--now` and `--drain` submit the task. Holds `QUEUE.md` (the `--queue` controls) and the `queue-up` SKILL.md as it was when it routed to them. | none |
 
-Two skills gave only a part of themselves to a mod and stay installed:
+`queue-up` itself stays installed for its in-session TodoList path only. Two more
+skills gave only a part of themselves to a mod and stay installed:
 `unity-bridge` (the `unity-sync` mod runs `sync` after `.cs` edits and shows the
 result to the person) and `crucible` / `gauntlet` (Seat Guard 0.2.0 supplies the
 route ledger's `actual` column).

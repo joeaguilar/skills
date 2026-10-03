@@ -117,6 +117,21 @@ codex/scripts/retire-agent-skill-duplicates.sh --apply
 `link-agent-skills.sh` remains available only for older Codex builds and
 requires `--compat` with `--apply` to acknowledge duplicate-name mode.
 
+The audit also compares installed repository-managed skills with `codex/skills`,
+including their scripts and references, and fails on stale copies. It leaves
+unique local skills and product-owned `.system` skills outside that comparison.
+Set `CODEX_SKILL_SOURCE` to audit against another source tree.
+
+On Windows, repair existing repository-managed skill copies using junctions:
+
+```powershell
+./codex/scripts/repair-installed-skills.ps1         # preview
+./codex/scripts/repair-installed-skills.ps1 -Apply  # back up copies, then link
+```
+
+This repairs only already-installed skills. It preserves unique local skills and
+`.system`, with replaced copies saved under `~/.codex/skill-backups/`.
+
 ## Validation
 
 Run the full cross-tree check before committing meaningful changes:

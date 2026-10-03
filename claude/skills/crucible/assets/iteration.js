@@ -55,6 +55,12 @@ const row = (stage, planned, actual, reason) => {
   ledger.push({ iter, target, stage, planned, actual, reason: reason || '—' })
 }
 
+// Every agent's prompt opens with a seat line naming this iteration and its stage,
+// in the ledger's own stage words. Where the Seat Guard mod is loaded it reads that
+// line off the agent's conversation and pairs it with the model the engine really
+// sent the agent's requests to: the fact STATUS.md's `actual` column wants.
+const seated = (stage, prompt, opts) => agent(`[seat crucible:${target}#${iter} ${stage}]\n${prompt}`, opts)
+
 // --- structured-output schemas ---------------------------------------------
 
 const SPEC_SCHEMA = {
@@ -166,7 +172,8 @@ let spec = null
 
 if (!baseline) {
   phase('Spec')
-  spec = await agent(
+  spec = await seated(
+    'spec',
     `You are the Spec stage of a crucible iteration. Produce the iteration spec that a builder and a BLIND
 test-author will each receive — they never see each other's output, so this document is the only thing
 that keeps them aligned. Vagueness here becomes a failed iteration.
@@ -219,7 +226,8 @@ if (!baseline) {
 
   const both = await parallel([
     () =>
-      agent(
+      seated(
+        'build',
         `You are the Builder for target "${target}", iteration ${iter}.
 
 Implement the source changes that make these behaviors true:
@@ -238,7 +246,8 @@ list — one checkable claim per behavior, each phrased so the evidence run can 
         { label: `build:${target}#${iter}`, phase: 'Build', schema: WORK_SCHEMA }
       ),
     () =>
-      agent(
+      seated(
+        'test-author',
         `You are the blind Test-author for target "${target}", iteration ${iter}.
 
 You are writing tests AT THE SAME TIME as the implementer, and you cannot see their work. Do not read the
@@ -308,7 +317,7 @@ the rig — never the numbers — and re-run. Report broken instruments explicit
 Return the evidence path, whether all instruments are healthy, the gate's verdict string, and the specific
 layer-1 clauses that failed (empty when layer 1 passes).`
 
-let ev = await agent(evidencePrompt(null), {
+let ev = await seated('evidence', evidencePrompt(null), {
   label: `evidence:${target}#${iter}`,
   phase: 'Evidence',
   schema: EVIDENCE_SCHEMA,
@@ -322,7 +331,8 @@ if (!baseline && ev) {
     phase('Repair')
     log(`layer 1 failed (${ev.layer1Failures.join('; ')}) — repair attempt ${repairAttempts}/2`)
 
-    const repair = await agent(
+    const repair = await seated(
+      'repair',
       `You are the Builder, repairing target "${target}", iteration ${iter} (attempt ${repairAttempts} of 2).
 
 Layer 1 of the gate failed on these clauses:
@@ -349,7 +359,7 @@ ${spec.behaviors.map((b) => `  ${b.id}: ${b.statement}`).join('\n')}`,
       return { iteration: iter, target, status: 'OWNERSHIP-VIOLATION', strays: repair.outOfScopeWrites, ledger }
     }
 
-    ev = await agent(evidencePrompt(`\n\nThis is a re-run after repair attempt ${repairAttempts}.`), {
+    ev = await seated('evidence', evidencePrompt(`\n\nThis is a re-run after repair attempt ${repairAttempts}.`), {
       label: `evidence:${target}#${iter}.r${repairAttempts}`,
       phase: 'Evidence',
       schema: EVIDENCE_SCHEMA,
@@ -440,7 +450,8 @@ if (panel) {
     lenses.map((l) => () => {
       const p = criticPrompt(l.lens, l.out)
       if (l.seat === 'codex') {
-        return agent(
+        return seated(
+          'critique:codex',
           `Run this critique through the Codex companion, read-only, and clerk the result.
 
 Command:
@@ -459,7 +470,7 @@ ${p}
           { label: `critic:codex:${target}#${iter}`, phase: 'Critique', schema: CRITIQUE_SCHEMA }
         )
       }
-      return agent(p, { label: `critic:${l.seat}:${target}#${iter}`, phase: 'Critique', schema: CRITIQUE_SCHEMA })
+      return seated(`critique:${l.seat}`, p, { label: `critic:${l.seat}:${target}#${iter}`, phase: 'Critique', schema: CRITIQUE_SCHEMA })
     })
   )
 
@@ -467,7 +478,8 @@ ${p}
   row('critique', codexSeat ? 'panel:opus,opus,codex' : 'panel:opus,opus,opus', `panel:${landed.length} validated`, codexSeat ? null : 'SANDBOX-DOWN')
 
   if (landed.length >= 2) {
-    const merged = await agent(
+    const merged = await seated(
+      'merge',
       `Merge the panel into one verdict for ${target} iteration ${iter}.
 
 Per-critic verdicts:
@@ -493,7 +505,8 @@ and return the path. This merged file is the one the gate reads.`,
   const p = criticPrompt(null, out)
 
   const c = useCodex
-    ? await agent(
+    ? await seated(
+        'critique:codex',
         `Run this critique through the Codex companion, read-only, and clerk the result.
 
 Command:
@@ -509,7 +522,7 @@ ${p}
 --- END CRITIC PROMPT ---`,
         { label: `critic:codex:${target}#${iter}`, phase: 'Critique', schema: CRITIQUE_SCHEMA }
       )
-    : await agent(p, { label: `critic:opus:${target}#${iter}`, phase: 'Critique', schema: CRITIQUE_SCHEMA })
+    : await seated('critique:opus', p, { label: `critic:opus:${target}#${iter}`, phase: 'Critique', schema: CRITIQUE_SCHEMA })
 
   row('critique', seat, useCodex ? 'codex' : 'opus', seat === 'codex' && !useCodex ? 'SANDBOX-DOWN' : null)
   critiques = [c].filter(Boolean)

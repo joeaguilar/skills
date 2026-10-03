@@ -255,6 +255,16 @@ Reason codes: `SANDBOX-DOWN`, `TOOL-MISSING`, `RATE-LIMIT`, `TASTE-REQUIRED`, `A
 planned≠actual is a closure blocker** — undeclared drift is invisible precisely because each local choice
 looks reasonable.
 
+**Where `actual` comes from.** The Workflow's rows say `workflow` for a stage that ran inside the Workflow:
+they record that the stage ran, not which model ran it. When the Seat Guard mod is loaded, its
+`mcp__seat-guard__ledger` tool is listed: call it with `filter: "crucible:<target>#<iter>"` once the Workflow
+returns. Every agent of an iteration opens its prompt with a `[seat crucible:<target>#<iter> <stage>]` line, so
+each row of the answer names a stage, the model the engine sent that seat's requests to, and any Codex run
+the seat launched (a run that came back as an error is marked `failed`). Write those model names in the
+`actual` column in place of `workflow`. A seat planned for Codex that launched no Codex run, or only failed
+ones, did not run on Codex: record the model it did run on as `actual` and give the reason code. The mod is
+machine-local; where the tool is not listed, paste the Workflow's rows as returned.
+
 **2. Score table — GENERATED.** Paste `gate.mjs --json`/report output verbatim (fenced). Never hand-edit a
 score, a trajectory, or a closure claim. Hand-written prose in STATUS.md is limited to "Next action", the
 resume block, and the ledger's reason cells.
@@ -274,7 +284,8 @@ Never `git add -A` / `git add .`; another agent's in-flight work must never be s
 **Closure reconciliation** (before declaring any target closed): reconcile the ledger against BOTH
 transcripts — `ccq` for Claude dispatches (`ccq agents -p <project> --root "C:\Users\Blue\.claude\projects"`)
 and `cxq` for the Codex seat (`cxq sessions -p <project>`, `cxq tools`), so a `SANDBOX-DOWN` row is verified
-rather than asserted. Either tool absent → skip with a note in the ledger. Any ledger row contradicted by a
+rather than asserted. Either tool absent → skip with a note in the ledger. Rows whose `actual` was copied from the Seat Guard
+ledger tool are the engine's own record already; the transcript check is for the rows that were not. Any ledger row contradicted by a
 transcript, or any dispatch missing a row, reopens bookkeeping. Gate exit 0 + clean two-sided reconciliation
 = closed; either alone is not.
 

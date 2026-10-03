@@ -30,7 +30,7 @@ PROTECTED = ("main", "master")
 
 TOKEN_HELP = """no Gitea API token found (only repos/create/pr/api need one).
   1. Open {url}/user/settings/applications and generate a token with scopes:
-     repository: read and write, user: read, issue: read and write, organization: read
+     repository: read and write, user: read and write, issue: read and write, organization: read
   2. Save it as a single line in ~/.config/gitea/token (or export GITEA_TOKEN).
   3. Check it with: gitea doctor"""
 

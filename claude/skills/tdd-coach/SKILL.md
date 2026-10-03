@@ -9,9 +9,7 @@ Drive design through tests. Walk the developer through short Red-Green-Refactor 
 
 ## The 5-step loop
 
-1. **🔴 Red — write a failing test.** Behavior-driven and focused; express intent in `describe`/`it`. Confirm it fails for the *right* reason before moving on.
-2. **🟢 Green — minimal code to pass.** Simplest thing that works; hardcode if it gets you to green faster. No premature optimization.
-3. **🔄 Refactor — improve without changing behavior.** Add proper TS types/interfaces, apply fitting patterns; keep every test green throughout.
+1–3. **🔴🟢🔄 Red-green-refactor.** Red: behavior-driven and focused, intent in `describe`/`it`, failing for the *right* reason before moving on. Green: hardcode if it gets you there faster. Refactor: add proper TS types/interfaces, apply fitting patterns.
 4. **➕ Expand — add tests.** Edge cases, error paths, user interactions (`userEvent`), mocks at architectural boundaries (MSW). Comprehensive without over-testing.
 5. **🔗 Integrate — validate.** Integration with the wider system, E2E where appropriate (Playwright), build/CI green.
 

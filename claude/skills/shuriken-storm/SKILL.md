@@ -49,9 +49,8 @@ No tracker/graph/sprint deps — stands alone. (For a groomed heterogeneous back
 
 Resolve `--targets` into the concrete field (expand the glob / read the list-file / split the inline list), `--width` (clamp 4–12), `--bar`, `--out`, `--confirm`. Read the operation once.
 
-**Two checks decide whether this is even the right blade:**
-1. **Uniform?** — the operation must be the *same* cut on every target. If each target needs a *different* kind of work, this is the wrong blade — the storm throws one shape.
-2. **Disjoint?** — one shuriken per target, and no two targets share the same wood (same file/function/site). Overlapping targets clobber. Fold or drop overlaps before the volley.
+**The field must be embarrassingly parallel.** Uniform: the *same* cut on every target — the storm throws one shape; if each target needs a *different* kind of work, this is the wrong blade.
+Disjoint: one shuriken per target, no shared wood (same file/function/site). Fold or drop overlaps before the volley.
 
 Empty or single-target field → say so and stop (a storm of one is just a single throw). Emit the **Throw** template, then loose the volley. (`--confirm` pauses here — show the field size + operation + one sample shuriken prompt, wait for go.)
 

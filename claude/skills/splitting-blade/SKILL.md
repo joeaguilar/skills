@@ -94,16 +94,9 @@ Emit the **Throw** template, then cut. `--confirm` → emit **The pause** and wa
 
 ## Phase 1 — Split (recurse)
 
-The control flow is a recursion on each node, starting at the root (depth 0):
-
-```
-process(node, depth):
-  if node meets the base condition           → LEAF: solve it (one leaf agent)
-  else if depth == max-depth                 → DEPTH WALL: solve as-is (one leaf agent, coarse) + note
-  else                                       → SPLIT into ≤ fanout disjoint children
-                                                spawn process(child, depth+1) for all children IN PARALLEL
-                                                fuse the children's results into this node (Phase 2)
-```
+**Divide and conquer** on each node, starting at the root (depth 0). Node meets the base condition → LEAF: solve it (one leaf agent).
+Else if depth == max-depth → DEPTH WALL: solve as-is (one leaf agent, coarse) + note.
+Else → SPLIT into ≤ fanout disjoint children, recurse on all children IN PARALLEL (depth+1), fuse their results into this node (Phase 2).
 
 **Splitting a node** — either the orchestrator cuts a clear node itself, or it spawns ONE splitter agent (planner) to propose the cut. Use the splitter when the node is large/unfamiliar enough that the cut itself needs reasoning.
 

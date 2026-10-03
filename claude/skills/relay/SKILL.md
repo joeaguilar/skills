@@ -84,11 +84,9 @@ Speak twice: when the scroll is thrown, when it reaches the end (or when the bat
 
 Resolve `--stages`, `--out`, `--confirm`. Read the task once.
 
-**Lay the chain** — order the work as a dependent sequence where each stage needs the prior stage's result:
+**Lay the chain** — a pipeline. `--stages` set → use that order, each token a stage. Unset → infer the chain: the canonical shape is `research → design → build → test`, but cut to the task, each stage a *different specialty*. Don't manufacture stages the task doesn't need; a two-stage chain is a valid relay.
 
-- `--stages` set → use that order, each token a stage.
-- Unset → infer the chain. The canonical shape is `research → design → build → test`, but cut to the task: each stage a *different specialty*, each consuming what the one before produced. Don't manufacture stages the task doesn't need; a two-stage chain is a valid relay.
-- **Order is the contract.** A stage may only depend on stages before it. If two pieces of work don't depend on each other, they are not a relay — keep the chain strictly dependent.
+- **Order is the contract.** If two pieces of work don't depend on each other, they are not a relay — keep the chain strictly dependent.
 - Name the **carried scroll** — what flows down the chain (findings → a design doc → a built change → a test report). Each stage transforms it forward.
 
 Emit the **Throw** template, then run. `--confirm` → emit **The pause** and **wait** for go. That flag is the only pause.

@@ -122,10 +122,7 @@ Spawn all N agents **in parallel** — one Agent call per axis, single batch, co
 4. FAITHFUL EXECUTION — the spec exactly; assume nothing, invent nothing, verify before you claim.
 Break a law and the clan falls. Execute.
 
-It is six months from now. The plan below was committed to, and it FAILED.
-You are the post-mortem investigator for ONE axis of that failure. Do not defend
-the plan, do not weigh whether it might succeed — assume it already died and work
-BACKWARD: on your axis, what killed it?
+Run a pre-mortem on the plan below. You investigate ONE axis of its failure.
 
 The plan that failed (context only):
 {plan restatement}

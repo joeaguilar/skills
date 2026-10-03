@@ -79,21 +79,10 @@ repository instructions. Preserve unrelated dirty work. If required files
 overlap ambiguous user changes, ask before editing; never stash or discard them.
 Initialize Git only for a truly greenfield directory.
 
-Reduce the brief to one sentence:
-
-> A user can `<primary action>` and observe `<primary consequence>`.
-
-That sentence is M1. It must cross the real entry point. A scaffold, spinning
-primitive, placeholder page, debug API, counter, or unit test is not the core
-slice unless the brief explicitly asks for it.
-
-Examples:
-
-- game: launch it, control the character, perform the signature action, see and
-  hear its consequence;
-- UI: open it, complete the primary interaction, observe the resulting state;
-- CLI: invoke the real command, exercise its primary operation, inspect output;
-- service: call the public boundary and observe the returned or persisted result.
+Reduce the brief to one sentence, M1, the walking skeleton: a user can
+`<primary action>` and observe `<primary consequence>` through the real entry
+point. A scaffold, spinning primitive, placeholder page, debug API, counter, or
+unit test is not the core slice unless the brief explicitly asks for it.
 
 Ask about product choices only when different answers materially change M1 and
 the brief supplies no safe interpretation. Do not interrogate for preferences

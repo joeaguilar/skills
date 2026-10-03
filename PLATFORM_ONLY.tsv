@@ -147,7 +147,3 @@ claude	skills	itr-snapshot
 claude	skills	impeccable
 # (heroic, an unfinished Claude workflow draft, moved to claude/wip/skills/ on 2026-10-03:
 #  it is outside the installed root, so it needs no line here until it graduates.)
-
-# gitea drives the user's self-hosted Gitea (SSH alias + REST API helper script).
-# Port to Codex wording when wanted, then graduate.
-claude	skills	gitea

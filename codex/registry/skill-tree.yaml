@@ -275,6 +275,19 @@ skills:
     recommends: []
     unlocked_by: []
     position: { x: 25, y: 42 }
+  gitea:
+    path: "skills/gitea"
+    group: "foundations"
+    tier: 0
+    icon: "GIT"
+    theme: "earth"
+    title: "Gitea"
+    summary: "Work with self-hosted Gitea repos, remotes, branches, and pull requests."
+    provides: ["git-hosting"]
+    requires: []
+    recommends: []
+    unlocked_by: []
+    position: { x: 38, y: 58 }
   plr:
     path: "skills/plr"
     group: "foundations"

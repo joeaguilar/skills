@@ -63,6 +63,7 @@
     "code-graph": { "label": "Code Graph" },
     "gate-runner": { "label": "Gate Runner" },
     "git-identity-audit": { "label": "Git Identity Audit" },
+    "git-hosting": { "label": "Git Hosting" },
     "prompt-library": { "label": "Prompt Library" },
     "rust-engineering": { "label": "Rust Engineering" },
     "minimal-engineering": { "label": "Minimal Engineering" },
@@ -377,6 +378,20 @@
       "recommends": [],
       "unlockedBy": [],
       "position": { "x": 25, "y": 42 }
+    },
+    "gitea": {
+      "path": "skills/gitea",
+      "group": "foundations",
+      "tier": 0,
+      "icon": "GIT",
+      "theme": "earth",
+      "title": "Gitea",
+      "summary": "Work with self-hosted Gitea repos, remotes, branches, and pull requests.",
+      "provides": ["git-hosting"],
+      "requires": [],
+      "recommends": [],
+      "unlockedBy": [],
+      "position": { "x": 38, "y": 58 }
     },
     "plr": {
       "path": "skills/plr",

@@ -1,0 +1,4 @@
+interface:
+  display_name: "gitea"
+  short_description: "Work with the self-hosted Gitea server"
+  default_prompt: "Use $gitea to clone, inspect, or manage this repo on Gitea."

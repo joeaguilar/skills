@@ -14,6 +14,9 @@ capabilities:
   git-identity-audit:
     label: "Git Identity Audit"
     description: "Audit git author configuration and historical commit identities."
+  git-hosting:
+    label: "Git Hosting"
+    description: "Work with self-hosted Gitea for cloning, remotes, branch hygiene, and pull requests."
   prompt-library:
     label: "Prompt Library"
     description: "Store, retrieve, and organize reusable prompt templates."

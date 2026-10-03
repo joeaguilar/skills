@@ -23,6 +23,10 @@ set -uo pipefail
 #   8. Shelf isolation — no skill name is both under claude/skills and under
 #                     claude/archived/skills or claude/wip/skills (the two
 #                     uninstalled shelves). Runs in every mode.
+#   9. Preflight    — claude/skills/blitz/scripts/preflight.sh is the one copy of the
+#                     verify-gate table: the Codex tree ships the same bytes, no skill
+#                     or script spells the Rust gate without --all-targets, and (full
+#                     mode only) claude/scripts/test-preflight.sh passes.
 #
 # --frontmatter-only: run only the frontmatter checks (3 + the payload lint of
 # 3b), skipping parity/staleness/deep checks. This is the pre-commit gate mode:
@@ -273,6 +277,40 @@ for shelf in archived wip; do
   done
 done
 [ "$shelf_errs" -eq 0 ] && echo "  OK: no archived or WIP skill is also installed"
+
+echo
+echo "== 9. Shared preflight script (one verify-gate table, both trees) =="
+# claude/skills/blitz/scripts/preflight.sh is the only copy of the verify-gate table
+# and of the tracker/sprint/tree facts the orchestrator skills read; the Codex tree
+# ships the same file. Runs in every mode: a second copy that drifts is the bug the
+# script exists to end (four copies of the clippy row once lacked --all-targets).
+PF_CLAUDE="$CLAUDE_SKILLS/blitz/scripts/preflight.sh"
+PF_CODEX="$CODEX_SKILLS/blitz/scripts/preflight.sh"
+if [ ! -f "$PF_CLAUDE" ]; then
+  echo "  ERROR: claude/skills/blitz/scripts/preflight.sh is missing"; errors=$((errors+1))
+elif [ ! -f "$PF_CODEX" ]; then
+  echo "  ERROR: codex/skills/blitz/scripts/preflight.sh is missing -> copy it from the claude tree"; errors=$((errors+1))
+elif ! cmp -s <(tr -d '\r' < "$PF_CLAUDE") <(tr -d '\r' < "$PF_CODEX"); then
+  echo "  ERROR: the two preflight.sh copies differ -> copy claude/skills/blitz/scripts/preflight.sh over the codex one"; errors=$((errors+1))
+else
+  echo "  OK: both trees ship the same preflight.sh"
+fi
+bare_clippy="$(grep -rnE 'cargo test && cargo clippy' "$CLAUDE_SKILLS" "$CODEX_SKILLS" --include=SKILL.md --include='*.sh' 2>/dev/null \
+  | grep -vE '/(synced|impeccable|\.system)/' | grep -v -- '--all-targets' || true)"
+if [ -n "$bare_clippy" ]; then
+  printf '%s\n' "$bare_clippy" | sed "s|$REPO_DIR/||; s/^/  ERROR: Rust gate without --all-targets: /" | cut -c1-200
+  errors=$((errors + $(printf '%s\n' "$bare_clippy" | wc -l | tr -d ' ')))
+else
+  echo "  OK: no Rust gate is spelled without --all-targets"
+fi
+if [ "$FRONTMATTER_ONLY" -eq 0 ] && [ -f "$PF_CLAUDE" ] && [ -f "$REPO_DIR/claude/scripts/test-preflight.sh" ]; then
+  if pf_out="$(bash "$REPO_DIR/claude/scripts/test-preflight.sh" 2>&1)"; then
+    echo "  OK: $(printf '%s\n' "$pf_out" | tail -1)"
+  else
+    printf '%s\n' "$pf_out" | sed 's/^/  /'
+    echo "  ERROR: preflight self-test failed"; errors=$((errors+1))
+  fi
+fi
 
 echo
 echo "== Summary: $errors error(s), $warns staleness warning(s) =="

@@ -91,42 +91,35 @@ The **only** human interaction inside the loop is Phase 7. With `--auto`/`--trus
 
 Announce `Phase 0 — Preflight & baseline`. Terse logging throughout.
 
+**Facts first.** Run `$blitz`'s preflight script once per repo root — read-only, writes nothing: `bash <skills-dir>/blitz/scripts/preflight.sh .` (`<skills-dir>` = the dir holding this skill's folder, typically `~/.codex/skills`). Steps 2–7 read its `key: value` lines; don't re-derive them. Script can't run → say so, ask once for `--verify`, gather the rest by hand.
+
 1. **Input → mode**, in order:
    - `--backlog`, or empty input + tracker has open tickets → **execute mode** (skip Phase 1).
    - Path that exists / inline brief / recent `/plan` / clear conversational ask → **plan mode**.
    - Nothing usable, no open tickets → **terminal no-op** (not a gate): print `Nothing to clear — no spec/brief and no open tickets. Re-invoke with a spec, brief, or --backlog.` Stop.
 
-2. **Tracker.** Default `itr`. Run `itr stats`; when `.itr.db` is absent, follow the `$itr` skill: surface the initialization step and obtain explicit approval before `itr init`. `itr agent-info` once — prefer its syntax for `update`/`close`/`--files`/body fields over anything here. `--tracker` override → capture list-open + close commands. Snapshot `agent-info` → `run.md`.
+2. **Tracker.** Default `itr`. `tracker: itr` → use it; on `tracker: itr-no-db`, follow the `$itr` skill: surface the initialization step and obtain explicit approval before `itr init`. `itr agent-info` once — prefer its syntax for `update`/`close`/`--files`/body fields over anything here. `--tracker` override → capture list-open + close commands. Snapshot `agent-info` → `run.md`.
 
 3. **Detect tooling** (non-blocking):
-   - `kgr` on PATH → file inference (`kgr refs`, `kgr query --who-imports`) + Phase 6 contract check.
-   - `STORY_STYLE.md` / `AGENTS.md` / `CODEX.md` / `CLAUDE.md` → mirror issue conventions, preferring Codex repo instructions over Claude fallbacks.
+   - `kgr: present` → file inference (`kgr refs`, `kgr query --who-imports`) + Phase 6 contract check.
+   - `story-style:` / `AGENTS.md` / `CODEX.md` / `CLAUDE.md` → mirror issue conventions, preferring Codex repo instructions over Claude fallbacks.
    - Before any commit, read repository commit, identity, and attribution rules. Verify the configured author and required trailers; repository instructions override the generic example in Phase 6.
-   - `docs/ROADMAP.md` → seed goal (plan mode), update Phase 8.
-   - `sprint/CURRENT` → in-flight sprint (execute mode finds the folder here).
+   - `roadmap:` → seed goal (plan mode), update Phase 8.
+   - `sprint-current:` → in-flight sprint (execute mode finds the folder here).
 
-4. **Sprint number & folder.** Execute mode + valid `sprint/CURRENT` → reuse that folder + `sprint-{N}` (continuing; don't allocate new). Else: max `sprint-{N}` under `sprint/` +1 (fallback max `sprint-N` tag +1; else `sprint-1`). Slug = `--name`, else 2–4 keywords from goal (plan) / input (execute), `[a-z0-9-]`, cap 32. Folder = `sprint-{N}-{YYYY-MM-DD}-{slug}`; collision → append `-{HHMM}`.
+4. **Sprint number & folder.** Execute mode + `sprint-current-valid: yes` → reuse that folder + `sprint-{N}` (continuing; don't allocate new). Else: the script's `sprint-next:` (max `sprint-{N}` under `sprint/` +1; fallback max `sprint-N` tag +1; else `sprint-1`). Slug = `--name`, else 2–4 keywords from goal (plan) / input (execute), `[a-z0-9-]`, cap 32. Folder = `sprint-{N}-{YYYY-MM-DD}-{slug}`; collision → append `-{HHMM}`.
 
-5. **Stale-ticket sweep.** Treat closing keywords in git history as candidates, not proof. Compare the issue AC with the current implementation and recorded verification before closing or excluding it. Keep partial or ambiguous work in scope and log the evidence; do not silently drop it because a commit mentions its ID.
+5. **Stale-ticket sweep.** Each `stale-ticket: #id sha subject` line = a commit in the last 30 days names `#id` with a closing keyword and `itr` still has it `open`. Treat these as candidates, not proof. Compare the issue AC with the current implementation and recorded verification before closing or excluding it. Keep partial or ambiguous work in scope and log the evidence; do not silently drop it because a commit mentions its ID.
 
 6. **Git safety & baseline** (load-bearing — makes rollback safe). Orchestrator commits, so the tree must be sane. Never hide or rewrite pre-existing work to manufacture a clean baseline:
-   - **Not a repo** → **hard stop**: print `overdrive needs a git repo — run \`git init\` and retry (per-wave commits are load-bearing).` No auto-init.
-   - **Detached HEAD** → stop and ask whether to create `overdrive-{slug}` or use another branch. Do not switch branches silently.
+   - **Not a repo** (`git: absent`) → **hard stop**: print `overdrive needs a git repo — run \`git init\` and retry (per-wave commits are load-bearing).` No auto-init.
+   - **Detached HEAD** (`branch: detached`) → stop and ask whether to create `overdrive-{slug}` or use another branch. Do not switch branches silently.
    - **`--branch name`** → create it only after confirming the worktree is clean.
-   - **No commits** → stop and ask for an initial baseline commit. Do not create an empty commit automatically.
-   - **Dirty tree** → stop before tracker writes, agents, branch switches, or commits. Offer: continue after the user commits/stashes the work, run `--dry-run`, or use an explicitly approved isolated-worktree workflow. Never auto-stash user work.
+   - **No commits** (`head: none`) → stop and ask for an initial baseline commit. Do not create an empty commit automatically.
+   - **Dirty tree** (`dirty:` above 0) → stop before tracker writes, agents, branch switches, or commits. Offer: continue after the user commits/stashes the work, run `--dry-run`, or use an explicitly approved isolated-worktree workflow. Never auto-stash user work.
    - `BASELINE_SHA = git rev-parse HEAD`. Record `run.md`. Verify clean: `git diff-index --quiet HEAD --` exit 0 — else surface + stop (never swarm a dirty tree).
 
-7. **Config & verify gate.** `concurrency` (cap at the smaller of 5 and available harness worker slots), `max-waves`, `max-retries` (2), `time-budget`, `--auto`/`--trust`. **`--auto` backstop:** `--auto` + neither `--time-budget` nor `--max-waves` → set `max-waves = 2 × open-ticket-count`, warn `Auto with no cap — backstopping at <N> waves; override with --max-waves/--time-budget.` Auto-detect verify gate/repo unless `--verify`:
-
-   | File | Default verify gate |
-   |---|---|
-   | `Cargo.toml` | `cargo test && cargo clippy -- -D warnings && cargo fmt --check` |
-   | `package.json` | union of existing `test`/`lint`/`typecheck`/`format:check` scripts |
-   | `pyproject.toml` | `pytest && ruff check . && ruff format --check .` |
-   | `go.mod` | `go test ./... && go vet ./... && test -z "$(gofmt -l .)"` |
-   | `Makefile` w/ `test` | `make test` + any of `lint`/`check`/`verify` |
-   | nothing matched | **stop and ask** for the gate command (one-time setup input, same class as repo/tracker — *not* a workflow gate) |
+7. **Config & verify gate.** `concurrency` (cap at the smaller of 5 and available harness worker slots), `max-waves`, `max-retries` (2), `time-budget`, `--auto`/`--trust`. **`--auto` backstop:** `--auto` + neither `--time-budget` nor `--max-waves` → set `max-waves = 2 × open-ticket-count`, warn `Auto with no cap — backstopping at <N> waves; override with --max-waves/--time-budget.` Verify gate/repo = the script's `verify-gate:` line unless `--verify` (detection table lives in the script — Cargo, npm scripts, pyproject, go.mod, Makefile, justfile; first match wins; `verify-gate-source:` names the file). `verify-gate: missing` → **stop and ask** for the gate command (one-time setup input, same class as repo/tracker — *not* a workflow gate).
 
    No-op/`true` gate is **deliberately not** the fallback: unverified per-wave commits ship broken code + kill self-healing. Supply `--verify` once to stay hands-off on odd stacks.
 

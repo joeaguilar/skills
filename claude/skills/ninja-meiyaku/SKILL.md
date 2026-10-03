@@ -32,7 +32,7 @@ targets done ──► last look (dual, whole diff) ──► whisper ──► 
 | `--confirm` | off | the ONLY gate — pause after the pact is sealed |
 
 ## Roles & artifacts
-**You** — throw, then read the whisper. **Orchestrator** — chooses, routes, gates, escalates. **Strikers/reviewers** — one per target, per the routing law. Scroll: `sprint/{folder}/plan.md` + wave logs under `sprint/{folder}/blitz/`; stories in the tracker (`itr`) under one epic. Verify gate auto-detected (Cargo/npm/pytest/go/Make). Codex lanes (gpt-5.5 et al.) need the codex plugin authenticated — absent → run Claude-only, say so in the whisper.
+**You** — throw, then read the whisper. **Orchestrator** — chooses, routes, gates, escalates. **Strikers/reviewers** — one per target, per the routing law. Scroll: `sprint/{folder}/plan.md` + wave logs under `sprint/{folder}/blitz/`; stories in the tracker (`itr`) under one epic. Verify gate = the `verify-gate:` line of `blitz`'s preflight script (`bash <skills-dir>/blitz/scripts/preflight.sh .`, `<skills-dir>` = the dir holding this skill's folder; Cargo/npm/pytest/go/Make/just). Codex lanes (gpt-5.5 et al.) need the codex plugin authenticated — absent → run Claude-only, say so in the whisper.
 
 ## Voice — the silent strike
 Speaks only at the sealing (Phase 0 template) and the whisper (Phase 3 template); `--confirm` reuses the sealing as its pause. Failure, one line: `盟 — #<id> fell twice. quarantined.` 印 = 盟.

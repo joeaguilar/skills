@@ -22,7 +22,7 @@ All args optional. Anything not supplied is auto-detected in Phase 0.
 | Arg | Default | Meaning |
 |---|---|---|
 | `tracker` | `itr` | Backlog source. Override with any shell command that lists open tasks (e.g. `gh issue list --state open --json number,title,body`). |
-| `verify` | auto-detect | Verify-gate command. See detection table in Phase 0. |
+| `verify` | auto-detect | Verify-gate command. Detected by the preflight script in Phase 0. |
 | `concurrency` | `5` | Requested maximum; clamp to the active harness's available worker slots. |
 | `max_waves` | unset | Hard cap on waves. |
 | `time_budget` | unset | e.g. `2h`, `45m`. Stop launching new waves once elapsed; in-flight wave finishes. |
@@ -34,25 +34,26 @@ All args optional. Anything not supplied is auto-detected in Phase 0.
 
 Resolve config from the request and project, then present a compact preflight. Reuse existing execution authorization. Ask only about missing scope, material changes, or a decision the user reserved; do not reconfirm an already-approved run.
 
+### Run the preflight script
+
+Run it once from each repo root in scope. It is read-only — it writes, stages and fixes nothing:
+
+```bash
+bash <skill-dir>/scripts/preflight.sh .
+```
+
+`<skill-dir>` is the directory that holds this SKILL.md (typically `~/.codex/skills/blitz`). It prints `key: value` facts — the tracker, `kgr`, the verify gate, every uncommitted path, every unfinished wave log — and the subsections below say what to do with each one. Take the facts from its output; do not re-derive them by hand. If the script cannot run (no POSIX shell on this machine), say so in the confirm block and ask the user for the verify gate rather than composing one yourself.
+
 ### Detect the tracker
 - If `tracker=` was passed, use it verbatim.
-- Otherwise default to `itr` (use it per the existing `itr` skill). Verify by running `itr stats` — if the binary is missing, or no `.itr.db` exists in the repo, **stop and ask the user** for a replacement: e.g. `gh issue list ...`, `linear-cli list ...`, or a path to a TODO file. Capture both a list-open command and a record-epic command.
+- Otherwise default to `itr` (use it per the existing `itr` skill). The script's `tracker:` line is the check: `itr` means a database resolves. On `itr-no-db` or `none`, **stop and ask the user** for a replacement: e.g. `gh issue list ...`, `linear-cli list ...`, or a path to a TODO file. Capture both a list-open command and a record-epic command.
 
 ### Detect the dep-graph tool
-- If `kgr` is on PATH, use it per the existing `kgr` skill (`kgr check --format json --no-progress . || true` per repo).
-- If absent, skip dep-graph audit. Note the absence in the confirm block — don't silently downgrade.
+- On `kgr: present`, use it per the existing `kgr` skill (`kgr check --format json --no-progress . || true` per repo).
+- On `kgr: absent`, skip dep-graph audit. Note the absence in the confirm block — don't silently downgrade.
 
 ### Detect the verify gate
-If `verify=` was passed, use it. Otherwise auto-detect from each repo root in this priority order:
-
-| File present | Default verify gate |
-|---|---|
-| `Cargo.toml` | `cargo test && cargo clippy --all-targets -- -D warnings && cargo fmt --check` |
-| `package.json` | Read `scripts`. Compose the union of `test`, `lint`, `typecheck`, `format:check` that exist (e.g. `npm test && npm run lint && npm run typecheck`). If only `test` exists, just run that. |
-| `pyproject.toml` | `pytest && ruff check . && ruff format --check .` (override if the project's tool config disagrees) |
-| `go.mod` | `go test ./... && go vet ./... && test -z "$(gofmt -l .)"` |
-| `Makefile` with `test` target | `make test` plus any of `lint`, `check`, `verify` that exist |
-| nothing matched | **stop and ask the user** for the gate command |
+If `verify=` was passed, use it. Otherwise take the script's `verify-gate:` line for each repo root. The script holds the detection table — `Cargo.toml`, the `test` / `lint` / `typecheck` / `format:check` scripts of `package.json`, `pyproject.toml`, `go.mod`, a `Makefile` with a `test` target, a `justfile` — and the first file that matches decides; `verify-gate-source:` names it. If the project's own tool config disagrees with the gate it reports, say so in the confirm block so the user can amend it. On `verify-gate: missing`, **stop and ask the user** for the gate command.
 
 For multi-repo runs, detect per repo and run each repo's gate from that repo's root.
 
@@ -60,9 +61,9 @@ Keep `--all-targets` when narrowing the default Rust lint gate to a package so t
 
 ### Check concurrent work
 
-Snapshot `git status --porcelain` and preserve existing edits. Put unrelated dirty paths in every worker's forbidden set. If the requested work must extend existing edits, assign that path to one owner with the original diff recorded; do not discard or silently absorb those edits.
+The script's `dirty-path:` lines are the `git status --porcelain` snapshot. Preserve existing edits. Put unrelated dirty paths in every worker's forbidden set. If the requested work must extend existing edits, assign that path to one owner with the original diff recorded; do not discard or silently absorb those edits.
 
-Inspect the current sprint and unscoped blitz logs for a run without a `Blitz complete` terminal marker. If `sprint/CURRENT` is absent from the working tree, its HEAD version can help locate prior logs. A missing marker is evidence to investigate, not proof that another session is live: inspect available session state and timestamps. Resolve uncertain ownership before launching overlapping writers; continue independent planning. Never stash, reset, clean, or modify user files to make preflight pass.
+The script's `unfinished-wave-log:` lines name each current-sprint or unscoped blitz log without a `Blitz complete` terminal marker; when `sprint/CURRENT` is absent from the working tree, it locates prior logs through the HEAD version. A missing marker is evidence to investigate, not proof that another session is live: inspect available session state and timestamps. Resolve uncertain ownership before launching overlapping writers; continue independent planning. Never stash, reset, clean, or modify user files to make preflight pass.
 
 ### Confirmation block
 

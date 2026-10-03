@@ -23,7 +23,7 @@ The coached, **non-sprint** implementation workflow. Reach for it when the work 
 
 ## Phases
 
-**Announce: Phase 0 — Understand.** Read the request (or the `spec-writer` doc). Map the codebase with `kgr` (fall back to grep): where does this slot in, what does it touch, what patterns already exist? Restate the intent and detect the verify gate the way `/blitz` does (Cargo / npm / pytest / go / Make / …).
+**Announce: Phase 0 — Understand.** Read the request (or the `spec-writer` doc). Map the codebase with `kgr` (fall back to grep): where does this slot in, what does it touch, what patterns already exist? Restate the intent and detect the verify gate the way `/blitz` does: `bash <skills-dir>/blitz/scripts/preflight.sh --gate .` prints it (Cargo / npm / pytest / go / Make / just; `<skills-dir>` is the directory that holds this skill's own folder, typically `~/.claude/skills`).
 
 **Announce: Phase 1 — Plan.** Produce an implementation plan + an **explicit owned-file list** + ordered tasks. For anything non-trivial, do it in two passes: high-level parent tasks → confirm with the user → expand into sub-tasks. **Surface the plan and wait** — this is the coached gate. If the work splits into independent, parallelizable pieces and is mid-size, offer `--blitz`: file the tasks as `itr` issues with declared file ownership and hand off to `/blitz`.
 

@@ -152,7 +152,7 @@ Preflight:
 
 - Tracker: default `itr`; run `itr stats` and `itr agent-info` when available.
 - Code graph: use `kgr` when present; otherwise grep/rg.
-- Verify gate: detect like `/blitz` unless `--verify` supplied.
+- Verify gate: detect like `/blitz` unless `--verify` supplied — the `verify-gate:` line of its preflight script, `bash <skills-dir>/blitz/scripts/preflight.sh .` (`<skills-dir>` is the directory that holds this skill's own folder, typically `~/.claude/skills`).
 - Dirty worktree: inspect before assigning agents; never revert unrelated user changes.
 - Token budget: default `work_cap_tokens=200000` for the **main orchestrator agent**; reserve 20% for repair, review, and reporting. Subagent context usage does not count against this cap — workers, scouts, and the reviewer each spend their own budget independently.
 - Agent budget: compute `workers + scouts + reviewer <= safe concurrency`; verification outranks scouts.

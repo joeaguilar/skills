@@ -95,16 +95,7 @@ Announce `Phase 0 — Preflight`. Terse.
 2. **Tracker:** `itr stats`; no `.itr.db` → `itr init`. `itr agent-info` once — prefer its syntax.
 3. **Tooling** (non-blocking): `kgr` → file inference. `gatr` → gates as `gatr run --tag <name> -- <cmd>`; absent → run directly. `STORY_STYLE.md`/`CLAUDE.md` → mirror conventions.
 4. **Git baseline:** not a repo → `git init` + baseline commit. Detached HEAD → branch `mission-<slug>`. Dirty tree → stash + surface restore hint. `BASELINE_SHA = git rev-parse HEAD`.
-5. **Verify gate** — auto-detect unless `--verify`:
-
-   | File | Default verify gate |
-   |---|---|
-   | `Cargo.toml` | `cargo test && cargo clippy -- -D warnings && cargo fmt --check` |
-   | `package.json` | union of existing `test`/`lint`/`typecheck`/`build` scripts |
-   | `pyproject.toml` | `pytest && ruff check . && ruff format --check .` |
-   | `go.mod` | `go test ./... && go vet ./... && test -z "$(gofmt -l .)"` |
-   | `Makefile` w/ `test` | `make test` + any of `lint`/`check`/`verify` |
-   | nothing matched | greenfield: the gate is whatever the skeleton link creates (build + smoke run); existing repo: ask once |
+5. **Verify gate** — unless `--verify`: run `blitz`'s preflight script, read-only: `bash <skills-dir>/blitz/scripts/preflight.sh .` (`<skills-dir>` = the dir holding this skill's folder, typically `~/.claude/skills`), take its `verify-gate:` line (detection table lives in the script — Cargo, npm scripts, pyproject, go.mod, Makefile, justfile; first match wins). `package.json` with a `build` script → append `npm run build`. `verify-gate: missing` → greenfield: the gate is whatever the skeleton link creates (build + smoke run); existing repo: ask once.
 
 6. **Scale gate** (above) — print `scale: LEAN|FULL — <one-line reason>`.
 7. **Slug:** `missions/CURRENT` written at launch (end of Phase 2).

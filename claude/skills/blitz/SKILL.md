@@ -20,7 +20,7 @@ All args optional. Anything not supplied is auto-detected in Phase 0.
 | Arg | Default | Meaning |
 |---|---|---|
 | `tracker` | `itr` | Backlog source. Override with any shell command that lists open tasks (e.g. `gh issue list --state open --json number,title,body`). |
-| `verify` | auto-detect | Verify-gate command. See detection table in Phase 0. |
+| `verify` | auto-detect | Verify-gate command. Detected by the preflight script in Phase 0. |
 | `concurrency` | `5` | Max parallel agents per wave. |
 | `max_waves` | unset | Hard cap on waves. |
 | `time_budget` | unset | e.g. `2h`, `45m`. Stop launching new waves once elapsed; in-flight wave finishes. |
@@ -32,25 +32,26 @@ All args optional. Anything not supplied is auto-detected in Phase 0.
 
 Resolve config from args + auto-detection, then present a single confirmation block. **No agent is spawned until the user approves.**
 
+### Run the preflight script
+
+Run it once from each repo root in scope. It is read-only — it writes, stages and fixes nothing:
+
+```bash
+bash <skill-dir>/scripts/preflight.sh .
+```
+
+`<skill-dir>` is the directory that holds this SKILL.md (typically `~/.claude/skills/blitz`). It prints `key: value` facts — the tracker, `kgr`, the verify gate, every uncommitted path, every unfinished wave log — and the subsections below say what to do with each one. Take the facts from its output; do not re-derive them by hand. If the script cannot run (no POSIX shell on this machine), say so in the confirm block and ask the user for the verify gate rather than composing one yourself.
+
 ### Detect the tracker
 - If `tracker=` was passed, use it verbatim.
-- Otherwise default to `itr` (use it per the existing `itr` skill). Verify by running `itr stats` — if the binary is missing, or no `.itr.db` exists in the repo, **stop and ask the user** for a replacement: e.g. `gh issue list ...`, `linear-cli list ...`, or a path to a TODO file. Capture both a list-open command and a record-epic command.
+- Otherwise default to `itr` (use it per the existing `itr` skill). The script's `tracker:` line is the check: `itr` means a database resolves. On `itr-no-db` or `none`, **stop and ask the user** for a replacement: e.g. `gh issue list ...`, `linear-cli list ...`, or a path to a TODO file. Capture both a list-open command and a record-epic command.
 
 ### Detect the dep-graph tool
-- If `kgr` is on PATH, use it per the existing `kgr` skill (`kgr check --format json --no-progress . || true` per repo).
-- If absent, skip dep-graph audit. Note the absence in the confirm block — don't silently downgrade.
+- On `kgr: present`, use it per the existing `kgr` skill (`kgr check --format json --no-progress . || true` per repo).
+- On `kgr: absent`, skip dep-graph audit. Note the absence in the confirm block — don't silently downgrade.
 
 ### Detect the verify gate
-If `verify=` was passed, use it. Otherwise auto-detect from each repo root in this priority order:
-
-| File present | Default verify gate |
-|---|---|
-| `Cargo.toml` | `cargo test && cargo clippy --all-targets -- -D warnings && cargo fmt --check` |
-| `package.json` | Read `scripts`. Compose the union of `test`, `lint`, `typecheck`, `format:check` that exist (e.g. `npm test && npm run lint && npm run typecheck`). If only `test` exists, just run that. |
-| `pyproject.toml` | `pytest && ruff check . && ruff format --check .` (override if the project's tool config disagrees) |
-| `go.mod` | `go test ./... && go vet ./... && test -z "$(gofmt -l .)"` |
-| `Makefile` with `test` target | `make test` plus any of `lint`, `check`, `verify` that exist |
-| nothing matched | **stop and ask the user** for the gate command |
+If `verify=` was passed, use it. Otherwise take the script's `verify-gate:` line for each repo root. The script holds the detection table — `Cargo.toml`, the `test` / `lint` / `typecheck` / `format:check` scripts of `package.json`, `pyproject.toml`, `go.mod`, a `Makefile` with a `test` target, a `justfile` — and the first file that matches decides; `verify-gate-source:` names it. If the project's own tool config disagrees with the gate it reports, say so in the confirm block so the user can amend it. On `verify-gate: missing`, **stop and ask the user** for the gate command.
 
 **`--all-targets` is not optional, and it survives scoping.** Bare `cargo clippy` lints only the default targets — a lint in a test file passes the gate and ships. If you narrow the gate for speed (e.g. `cargo clippy -p <crate>` per agent, common on slow workspaces), the `--all-targets` must come with it: `cargo clippy -p <crate> --all-targets -- -D warnings`. *(sprint-9: a `match_wild_err_arm` in a test file cleared an unscoped per-crate Wave-1 gate, shipped in a commit, and surfaced in Wave-2 as a fresh ticket the orchestrator had to fix.)*
 
@@ -60,13 +61,13 @@ For multi-repo runs, detect per repo and run each repo's gate from that repo's r
 
 File-fence discipline assumes exactly one scheduler and no in-flight human edits. Both assumptions have broken. Check both, report both, **change nothing**.
 
-1. **Another orchestrator in this tree?** Look for a wave log from a blitz that started and never finished: `sprint/{folder}/blitz/wave-*.md`, plus `sprint/_unscoped/blitz-*.md`. Resolve `{folder}` from `sprint/CURRENT` — and if that file is missing or deleted in the working tree, fall back to `git show HEAD:sprint/CURRENT` before concluding there is nothing to scan.
+1. **Another orchestrator in this tree?** The script prints an `unfinished-wave-log:` line for every wave log from a blitz that started and never finished. It scans `sprint/{folder}/blitz/wave-*.md`, plus `sprint/_unscoped/blitz-*.md`, resolving `{folder}` from `sprint/CURRENT` — and when that file is missing or deleted in the working tree, from `git show HEAD:sprint/CURRENT`, before concluding there is nothing to scan.
 
    The signal is a **missing terminal marker** — a log with no `Blitz complete` line (Phase 8 writes it) — not an empty `Outcomes` section. `Outcomes` fills *incrementally*, wave by wave, so it is non-empty for almost the entire window in which a collision can happen. *(Verified against the sprint-7 incident this rule exists to prevent: session A parked after W2, so by the time session B ran preflight the log already carried its W1 and W2 entries. An empty-`Outcomes` test would have printed "none detected" and waved session B straight into the collision. The `Blitz complete` marker is absent for that whole window and fires correctly.)*
 
-   If a marker-less log is found, warn hard — name the file — and ask the PO to confirm no other session is live before proceeding. Two orchestrators fanning out against one tree both believe they own the fences, and neither does. A stale log from a blitz that finished without writing its marker will also warn; that is the intended cost — one PO question beats a silent collision. *(sprint-7: two sessions collided on the same tree; one task was touched by both and only recovered via a 180s quiescence window.)*
+   If the script lists a marker-less log, warn hard — name the file — and ask the PO to confirm no other session is live before proceeding. Two orchestrators fanning out against one tree both believe they own the fences, and neither does. A stale log from a blitz that finished without writing its marker will also warn; that is the intended cost — one PO question beats a silent collision. *(sprint-7: two sessions collided on the same tree; one task was touched by both and only recovered via a 180s quiescence window.)*
 
-2. **Uncommitted work in the tree?** Run `git status --porcelain` (read-only). Report every dirty path. Do **not** stash, reset, checkout, restore, or clean, and do **not** suggest that the PO do so — just show the list. Then, whatever the PO decides, **add every uncommitted path to the do-not-touch neighbor set of every agent in every wave**. An agent must never edit a file with in-flight human work in it, and the orchestrator must not "fix" one to get a gate green — surface a gate that is red only on a dirty user file and ask. *(sprint-7: a Wave-1 gate went red on the user's uncommitted `gen.rs` and the orchestrator relocated a test module inside that in-flight file to get green.)*
+2. **Uncommitted work in the tree?** The script's `dirty-path:` lines are `git status --porcelain`, one path each (read-only). Report every dirty path. Do **not** stash, reset, checkout, restore, or clean, and do **not** suggest that the PO do so — just show the list. Then, whatever the PO decides, **add every uncommitted path to the do-not-touch neighbor set of every agent in every wave**. An agent must never edit a file with in-flight human work in it, and the orchestrator must not "fix" one to get a gate green — surface a gate that is red only on a dirty user file and ask. *(sprint-7: a Wave-1 gate went red on the user's uncommitted `gen.rs` and the orchestrator relocated a test module inside that in-flight file to get green.)*
 
 ### Confirmation block
 

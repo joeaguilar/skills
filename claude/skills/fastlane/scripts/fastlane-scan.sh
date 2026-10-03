@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 set -u
 
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd -P)"
 ROOT="${1:-.}"
 if ! cd "$ROOT" 2>/dev/null; then
   printf 'fastlane scan error: cannot enter %s\n' "$ROOT" >&2
@@ -91,60 +92,11 @@ penalize_missing_skill() {
 }
 
 detect_verify_gate() {
-  if [ -f Cargo.toml ]; then
-    printf 'cargo test && cargo clippy -- -D warnings && cargo fmt --check'
-    return 0
-  fi
-
-  if [ -f package.json ]; then
-    if have node; then
-      gate="$(node -e 'const fs=require("fs"); const p=JSON.parse(fs.readFileSync("package.json","utf8")); const s=p.scripts||{}; const cmds=[]; if(s.test)cmds.push("npm test"); if(s.lint)cmds.push("npm run lint"); if(s.typecheck)cmds.push("npm run typecheck"); if(s["format:check"])cmds.push("npm run format:check"); process.stdout.write(cmds.join(" && "));' 2>/dev/null)"
-      if [ -n "$gate" ]; then
-        printf '%s' "$gate"
-        return 0
-      fi
-    fi
-    if grep -q '"test"[[:space:]]*:' package.json 2>/dev/null; then
-      printf 'npm test'
-      return 0
-    fi
-  fi
-
-  if [ -f pyproject.toml ]; then
-    printf 'pytest && ruff check . && ruff format --check .'
-    return 0
-  fi
-
-  if [ -f go.mod ]; then
-    printf 'go test ./... && go vet ./... && test -z "$(gofmt -l .)"'
-    return 0
-  fi
-
-  if [ -f Makefile ] && grep -Eq '^test:' Makefile 2>/dev/null; then
-    gate='make test'
-    grep -Eq '^lint:' Makefile 2>/dev/null && gate="$gate && make lint"
-    grep -Eq '^check:' Makefile 2>/dev/null && gate="$gate && make check"
-    grep -Eq '^verify:' Makefile 2>/dev/null && gate="$gate && make verify"
-    printf '%s' "$gate"
-    return 0
-  fi
-
-  if [ -f justfile ] || [ -f Justfile ]; then
-    jf="justfile"
-    [ -f Justfile ] && jf="Justfile"
-    if grep -Eq '^(verify|check|test):' "$jf" 2>/dev/null; then
-      if grep -Eq '^verify:' "$jf" 2>/dev/null; then
-        printf 'just verify'
-      elif grep -Eq '^check:' "$jf" 2>/dev/null; then
-        printf 'just check'
-      else
-        printf 'just test'
-      fi
-      return 0
-    fi
-  fi
-
-  return 1
+  # The gate table has one home: blitz's preflight script, a sibling of this
+  # skill. A second copy lived here and drifted from it (the clippy row).
+  preflight="$SCRIPT_DIR/../../blitz/scripts/preflight.sh"
+  [ -f "$preflight" ] || return 1
+  bash "$preflight" --gate .
 }
 
 git_state="absent"

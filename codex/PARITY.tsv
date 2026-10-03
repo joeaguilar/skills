@@ -1,10 +1,10 @@
 # codex port parity baseline.  <skill>\t<git blob sha of the claude SKILL.md the codex port was last reconciled against>
 # After re-porting a skill to codex, refresh its line:  git hash-object claude/skills/<skill>/SKILL.md
 alignment	a02c687b2635bc4e37ffc4744d0053151953f53c
-blitz	ef91e8fac91e50cab318b2dda14d6363ef70c1f5
+blitz	d642928e1a86a34201175055a6bd5838487fa60d
 bootstrap-project-docs	bc0c0c208f875baf4ec368007e3c653283ca68ee
 code-roast	3be7599afd8cdae38910502f22a1d4d056c67af9
-dual-blitz	fd745c16e1e7c98d87bd29ecdfd250a1b504aa1f
+dual-blitz	d993f34560a2966eabf88f01d64ec017e5354fab
 fastlane	b890e7bae432bddc56124a6349a70f2acbfd92cf
 forge-change	5c8c18b3aa1db7206f769775ec61a1a0a58e25c7
 gauntlet	fc3baf341855e98976ed9c4919fb87c4d1e17d25
@@ -12,7 +12,7 @@ gatr	c813bbe17b68ae05e6816cc940f8bd6c3609b4ac
 git-identity-check	15fe8dae01842138c9757c88d3771441416a2da6
 itr	ffe33e72b8efe8f5a731c010c8bc8ae0429fbb8f
 kgr	660753e7312bae26916570ad11da92da85c78454
-overdrive	b4c7261cb1716ce766e09e8485f714c56034bc9c
+overdrive	88eda7295d0710800706e2b65e5ab1c4e0e422f7
 plr	417a4ada0a302f9c37a6277ab0767ae011404f0e
 ponytail	c9bb8ba4f3bb395b7c73efcc76f639cd56779e6b
 pre-mortem	d07c1d78be57753041e2d341d6d6f2585d02be9f
@@ -23,13 +23,13 @@ scout-strike	ff61722dd2c849ae9faf19bc27e4cac052c301e3
 shadow-duel	016e8c271f482c0ede9499f66092ec29b4753abc
 shell-prompt	cc58871664133ba31a36255c3035dd27ab5ccd60
 spicy-code-roast	6606a10f42ea66959abc5b1a7518c60b00ad6279
-sprint	34255c54a2c4529f633b3b658b76581ab2e63459
+sprint	2ac704db89e03a4362837e839e1cacda07042b35
 sprint-review	4c254bb38bb294c592596ecb1fdb95cb3be791c4
 story-style	25b41d1ca7d4a612efddd9e9654410f96c5c6ebb
 whats-next	775fc6953cd3cbcfdad72c0e6b22641bd5e2db6c
 whetstone	9670fb5e3b98656cb7c1257cc088091fe7edf5f0
 spec-writer	bf3867a8e184c7d7c79befff55f7d78a37723d1e
-feature-build	8589162330f077618ab8cdfe01ece96a491d7c53
+feature-build	f305575350ec4254db25f8452cb1cb9ca6ab649f
 mission	c555241b2d5dbcfcd7f44743114bdba99a2ce47c
 auto-versioning	f9383acd3df2008a2d1eeeb0108b04c6805f10c5
 changelog	0e4e9d6f52a252463da76767f1faf7d8383cd9d9

@@ -71,7 +71,7 @@ Then:
 
 - Run `itr stats` and `itr agent-info` when `itr` is the tracker.
 - Detect `kgr`; use it for file inference when present, otherwise use `rg`.
-- Detect the verify gate like `/blitz` unless `--verify` is supplied.
+- Detect the verify gate like `/blitz` unless `--verify` is supplied: run its preflight script, `bash <skills-dir>/blitz/scripts/preflight.sh .` (`<skills-dir>` is the directory that holds this skill's own folder, typically `~/.claude/skills`), and take the `verify-gate:` line. Its `dirty-path:` lines are the dirty worktree for the next step.
 - Inspect the dirty worktree before planning. Existing unrelated changes are not lane-owned unless the plan explicitly assigns them.
 - Set `concurrency-per-agent` to 3 by default. Lower it when shell/session pressure is obvious.
 

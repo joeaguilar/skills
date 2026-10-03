@@ -25,7 +25,7 @@ The one wrinkle Codex adds: the Codex companion allows only **one active task pe
 | Arg | Default | Meaning |
 |---|---|---|
 | `tracker` | `itr` | Backlog source (any command that lists open tasks, e.g. `gh issue list ...`). |
-| `verify` | auto-detect | Verify-gate command (Cargo / npm / pytest / go / Make — same detection table as a standard blitz). |
+| `verify` | auto-detect | Verify-gate command (Cargo / npm / pytest / go / Make / just — detected by the standard blitz's preflight script). |
 | `concurrency` | `5` | Max parallel agents per wave. |
 | `max_waves` | unset | Hard cap on waves. |
 | `time_budget` | unset | e.g. `2h`. Stop launching new waves once elapsed; in-flight wave finishes. |
@@ -91,7 +91,7 @@ Requires: git repo(s); the tracker on PATH; whenever any task routes to a Codex 
 
 ## Phase 0 — Preflight & confirm (BLOCKING)
 
-**Announce: Phase 0 — Preflight.** Resolve config from args + auto-detection (tracker, dep-graph tool `kgr` if present, verify gate per repo — same detection as a standard blitz). Then **additionally**:
+**Announce: Phase 0 — Preflight.** Resolve config from args + auto-detection (tracker, dep-graph tool `kgr` if present, verify gate per repo, uncommitted paths, unfinished wave logs — the same facts as a standard blitz, read from its preflight script: `bash <skills-dir>/blitz/scripts/preflight.sh .` once per repo root, where `<skills-dir>` is the directory that holds this skill's own folder, typically `~/.claude/skills`). Then **additionally**:
 
 - Confirm the **codex plugin is installed and authenticated** if any task is likely to route to a Codex model (gpt-5.6-terra et al.) — locate the companion runtime: `ls -d ~/.claude/plugins/cache/openai-codex/codex/*/scripts/codex-companion.mjs 2>/dev/null | sort -V | tail -1`, and confirm Codex auth (`codex login status`). Missing/unauthenticated → tell the user (`/codex:setup` / `codex login` is the fix) and offer to proceed **Claude-only** (route every bulk task to opus-5.5 instead — say so, and note the cost hit).
 - **Only if `codex_parallel=on`:** confirm the harness supports **`isolation: 'worktree'`**, or that the orchestrator can `git worktree add` itself. Worktrees are what let *several* Codex tasks per wave run in parallel (the companion keys its job store on the worktree top-level and allows only one active `task` per store — distinct worktrees dodge the `Task … is still running` guard). If worktrees are unavailable, fall back to the default (`codex_parallel=off`, ≤1 Codex/wave in the shared tree) and say so.

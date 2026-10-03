@@ -106,7 +106,7 @@ Announce `Phase 0 — Preflight`. Terse logging.
 
    | File | Default verify gate |
    |---|---|
-   | `Cargo.toml` | `cargo test && cargo clippy -- -D warnings && cargo fmt --check` |
+   | `Cargo.toml` | `cargo test && cargo clippy --all-targets -- -D warnings && cargo fmt --check` |
    | `package.json` | union of existing `test`/`lint`/`typecheck`/`format:check` scripts |
    | `pyproject.toml` | `pytest && ruff check . && ruff format --check .` |
    | `go.mod` | `go test ./... && go vet ./... && test -z "$(gofmt -l .)"` |

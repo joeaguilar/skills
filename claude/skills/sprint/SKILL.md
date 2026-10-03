@@ -47,6 +47,14 @@ State these once at the top of every run so the user knows the contract:
 
 Announce: `Phase 0 — Intake & preflight`.
 
+**Gather the facts first.** Run `blitz`'s preflight script from the repo root. It is read-only — it writes, files and closes nothing:
+
+```
+bash <skills-dir>/blitz/scripts/preflight.sh .
+```
+
+`<skills-dir>` is the directory that holds this skill's own folder (typically `~/.claude/skills`). It prints `key: value` lines, and steps 2, 4, 5, 6, 7, 8 and 9 below each name the line they read. Take the fact from the script rather than re-deriving it; where a step also spells the procedure out, that text describes what the script does and is the by-hand fallback. If the script cannot run, do those steps by hand as written and say so in the Phase 0 summary.
+
 1. **Resolve input.** In order:
    - If args contain a path that exists, read it as the spec.
    - Else if args contain inline text (more than just flags), use that.
@@ -54,26 +62,26 @@ Announce: `Phase 0 — Intake & preflight`.
    - Else if recent conversation contains a clear ask, use that.
    - Else **stop and ask** the user for a spec path or inline brief.
 
-2. **Verify `itr` is available.** Run `itr stats`. If no `.itr.db`, surface the message from the `itr` skill and confirm before `itr init`. (Defer to the `itr` skill's own intake rules.)
+2. **Verify `itr` is available.** Read the script's `tracker:` line — `itr` means `itr stats` found a database. On `itr-no-db`, surface the message from the `itr` skill and confirm before `itr init`. (Defer to the `itr` skill's own intake rules.)
 
 3. **Run `itr agent-info`** once per session to get authoritative flag/tag/urgency conventions. Use what it says over what's written here if they disagree.
 
-4. **Detect kgr.** If `kgr` is on `$PATH`, plan to use it for file inference and dependency edges (`kgr refs`, `kgr query --who-imports`). If absent, note the absence in the Phase 0 summary and proceed without it.
+4. **Detect kgr.** On `kgr: present`, plan to use it for file inference and dependency edges (`kgr refs`, `kgr query --who-imports`). On `kgr: absent`, note the absence in the Phase 0 summary and proceed without it.
 
 5. **Detect story style.** Look for project conventions in this priority:
-   - `./STORY_STYLE.md` — canonical location (built by `/story-style`).
+   - `./STORY_STYLE.md` — canonical location (built by `/story-style`); the script's `story-style:` line says whether it exists.
    - `CLAUDE.md` / `AGENTS.md` — scan for sections about story style, issue conventions, or ticket format.
    - Project default (any obvious project-level convention you can infer from existing `itr` issues — title casing, AC format, tag prefixes).
    - **Base default** (used if none of the above): see `Story style — base default` below.
 
    Note which style won in the Phase 0 summary. If the base default is in use (i.e. no `STORY_STYLE.md`, nothing relevant in `CLAUDE.md` / `AGENTS.md`, and no inferable project default), include a soft-suggest line: `Run /story-style to capture project conventions.` Do not pause — this is a surface, not a gate.
 
-6. **Determine sprint number.** Prefer filesystem over tracker:
+6. **Determine sprint number.** It is the script's `sprint-next:` line, which prefers the filesystem over the tracker:
    - If `sprint/` exists, list `sprint/sprint-*` directories, parse the leading `sprint-{N}` from each, take max N + 1.
    - Else fall back to `itr search "sprint-" -f json --fields tags`, find max `sprint-N` tag, +1.
    - If neither yields anything, this is `sprint-1`.
 
-7. **Check for in-flight sprints.** Read `sprint/CURRENT` if it exists — its single line names the most-recent open sprint folder. Cross-reference with `itr` for any open `sprint-N` epics.
+7. **Check for in-flight sprints.** The script's `sprint-current:` line is `sprint/CURRENT`'s single line, which names the most-recent open sprint folder (`absent` when there is no such file); `sprint-current-reviewed:` is the outcome of sub-steps 1–3 below. Cross-reference with `itr` for any open `sprint-N` epics.
 
    **Detect already-reviewed sprints before flagging as in-flight.** A sprint that has been through `/sprint-review` will have its `plan.md` Outcomes / Demo / Retro sections populated (Phase 6 writes them as empty HTML-comment placeholders; `/sprint-review` Phase 6 replaces them). Without this check, a closed-but-not-yet-incremented sprint will be falsely flagged as in-flight — noise the PO has to mentally filter. This mirrors the sprint-1 stale-tickets pattern (step 8 below): the bookkeeping says open, the reality is closed, and we have to read the reality before reporting.
 
@@ -86,6 +94,8 @@ Announce: `Phase 0 — Intake & preflight`.
    **Self-test (manual, for skill authors):** create a scratch `sprint/sprint-9-2026-01-01-test/plan.md` with the canonical Phase 6 template and confirm step 7 reports it as in-flight. Then replace `<!-- Populated by /sprint-review after /blitz runs. -->` with any single line of real outcomes text and re-run — step 7 should now report `reviewed, awaiting new-sprint increment` and skip the stacking warning. A missing `plan.md` should fall back to the in-flight warning path.
 
 8. **Detect stale itr tickets (commit-closed but still open in `itr`).** Git commit conventions like `closes #186` don't auto-sync into `.itr.db` — `itr` has no post-merge hook. Without this check, a sprint can over-count scope by planning a story that already shipped (sprint-1 hit this with #186; see retro action item #196).
+
+   The script runs sub-steps 1–3 and prints one `stale-ticket: #<id> <sha> <subject>` line per candidate (30-day window; rerun it with `--since <days>` to widen). No such line means no candidates. Start from those lines at sub-step 4.
 
    1. Run, in the current repo:
 
@@ -114,7 +124,7 @@ Announce: `Phase 0 — Intake & preflight`.
 
    **Self-test (manual, for skill authors):** to validate this step end-to-end, create a synthetic stale ticket in a scratch repo — open an `itr` ticket, then commit any file with `closes #<that-id>` in the message, then re-run `/sprint`. The preflight should surface the ticket and offer the three choices. A repo with zero matching commits, or zero open referenced IDs, should produce `Stale tickets: none`. No automated test exists for skill templates; the verify path is re-read of this file + the synthetic-repo exercise above.
 
-9. **Detect `docs/ROADMAP.md`** (the cross-sprint product map built by `/roadmap`). Resolution order: `docs/ROADMAP.md` → `./ROADMAP.md` (spec-less projects). If found:
+9. **Detect `docs/ROADMAP.md`** (the cross-sprint product map built by `/roadmap`). Resolution order: `docs/ROADMAP.md` → `./ROADMAP.md` (spec-less projects); the script's `roadmap:` line names the one it found. If found:
 
    1. Read the file. Parse the per-section tables to extract: section title, status (✅/🟡/❌), size, linked itr issues, and any optional `Trajectory` section.
 

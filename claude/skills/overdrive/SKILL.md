@@ -91,41 +91,34 @@ Only human touch inside the loop = Phase 7. With `--auto`/`--trust`, Phase 7 ski
 
 Announce `Phase 0 — Preflight & baseline`. Terse logging throughout.
 
+**Facts first.** Run `blitz`'s preflight script once per repo root — read-only, writes nothing: `bash <skills-dir>/blitz/scripts/preflight.sh .` (`<skills-dir>` = the dir holding this skill's folder, typically `~/.claude/skills`). Steps 2–7 read its `key: value` lines; don't re-derive them. Script can't run → say so, ask once for `--verify`, gather the rest by hand.
+
 1. **Input → mode**, in order:
    - `--backlog`, or empty input + tracker has open tickets → **execute mode** (skip Phase 1).
    - Path that exists / inline brief / recent `/plan` / clear conversational ask → **plan mode**.
    - Nothing usable, no open tickets → **terminal no-op** (not a gate): print `Nothing to clear — no spec/brief and no open tickets. Re-invoke with a spec, brief, or --backlog.` Stop.
 
-2. **Tracker.** Default `itr`. `itr stats`; no `.itr.db` → **autonomously `itr init`** (init fail → surface + stop). `itr agent-info` once — prefer its syntax for `update`/`close`/`--files`/body fields over anything here. `--tracker` override → capture list-open + close cmds. Snapshot `agent-info` → `run.md`.
+2. **Tracker.** Default `itr`. `tracker: itr` → use it; `tracker: itr-no-db` → **autonomously `itr init`** (init fail → surface + stop). `itr agent-info` once — prefer its syntax for `update`/`close`/`--files`/body fields over anything here. `--tracker` override → capture list-open + close cmds. Snapshot `agent-info` → `run.md`.
 
 3. **Detect tooling** (non-blocking):
-   - `kgr` on PATH → file inference (`kgr refs`, `kgr query --who-imports`) + Phase 6 contract check.
-   - `STORY_STYLE.md` / `CLAUDE.md` / `AGENTS.md` → mirror issue conventions.
-   - `docs/ROADMAP.md` → seed goal (plan mode), update Phase 8.
-   - `sprint/CURRENT` → in-flight sprint (execute mode finds the folder here).
+   - `kgr: present` → file inference (`kgr refs`, `kgr query --who-imports`) + Phase 6 contract check.
+   - `story-style:` / `CLAUDE.md` / `AGENTS.md` → mirror issue conventions.
+   - `roadmap:` → seed goal (plan mode), update Phase 8.
+   - `sprint-current:` → in-flight sprint (execute mode finds the folder here).
 
-4. **Sprint number & folder.** Execute mode + valid `sprint/CURRENT` → reuse that folder + `sprint-{N}` (continuing; don't allocate new). Else: max `sprint-{N}` under `sprint/` +1 (fallback max `sprint-N` tag +1; else `sprint-1`). Slug = `--name`, else 2–4 keywords from goal (plan) / input (execute), `[a-z0-9-]`, cap 32. Folder = `sprint-{N}-{YYYY-MM-DD}-{slug}`; collision → append `-{HHMM}`.
+4. **Sprint number & folder.** Execute mode + `sprint-current-valid: yes` → reuse that folder + `sprint-{N}` (continuing; don't allocate new). Else: the script's `sprint-next:` (max `sprint-{N}` under `sprint/` +1; fallback max `sprint-N` tag +1; else `sprint-1`). Slug = `--name`, else 2–4 keywords from goal (plan) / input (execute), `[a-z0-9-]`, cap 32. Folder = `sprint-{N}-{YYYY-MM-DD}-{slug}`; collision → append `-{HHMM}`.
 
-5. **Stale-ticket sweep.** `git log --grep='closes\? #'` / `fixes\? #` / `resolves\? #` (last 30 days). Referenced ID still `open` in `itr` = shipped-not-closed → **autonomously exclude** from scope, log `run.md` → `Stale (excluded)`. (Autonomous — no three-way pause; commit already shipped it.)
+5. **Stale-ticket sweep.** Each `stale-ticket: #id sha subject` line = a commit in the last 30 days says closes / fixes / resolves `#id` and `itr` still has it `open` = shipped-not-closed → **autonomously exclude** from scope, log `run.md` → `Stale (excluded)`. (Autonomous — no three-way pause; commit already shipped it.)
 
 6. **Git safety & baseline** (load-bearing — makes rollback safe). Orchestrator commits → tree must be sane. Resolve **autonomously** except the one hard blocker:
-   - **Not a repo** → **hard stop**: print `overdrive needs a git repo — run \`git init\` and retry (per-wave commits are load-bearing).` No auto-init.
-   - **Detached HEAD** → create + checkout `overdrive-{slug}`. Log.
+   - **Not a repo** (`git: absent`) → **hard stop**: print `overdrive needs a git repo — run \`git init\` and retry (per-wave commits are load-bearing).` No auto-init.
+   - **Detached HEAD** (`branch: detached`) → create + checkout `overdrive-{slug}`. Log.
    - **`--branch name`** → `git checkout -b name` off HEAD.
-   - **No commits** → `git commit --allow-empty -m "overdrive: baseline"`; confirm landed (`git rev-parse HEAD` exit 0).
-   - **Dirty tree** → **don't commit user WIP, don't gate — stash it.** `git stash push --include-untracked -m "overdrive: pre-run WIP (sprint-N)"`. Preserves their work (recoverable) + clean baseline. Surface stash ref + restore hint (`git stash list` / `git stash pop`).
+   - **No commits** (`head: none`) → `git commit --allow-empty -m "overdrive: baseline"`; confirm landed (`git rev-parse HEAD` exit 0).
+   - **Dirty tree** (`dirty:` above 0) → **don't commit user WIP, don't gate — stash it.** `git stash push --include-untracked -m "overdrive: pre-run WIP (sprint-N)"`. Preserves their work (recoverable) + clean baseline. Surface stash ref + restore hint (`git stash list` / `git stash pop`).
    - `BASELINE_SHA = git rev-parse HEAD`. Record `run.md`. Verify clean: `git diff-index --quiet HEAD --` exit 0 — else surface + stop (never swarm a dirty tree).
 
-7. **Config & verify gate.** `concurrency` (cap 5, clamp+warn), `max-waves`, `max-retries` (2), `time-budget`, `--auto`/`--trust`. **`--auto` backstop:** `--auto` + neither `--time-budget` nor `--max-waves` → set `max-waves = 2 × open-ticket-count`, warn `Auto with no cap — backstopping at <N> waves; override with --max-waves/--time-budget.` Auto-detect verify gate/repo unless `--verify`:
-
-   | File | Default verify gate |
-   |---|---|
-   | `Cargo.toml` | `cargo test && cargo clippy -- -D warnings && cargo fmt --check` |
-   | `package.json` | union of existing `test`/`lint`/`typecheck`/`format:check` scripts |
-   | `pyproject.toml` | `pytest && ruff check . && ruff format --check .` |
-   | `go.mod` | `go test ./... && go vet ./... && test -z "$(gofmt -l .)"` |
-   | `Makefile` w/ `test` | `make test` + any of `lint`/`check`/`verify` |
-   | nothing matched | **stop and ask** for the gate cmd (one-time setup input, same class as repo/tracker — *not* a workflow gate) |
+7. **Config & verify gate.** `concurrency` (cap 5, clamp+warn), `max-waves`, `max-retries` (2), `time-budget`, `--auto`/`--trust`. **`--auto` backstop:** `--auto` + neither `--time-budget` nor `--max-waves` → set `max-waves = 2 × open-ticket-count`, warn `Auto with no cap — backstopping at <N> waves; override with --max-waves/--time-budget.` Verify gate/repo = the script's `verify-gate:` line unless `--verify` (detection table lives in the script — Cargo, npm scripts, pyproject, go.mod, Makefile, justfile; first match wins; `verify-gate-source:` names the file). `verify-gate: missing` → **stop and ask** for the gate cmd (one-time setup input, same class as repo/tracker — *not* a workflow gate).
 
    No-op/`true` gate is **deliberately not** the fallback: unverified per-wave commits ship broken code + kill self-healing. Supply `--verify` once to stay hands-off on odd stacks.
 

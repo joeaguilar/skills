@@ -87,8 +87,10 @@ machine, before the next commit:
    git config --global user.email joeaguilar@users.noreply.github.com
    git config --show-origin user.email   # must come from the global file; no --local override
    ```
-   Audit every repo on the machine with the `git-identity-check` skill (read-only;
-   it never rewrites history).
+   Audit every repo on the machine with Git Pulse's identity audit, `/git-pulse identity`
+   (a mod; read-only apart from a button that unsets a local override, and it never
+   rewrites history). On a machine without the mod, run the four commands in
+   `claude/archived/skills/git-identity-check/SKILL.md` by hand.
 2. **Hooks** — the commit gates are the separate githooks repo, installed once per
    machine through a global `core.hooksPath`; this repo's `.githooks/pre-commit` is
    only the repo-local delegate that global hook calls. Clone githooks **beside this

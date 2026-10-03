@@ -23,12 +23,20 @@
 # will start enforcing parity for it normally.
 
 # --- Codex-only skills ---
-# (dual-blitz, fastlane, run-the-rivers-dry, bootstrap-project-docs graduated to parity — Claude
+# (dual-blitz, fastlane, run-the-rivers-dry graduated to parity — Claude
 #  peers now live in claude/skills/; Codex refreshes codex/PARITY.tsv on its side to clear the
 #  staleness warning.)
 codex	skills	retro-game-assets
 codex	skills	panthexia-tiled-materials
 codex	skills	panthexia-sprites
+# Claude retired these four to claude/archived/skills/ on 2026-10-03: Claude Code mods took over
+# their work (the whats-next, ponytail and bootstrap-docs mods, and Git Pulse's identity audit).
+# Codex has no mods, so its ports stay and are Codex-only. To bring one back to parity, restore
+# the Claude skill (claude/archived/README.md) and delete its line here.
+codex	skills	whats-next
+codex	skills	ponytail
+codex	skills	bootstrap-project-docs
+codex	skills	git-identity-check
 
 # --- Codex-only agents (drift: Claude converted these imports to skills; Codex keeps the agent form) ---
 codex	agents	analytics-event-architect.md
@@ -69,8 +77,8 @@ claude	skills	ninja-meiyaku
 # Each is a self-contained "blade" that slices a problem a different way. Claude forged
 # these first; graduate each to parity as its codex/skills/<blade> port lands.
 claude	skills	fan-of-agents
-# tsugi is the quiet dojo-voiced pointer (one stone, three lines) — kin of whats-next.
-claude	skills	tsugi
+# (tsugi, the quiet dojo-voiced pointer, archived 2026-10-03 to claude/archived/skills/tsugi:
+#  the whats-next mod answers /tsugi with no model turn.)
 # feint is the read-only counterweight to the rack — every execution blade writes by default,
 # so feint walks the whole motion and lands nothing, handing back the would-be cut to preview.
 claude	skills	feint
@@ -124,10 +132,8 @@ claude	skills	old-mission-skill-ab
 # `user-invocable: false` frontmatter key (model-invoked only, no slash command), which has
 # no Codex equivalent — a port would be user-callable, the opposite of the design.
 claude	skills	typo
-# start is the generic, convention-discovering counterpart to whats-next (whats-next encodes
-# THIS ecosystem's next-work surfaces; start reads whatever conventions a shared repo documents).
-# Claude-only for the same frontmatter reason: it relies on `disable-model-invocation`.
-claude	skills	start
+# (start, the generic convention-discovering counterpart to whats-next, archived 2026-10-03 to
+#  claude/archived/skills/start: the whats-next mod's /start submits its text as the prompt.)
 
 # crucible is the generic sibling of gauntlet: it depends on the Workflow tool (no Codex
 # equivalent), the ultracode session toggle, and the Codex-companion critic seat driven from

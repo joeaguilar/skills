@@ -46,7 +46,7 @@ Not every blade in the dojo is a four-knob orchestration cut. These follow the f
 
 | Blade | 印 | Nature | Draw it when |
 |---|---|---|---|
-| `tsugi` | 次 | quiet pointer — one stone, three lines, read-only, never begins work | "next?" deserves a breath, not a report |
+| `tsugi` | 次 | quiet pointer — one stone, three lines, read-only, never begins work. *Archived 2026-10-03:* `/tsugi` is now answered by the `whats-next` mod with no model turn; the blade's text is kept in `claude/archived/skills/tsugi/` | "next?" deserves a breath, not a report |
 | `feint` | 虚 | the empty attack — walk the whole motion read-only, draft the would-be change in full, land nothing | you want to see the cut without making it — the one read-only blade |
 | `ninja-meiyaku` | 盟 | sworn stealth campaign — choose targets (or take `--sprint`) → model-routed cross-reviewed waves → last look → whisper review | the whole backlog gamut, run in silence end-to-end under one pact |
 | `masamune` | 正 | the legend — ONE agent on the finest steel (Fable), whole task, one cut, no retry, silence between draw and cut | the task deserves the best blade, not many blades |

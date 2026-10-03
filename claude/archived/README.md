@@ -9,6 +9,17 @@ built from. Layout mirrors the installed roots: `claude/archived/skills/<name>/`
 
 | Archived | Date | Replaced by | Codex port |
 |---|---|---|---|
+| `skills/whats-next` | 2026-10-03 | `whats-next` mod: a band line with the next item, the `/whats-next` pane, a `report` tool the model can call | stays, Codex-only |
+| `skills/tsugi` | 2026-10-03 | `whats-next` mod: `/tsugi` | none |
+| `skills/start` | 2026-10-03 | `whats-next` mod: `/start` and `Start ¤` submit this text as the prompt | none |
+| `skills/ponytail` | 2026-10-03 | `ponytail` mod: `/ponytail on\|off` adds the body as a system-prompt section | stays, Codex-only |
+| `skills/bootstrap-project-docs` | 2026-10-03 | `bootstrap-docs` mod: `/bootstrap-docs` writes the scaffold with no model turn | stays, Codex-only |
+| `skills/git-identity-check` | 2026-10-03 | Git Pulse 0.2.0: `/git-pulse identity [path…]` | stays, Codex-only |
+
+Two skills gave only a part of themselves to a mod and stay installed:
+`unity-bridge` (the `unity-sync` mod runs `sync` after `.cs` edits and shows the
+result to the person) and `crucible` / `gauntlet` (Seat Guard 0.2.0 supplies the
+route ledger's `actual` column).
 
 ## Where the replacements live
 

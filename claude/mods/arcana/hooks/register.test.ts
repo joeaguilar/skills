@@ -176,6 +176,25 @@ test('captures the prompt and the edit when no settings hook does', async ($, on
   expect(status.at(-1)).toBe('arcana: 1 edit this session (mod captures)')
 })
 
+test('a finished background task does not replace the prompt', async ($, on) => {
+  const { hooks } = world(on)
+
+  await $.session.start(start)
+  await $.turn.start({ text: 'fix the parser', turnId: 'turn-1' })
+  await $.turn.start({
+    text: '<task-notification>\n<task-id>b1</task-id>\n</task-notification>',
+    turnId: 'turn-2',
+  })
+  await $.tool.call(EDIT)
+
+  const sent = hooks().map(run => [run.argv[2], JSON.parse(run.stdin ?? '{}').prompt_id])
+  expect(sent).toEqual([
+    ['prompt', 'turn-1'],
+    ['pre', 'turn-1'],
+    ['post', 'turn-1'],
+  ])
+})
+
 test('stands down when the settings hooks already capture', async ($, on) => {
   const { hooks, status } = world(on, { settings: SETTINGS_HOOKS })
 

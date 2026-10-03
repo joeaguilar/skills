@@ -292,8 +292,12 @@ export const register: Register = on => {
   })
 
   on('turn.start', async ($, e, next) => {
-    // A turn with no text continues the prompt before it.
-    if (capture.mode === 'mod' && e.text !== '') {
+    // A turn with no text continues the prompt before it, and so does one a
+    // finished background task started: the harness wrote that text.
+    const isPrompt =
+      e.text !== '' && !e.text.trimStart().startsWith('<task-notification>')
+
+    if (capture.mode === 'mod' && isPrompt) {
       capture.promptId = e.turnId
       await record($, capture, 'prompt', {
         session_id: capture.sessionId,

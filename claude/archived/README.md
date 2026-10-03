@@ -17,6 +17,9 @@ built from. Layout mirrors the installed roots: `claude/archived/skills/<name>/`
 | `skills/git-identity-check` | 2026-10-03 | Git Pulse 0.2.0: `/git-pulse identity [path…]` | stays, Codex-only |
 | `skills/queue-up-persistent` | 2026-10-03 | `queue` mod: `/queue` stages, shows, drops and clears with no model turn; `--run`, `--now` and `--drain` submit the task. Holds `QUEUE.md` (the `--queue` controls) and the `queue-up` SKILL.md as it was when it routed to them. | none |
 
+| `skills/typo` | 2026-10-03 | One always-on line, "Typos", in the global instructions (`claude/global-CLAUDE.md`): the model has to notice a typo either way, and a skill cost a tool round trip each time | none |
+| `skills/old-mission-skill-ab` | 2026-10-03 | Nothing: it is the earlier `mission` skill, kept for the 2026-07-26 A/B comparison under `artifacts/`. `mission` and `scrum` carry the work now | none |
+
 `queue-up` itself stays installed for its in-session TodoList path only. Two more
 skills gave only a part of themselves to a mod and stay installed:
 `unity-bridge` (the `unity-sync` mod runs `sync` after `.cs` edits and shows the

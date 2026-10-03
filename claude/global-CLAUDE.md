@@ -18,5 +18,9 @@
   private repos, personal details, or machine layout go in the folder named by the
   `AI_PRIVATE` environment variable, never inside a git repo's working tree. If the
   variable is unset, ask where to put the document instead of writing it into a repo.
+- **Typos:** when the user's prompt has a typo (not quoted, called out, or a real
+  name), open the reply with one short line saying what you saw and what you read
+  it as, every correction on that line, then answer normally. Missing apostrophes
+  in contractions (dont, cant, didnt) are not typos.
 - **Close with actions:** end substantive replies with open questions and pending
   decisions as their own short list, separate from the analysis.

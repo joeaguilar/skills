@@ -125,13 +125,9 @@ claude	skills	ml-integration
 # tdd_process is the quick-reference companion to the tdd-coach skill; kept deliberately.
 claude	commands	tdd_process.md
 claude	skills	scrum
-claude	skills	old-mission-skill-ab
-
-
-# typo is a micro-skill for flagging user-prompt typos; it depends on the Claude Code
-# `user-invocable: false` frontmatter key (model-invoked only, no slash command), which has
-# no Codex equivalent — a port would be user-callable, the opposite of the design.
-claude	skills	typo
+# (old-mission-skill-ab, the earlier mission skill kept for an A/B comparison, and typo, the
+#  micro-skill for flagging user-prompt typos, archived 2026-10-03 to claude/archived/skills/.
+#  typo's rule is now one always-on line in claude/global-CLAUDE.md.)
 # (start, the generic convention-discovering counterpart to whats-next, archived 2026-10-03 to
 #  claude/archived/skills/start: the whats-next mod's /start submits its text as the prompt.)
 

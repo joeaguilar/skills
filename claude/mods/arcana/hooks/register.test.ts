@@ -223,6 +223,17 @@ test('/arcana off stops capture, the feed and the status line', async ($, on) =>
   expect(stored.enabled).toBe(false)
 })
 
+test('/arcana answers for itself when session.start has not finished', async ($, on) => {
+  const { status } = world(on, { settings: SETTINGS_HOOKS })
+
+  // No session.start yet: the command arrived first, as it does when it was
+  // typed while the mod was loading.
+  const answer = await $.command.run(typed(''))
+
+  expect(answer.text).toMatch(/^The settings hooks capture this session/)
+  expect(status.at(-1)).toBe('arcana: 0 edits this session (hooks capture)')
+})
+
 test('stays off in a session that starts after /arcana off', async ($, on) => {
   const { runs, status } = world(on, { stored: { enabled: false } })
 

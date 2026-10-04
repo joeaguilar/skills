@@ -77,6 +77,16 @@ const detect = async (
   return JSON.stringify(hooks ?? {}).includes(`${BIN} hook`) ? 'hooks' : 'mod'
 }
 
+// Learns the session and where the mod stands. A command can arrive before
+// session.start has finished doing this, so both go through here.
+const settle = async ($: EngineInterface, capture: Capture) => {
+  if (capture.sessionId === '') {
+    capture.sessionId = await $.session.id()
+    capture.startedAt = await $.clock.now()
+  }
+  capture.mode = await detect($, capture)
+}
+
 const count = ({ edits }: Capture) =>
   `${edits} ${edits === 1 ? 'edit' : 'edits'} this session`
 
@@ -250,9 +260,7 @@ export const register: Register = on => {
         "Show arcana's capture state or its feed, or switch the mod on or off",
       argumentHint: '[feed|on|off]',
     })
-    capture.sessionId = await $.session.id()
-    capture.startedAt = await $.clock.now()
-    capture.mode = await detect($, capture)
+    await settle($, capture)
     show($, capture)
     watch($, capture)
 
@@ -261,6 +269,21 @@ export const register: Register = on => {
 
   on('command.run', { command: 'arcana' }, async ($, e) => {
     const wanted = e.args.trim().toLowerCase()
+
+    if (wanted === 'off') {
+      await $.store.set(ENABLED, false)
+      capture.mode = 'off'
+      await $.ui.close({ id: PANE }).catch(() => undefined)
+    } else if (wanted === 'on' || wanted === 'feed' || wanted === '') {
+      if (wanted === 'on') await $.store.set(ENABLED, true)
+      // Looked up afresh: the answer is right even while session.start is
+      // still running, or after `arcana init` or an install mid-session.
+      await settle($, capture)
+    } else {
+      return { text: 'Usage: /arcana [feed|on|off]' }
+    }
+    show($, capture)
+    watch($, capture)
 
     if (wanted === 'feed') {
       if (!isLive(capture.mode)) return { text: describe(capture) }
@@ -274,19 +297,6 @@ export const register: Register = on => {
           : `arcana feed is open but not drawn yet: ${opened.reason}`,
       }
     }
-
-    if (wanted === 'off') {
-      await $.store.set(ENABLED, false)
-      capture.mode = 'off'
-      await $.ui.close({ id: PANE }).catch(() => undefined)
-    } else if (wanted === 'on') {
-      await $.store.set(ENABLED, true)
-      capture.mode = await detect($, capture)
-    } else if (wanted !== '') {
-      return { text: 'Usage: /arcana [feed|on|off]' }
-    }
-    show($, capture)
-    watch($, capture)
 
     return { text: describe(capture) }
   })

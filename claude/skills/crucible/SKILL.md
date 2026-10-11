@@ -1,6 +1,6 @@
 ---
 name: crucible
-description: Run (or resume) a two-layer, rubric-gated autonomous build/critique loop on ANY project — the work is laid out as milestones that together cover everything the spec proposes (planning must be finished for every one of them before the run starts), a milestone is met only when the gate closes every target in it and its outcome command runs, and within a milestone the whole chain of targets is built first, one Workflow per link (Spec → Build ∥ blind test-author → Evidence → bounded Repair) with only the hard gate between links, then critiqued once it works end to end, with fix rounds only where an axis is below the bar; a hard layer-1 gate (no new test failures, changed-lines coverage, every declared behavior pinned by a passing test, declared metric thresholds) plus blind instrumented critics scored against a negotiated rubric, closure decided solely by `gate.mjs`, evidence produced only by contract-registered instruments, routing reconciled via a mandatory route ledger. Trigger when the user types `/crucible`, or asks to "run the crucible loop", "iterate this module until it's actually good", "rubric-gated loop with real tests", "autonomous build/critique loop on this package", "resume the crucible", or similar. Do NOT trigger for a visual/pixel subsystem where the measurement IS the pixels (use `/gauntlet` — it carries a verified pixel instrument), for a single one-off review (use `/code-review`), for clearing a task backlog in parallel (use `/blitz`), or for a roadmap-bounded campaign (use `/proof-campaign`).
+description: Run (or resume) a two-layer, rubric-gated autonomous build/critique loop on ANY project — the work is laid out as milestones that together cover everything the spec proposes (planning must be finished for every one of them before the run starts), a milestone is met only when the gate closes every target in it and its outcome command runs, the loop is run exactly as written, work that does not fit it is told so and pointed to a workflow that does, and within a milestone the whole chain of targets is built first, one Workflow per link (Spec → Build ∥ blind test-author → Evidence → bounded Repair) with only the hard gate between links, then critiqued once it works end to end, with fix rounds only where an axis is below the bar; a hard layer-1 gate (no new test failures, changed-lines coverage, every declared behavior pinned by a passing test, declared metric thresholds) plus blind instrumented critics scored against a negotiated rubric, closure decided solely by `gate.mjs`, evidence produced only by contract-registered instruments, routing reconciled via a mandatory route ledger. Trigger when the user types `/crucible`, or asks to "run the crucible loop", "iterate this module until it's actually good", "rubric-gated loop with real tests", "autonomous build/critique loop on this package", "resume the crucible", or similar. Do NOT trigger for a visual/pixel subsystem where the measurement IS the pixels (use `/gauntlet` — it carries a verified pixel instrument), for a single one-off review (use `/code-review`), for clearing a task backlog in parallel (use `/blitz`), or for a roadmap-bounded campaign (use `/proof-campaign`).
 ---
 
 # crucible — two-layer gated build/critique loop, any project
@@ -24,6 +24,53 @@ in order. A milestone is **met** when the gate has CLOSED every target in it and
 sentence says — nothing less. The run is finished when every milestone is met, or is reported as not met with
 what it would take. Part of the work is never "the scope" because it happened to be the part that was
 specified, came first, or fit the budget.
+
+## Run the loop as written, or say that the work does not fit it
+
+**This loop is followed exactly as this file describes it. It is not a menu and not a starting point.** The
+order is fixed:
+
+1. Planning check, fit check, then the contract — covering every milestone.
+2. Baselines: measured, never scored.
+3. For each milestone in order: build every link, with only the hard gate between links → run the
+   milestone's outcome command → critique each of its targets once → fix rounds only on an axis below the bar
+   → the milestone is met → the next milestone starts in the same turn.
+
+Do not reorder, skip, add or repeat a step on your own judgement. No critic between links. No critique of a
+baseline. No closing one target before the next one is built. No round whose purpose is a higher score. No
+stopping to report between links. No bookkeeping beyond Phase 5. No reading "milestone 1" as "the run". If you
+notice you are doing something this file does not describe, stop doing it and return to the step you left.
+
+**If the work does not fit the loop, SAY SO, in those words, and do not run it.** The work fits only when
+every one of these holds (the **fit check**, run in Phase 0 before the contract and again whenever the facts
+change):
+
+- Every milestone can be given an outcome sentence and a command that shows it.
+- The work divides into targets with disjoint files, in a build order, few enough to be one chain per
+  milestone. A roadmap of dozens of rows is a campaign, not a chain.
+- "Good" can be measured by registered instruments — tests, declared behaviors, metrics — and not only by eye.
+- The agreed budget can close every milestone (`--validate-contract` checks the arithmetic).
+- The loop can be run as written on this machine: the Workflow toggle is on, the engine verifies, every seat
+  the contract needs can run its instruments.
+
+When any of them fails, the first thing the user reads is: **"This work does not fit the crucible loop,
+because <the check that failed>."** Then name the workflow that does fit and why, and wait for their choice:
+
+| The work is… | Use |
+|---|---|
+| a whole roadmap, many rows, closed only on proof | `/proof-campaign`, or `/rolling-campaign` when it will not fit one context |
+| greenfield, or "take this from brief to working": the smallest runnable end-to-end path first | `/mission` |
+| a backlog of independent tasks that can run side by side | `/blitz` |
+| one feature in one sitting | `/feature-build` |
+| a visual subsystem where the measurement is the pixels | `/gauntlet` |
+| one review of work that already exists | `/code-review` |
+
+Never bend the loop to make the work fit, never bend the work (cut it down, pick the part that fits) to make
+the loop fit, and never run some other shape of loop under this name. The same holds in the middle of a run:
+when a step cannot be carried out as written — a seat cannot run, the engine cannot do what a phase asks, the
+budget cannot close what is left — stop at that step, say which step and why, and offer the choices: repair
+the rig, change the contract with the user's yes, or move the rest of the work to a workflow that fits.
+Carrying on in an improvised shape is the one thing not on that list.
 
 Every rule below is wired to a file, a gate, or a harness toggle — **anything the loop asserts about its own
 behavior must land in one of those three.** A rule that can only be obeyed by remembering it is dropped after
@@ -131,6 +178,10 @@ when toggles and engine copies have been lost.
    baseline or build. Do not start on the part that happens to be specified while the rest waits. Only the
    user takes work out of the run, in so many words; agreeing to an order of delivery ("that can be
    milestone 2", "start with the core") takes nothing out.
+   **Fit check (BLOCKING, before any contract is drafted).** Run the five checks under "Run the loop as
+   written, or say that the work does not fit it". If one fails, do not draft a contract: tell the user
+   "This work does not fit the crucible loop, because …", name the workflow that does, and wait. Write the
+   result in STATUS.md as `Fit: yes — <date>` or do not start.
    **Then the contract.** Scan the repo: language and package manager, test runner
    and its machine-readable reporter flag, coverage tooling, linter/typechecker, benchmark or perf harness,
    CI config, existing scripts, and which measurement surfaces are reachable (Chrome MCP, `unity-bridge`,
@@ -440,6 +491,7 @@ once per stage, and do not edit the script to change it mid-run.
 
 ## Principles
 
+- The loop is run as written or not at all. Work that does not fit it is told so, out loud, and sent to a workflow that fits.
 - Everything the spec proposes is work to be done. The run is measured in milestones met, not in targets closed, scores or rounds spent.
 - A plan that is detailed up to a point and thin after it is not finished. Finish it with the user before building any of it.
 - Finish a milestone's chain before judging it. A working end-to-end result with residuals beats a first layer at 9 and nothing a person can run.
@@ -453,6 +505,8 @@ once per stage, and do not edit the script to change it mid-run.
 
 ## Don't
 
+- Don't run this loop in any shape other than the one written here, and don't start it on work that fails the fit check. Say "this work does not fit the crucible loop, because …" and name the workflow that does.
+- Don't improvise when a step cannot be done as written. Stop at that step, say so, and offer: repair the rig, change the contract with the user's yes, or another workflow.
 - Don't draft a contract, take a baseline or build anything while any milestone the spec proposes is planned more thinly than the first. Stop and finish the planning with the user.
 - Don't narrow the run to part of what the spec proposes — a "priority path", a first slice, the first milestone — on your own, and don't read a yes to an order of delivery as leaving work out.
 - Don't call a milestone met unless the gate closed every target in it and its outcome command ran. Don't skip or thin the review for a later milestone.

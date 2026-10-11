@@ -1,14 +1,21 @@
 ---
 name: crucible
-description: Run (or resume) a two-layer, rubric-gated autonomous build/critique loop on ANY project — one Workflow per iteration (Spec → Build ∥ blind test-author → Evidence → bounded Repair → Critique), a hard layer-1 gate (no new test failures, changed-lines coverage, every declared behavior pinned by a passing test, declared metric thresholds) plus blind instrumented critics scored against a negotiated rubric, closure decided solely by `gate.mjs`, evidence produced only by contract-registered instruments, routing reconciled via a mandatory route ledger. Trigger when the user types `/crucible`, or asks to "run the crucible loop", "iterate this module until it's actually good", "rubric-gated loop with real tests", "autonomous build/critique loop on this package", "resume the crucible", or similar. Do NOT trigger for a visual/pixel subsystem where the measurement IS the pixels (use `/gauntlet` — it carries a verified pixel instrument), for a single one-off review (use `/code-review`), for clearing a task backlog in parallel (use `/blitz`), or for a roadmap-bounded campaign (use `/proof-campaign`).
+description: Run (or resume) a two-layer, rubric-gated autonomous build/critique loop on ANY project — the whole chain of targets is built first, one Workflow per link (Spec → Build ∥ blind test-author → Evidence → bounded Repair) with only the hard gate between links, then critiqued once it works end to end, with fix rounds only where an axis is below the bar; a hard layer-1 gate (no new test failures, changed-lines coverage, every declared behavior pinned by a passing test, declared metric thresholds) plus blind instrumented critics scored against a negotiated rubric, closure decided solely by `gate.mjs`, evidence produced only by contract-registered instruments, routing reconciled via a mandatory route ledger. Trigger when the user types `/crucible`, or asks to "run the crucible loop", "iterate this module until it's actually good", "rubric-gated loop with real tests", "autonomous build/critique loop on this package", "resume the crucible", or similar. Do NOT trigger for a visual/pixel subsystem where the measurement IS the pixels (use `/gauntlet` — it carries a verified pixel instrument), for a single one-off review (use `/code-review`), for clearing a task backlog in parallel (use `/blitz`), or for a roadmap-bounded campaign (use `/proof-campaign`).
 ---
 
 # crucible — two-layer gated build/critique loop, any project
 
-Iterate a **target** (a module, package, service, or feature slice) through Spec → Build → Evidence →
-Critique rounds until `gate.mjs` declares it CLOSED. Sibling of `/gauntlet`: same honesty chain, but the
-rubric axes are **negotiated per project** rather than fixed, evidence comes from **contract-registered
-instruments** rather than a pixel tool, and tests are a **hard gate** rather than an afterthought.
+Build a **chain of targets** (modules, packages, services, or feature slices, each built on the one before)
+through Spec → Build → Evidence links, then critique what was built until `gate.mjs` declares each target
+CLOSED. Sibling of `/gauntlet`: same honesty chain, but the rubric axes are **negotiated per project** rather
+than fixed, evidence comes from **contract-registered instruments** rather than a pixel tool, and tests are a
+**hard gate** rather than an afterthought.
+
+**Building comes first and critique is spent sparingly.** The hard gate (tests, declared behaviors, coverage,
+metrics) is mechanical and cheap, so it sits between every pair of links. A critic costs about as much as the
+build it judges, so critics run once the chain works end to end, each target closes on its first critique at
+the bar, and another scored round is spent only on an axis that is below it. A run that polishes its first
+layers and never reaches the last one has failed, whatever its scores say.
 
 Every rule below is wired to a file, a gate, or a harness toggle — **anything the loop asserts about its own
 behavior must land in one of those three.** A rule that can only be obeyed by remembering it is dropped after
@@ -19,15 +26,19 @@ Load-bearing tools (exact contracts — do not re-derive them). `<dir>` = artifa
 ```
 node <dir>/tools/gate.mjs [--dir <dir>/critiques] [--json]     # full closure report, all targets
 node <dir>/tools/gate.mjs --check <target>                      # exit 0 iff CLOSED — the SOLE closure authority
+node <dir>/tools/gate.mjs --layer1 <target> --iter <N>          # exit 0 iff that link passes the hard layer — what advances the chain
 node <dir>/tools/gate.mjs --validate <file.json>                # schema-check one critique verdict
-node <dir>/tools/gate.mjs --validate-contract [CONTRACT.json]   # schema-check the negotiated contract
+node <dir>/tools/gate.mjs --validate-contract [CONTRACT.json]   # schema-check the negotiated contract, budget included
 node <dir>/tools/gate.mjs --verify-engine                       # sha256 every copied tool vs manifest.json
     --waive <target>:<axis>   # honor a waiver for THIS invocation only (repeatable)
-    --cap N                   # iteration budget for THIS invocation only (default 40)
+    --cap N                   # scored rounds allowed PER TARGET (default 4)
+    --run-cap N               # scored rounds allowed over ALL targets (default: none)
+    --confirm N               # critiques in a row at the bar that close a target (default 1)
     --bar N                   # closure bar for every axis, 1-10 (default 8)
     --contract <path>         # contract location (default <dir>/CONTRACT.json)
 
 node <dir>/tools/evidence.mjs run --target <t> --iter <N>       # run registered instruments -> evidence report
+node <dir>/tools/evidence.mjs run --target <t> --iter <N> --scratch   # re-measure without replacing that report
 node <dir>/tools/evidence.mjs baseline --target <t>             # iteration-0 snapshot -> baseline/<t>.json
 node <dir>/tools/testreport.mjs parse <file> --format <fmt>     # junit|tap|cargo-json|pytest-json|go-json|auto
 node <dir>/tools/testreport.mjs behaviors <file> --map <b.json> # behavior id -> passing test resolution
@@ -37,9 +48,14 @@ node <dir>/tools/cover.mjs changed <cov> --format <fmt> --globs # coverage on CH
 Every command supports `--json`; parse that, never scrape prose output.
 
 **gate.mjs is STATELESS** — a pure function of the critiques dir, the evidence reports, and its flags;
-`--waive`, `--cap`, and `--bar` persist nothing. The durable copy lives in a single STATUS.md line,
-`Gate flags: --cap N [--bar N] [--waive t:axis ...]`, appended verbatim to EVERY gate invocation. A gate call
-missing a recorded flag is consulting a different gate — treat its answer as void.
+`--waive`, `--cap`, `--run-cap`, `--confirm`, and `--bar` persist nothing. The durable copy lives in a single
+STATUS.md line, `Gate flags: --cap N [--run-cap N] [--confirm N] [--bar N] [--waive t:axis ...]`, appended
+verbatim to EVERY gate invocation. A gate call missing a recorded flag is consulting a different gate — treat
+its answer as void. (`--layer1` reads none of them: the hard layer has no budget and no bar.)
+
+**Budgets count scored rounds — merged critiques — and nothing else.** A build link, a repair and a baseline
+are never counted. `--cap` is one target's budget and `--run-cap` is the whole run's: they are two numbers
+because one number read both ways ends a multi-target run at its first few targets.
 
 Exit codes — gate: report 0 · `--check` 0 CLOSED / 1 not-closed (reason on stdout) · `--validate*`,
 `--verify-engine` 0/1 · 2 usage or I/O. evidence/testreport/cover: 0 pass · 1 measurement or parse failure ·
@@ -49,15 +65,21 @@ coverage is below threshold still exits 0. Only the gate rules on quality.
 ## Slash invocation
 
 ```
-/crucible [target|all] [--cap N] [--bar N] [--resume]
+/crucible [target|all] [--cap N] [--run-cap N] [--confirm N] [--bar N] [--resume]
 ```
 
 | Arg | Default | Meaning |
 |---|---|---|
-| `target` | `all` | One target from CONTRACT.json, or every target in sequence. |
-| `--cap` | 40 | Iteration budget per target, enforced via `gate.mjs --cap N`. |
+| `target` | `all` | One target from CONTRACT.json, or the whole chain in contract order. |
+| `--cap` | 4 | Scored rounds per target, enforced via `gate.mjs --cap N`. |
+| `--run-cap` | none | Scored rounds over the whole run, enforced via `gate.mjs --run-cap N`. |
+| `--confirm` | 1 | Critiques in a row at the bar that close a target. `2` buys a confirmation round (and its panel) for every target; ask for it only where one critic's word is not enough. |
 | `--bar` | 8 | Closure bar per axis, enforced via `gate.mjs --bar N`. |
 | `--resume` | off | Re-enter a live loop: read the STATUS.md resume block + `gate.mjs --json`, resume the in-flight Workflow with `resumeFromRunId`. |
+
+**A single number from the user is the run's budget.** "Cap it at 10" means ten scored rounds for the run:
+record it as `runCap` in the contract and `--run-cap 10` in the gate flags, leave `--cap` at its default, and
+ask nothing. `--validate-contract` refuses a `runCap` the declared targets cannot close within.
 
 ## Roles & artifacts
 
@@ -79,7 +101,7 @@ when toggles and engine copies have been lost.
    confirmation. A keyword pasted in prompt text or embedded in `/loop` wakeup prompts does NOT survive
    re-entry — the opt-in lives in the message envelope, not the content. If the session toggle is not on,
    **STOP.** Do not substitute loose Agent calls for the iteration Workflow.
-2. **Git repo, clean-enough tree.** The loop commits per iteration and coverage is computed from `git diff`.
+2. **Git repo, clean-enough tree.** The loop commits per link and per critique, and coverage is computed from `git diff`.
    Uncommitted unrelated work must be committed or stashed first — the loop must never sweep it up.
 3. **Engine installed and verified.** Copy this skill's bundled assets into `<dir>/tools/` —
    `gate.mjs`, `evidence.mjs`, `cover.mjs`, `testreport.mjs`, `iteration.js`, `SCHEMAS.md`, `AXES.md` — and
@@ -92,9 +114,14 @@ when toggles and engine copies have been lost.
 4. **Negotiate the contract — the one human gate.** Scan the repo: language and package manager, test runner
    and its machine-readable reporter flag, coverage tooling, linter/typechecker, benchmark or perf harness,
    CI config, existing scripts, and which measurement surfaces are reachable (Chrome MCP, `unity-bridge`,
-   `/run`, other skills). Then draft the full `CONTRACT.json` (schema: `assets/SCHEMAS.md` §1) — targets with
-   **disjoint** source/test globs, the axis subset from `assets/AXES.md` with anchors tuned to this project,
-   layer-1 thresholds, and the instrument registry. **Ask via AskUserQuestion about anything the scan leaves
+   `/run`, other skills). Then draft the full `CONTRACT.json` (schema: `assets/SCHEMAS.md` §1) — targets **in
+   build order** (the array is the chain: each target may use the ones before it) with **disjoint**
+   source/test globs and a `brief` each (what it has to deliver, and which documents say so — the first Spec
+   stage works from it), the axis subset from `assets/AXES.md` with anchors tuned to this project,
+   layer-1 thresholds, the budget (`cap`, `runCap`, `confirm`), and the instrument registry. Agree the
+   **outcome** at the same sitting: one sentence on what a person can do once the chain is built, and the
+   exact command that shows it. It goes in STATUS.md as `Outcome: <sentence> — shown by: <command>` and is
+   what Phase 2 builds toward. **Ask via AskUserQuestion about anything the scan leaves
    genuinely ambiguous** — which module is the target, what "good" means here, what the perf budget is —
    then present the draft for sign-off, accept edits, and write it. Validate with
    `gate.mjs --validate-contract`. Generate `<dir>/RUBRIC.md` from it (critics read the rubric; they never
@@ -115,38 +142,78 @@ when toggles and engine copies have been lost.
    one is a recorded degradation.
 7. **Residual sink**: `itr stats` succeeds (`.itr.db` present) — else create `<dir>/RESIDUALS.md` and use it.
    Residuals go to a tracked file, never to prose.
-8. **STATUS.md scaffolded** with the route ledger table (Phase 5), the resume block, and the
-   `Gate flags: --cap N [--bar N]` line. Running `gate.mjs --cap N` once records nothing — the flag is
-   per-invocation, so the STATUS.md line is the record and every subsequent gate call carries it.
+8. **STATUS.md scaffolded** with the route ledger table (Phase 5), the resume block, the `Outcome:` line,
+   and the `Gate flags: --cap N [--run-cap N] [--confirm N] [--bar N]` line. Running `gate.mjs --cap N` once
+   records nothing — the flag is per-invocation, so the STATUS.md line is the record and every subsequent
+   gate call carries it.
 
 ---
 
-## Phase 1 — Iteration 0: the baseline (no builder)
+## Phase 1 — Iteration 0: the baseline (no builder, no critic)
 
 You cannot claim a delta without a before. Iteration 0 runs the iteration Workflow in baseline mode: no Spec,
-no Build — `evidence.mjs baseline --target <t>` snapshots the failing-test set and every metric's starting
-value into `<dir>/baseline/<target>.json`, then one critic scores every axis cold against the rubric.
+no Build, no critic — `evidence.mjs baseline --target <t>` snapshots the failing-test set and every metric's
+starting value into `<dir>/baseline/<target>.json`. Take every target's baseline before the first link, one
+Workflow call each.
 
 - The baseline failure set is what makes `newFailures` meaningful forever after: a repo that ships with three
   known-broken tests stays usable, and only regressions block.
 - An instrument that cannot produce its number **here** is a contract defect — fix the contract or the
   instrument before any code is touched. This is the cheapest place to discover a broken rig.
-- Commit the baseline before iteration 1.
+- A baseline is a measurement. Scoring code that does not exist yet tells nobody anything and used to cost
+  one scored round per target; pass `critique: true` only for a target that already has code worth a cold read.
+- Commit the baselines before the first link.
 
-## Phase 2 — Iteration = ONE Workflow call
+## Phase 2 — Build the chain, then critique it
 
-Each iteration is **ONE Workflow call** against the bundled script, never loose Agent calls:
+A run is a **chain**: the contract's targets in order, each one a **link** built on the ones before it. A
+single-target run is a chain of one. Every Workflow call goes to the bundled script, never to loose Agent calls:
 
 ```
-Workflow({ scriptPath: "<dir>/tools/iteration.js", args: { target, iter, dir, gateFlags, seat, panel,
-                                                           codexSeat, companion, priorCritique, findings,
-                                                           sourceGlobs, testGlobs } })
+Workflow({ scriptPath: "<dir>/tools/iteration.js", args: { target, iter, dir, mode, critique, brief,
+                                                           seat, panel, codexSeat, companion, criticModel,
+                                                           priorCritique, findings, sourceGlobs, testGlobs } })
 ```
 
-Phases inside the script: **Spec → (Build ∥ blind Test-author) → Evidence → bounded Repair → Critique.**
+**Step 1 — build every link, with no critic between them.** For each target in contract order, one call with
+`critique: false` and the target's `brief`. The script runs **Spec → (Build ∥ blind Test-author) → Evidence →
+bounded Repair** and returns `LINK-DONE` once the hard layer holds. Then:
 
-- **Spec** pins the numbered behavior list (`B1`, `B2`, …) from the prior critique's findings, the interface
-  both agents must agree on, and disjoint file ownership. Behaviors are the join key for functional coverage:
+- run `gate.mjs --layer1 <target> --iter <N>` yourself — exit 0 is what lets the chain move on, not the
+  script's word for it;
+- do the Phase 5 bookkeeping and the ownership-scoped commit;
+- start the next link in the same turn. A link landing is not a reason to stop, summarize, or ask anything.
+
+A link is the whole target as its brief describes it. Do not cut a target into several rounds so that
+something can be scored between them. `LAYER1-FAILED` (two repairs spent) → one more link for the same target
+at the next iteration number, with the failing clauses as its `findings`. Failing again → write
+`<dir>/PLATEAU-<target>.md`, mark it terminal, and carry on with every later target that can be built without
+it.
+
+**Step 2 — show the outcome.** When the last link has landed, run the command on STATUS.md's `Outcome:` line.
+If it does not do what the sentence says, what is missing is building work, not a finding: build it as one
+more link on the target that owns it. No critic runs before the outcome does. Tell the user, in one line, the
+command they can now run.
+
+**Step 3 — critique what was built.** One call per target that is `UNSCORED` in the gate report, with
+`mode: "critique"` and `iter` set to that target's latest link. The script spawns the critic and nothing else:
+the link's own evidence report is the record. Run these calls **one at a time** — every critic runs a mutation
+experiment in the one working tree.
+
+**Step 4 — fix rounds, only below the bar.** For each target the gate reports `CONTINUE`, one full round
+(`critique` left at its default) whose `findings` are the gate's work order: the findings on the axes below
+the bar, and no others. Everything else a critic found goes to the residual sink (Phase 5.4) and costs no
+round. Repeat until the gate says CLOSED, CAPPED or PLATEAU for every target.
+
+To critique each link as it lands instead — the old shape — leave `critique` at its default in step 1. Do that
+only when a later target cannot be built at all on an unjudged one, and say why in STATUS.md.
+
+Phases inside the script: **Spec → (Build ∥ blind Test-author) → Evidence → bounded Repair → Critique**, with
+Critique skipped on a build link and the only phase of a deferred critique.
+
+- **Spec** pins the numbered behavior list (`B1`, `B2`, …) from the target's brief on a first build, or from
+  the prior critique's findings on a fix round, plus the interface both agents must agree on and disjoint
+  file ownership. Behaviors are the join key for functional coverage:
   a behavior is an externally observable statement phrased so a test can fail when it is false.
 - **Build ∥ Test-author** run in parallel from the same spec, neither seeing the other's output. The builder
   owns the source globs and **must not touch a test file**; the test-author owns the test globs and writes
@@ -154,7 +221,7 @@ Phases inside the script: **Spec → (Build ∥ blind Test-author) → Evidence 
   carries its behavior id as a standalone token — that token is how the gate proves the behavior is pinned.
   A write outside an agent's declared globs stops the iteration before the commit.
 - **Evidence** runs every registered instrument via `evidence.mjs`, patches in any `kind:"tool"` result with
-  a cited transcript, and reports the gate's verdict verbatim. An instrument that failed to RUN is a broken
+  a cited transcript, and reports `gate.mjs --layer1`'s verdict verbatim. An instrument that failed to RUN is a broken
   rig: repair the rig, never the numbers, and re-run. **Never spawn a critic on missing evidence.**
 - **Repair** fires only when layer 1 fails: up to **2 attempts**, builder fixes the SOURCE from the verbatim
   failing output. Editing a blind author's test to make it pass is score laundering. Still failing after 2 →
@@ -165,7 +232,20 @@ On a dead wakeup or compaction, resume the in-flight iteration with `resumeFromR
 scratch. If you are about to call Agent for a Spec/Build/Evidence/Repair/Critique step, **you have already
 deviated: record it in the route ledger** (planned=workflow, actual=agent, reason code) before proceeding.
 
-## Phase 3 — Critics: blind, instrumented, validated
+## Phase 3 — Critics: blind, instrumented, validated, and few
+
+**Few.** A critic runs in two places only: Phase 2 step 3 (once per built target, after the outcome runs) and
+the end of a fix round. Never on a baseline, never between links, and never a second time on a target that
+is already at the bar. In the first run of this loop on a four-target chain, re-rounds took more time than
+first builds and the critic used as many tokens as the builder, while the last target was never started.
+
+**Held to what was declared.** A target answers for its declared behaviors and the rubric's anchors. A
+sentence in a comment or a doc that no behavior declares goes in the critique's `notes` and from there to the
+residual sink: it is not scored, not a mutation target, and never the reason for a round. A critic runs at
+most three mutations, each on a declared behavior.
+
+**Never a record-writer.** Critics run instruments with `evidence.mjs run … --scratch`. The round's evidence
+report is the gate's input and is written once, by the Evidence stage.
 
 **Blind.** The critic prompt contains EXACTLY: `RUBRIC.md`, the evidence report path, the prior critique path,
 the source/test globs, and the registered instrument list. **Never** tell a critic what a score triggers, what
@@ -187,8 +267,11 @@ respawn the critic with the validator's error appended — hand-patching the JSO
 
 **Seats.** Regular rounds: 1 critic, alternating families by iteration parity (odd = Opus seat, even = Codex
 seat) so the ledger reconciles without judgment calls. **A round whose builder ran on `opus-5.5` must be
-critiqued by the Codex seat** — MODELS.md is explicit that Opus is not effective at judging its own work.
-Confirmation rounds (the round that could produce the second consecutive all-≥bar): a **3-critic panel** —
+critiqued by the Codex seat** — MODELS.md is explicit that Opus is not effective at judging its own work —
+unless the project's own instructions set a different review rule, which then governs and is recorded in
+STATUS.md (`Judging:` line). `criticModel` puts every Claude critic seat on a named model.
+Confirmation rounds exist only under `--confirm 2` or more (the round that could produce the last
+consecutive all-≥bar): a **3-critic panel**, run one seat at a time —
 correctness/error-handling lens, design/maintainability lens, and a **does-it-reproduce seat on Codex** that
 re-derives the prior round's measured claims from fresh instrument runs and scores only what reproduces.
 Per-axis score = median of the three; all verdicts are committed and the merged file is what the gate reads.
@@ -224,16 +307,28 @@ no new test failures vs the baseline set · changed-lines coverage ≥ `hard.cov
 test** (the real sufficiency check — functional coverage, not line coverage) · every declared metric inside
 its threshold · every instrument ran clean.
 
-**Layer 2 (scored)** — the two most recent critiques have every measured axis ≥ bar, waivers honored.
+**Layer 2 (scored)** — the `confirm` most recent critiques (one, by default) have every measured axis ≥ bar,
+waivers honored. A target at the bar on its first critique is CLOSED on that critique. Scores above the bar
+buy nothing: there is no round whose purpose is to turn an 8 into a 9.
 
+- **UNSCORED** — built, hard layer reported, no critique yet. The normal state of every link during Phase 2
+  step 1; it becomes a critique in step 3, not before.
 - Both layers pass → CLOSED. Proceed to Phase 5 reconciliation, then the next target.
-- CONTINUE / CONFIRM → next iteration, seeded with the new findings.
+- CONTINUE → a fix round (Phase 2 step 4), seeded with the gate's work order. CONFIRM (only under
+  `--confirm 2`+) → a confirmation round.
 - **BLOCKED** — layer 2 would close but layer 1 fails, or a null axis is unwaived, or an invalid critique
   poisons the record. Do NOT dispatch a builder: the fix is evidence or bookkeeping, not building.
-- **PLATEAU** (3 consecutive critiques with no improvement in total measured score) or **CAPPED** (budget
-  spent) → write `<dir>/PLATEAU-<target>.md` containing the verbatim `gate.mjs --json` report plus the open
-  residual list, commit, and mark that target **terminal**. The run continues to the next target; a stuck
-  module does not hold healthy ones hostage. The run ends when every target is CLOSED or terminal.
+- **PLATEAU** (3 consecutive critiques with no improvement in total measured score) or **CAPPED** (the
+  target's `--cap` spent, or the run's `--run-cap`) → write `<dir>/PLATEAU-<target>.md` containing the
+  verbatim `gate.mjs --json` report plus the open residual list, commit, and mark that target **terminal**.
+  A target at its own cap does not stop the others; a stuck module does not hold healthy ones hostage. A
+  spent run cap ends the scored part of the run for every target still open. The run ends when every target
+  is CLOSED or terminal.
+
+**A spent budget is a result, not a question.** Do not ask the user to raise the cap, lower the bar or change
+`confirm` in the middle of a run, and do not change them yourself. Write the PLATEAU file, finish what the
+budget still allows, and report what closed, what did not and what it would take. The place to get the budget
+right is the contract: `--validate-contract` refuses one that cannot close the declared targets.
 
 Do not argue with the gate, do not hand-count consecutive rounds, do not interpret a 7 as effectively-8.
 
@@ -269,13 +364,13 @@ machine-local; where the tool is not listed, paste the Workflow's rows as return
 score, a trajectory, or a closure claim. Hand-written prose in STATUS.md is limited to "Next action", the
 resume block, and the ledger's reason cells.
 
-**3. Resume block — rewritten every iteration.** Target, iteration N, in-flight `runId`, gate verdict, next
-action. This is what `--resume` reads. Because each iteration is one Workflow call, agent tokens never touch
+**3. Resume block — rewritten every link and every critique.** Which step of Phase 2 the chain is in, target,
+iteration N, in-flight `runId`, gate verdict, next action. This is what `--resume` reads. Because each iteration is one Workflow call, agent tokens never touch
 your context, so the orchestrator stays lean by construction — the resume block, not a token budget, is what
 survives a compaction.
 
-**4. Residuals at critique time** — every finding the builder will not fix this round, every blocker below
-the bar, every disclosed trade: `itr add` it NOW (per the `itr` skill) citing the critique file and axis, or
+**4. Residuals at critique time** — every finding on an axis that is at the bar, every entry in a critique's
+`notes`, every finding the builder will not fix this round, every disclosed trade: `itr add` it NOW (per the `itr` skill) citing the critique file and axis, or
 append to `<dir>/RESIDUALS.md`. Residuals parked in prose are invisible to `/blitz` and every future loop.
 
 **5. Ownership-scoped commit** — `git add` the target's declared globs plus this iteration's artifacts only.
@@ -303,8 +398,14 @@ transcript, or any dispatch missing a row, reopens bookkeeping. Gate exit 0 + cl
 | Spec / Evidence / merge clerking | sonnet-5 | Mechanical stages stay off the flagship rungs and off your context. |
 | Escalation on a missed round | gpt-5.6-terra → gpt-6-astra → fable-5.1 | Non-taste ladder per MODELS.md (gpt-6-sol's rung is skipped while it is unavailable); record the escalation in the ledger. |
 
+The bundled script sets a model for the Claude critic seats only (`criticModel`). Every other seat runs on the
+session model, whatever this table plans: record that in the ledger as planned ≠ actual with `TOOL-MISSING`,
+once per stage, and do not edit the script to change it mid-run.
+
 ## Principles
 
+- Finish the chain before judging it. A working end-to-end result with residuals beats a first layer at 9 and nothing a person can run.
+- The hard gate is cheap and sits between every link; a critic is dear and is spent once per target, then only below the bar.
 - The gate is the referee; critics are witnesses; instruments are the record; you are the clerk. None may do another's job.
 - Two layers because they catch different lies: layer 1 catches "it isn't tested", layer 2 catches "it isn't good".
 - Functional coverage over line coverage — a behavior with no failing-when-broken test is untested, whatever the percentage says.
@@ -320,6 +421,10 @@ transcript, or any dispatch missing a row, reopens bookkeeping. Gate exit 0 + cl
 - Don't weaken, skip, or delete a blind author's test to make a round pass. Report the contradiction and leave it failing.
 - Don't score `test_quality` without a mutation experiment, and don't leave a mutation in the tree.
 - Don't spawn a critic on a broken rig, on missing evidence, or on a failed layer 1.
+- Don't spawn a critic on a baseline, between links, or on a target already at the bar, and don't run a round to answer findings on an axis that is at the bar — those are residuals.
+- Don't stop, summarize or ask between links; the chain runs to the outcome on its own.
+- Don't ask the user to raise the cap, lower the bar or change `confirm` mid-run, and don't change them yourself. A spent budget is reported, not negotiated.
+- Don't let a critic run instruments without `--scratch` — the evidence record is written once, by the Evidence stage.
 - Don't tell a critic anything about closure mechanics, the bar, or round significance — and don't hand the Codex seat anything Claude critics are denied.
 - Don't run an all-Claude panel while the companion is available, and don't route a critique of `opus-5.5` output to `opus-5.5`.
 - Don't invoke `gate.mjs` without the recorded `Gate flags:` line — the tool is stateless, and a flagless call silently drops every waiver and the cap.

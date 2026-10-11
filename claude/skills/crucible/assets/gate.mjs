@@ -20,21 +20,30 @@
  *   (e) every instrument in the report ran clean (ran:true, error:null) when
  *       hard.instrumentsMustRun
  *
- * Layer 2 (scored) — the gauntlet rule, unchanged in spirit: the two most
- * recent critiques must both have every measured (non-null) axis >= bar; a
- * null axis needs an explicit --waive <target>:<axis>.
+ * Layer 2 (scored) — the <confirm> most recent critiques (default 1) must each
+ * have every measured (non-null) axis >= bar; a null axis needs an explicit
+ * --waive <target>:<axis>. With the default, the first critique at the bar
+ * closes the target: a second scored round is spent only when an axis is below
+ * the bar. --confirm 2 restores the gauntlet's two-in-a-row rule.
+ *
+ * Budgets count scored rounds (merged critiques), never build links:
+ *   --cap      per target (default 4)
+ *   --run-cap  over every target in the run (default: none)
  *
  * States per target (critiques sorted by iteration):
+ *   UNSCORED — built but not yet critiqued: an evidence report exists and no
+ *              merged critique does. Layer 1 of the latest link is reported.
  *   CLOSED   — layer 2 closes AND the most recent iteration passes layer 1.
  *   BLOCKED  — layer 2 closure met but layer 1 fails (failing clause named),
  *              an unwaived null axis blocks (UNMEASURED), or closure is
  *              withheld because an invalid or unmerged critique file is in
  *              the record.
- *   CONFIRM  — latest critique all measured axes >= bar, previous was not (or
- *              absent): next round is a confirmation round.
+ *   CONFIRM  — only with --confirm >= 2: latest critique all measured axes
+ *              >= bar but fewer than <confirm> in a row.
  *   PLATEAU  — 3 consecutive critiques with no improvement in total measured
  *              score.
- *   CAPPED   — iteration budget spent and target not closed.
+ *   CAPPED   — scored-round budget spent (the target's, or the run's) and
+ *              target not closed.
  *   CONTINUE — otherwise; every axis < bar listed with latest findings.
  *
  * Fail-safe: an unreadable/invalid critique file is an unverifiable verdict.
@@ -55,7 +64,8 @@ import crypto from 'node:crypto';
 const FINDING_FIELDS = ['axis', 'score', 'region', 'defect', 'fix'];
 const MUTATION_STRING_FIELDS = ['behavior', 'mutation', 'command', 'output'];
 const DEFAULT_BAR = 8;
-const DEFAULT_CAP = 40;
+const DEFAULT_CAP = 4;
+const DEFAULT_CONFIRM = 1;
 
 const AXIS_NAME_RE = /^[a-z][a-z0-9_]*$/;
 const TARGET_NAME_RE = /^[A-Za-z0-9._-]+$/;
@@ -75,6 +85,11 @@ USAGE
   node tools/gate.mjs [options]                   Full state report, all targets
   node tools/gate.mjs --check <target>            Exit 0 iff target is CLOSED,
                                                   else exit 1, blocking reason on stdout
+  node tools/gate.mjs --layer1 <target> --iter <N>
+                                                  Exit 0 iff evidence/<target>_iter<N>.json
+                                                  passes the hard layer, else exit 1 naming
+                                                  every failing clause. Needs no critique:
+                                                  this is what advances a build chain
   node tools/gate.mjs --validate <file.json>      Schema-validate one critique verdict
                                                   against the contract axes; exit 1
                                                   naming every offending field
@@ -92,9 +107,18 @@ OPTIONS
   --manifest <path>        manifest.json path for --verify-engine
                            (default: <dir>/../manifest.json)
   --json                   Machine-readable JSON output (all commands)
-  --cap <N>                Iteration cap (default ${DEFAULT_CAP}, overridden by the
-                           contract's cap, overridden by this flag); at/over cap,
-                           every non-closed target reports CAPPED
+  --cap <N>                Scored rounds allowed PER TARGET (default ${DEFAULT_CAP},
+                           overridden by the contract's cap or the target's own,
+                           overridden by this flag); a target at its cap and not
+                           closed reports CAPPED. Build links are never counted
+  --run-cap <N>            Scored rounds allowed over ALL targets (default: none,
+                           overridden by the contract's runCap, overridden by this
+                           flag); once spent, every non-closed target that has a
+                           critique reports CAPPED
+  --confirm <N>            Critiques in a row at the bar that close a target
+                           (default ${DEFAULT_CONFIRM}, overridden by the contract's
+                           confirm, overridden by this flag)
+  --iter <N>               Iteration for --layer1
   --bar <N>                Closure bar for every axis, 1-10 (default ${DEFAULT_BAR},
                            overridden by the contract's bar, overridden by this
                            flag); per-invocation like every flag — record it in
@@ -109,22 +133,24 @@ CLOSURE = LAYER 1 AND LAYER 2
                           coverage.ratio >= hard.coverage.min, behavior map
                           complete, every hard metric within threshold, every
                           instrument ran clean
-  layer 2 (scored)        two most recent critiques both all-measured >= <bar>,
+  layer 2 (scored)        the <confirm> most recent critiques all-measured >= <bar>,
                           null axes waived
 
 STATES (<bar> = effective bar, default ${DEFAULT_BAR})
+  UNSCORED  built, not yet critiqued; layer 1 of the latest link is reported
   CLOSED    layer 2 closes AND the most recent iteration passes layer 1
   BLOCKED   layer 2 closure met but layer 1 fails (failing clause named),
             an UNMEASURED (null, unwaived) axis blocks, or closure withheld
             because an invalid/unmerged critique file is in the record
-  CONFIRM   latest all measured >= <bar>, previous was not — confirmation round next
+  CONFIRM   (--confirm >= 2 only) latest all measured >= <bar>, not yet <confirm> in a row
   PLATEAU   3 consecutive critiques with no improvement in total measured score
-  CAPPED    iteration cap reached and target not closed
+  CAPPED    scored-round budget (target's or run's) spent and target not closed
   CONTINUE  work remains; axes < <bar> listed with latest findings
 
 EXIT CODES
   default report:      0 (2 on I/O or usage error)
   --check:             0 CLOSED, 1 not closed (reason on stdout), 2 usage/I/O error
+  --layer1:            0 hard layer passes, 1 it fails (clauses on stdout), 2 usage/I/O error
   --validate:          0 valid, 1 invalid (every offending field named), 2 usage/I/O error
   --validate-contract: 0 valid, 1 invalid (every offending field named), 2 usage/I/O error
   --verify-engine:     0 all hashes match, 1 drift (every file named), 2 usage/I/O error
@@ -136,7 +162,11 @@ function parseArgs(argv) {
     contract: null,
     manifest: null,
     json: false,
-    cap: null, // resolved later: flag > contract cap > DEFAULT_CAP
+    cap: null, // resolved later: flag > target cap > contract cap > DEFAULT_CAP
+    runCap: null, // resolved later: flag > contract runCap > none
+    confirm: null, // resolved later: flag > contract confirm > DEFAULT_CONFIRM
+    layer1: null,
+    iter: null,
     bar: null, // resolved later: flag > contract bar > DEFAULT_BAR
     waive: [], // [{target, axis}] — axis membership checked once the contract is loaded
     check: null,
@@ -165,6 +195,28 @@ function parseArgs(argv) {
         opts.cap = n;
         break;
       }
+      case '--run-cap': {
+        const v = need('--run-cap');
+        const n = Number(v);
+        if (!Number.isInteger(n) || n < 1) usageError(`--run-cap must be a positive integer (got ${JSON.stringify(v)})`);
+        opts.runCap = n;
+        break;
+      }
+      case '--confirm': {
+        const v = need('--confirm');
+        const n = Number(v);
+        if (!Number.isInteger(n) || n < 1) usageError(`--confirm must be a positive integer (got ${JSON.stringify(v)})`);
+        opts.confirm = n;
+        break;
+      }
+      case '--iter': {
+        const v = need('--iter');
+        const n = Number(v);
+        if (!Number.isInteger(n) || n < 0) usageError(`--iter must be a non-negative integer (got ${JSON.stringify(v)})`);
+        opts.iter = n;
+        break;
+      }
+      case '--layer1': opts.layer1 = need('--layer1'); break;
       case '--bar': {
         const v = need('--bar');
         const n = Number(v);
@@ -189,8 +241,10 @@ function parseArgs(argv) {
       default: usageError(`unknown argument ${JSON.stringify(a)} (see --help)`);
     }
   }
-  const modes = [opts.check !== null, opts.validate !== null, opts.validateContract, opts.verifyEngine].filter(Boolean);
-  if (modes.length > 1) usageError('choose exactly one of --check, --validate, --validate-contract, --verify-engine');
+  const modes = [opts.check !== null, opts.layer1 !== null, opts.validate !== null, opts.validateContract, opts.verifyEngine].filter(Boolean);
+  if (modes.length > 1) usageError('choose exactly one of --check, --layer1, --validate, --validate-contract, --verify-engine');
+  if (opts.layer1 !== null && opts.iter === null) usageError('--layer1 <target> requires --iter <N>');
+  if (opts.iter !== null && opts.layer1 === null) usageError('--iter only applies to --layer1');
   if (opts.manifest !== null && !opts.verifyEngine) usageError('--manifest only applies to --verify-engine');
   return opts;
 }
@@ -252,6 +306,23 @@ function validateContract(obj) {
   }
   if ('bar' in obj && !(Number.isInteger(obj.bar) && obj.bar >= 1 && obj.bar <= 10)) {
     errors.push(`bar: must be an integer 1-10 (got ${describe(obj.bar)})`);
+  }
+  if ('runCap' in obj && obj.runCap !== null && !(Number.isInteger(obj.runCap) && obj.runCap >= 1)) {
+    errors.push(`runCap: must be a positive integer or null (got ${describe(obj.runCap)})`);
+  }
+  if ('confirm' in obj && !(Number.isInteger(obj.confirm) && obj.confirm >= 1)) {
+    errors.push(`confirm: must be a positive integer (got ${describe(obj.confirm)})`);
+  }
+  // A budget that cannot close the declared targets is a contract defect, found here
+  // and not at the round where it runs out: every target needs <confirm> scored rounds.
+  {
+    const confirm = Number.isInteger(obj.confirm) && obj.confirm >= 1 ? obj.confirm : DEFAULT_CONFIRM;
+    const nTargets = Array.isArray(obj.targets) ? obj.targets.length : 0;
+    if (Number.isInteger(obj.runCap) && obj.runCap >= 1 && nTargets > 0 && obj.runCap < nTargets * confirm) {
+      errors.push(`runCap: ${obj.runCap} cannot close ${nTargets} target(s) — each needs at least ${confirm} scored round(s), ${nTargets * confirm} in all`);
+    }
+    const cap = Number.isInteger(obj.cap) && obj.cap >= 1 ? obj.cap : DEFAULT_CAP;
+    if (cap < confirm) errors.push(`cap: ${cap} is below confirm ${confirm} — no target could close`);
   }
   if ('codexSeat' in obj && typeof obj.codexSeat !== 'boolean') {
     errors.push(`codexSeat: must be a boolean (got ${describe(obj.codexSeat)})`);
@@ -332,6 +403,9 @@ function validateContract(obj) {
       }
       if ('cap' in t && !(Number.isInteger(t.cap) && t.cap >= 1)) {
         errors.push(`${label}.cap: must be a positive integer (got ${describe(t.cap)})`);
+      }
+      if ('brief' in t && (typeof t.brief !== 'string' || t.brief.length === 0)) {
+        errors.push(`${label}.brief: must be a non-empty string when present (got ${describe(t.brief)})`);
       }
       if ('bar' in t && !(Number.isInteger(t.bar) && t.bar >= 1 && t.bar <= 10)) {
         errors.push(`${label}.bar: must be an integer 1-10 (got ${describe(t.bar)})`);
@@ -612,7 +686,10 @@ function loadDir(dir, ctx) {
   try {
     entries = fs.readdirSync(dir).filter((f) => f.toLowerCase().endsWith('.json')).sort();
   } catch (e) {
-    usageError(`cannot read critiques dir ${dir}: ${e.message}`);
+    // A build chain has no critiques dir until its first critique. The contract was
+    // already read from beside it, so a missing dir here is an empty record, not a typo.
+    if (e.code !== 'ENOENT') usageError(`cannot read critiques dir ${dir}: ${e.message}`);
+    entries = [];
   }
   const critiques = [];      // merged (unsuffixed) valid verdicts {file, data}
   const invalid = [];        // {file, target, errors}
@@ -697,7 +774,7 @@ function evaluateLayer1(targetName, latestIteration, artifactDir, contract) {
     return result;
   }
   if (ev.iteration !== latestIteration) {
-    clause('evidence_report', false, `${evidenceFile}: iteration is ${describe(ev.iteration)}, expected ${latestIteration} (the latest critique iteration)`);
+    clause('evidence_report', false, `${evidenceFile}: iteration is ${describe(ev.iteration)}, expected ${latestIteration} (the iteration being judged)`);
   }
   if (ev.target !== targetName) {
     clause('evidence_report', false, `${evidenceFile}: target is ${describe(ev.target)}, expected ${JSON.stringify(targetName)}`);
@@ -826,16 +903,15 @@ const totalMeasured = (scores, axes) => measuredAxes(scores, axes).reduce((s, a)
 
 /**
  * Evaluate one target. crits = validated merged critiques sorted by iteration
- * (ascending). Layer-2 math is the gauntlet's, unchanged: consecutive-round
- * closure, plateau over 3 totals, cap enforcement, waiver handling. Layer 1
+ * (ascending). Layer-2 math is the gauntlet's with the run length made a
+ * parameter: <confirm> consecutive rounds at the bar close (1 by default),
+ * plateau over 3 totals, cap enforcement, waiver handling. Layer 1
  * gates the CLOSED verdict only: a would-be CLOSED with a failing layer-1
  * clause is BLOCKED with that clause named.
  */
-function evaluateTarget(name, crits, waivedAxes, capReached, invalidRelevant, unmergedPanel, layer1, axes, bar) {
+function evaluateTarget(name, crits, waivedAxes, capReached, invalidRelevant, unmergedPanel, layer1, axes, bar, confirm) {
   const latest = crits[crits.length - 1];
-  const prev = crits.length >= 2 ? crits[crits.length - 2] : null;
   const ls = latest.data.scores;
-  const ps = prev?.data.scores ?? null;
 
   // Per-axis history, streak, latest.
   const axisInfo = {};
@@ -854,15 +930,18 @@ function evaluateTarget(name, crits, waivedAxes, capReached, invalidRelevant, un
     };
   }
 
-  // Null-axis policy: null in the latest two critiques blocks unless waived.
-  const nullBoth = prev ? axes.filter((a) => ls[a] === null && ps[a] === null) : axes.filter((a) => ls[a] === null);
+  // The closing window: the <confirm> most recent critiques (fewer while the record is short).
+  const window = crits.slice(-confirm);
+  const windowIters = window.map((c) => c.data.iteration).join('+');
+
+  // Null-axis policy: null in every critique of the window blocks unless waived.
+  const nullBoth = axes.filter((a) => window.every((c) => c.data.scores[a] === null));
   const unmeasuredBlockers = nullBoth.filter((a) => !waivedAxes.has(a));
   const waivedNulls = nullBoth.filter((a) => waivedAxes.has(a))
     .map((a) => ({ axis: a, source: waivedAxes.get(a) }));
 
   const latestOk = measuredOk(ls, axes, bar);
-  const prevOk = prev !== null && measuredOk(ps, axes, bar);
-  const closedMeasured = latestOk && prevOk;
+  const closedMeasured = crits.length >= confirm && window.every((c) => measuredOk(c.data.scores, axes, bar));
 
   const totals = crits.map((c) => totalMeasured(c.data.scores, axes));
   const n = totals.length;
@@ -896,27 +975,25 @@ function evaluateTarget(name, crits, waivedAxes, capReached, invalidRelevant, un
     }
     if (withheld.length) {
       state = 'BLOCKED';
-      reason = `layer 2 closure met (iters ${prev.data.iteration}+${latest.data.iteration} all measured >=${bar}) but ${withheld.join('; ')}`;
+      reason = `layer 2 closure met (iter ${windowIters} all measured >=${bar}) but ${withheld.join('; ')}`;
     } else {
       state = 'CLOSED';
-      reason = `iters ${prev.data.iteration}+${latest.data.iteration} both all-measured >=${bar}; layer 1 hard gate ${layer1.evaluated ? `PASS (evidence iter ${latest.data.iteration})` : 'not configured (no "hard" section in contract)'}`
+      reason = `iter ${windowIters} all-measured >=${bar}; layer 1 hard gate ${layer1.evaluated ? `PASS (evidence iter ${latest.data.iteration})` : 'not configured (no "hard" section in contract)'}`
         + (waivedNulls.length ? `; null axes waived: ${waivedNulls.map((w) => `${w.axis} (${w.source})`).join(', ')}` : '');
     }
   } else if (capReached) {
     state = 'CAPPED';
-    reason = `iteration cap reached and target not closed`;
+    reason = `${capReached} and target not closed`;
   } else if (closedMeasured) {
     state = 'BLOCKED';
-    reason = `measured closure met (iters ${prev.data.iteration}+${latest.data.iteration} all >=${bar}) but UNMEASURED axes block: ${unmeasuredBlockers.join(', ')}`;
+    reason = `measured closure met (iter ${windowIters} all >=${bar}) but UNMEASURED axes block: ${unmeasuredBlockers.join(', ')}`;
     for (const a of unmeasuredBlockers) {
       blockers.push({ axis: a, kind: 'UNMEASURED', latest_score: null,
-        note: `null in latest two critiques with no waiver (--waive ${name}:${a})` });
+        note: `null in the latest ${window.length} critique(s) with no waiver (--waive ${name}:${a})` });
     }
   } else if (latestOk) {
     state = 'CONFIRM';
-    reason = prev
-      ? `iter ${latest.data.iteration} all measured >=${bar} but iter ${prev.data.iteration} was not — next round is a confirmation round`
-      : `iter ${latest.data.iteration} all measured >=${bar} with no prior critique — next round is a confirmation round`;
+    reason = `iter ${latest.data.iteration} all measured >=${bar}, but closure needs ${confirm} in a row — next round is a confirmation round`;
     for (const a of unmeasuredBlockers) {
       blockers.push({ axis: a, kind: 'UNMEASURED', latest_score: null,
         note: 'will block closure at confirmation unless waived' });
@@ -947,6 +1024,7 @@ function evaluateTarget(name, crits, waivedAxes, capReached, invalidRelevant, un
     state,
     reason,
     bar,
+    confirm,
     iterations: crits.length,
     latest_iteration: latest.data.iteration,
     latest_file: latest.file,
@@ -974,6 +1052,20 @@ function pushWorkOrder(blockers, latest, ls, axes, bar) {
   }
 }
 
+/** Highest N >= 1 with an evidence/<target>_iter<N>.json report, or null. */
+function latestEvidenceIteration(artifactDir, targetName) {
+  let names;
+  try { names = fs.readdirSync(path.join(artifactDir, 'evidence')); } catch { return null; }
+  let best = null;
+  for (const f of names) {
+    const m = /^(.+)_iter(\d+)\.json$/.exec(f);
+    if (!m || m[1] !== targetName) continue;
+    const n = Number(m[2]);
+    if (n >= 1 && (best === null || n > best)) best = n;
+  }
+  return best;
+}
+
 function buildReport(opts) {
   const contract = loadContractOrExit(opts);
   const c = contract.data;
@@ -985,6 +1077,8 @@ function buildReport(opts) {
   }
   const bar = opts.bar ?? (Number.isInteger(c.bar) ? c.bar : DEFAULT_BAR);
   const cap = opts.cap ?? (Number.isInteger(c.cap) ? c.cap : DEFAULT_CAP);
+  const runCap = opts.runCap ?? (Number.isInteger(c.runCap) ? c.runCap : null);
+  const confirm = opts.confirm ?? (Number.isInteger(c.confirm) ? c.confirm : DEFAULT_CONFIRM);
 
   const { critiques, invalid, panelFiles, unsuffixedSeen } = loadDir(opts.dir, { axes, instrumentIds, targetNames });
   const artifactDir = artifactDirOf(opts);
@@ -1001,8 +1095,10 @@ function buildReport(opts) {
     arr.sort((a, b) => a.data.iteration - b.data.iteration || cmp(a.file, b.file));
   }
 
+  // Budgets count scored rounds. The run's budget and a target's are two numbers:
+  // one cap read both ways ends a multi-target run at its first few targets.
   const totalIterations = critiques.length;
-  const capReachedGlobal = totalIterations >= cap;
+  const capReachedGlobal = runCap !== null && totalIterations >= runCap;
 
   // Panel bookkeeping: target -> Map(iteration -> {iteration, critics, files, merged}).
   const panels = new Map();
@@ -1042,7 +1138,9 @@ function buildReport(opts) {
     const tdef = c.targets.find((t) => t.name === name) ?? null;
     const tBar = opts.bar ?? (tdef && Number.isInteger(tdef.bar) ? tdef.bar : bar);
     const tCap = opts.cap ?? (tdef && Number.isInteger(tdef.cap) ? tdef.cap : cap);
-    const capReached = capReachedGlobal || crits.length >= tCap;
+    const capReached = crits.length >= tCap
+      ? `target cap reached (${crits.length} of ${tCap} scored rounds)`
+      : capReachedGlobal ? `run cap reached (${totalIterations} of ${runCap} scored rounds over all targets)` : null;
     const waived = new Map(); // axis -> source string
     for (const w of opts.waive) {
       if (w.target === name) waived.set(w.axis, `--waive ${w.target}:${w.axis}`);
@@ -1052,7 +1150,7 @@ function buildReport(opts) {
     const unmergedPanel = panelList.filter((p) => !p.merged);
     const latestIteration = crits[crits.length - 1].data.iteration;
     const layer1 = evaluateLayer1(name, latestIteration, artifactDir, c);
-    const rec = evaluateTarget(name, crits, waived, capReached, invalidRelevant, unmergedPanel, layer1, axes, tBar);
+    const rec = evaluateTarget(name, crits, waived, capReached, invalidRelevant, unmergedPanel, layer1, axes, tBar, confirm);
     rec.panel = panelList;
     targets[name] = rec;
   }
@@ -1079,10 +1177,38 @@ function buildReport(opts) {
     };
   }
 
+  // Targets built but not yet critiqued: an evidence report and no critique file of any
+  // kind. A build chain leaves every link in this state until its critique pass.
+  for (const t of c.targets) {
+    if (targets[t.name]) continue;
+    const n = latestEvidenceIteration(artifactDir, t.name);
+    if (n === null) continue;
+    const layer1 = evaluateLayer1(t.name, n, artifactDir, c);
+    targets[t.name] = {
+      target: t.name,
+      state: 'UNSCORED',
+      reason: `built to iter ${n}, no critique yet; layer 1 hard gate ${layer1.evaluated ? (layer1.pass ? 'PASS' : 'FAIL') : 'not configured'}`,
+      bar: opts.bar ?? (Number.isInteger(t.bar) ? t.bar : bar),
+      confirm,
+      iterations: 0,
+      latest_iteration: n,
+      latest_file: null,
+      totals_measured: [],
+      axes: {},
+      waived_nulls: [],
+      layer1,
+      panel: [],
+      blockers: layer1.clauses.filter((cl) => !cl.pass)
+        .map((cl) => ({ axis: null, kind: 'HARD_GATE', clause: cl.clause, latest_score: null, note: cl.detail })),
+    };
+  }
+
   return {
     dir: opts.dir,
     contract: contract.file,
     cap,
+    run_cap: runCap,
+    confirm,
     bar,
     total_iterations: totalIterations,
     cap_reached: capReachedGlobal,
@@ -1097,7 +1223,7 @@ function renderReport(r) {
   const out = [];
   out.push(`GATE REPORT  dir=${r.dir}`);
   out.push(`contract=${r.contract}`);
-  out.push(`iterations ${r.total_iterations}/${r.cap}${r.cap_reached ? '  ** CAP REACHED **' : ''}  bar=${r.bar}`);
+  out.push(`scored rounds ${r.total_iterations}${r.run_cap !== null ? `/${r.run_cap}` : ''}${r.cap_reached ? '  ** RUN CAP REACHED **' : ''}  cap/target=${r.cap}  confirm=${r.confirm}  bar=${r.bar}`);
   out.push('');
   for (const sub of Object.values(r.targets)) {
     out.push(`## ${sub.target}  —  ${sub.state}  (${sub.iterations} critiques, latest iter ${sub.latest_iteration ?? '-'})`);
@@ -1198,6 +1324,25 @@ function cmdCheck(opts) {
     }
   }
   process.exit(closed ? 0 : 1);
+}
+
+function cmdLayer1(opts) {
+  const contract = loadContractOrExit(opts);
+  const c = contract.data;
+  if (!c.targets.some((t) => t.name === opts.layer1)) {
+    usageError(`--layer1: ${JSON.stringify(opts.layer1)} is not a contract target (known: ${c.targets.map((t) => t.name).join(', ')})`);
+  }
+  const l1 = evaluateLayer1(opts.layer1, opts.iter, artifactDirOf(opts), c);
+  const failing = l1.clauses.filter((cl) => !cl.pass);
+  if (opts.json) {
+    process.stdout.write(JSON.stringify({ target: opts.layer1, iteration: opts.iter, pass: l1.pass,
+      evaluated: l1.evaluated, evidence_file: l1.evidence_file, clauses: l1.clauses,
+      failing: failing.map((cl) => `${cl.clause}: ${cl.detail}`), note: l1.note }, null, 2) + '\n');
+  } else {
+    process.stdout.write(`${opts.layer1} iter ${opts.iter}: layer 1 ${l1.evaluated ? (l1.pass ? 'PASS' : 'FAIL') : l1.note}\n`);
+    for (const cl of l1.clauses) process.stdout.write(`  ${cl.pass ? 'ok  ' : 'FAIL'} ${cl.clause}: ${cl.detail}\n`);
+  }
+  process.exit(l1.pass ? 0 : 1);
 }
 
 function cmdValidate(opts) {
@@ -1322,5 +1467,6 @@ if (opts.help) { process.stdout.write(HELP); process.exit(0); }
 if (opts.verifyEngine) cmdVerifyEngine(opts);
 else if (opts.validateContract) cmdValidateContract(opts);
 else if (opts.validate !== null) cmdValidate(opts);
+else if (opts.layer1 !== null) cmdLayer1(opts);
 else if (opts.check !== null) cmdCheck(opts);
 else cmdReport(opts);

@@ -16,6 +16,7 @@ Layout inside `<dir>`:
 <dir>/evidence/<target>_iter<N>.json           aggregated evidence report
 <dir>/evidence/<target>_iter<N>.behaviors.json blind test-author's behavior->test map
 <dir>/evidence/raw/                            instrument stdout/artifacts (junit.xml, lcov.info, ...)
+<dir>/evidence/scratch/                        critics' own instrument runs (`run --scratch`); never read by the gate
 <dir>/critiques/<target>_iter<N>[.<critic>].json
 <dir>/PLATEAU-<target>.md    written when a target goes terminal
 ```
@@ -28,7 +29,9 @@ Layout inside `<dir>`:
 {
   "version": 1,
   "artifactDir": ".crucible",
-  "cap": 40,
+  "cap": 4,
+  "runCap": 10,
+  "confirm": 1,
   "bar": 8,
   "codexSeat": true,
   "targets": [
@@ -36,7 +39,8 @@ Layout inside `<dir>`:
       "name": "parser",
       "sourceGlobs": ["src/parser/**"],
       "testGlobs": ["tests/parser/**"],
-      "cap": 40,
+      "brief": "Tokenize and parse the config language in docs/spec.md sections 2-4; errors carry a position.",
+      "cap": 4,
       "bar": 8
     }
   ],
@@ -78,7 +82,15 @@ Field rules:
 - `axes[].anchors` — keys exactly `"3" "5" "8" "10"`, each a non-empty string.
 - `targets[].name` — `^[A-Za-z0-9._-]+$`, unique. `sourceGlobs` and `testGlobs` must not intersect
   (the Spec phase's disjoint-ownership rule; `gate.mjs --validate-contract` checks literal-prefix overlap).
-- `targets[].cap` / `targets[].bar` override the top-level values for that target only.
+- `targets` is ordered: it is the build chain, and a target may use the ones before it.
+- `targets[].brief` — optional non-empty string: what the target has to deliver and which documents say so.
+  The first Spec stage of the target works from it.
+- `cap` — scored rounds (merged critiques) allowed per target, default 4. `targets[].cap` / `targets[].bar`
+  override the top-level values for that target only.
+- `runCap` — scored rounds allowed over the whole run, default none. `--validate-contract` refuses a value
+  below `targets.length * confirm`, which could not close every target.
+- `confirm` — critiques in a row at the bar that close a target, default 1.
+- Build links, repairs and baselines are never counted against `cap` or `runCap`.
 - `instruments[].kind` — `"command"` (a shell command), `"tool"` (an MCP/skill flow — Chrome, unity-bridge:
   `cmd` is null, `note` states the exact invocation and required output shape), or `"probe"` (a script
   committed into the target repo). Only `kind:"command"` and `kind:"probe"` are runnable by `evidence.mjs`;
@@ -108,7 +120,7 @@ Field rules:
 ```
 
 - `behaviors[].id` — `^B[0-9]+$`, unique within the iteration. This id is the join key for functional coverage.
-- Iteration 0 (baseline) writes a spec with `behaviors: []` and no ownership fan-out.
+- Iteration 0 (baseline) has no spec: it is an evidence run and nothing else.
 
 ## 3. evidence/<target>_iter<N>.behaviors.json  (blind test-author output)
 
@@ -192,6 +204,8 @@ Validator rules (`gate.mjs --validate`):
 - **If `scores.test_quality` is non-null, the `mutation` block is REQUIRED** and needs
   `behavior`, `mutation`, `command`, `output`, boolean `testFailed`, and `reverted: true`.
   A `test_quality` score with no mutation experiment is an invalid critique, not a low score.
+- `notes` — optional array of strings: things a critic saw that no declared behavior or rubric anchor
+  covers (a claim made only in a comment, say). Not scored; the orchestrator files them as residuals.
 - Panel rounds write one file per critic (`.opus`, `.opus2`, `.codex` suffixes); the merged
   median verdict is written to the unsuffixed path and is the file the gate reads.
 

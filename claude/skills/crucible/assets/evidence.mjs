@@ -141,7 +141,7 @@ function runSibling(name, args, notes, label) {
 // Execute one instrument, capture stdout+stderr to the raw file, and return
 // the §4 instrument record. Never throws — a timeout or spawn failure becomes
 // ran:false + a human error string so the remaining instruments still run.
-function execInstrument(inst, iter, dir, root) {
+function execInstrument(inst, iter, outDir, root) {
   const rec = {
     id: inst.id,
     kind: inst.kind,
@@ -156,7 +156,7 @@ function execInstrument(inst, iter, dir, root) {
     rec.error = 'tool-kind instrument: orchestrator must supply result';
     return rec;
   }
-  const stdoutRel = `${dir}/evidence/raw/${inst.id}.iter${iter}.out`;
+  const stdoutRel = `${outDir}/raw/${inst.id}.iter${iter}.out`;
   rec.stdoutPath = stdoutRel;
   const stdoutAbs = resolve(root, stdoutRel);
   if (typeof inst.cmd !== 'string' || inst.cmd.trim() === '') {
@@ -267,7 +267,7 @@ function computeTests(ctx) {
   }
   // 2. Diff against the baseline via the sibling's diff (it takes the parse
   //    output as its current side, so persist that next to the raw capture).
-  const parsedRel = `${dir}/evidence/raw/${inst.id}.iter${iter}.parsed.json`;
+  const parsedRel = `${ctx.outDir}/raw/${inst.id}.iter${iter}.parsed.json`;
   writeFileSync(resolve(root, parsedRel), JSON.stringify(out, null, 2) + '\n');
   const dout = runSibling(
     'testreport.mjs',
@@ -535,7 +535,7 @@ function computeMetrics(ctx) {
 
 // ---------------------------------------------------------------- run / baseline
 
-function doRun({ contractPath, targetName, iter, only, isBaseline, json }) {
+function doRun({ contractPath, targetName, iter, only, isBaseline, scratch, json }) {
   const root = process.cwd();
   const contract = loadContract(root, contractPath);
   const dir = contract.artifactDir ?? '.crucible';
@@ -557,7 +557,11 @@ function doRun({ contractPath, targetName, iter, only, isBaseline, json }) {
   }
   const selectedIds = new Set(selected.map((i) => i.id));
 
-  mkdirSync(resolve(root, `${dir}/evidence/raw`), { recursive: true });
+  // --scratch: a re-measurement that must not replace the round's record. The report and
+  // the raw captures go under evidence/scratch/; the behavior map, the spec and the
+  // baseline are still read from where the round left them.
+  const outDir = scratch ? `${dir}/evidence/scratch` : `${dir}/evidence`;
+  mkdirSync(resolve(root, `${outDir}/raw`), { recursive: true });
   if (isBaseline) mkdirSync(resolve(root, `${dir}/baseline`), { recursive: true });
 
   const notes = [];
@@ -568,10 +572,10 @@ function doRun({ contractPath, targetName, iter, only, isBaseline, json }) {
 
   // 1. Execute every selected command/probe instrument, in declaration order.
   //    A failure never aborts the run — remaining instruments still execute.
-  const records = selected.map((inst) => execInstrument(inst, iter, dir, root));
+  const records = selected.map((inst) => execInstrument(inst, iter, outDir, root));
   const recById = new Map(records.map((r) => [r.id, r]));
 
-  const ctx = { contract, target, iter, dir, root, recById, instById, selectedIds, notes };
+  const ctx = { contract, target, iter, dir, outDir, root, recById, instById, selectedIds, notes };
 
   // 2. Tests / behaviors / coverage / metrics.
   const t = computeTests(ctx);
@@ -591,7 +595,8 @@ function doRun({ contractPath, targetName, iter, only, isBaseline, json }) {
   };
 
   // 3. Write the report (and, for baseline, the §6 baseline file).
-  const reportRel = `${dir}/evidence/${target.name}_iter${iter}.json`;
+  if (scratch) notes.push('scratch run: not the record of this iteration; changed-line coverage here is taken against whatever the working tree differs from now, which is not the base the record used');
+  const reportRel = `${outDir}/${target.name}_iter${iter}.json`;
   writeFileSync(resolve(root, reportRel), JSON.stringify(report, null, 2) + '\n');
   let baselineRel = null;
   if (isBaseline) {
@@ -711,7 +716,7 @@ cover.mjs, run as child processes), and writes the aggregated evidence report
 (SCHEMAS.md section 4). Zero dependencies (node builtins). All commands take --json.
 
 USAGE
-  node evidence.mjs run --target <name> --iter <N> [--contract .crucible/CONTRACT.json] [--only id,id] [--json]
+  node evidence.mjs run --target <name> --iter <N> [--scratch] [--contract .crucible/CONTRACT.json] [--only id,id] [--json]
   node evidence.mjs baseline --target <name> [--contract ...] [--only id,id] [--json]
   node evidence.mjs show <evidence.json> [--json]
 
@@ -724,6 +729,10 @@ COMMANDS
             orchestrator can patch in the result. One instrument failing never
             aborts the run. Writes <dir>/evidence/<target>_iter<N>.json.
             --only id,id restricts the run to those instrument ids.
+            --scratch writes the report and raw captures under
+            <dir>/evidence/scratch/ and leaves the iteration's record alone. It is
+            how a critic re-measures or runs a mutation experiment: the gate reads
+            the record, never the scratch copy.
   baseline  run with iteration 0, plus: writes <dir>/baseline/<target>.json with
             capturedAt (ISO date) and metricsBefore (SCHEMAS.md section 6).
   show      Pretty-print an existing evidence report (--json emits it verbatim).
@@ -758,7 +767,7 @@ function main() {
   }
   switch (cmd) {
     case 'run': {
-      const opts = parseArgs(rest, ['target', 'iter', 'contract', 'only']);
+      const opts = parseArgs(rest, ['target', 'iter', 'contract', 'only'], ['json', 'scratch']);
       if (opts._.length > 0) die(`run: unexpected argument '${opts._[0]}'`);
       if (!opts.target) die('run: --target <name> required');
       if (opts.iter === undefined) die('run: --iter <N> required');
@@ -772,6 +781,7 @@ function main() {
         iter,
         only: opts.only ?? null,
         isBaseline: false,
+        scratch: !!opts.scratch,
         json: !!opts.json,
       });
     }
@@ -785,6 +795,7 @@ function main() {
         iter: 0,
         only: opts.only ?? null,
         isBaseline: true,
+        scratch: false,
         json: !!opts.json,
       });
     }

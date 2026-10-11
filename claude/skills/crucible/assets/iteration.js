@@ -1,24 +1,32 @@
 export const meta = {
   name: 'crucible-iteration',
-  description: 'One crucible iteration: Spec -> (Build || blind Test-author) -> Evidence -> bounded Repair -> Critique',
-  whenToUse: 'Invoked by the crucible skill, once per iteration per target. Never run by hand — the skill supplies args and records the ledger.',
+  description: 'One crucible round: a build link (Spec -> Build || blind Test-author -> Evidence -> bounded Repair), a critique of a built target, or both',
+  whenToUse: 'Invoked by the crucible skill, once per build link and once per critique. Never run by hand — the skill supplies args and records the ledger.',
   phases: [
-    { title: 'Spec', detail: 'pin behavior ids, interface, and disjoint file ownership from the prior critique' },
+    { title: 'Spec', detail: 'pin behavior ids, interface, and disjoint file ownership from the brief or the prior critique' },
     { title: 'Build', detail: 'builder and blind test-author in parallel, disjoint globs' },
     { title: 'Evidence', detail: 'run registered instruments, aggregate the evidence report' },
     { title: 'Repair', detail: 'up to 2 source-only repair attempts when layer 1 fails' },
-    { title: 'Critique', detail: 'blind instrumented critic, or a 3-seat panel on confirmation rounds' },
+    { title: 'Critique', detail: 'blind instrumented critic; skipped on a build link, the only phase of a deferred critique' },
   ],
 }
 
 // ---------------------------------------------------------------------------
 // args (supplied by the crucible skill; see SKILL.md "Phase 1")
 //   target        string   target name from CONTRACT.json
-//   iter          number   iteration number; 0 means the baseline round
+//   iter          number   iteration number; 0 means the baseline round (evidence only)
+//   mode          string   'build' (default) | 'critique'. 'critique' judges an iteration that
+//                          was already built and committed: no Spec, no Build, no new evidence
+//                          run. Its record is the evidence report that link left behind.
+//   critique      boolean  false = a build link: stop once layer 1 passes, no critic. Default
+//                          true for a build round, false for the baseline.
+//   brief         string   what the target has to deliver and which documents say so; the Spec
+//                          stage reads it when there is no prior critique to work from
+//   criticModel   string   model every Claude critic seat runs on; unset = the session model
 //   dir           string   artifact dir, default '.crucible'
-//   gateFlags     string   the verbatim STATUS.md `Gate flags:` line contents
+//   gateFlags     string   accepted and ignored: the hard-layer check a link uses takes no gate flags
 //   seat          string   'opus' | 'codex' — whose turn the regular critic seat is
-//   panel         boolean  true on a confirmation round (3 critics, median merge)
+//   panel         boolean  true for a 3-critic panel with a median merge (used with --confirm >= 2)
 //   codexSeat     boolean  false when the companion is absent and the user consented to Claude-only
 //   companion     string   absolute path to codex-companion.mjs, or null
 //   priorCritique string   path to the previous iteration's merged critique, or null
@@ -32,16 +40,26 @@ const dir = a.dir || '.crucible'
 const target = a.target
 const iter = a.iter
 const baseline = iter === 0
+const critiqueOnly = a.mode === 'critique'
+// A baseline is a measurement, not a judgement, and a build link is judged later with the
+// rest of its chain: a critic runs only where one was asked for.
+const withCritique = critiqueOnly ? true : baseline ? a.critique === true : a.critique !== false
+const brief = typeof a.brief === 'string' ? a.brief : ''
+const criticModel = a.criticModel || null
+const criticName = criticModel || 'opus'
+const criticOpts = (o) => (criticModel ? { ...o, model: criticModel } : o)
 const seat = a.seat === 'codex' ? 'codex' : 'opus'
 const panel = a.panel === true
 const codexSeat = a.codexSeat !== false && !!a.companion
-const gateFlags = a.gateFlags || ''
 const sourceGlobs = a.sourceGlobs || []
 const testGlobs = a.testGlobs || []
 const findings = a.findings || []
 
 if (!target || typeof iter !== 'number') {
   throw new Error('crucible-iteration: args.target (string) and args.iter (number) are required')
+}
+if (critiqueOnly && baseline) {
+  throw new Error('crucible-iteration: mode "critique" needs the iteration of a built link (iter >= 1)')
 }
 
 const TOOLS = `${dir}/tools`
@@ -160,7 +178,11 @@ laundering and voids the iteration.`
 const INSTRUMENT_RULE = `
 Every measured claim you make must cite the exact registered command you ran and its verbatim output.
 Registered instruments live in ${dir}/CONTRACT.json under "instruments" — run them with:
-  node ${TOOLS}/evidence.mjs run --target ${target} --iter ${iter} --json
+  node ${TOOLS}/evidence.mjs run --target ${target} --iter ${iter} --scratch --json
+Always pass --scratch. It writes your run under ${dir}/evidence/scratch/ and leaves the round's record
+(${dir}/evidence/${target}_iter${iter}.json) as it is; a run without it replaces the record. The scratch
+report's changed-line coverage is taken against a different base than the record's, so cite coverage from
+the record only. --only <id,id> restricts a run to the instruments you need.
 Do NOT hand-roll a measurement script, and do NOT cite a command that is not registered. If a number you
 need has no registered instrument, say so as a finding rather than improvising one.`
 
@@ -170,7 +192,7 @@ need has no registered instrument, say so as a finding rather than improvising o
 
 let spec = null
 
-if (!baseline) {
+if (!baseline && !critiqueOnly) {
   phase('Spec')
   spec = await seated(
     'spec',
@@ -182,12 +204,19 @@ Target: ${target}      Iteration: ${iter}
 Artifact dir: ${dir}
 Prior critique: ${a.priorCritique || '(none)'}
 
+What this target has to deliver (the brief):
+${brief || '(no brief given — read the project\'s own spec and roadmap documents for this target)'}
+
 Findings to address this iteration (verbatim from the prior critique):
-${findings.length ? JSON.stringify(findings, null, 2) : '(none — first working iteration; derive behaviors from the baseline critique)'}
+${findings.length ? JSON.stringify(findings, null, 2) : '(none — this is the target\'s first build; the brief and the documents it names are the source)'}
 
 Do this:
-1. Read the prior critique and the target's current source (globs: ${sourceGlobs.join(', ')}).
-2. Turn the findings into a numbered behavior list. Each behavior is ONE externally observable statement
+1. Read the brief and the documents it names, the prior critique when there is one, and the target's
+   current source (globs: ${sourceGlobs.join(', ')}). Read what the targets this one builds on already
+   expose, so the interface you pin fits them.
+2. Turn the brief (first build) or the findings (later rounds) into a numbered behavior list. On a first
+   build, cover everything the brief asks of this target in this one iteration: the next target is built
+   on top of it before any critic looks, so a behavior left for later is a gap in the chain. Each behavior is ONE externally observable statement
    about what the code must do — phrased so a test can fail when it is false, and phrased WITHOUT reference
    to any particular implementation. Ids are B1, B2, ... and are the join key the gate uses to prove
    functional coverage. Fold findings that share one behavior; split a finding that hides two.
@@ -217,7 +246,7 @@ quote column" is a behavior; "improve error handling" is not.`,
 let build = null
 let tests = null
 
-if (!baseline) {
+if (!baseline && !critiqueOnly) {
   phase('Build')
   const behaviorBlock = spec.behaviors.map((b) => `  ${b.id}: ${b.statement}`).join('\n')
   const interfaceBlock = spec.interface.length
@@ -293,8 +322,6 @@ Return the test files you wrote and, in behaviorsCovered, the behavior ids you m
 // Phase: Evidence  (+ bounded Repair)
 // ---------------------------------------------------------------------------
 
-phase('Evidence')
-
 const evidencePrompt = (attemptNote) => `You are the Evidence stage for target "${target}", iteration ${iter}.
 
 Run, in this order, and report exactly what happened — never summarize a number you did not see:
@@ -307,9 +334,13 @@ Run, in this order, and report exactly what happened — never summarize a numbe
 2. For any instrument of kind "tool" (Chrome MCP, unity-bridge, or another skill), perform its documented
    invocation yourself and patch its result into the evidence report's instruments entry, citing the
    transcript. A tool instrument left with ran:false is a broken rig, not a passing gate.
-3. node ${TOOLS}/gate.mjs --check ${target} ${gateFlags} --json
-   Report its verdict verbatim. The gate is the referee: do not interpret, argue with, or restate its
-   verdict in friendlier terms.
+${baseline
+      ? `3. A baseline has no verdict: return gateVerdict "baseline" and an empty layer1Failures.`
+      : `3. node ${TOOLS}/gate.mjs --layer1 ${target} --iter ${iter} --json
+   This is the hard layer's verdict on the report you just wrote. Return "PASS" or "FAIL" as gateVerdict
+   and its "failing" array, verbatim, as layer1Failures (empty when "pass" is true). The gate is the
+   referee: do not interpret, argue with, or restate its verdict in friendlier terms, and do not work
+   the clauses out yourself.`}
 
 If an instrument failed to RUN (timeout, missing binary, unparseable output), that is a broken rig: repair
 the rig — never the numbers — and re-run. Report broken instruments explicitly.${attemptNote || ''}
@@ -317,15 +348,24 @@ the rig — never the numbers — and re-run. Report broken instruments explicit
 Return the evidence path, whether all instruments are healthy, the gate's verdict string, and the specific
 layer-1 clauses that failed (empty when layer 1 passes).`
 
-let ev = await seated('evidence', evidencePrompt(null), {
-  label: `evidence:${target}#${iter}`,
-  phase: 'Evidence',
-  schema: EVIDENCE_SCHEMA,
-})
-row('evidence', 'workflow', ev ? 'workflow' : 'failed', ev ? null : 'AGENT-FAILED')
+let ev
+if (critiqueOnly) {
+  // The link's own evidence report is the record. The orchestrator checked it with
+  // `gate.mjs --layer1` before asking for this critique; nothing is re-run here, because
+  // the link is committed and a fresh changed-line reading would be of another diff.
+  ev = { evidencePath: EVIDENCE_PATH, instrumentsHealthy: true, gateVerdict: 'recorded', layer1Failures: [] }
+} else {
+  phase('Evidence')
+  ev = await seated('evidence', evidencePrompt(null), {
+    label: `evidence:${target}#${iter}`,
+    phase: 'Evidence',
+    schema: EVIDENCE_SCHEMA,
+  })
+  row('evidence', 'workflow', ev ? 'workflow' : 'failed', ev ? null : 'AGENT-FAILED')
+}
 
 let repairAttempts = 0
-if (!baseline && ev) {
+if (!baseline && !critiqueOnly && ev) {
   while (ev && ev.layer1Failures && ev.layer1Failures.length > 0 && repairAttempts < 2) {
     repairAttempts += 1
     phase('Repair')
@@ -398,6 +438,22 @@ if (!ev.instrumentsHealthy) {
   }
 }
 
+// A build link ends here: layer 1 holds, and the next link can be built on this one.
+if (!withCritique) {
+  return {
+    iteration: iter,
+    target,
+    status: baseline ? 'BASELINE-DONE' : 'LINK-DONE',
+    evidencePath: ev.evidencePath,
+    specPath: baseline ? null : SPEC_PATH,
+    behaviors: spec ? spec.behaviors.map((b) => b.id) : [],
+    critiques: [],
+    repairAttempts,
+    gateVerdictAtEvidence: ev.gateVerdict,
+    ledger,
+  }
+}
+
 // ---------------------------------------------------------------------------
 // Phase: Critique — blind, instrumented, validated
 // ---------------------------------------------------------------------------
@@ -415,13 +471,22 @@ Tests under review: ${testGlobs.join(', ')}
 ${lens ? `\nYour lens this round: ${lens}\nScore every axis, but investigate your lens's axes deeply.\n` : ''}
 ${INSTRUMENT_RULE}
 
-Required for every finding: axis, score, region (file:line-range), defect, concrete fix, and the evidence
-that proves it (instrument id, exact command, verbatim output).
+A finding is a defect: something wrong or missing that a builder can act on. Each needs axis, score,
+region (file:line-range), defect, concrete fix, and the evidence that proves it (instrument id, exact
+command, verbatim output). Where an axis has no defect, write no finding for it — do not write one to
+explain a good score. One line per axis in "summary" is the place for that.
 
-The test_quality axis is UNSCORABLE without a mutation experiment. To score it: pick one behavior the new
-tests claim to cover, break that behavior in the SOURCE, run the registered test command, cite the output,
-then REVERT your mutation and confirm the revert. Record it in the mutation block. If the suite stays green
-under the mutation, the test does not constrain behavior — that is a finding, and the axis scores low.
+What the target is held to is its declared behaviors (${dir}/spec/${target}_iter*.json, every iteration)
+and the rubric's anchors. A sentence in a comment or a doc that no declared behavior states is not a
+behavior: if one looks unconstrained, list it once in a top-level "notes" array of strings, and do not
+score it, mutate against it, or write a finding for it.
+
+The test_quality axis is UNSCORABLE without a mutation experiment. To score it: pick one DECLARED behavior
+the tests claim to cover, break that behavior in the SOURCE, run the registered test command, cite the
+output, then REVERT your mutation and confirm the revert. Record it in the mutation block. If the suite
+stays green under the mutation, the test does not constrain behavior — that is a finding, and the axis
+scores low. One experiment scores the axis. Run at most three, each on a different declared behavior at
+its centre, and stop there: a full run of the test instrument is the most expensive thing you do.
 Never mutate a test file. Never leave a mutation in the tree.
 
 Score against the anchors as written. An axis you cannot measure with a registered instrument scores null —
@@ -435,7 +500,7 @@ alter a score to make the validator pass; the validator checks shape, never cont
 let critiques = []
 
 if (panel) {
-  log(`confirmation round — 3-critic panel${codexSeat ? ' (does-it-reproduce seat on Codex)' : ' (all-Claude: companion unavailable)'}`)
+  log(`3-critic panel${codexSeat ? ' (does-it-reproduce seat on Codex)' : ' (all-Claude: companion unavailable)'}`)
   const lenses = [
     { lens: 'correctness and error handling — does it do what it claims at the edges', out: `${dir}/critiques/${target}_iter${iter}.opus.json`, seat: 'opus' },
     { lens: 'design and maintainability — api_design, readability, docs_dx', out: `${dir}/critiques/${target}_iter${iter}.opus2.json`, seat: 'opus' },
@@ -446,8 +511,9 @@ if (panel) {
     },
   ]
 
-  critiques = await parallel(
-    lenses.map((l) => () => {
+  // One critic at a time. Each runs a mutation experiment in the one working tree, and
+  // two at once put one seat's mutation into another seat's instrument run.
+  const panelSeats = lenses.map((l) => async () => {
       const p = criticPrompt(l.lens, l.out)
       if (l.seat === 'codex') {
         return seated(
@@ -470,12 +536,25 @@ ${p}
           { label: `critic:codex:${target}#${iter}`, phase: 'Critique', schema: CRITIQUE_SCHEMA }
         )
       }
-      return seated(`critique:${l.seat}`, p, { label: `critic:${l.seat}:${target}#${iter}`, phase: 'Critique', schema: CRITIQUE_SCHEMA })
-    })
-  )
+      return seated(`critique:${criticName}`, p, criticOpts({ label: `critic:${criticName}:${target}#${iter}`, phase: 'Critique', schema: CRITIQUE_SCHEMA }))
+  })
+  critiques = []
+  for (const runSeat of panelSeats) {
+    try {
+      critiques.push(await runSeat())
+    } catch (e) {
+      log(`panel critic failed: ${e && e.message ? e.message : e}`)
+      critiques.push(null)
+    }
+  }
 
   const landed = critiques.filter(Boolean).filter((c) => c.validated)
-  row('critique', codexSeat ? 'panel:opus,opus,codex' : 'panel:opus,opus,opus', `panel:${landed.length} validated`, codexSeat ? null : 'SANDBOX-DOWN')
+  row(
+    'critique',
+    codexSeat ? `panel:${criticName},${criticName},codex` : `panel:${criticName},${criticName},${criticName}`,
+    `panel:${landed.length} validated`,
+    codexSeat ? null : 'SANDBOX-DOWN'
+  )
 
   if (landed.length >= 2) {
     const merged = await seated(
@@ -522,9 +601,9 @@ ${p}
 --- END CRITIC PROMPT ---`,
         { label: `critic:codex:${target}#${iter}`, phase: 'Critique', schema: CRITIQUE_SCHEMA }
       )
-    : await seated('critique:opus', p, { label: `critic:opus:${target}#${iter}`, phase: 'Critique', schema: CRITIQUE_SCHEMA })
+    : await seated(`critique:${criticName}`, p, criticOpts({ label: `critic:${criticName}:${target}#${iter}`, phase: 'Critique', schema: CRITIQUE_SCHEMA }))
 
-  row('critique', seat, useCodex ? 'codex' : 'opus', seat === 'codex' && !useCodex ? 'SANDBOX-DOWN' : null)
+  row('critique', seat === 'codex' ? 'codex' : criticName, useCodex ? 'codex' : criticName, seat === 'codex' && !useCodex ? 'SANDBOX-DOWN' : null)
   critiques = [c].filter(Boolean)
 }
 
@@ -536,10 +615,10 @@ if (validated.length === 0) {
 return {
   iteration: iter,
   target,
-  status: baseline ? 'BASELINE-DONE' : 'ITERATION-DONE',
+  status: baseline ? 'BASELINE-DONE' : critiqueOnly ? 'CRITIQUE-DONE' : 'ITERATION-DONE',
   evidencePath: ev.evidencePath,
-  specPath: baseline ? null : SPEC_PATH,
-  behaviors: baseline ? [] : spec.behaviors.map((b) => b.id),
+  specPath: baseline || critiqueOnly ? null : SPEC_PATH,
+  behaviors: spec ? spec.behaviors.map((b) => b.id) : [],
   critiques: validated.map((c) => ({ path: c.critiquePath, critic: c.critic, scores: c.scores })),
   repairAttempts,
   gateVerdictAtEvidence: ev.gateVerdict,

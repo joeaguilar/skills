@@ -1,0 +1,54 @@
+{
+  "name": "cache-watch",
+  "version": "0.3.0",
+  "description": "Shows how warm the prompt cache is: time left before it lapses, how large the cached conversation is, what the next turn costs warm and cold, and the session's hit rate, misses and savings. Sets how the conversation compacts: manual, auto, or auto+summary, where a fork of the warm cache writes auto-compact-handoff-<date>.md first, briefs the summarizer, and leaves the wake prompt in the input box.",
+  "types": "./types/index.d.ts",
+  "userConfig": {
+    "compact": {
+      "type": "string",
+      "title": "Compaction",
+      "description": "The default for projects without a .cache-watch file in their root (compact: manual | auto | auto+summary, threshold: 85). manual: nothing compacts on its own; Claude Code's threshold compaction is held off and only your /compact compacts. auto: the mod compacts at the threshold between turns (or lets Claude Code's own stand), and the cache rebuilds cold. auto+summary ¤ (uses tokens): a fork of the still-warm cache first writes auto-compact-handoff-<date>.md in the project root, the summarizer is told what to keep and where the file is, then the wake prompt is put in the input box. /cache-watch manual | auto | summary writes the project's file.",
+      "default": "auto",
+      "options": [
+        "manual",
+        "auto",
+        "auto+summary"
+      ]
+    },
+    "ttl": {
+      "type": "string",
+      "title": "Cache lifetime",
+      "description": "auto follows Claude Code's own rules for the main conversation (FORCE_PROMPT_CACHING_5M, CLAUDE_CODE_PROMPT_CACHE_TTL, the promptCacheTtl setting, ENABLE_PROMPT_CACHING_1H, then one hour on a subscription within plan usage and five minutes otherwise). Name one to pin it.",
+      "default": "auto",
+      "options": [
+        "auto",
+        "5m",
+        "1h"
+      ]
+    },
+    "band": {
+      "type": "boolean",
+      "title": "Reading above the prompt",
+      "description": "Keep the one-line cache reading above the prompt: green while the cache is warm, yellow on its last fifth or while it has to be rebuilt, red once it is cold. Off leaves the /cache-watch pane and the toasts.",
+      "default": true
+    },
+    "warn": {
+      "type": "boolean",
+      "title": "Warn before a lapse",
+      "description": "Toast once while the session sits idle and the cache is about to go cold (five minutes ahead on the one-hour lifetime, one minute ahead on the five-minute one), and when a request misses the cache.",
+      "default": true
+    },
+    "warnUsd": {
+      "type": "number",
+      "title": "Warn from (USD)",
+      "description": "Only toast when the lapse or the miss adds at least this much.",
+      "default": 0.5
+    },
+    "inputPrice": {
+      "type": "number",
+      "title": "Input price (USD per million tokens)",
+      "description": "0 uses Anthropic's list price for the model. Set your own base input rate for fast mode, a cloud provider or contracted pricing; cache writes and reads are derived from it.",
+      "default": 0
+    }
+  }
+}

@@ -1,6 +1,6 @@
 ---
 name: crucible
-description: Run (or resume) a two-layer, rubric-gated autonomous build/critique loop on ANY project — the whole chain of targets is built first, one Workflow per link (Spec → Build ∥ blind test-author → Evidence → bounded Repair) with only the hard gate between links, then critiqued once it works end to end, with fix rounds only where an axis is below the bar; a hard layer-1 gate (no new test failures, changed-lines coverage, every declared behavior pinned by a passing test, declared metric thresholds) plus blind instrumented critics scored against a negotiated rubric, closure decided solely by `gate.mjs`, evidence produced only by contract-registered instruments, routing reconciled via a mandatory route ledger. Trigger when the user types `/crucible`, or asks to "run the crucible loop", "iterate this module until it's actually good", "rubric-gated loop with real tests", "autonomous build/critique loop on this package", "resume the crucible", or similar. Do NOT trigger for a visual/pixel subsystem where the measurement IS the pixels (use `/gauntlet` — it carries a verified pixel instrument), for a single one-off review (use `/code-review`), for clearing a task backlog in parallel (use `/blitz`), or for a roadmap-bounded campaign (use `/proof-campaign`).
+description: Run (or resume) a two-layer, rubric-gated autonomous build/critique loop on ANY project — the work is laid out as milestones that together cover everything the spec proposes (planning must be finished for every one of them before the run starts), a milestone is met only when the gate closes every target in it and its outcome command runs, and within a milestone the whole chain of targets is built first, one Workflow per link (Spec → Build ∥ blind test-author → Evidence → bounded Repair) with only the hard gate between links, then critiqued once it works end to end, with fix rounds only where an axis is below the bar; a hard layer-1 gate (no new test failures, changed-lines coverage, every declared behavior pinned by a passing test, declared metric thresholds) plus blind instrumented critics scored against a negotiated rubric, closure decided solely by `gate.mjs`, evidence produced only by contract-registered instruments, routing reconciled via a mandatory route ledger. Trigger when the user types `/crucible`, or asks to "run the crucible loop", "iterate this module until it's actually good", "rubric-gated loop with real tests", "autonomous build/critique loop on this package", "resume the crucible", or similar. Do NOT trigger for a visual/pixel subsystem where the measurement IS the pixels (use `/gauntlet` — it carries a verified pixel instrument), for a single one-off review (use `/code-review`), for clearing a task backlog in parallel (use `/blitz`), or for a roadmap-bounded campaign (use `/proof-campaign`).
 ---
 
 # crucible — two-layer gated build/critique loop, any project
@@ -16,6 +16,14 @@ metrics) is mechanical and cheap, so it sits between every pair of links. A crit
 build it judges, so critics run once the chain works end to end, each target closes on its first critique at
 the bar, and another scored round is spent only on an axis that is below it. A run that polishes its first
 layers and never reaches the last one has failed, whatever its scores say.
+
+**The run is measured in milestones, and a milestone has to be met.** A milestone is a stage of the work a
+person can use: an outcome sentence, the command that shows it, and the targets that make it up. **Everything
+the project's spec and roadmap propose is work to be done**, and the contract covers all of it, as milestones
+in order. A milestone is **met** when the gate has CLOSED every target in it and its command does what its
+sentence says — nothing less. The run is finished when every milestone is met, or is reported as not met with
+what it would take. Part of the work is never "the scope" because it happened to be the part that was
+specified, came first, or fit the budget.
 
 Every rule below is wired to a file, a gate, or a harness toggle — **anything the loop asserts about its own
 behavior must land in one of those three.** A rule that can only be obeyed by remembering it is dropped after
@@ -111,17 +119,34 @@ when toggles and engine copies have been lost.
    **A mismatch STOPS the run** — either re-copy from the bundle or record an explicit override in the
    ledger with a reason. A hand-edited local gate is an unverified closure authority and voids every closure
    it grants. Verify again on every `--resume`. Never write these tools from memory.
-4. **Negotiate the contract — the one human gate.** Scan the repo: language and package manager, test runner
+4. **Check that planning is finished, then negotiate the contract — the one human gate.**
+   **Planning check (BLOCKING, before any contract is drafted).** Read the spec and the roadmap whole and list
+   every milestone they propose. Everything proposed is work to be done, whatever the document calls it:
+   "later", "v2", "phase 2", "fast follow", "deferred", "not specified here". Each milestone must be planned
+   to the same depth as the first: requirements a numbered behavior list can be written from, acceptance, and
+   an outcome a command can show. A milestone that is a heading and a sentence is not planned, and a spec that
+   is detailed up to some point and thin after it is an unfinished plan, not a scope. If any milestone is
+   thinner than the first, **planning is not finished: STOP.** Tell the user which milestones are thin and
+   what each is missing, and finish the spec with them (`/alignment`, `/spec-writer`) before any contract,
+   baseline or build. Do not start on the part that happens to be specified while the rest waits. Only the
+   user takes work out of the run, in so many words; agreeing to an order of delivery ("that can be
+   milestone 2", "start with the core") takes nothing out.
+   **Then the contract.** Scan the repo: language and package manager, test runner
    and its machine-readable reporter flag, coverage tooling, linter/typechecker, benchmark or perf harness,
    CI config, existing scripts, and which measurement surfaces are reachable (Chrome MCP, `unity-bridge`,
    `/run`, other skills). Then draft the full `CONTRACT.json` (schema: `assets/SCHEMAS.md` §1) — targets **in
    build order** (the array is the chain: each target may use the ones before it) with **disjoint**
    source/test globs and a `brief` each (what it has to deliver, and which documents say so — the first Spec
    stage works from it), the axis subset from `assets/AXES.md` with anchors tuned to this project,
-   layer-1 thresholds, the budget (`cap`, `runCap`, `confirm`), and the instrument registry. Agree the
-   **outcome** at the same sitting: one sentence on what a person can do once the chain is built, and the
-   exact command that shows it. It goes in STATUS.md as `Outcome: <sentence> — shown by: <command>` and is
-   what Phase 2 builds toward. **Ask via AskUserQuestion about anything the scan leaves
+   layer-1 thresholds, the budget (`cap`, `runCap`, `confirm`), and the instrument registry. The targets
+   cover **every milestone**, grouped by milestone in order; the budget is sized for all of them. Agree each
+   milestone's **outcome** at the same sitting: one sentence on what a person can do once that milestone is
+   built, and the exact command that shows it. Each goes in STATUS.md as
+   `Milestone <n>: <sentence> — shown by: <command> — targets: <a, b, c>` (a run with one milestone has one
+   such line) and is what Phase 2 builds toward. Before sign-off, show the user a table of milestone →
+   targets → the spec sections they cover, and one line `Not covered by this contract: <list, or nothing>`.
+   A contract that covers less than the spec proposes is presented as exactly that and needs the user's yes
+   to what is left out; it is never the default. **Ask via AskUserQuestion about anything the scan leaves
    genuinely ambiguous** — which module is the target, what "good" means here, what the perf budget is —
    then present the draft for sign-off, accept edits, and write it. Validate with
    `gate.mjs --validate-contract`. Generate `<dir>/RUBRIC.md` from it (critics read the rubric; they never
@@ -142,7 +167,7 @@ when toggles and engine copies have been lost.
    one is a recorded degradation.
 7. **Residual sink**: `itr stats` succeeds (`.itr.db` present) — else create `<dir>/RESIDUALS.md` and use it.
    Residuals go to a tracked file, never to prose.
-8. **STATUS.md scaffolded** with the route ledger table (Phase 5), the resume block, the `Outcome:` line,
+8. **STATUS.md scaffolded** with the route ledger table (Phase 5), the resume block, one `Milestone <n>:` line per milestone,
    and the `Gate flags: --cap N [--run-cap N] [--confirm N] [--bar N]` line. Running `gate.mjs --cap N` once
    records nothing — the flag is per-invocation, so the STATUS.md line is the record and every subsequent
    gate call carries it.
@@ -167,7 +192,10 @@ Workflow call each.
 ## Phase 2 — Build the chain, then critique it
 
 A run is a **chain**: the contract's targets in order, each one a **link** built on the ones before it. A
-single-target run is a chain of one. Every Workflow call goes to the bundled script, never to loose Agent calls:
+single-target run is a chain of one. **The chain is worked one milestone at a time:** steps 1 to 4 below run
+for the first milestone's targets until that milestone is met, then for the next milestone's, in the same
+turn, to the last. The strict review (steps 3 and 4, both gate layers) is held at every milestone and is not
+thinned for a later one. Every Workflow call goes to the bundled script, never to loose Agent calls:
 
 ```
 Workflow({ scriptPath: "<dir>/tools/iteration.js", args: { target, iter, dir, mode, critique, brief,
@@ -175,7 +203,7 @@ Workflow({ scriptPath: "<dir>/tools/iteration.js", args: { target, iter, dir, mo
                                                            priorCritique, findings, sourceGlobs, testGlobs } })
 ```
 
-**Step 1 — build every link, with no critic between them.** For each target in contract order, one call with
+**Step 1 — build every link of the milestone, with no critic between them.** For each of its targets in contract order, one call with
 `critique: false` and the target's `brief`. The script runs **Spec → (Build ∥ blind Test-author) → Evidence →
 bounded Repair** and returns `LINK-DONE` once the hard layer holds. Then:
 
@@ -190,7 +218,7 @@ at the next iteration number, with the failing clauses as its `findings`. Failin
 `<dir>/PLATEAU-<target>.md`, mark it terminal, and carry on with every later target that can be built without
 it.
 
-**Step 2 — show the outcome.** When the last link has landed, run the command on STATUS.md's `Outcome:` line.
+**Step 2 — show the outcome.** When the milestone's last link has landed, run the command on its STATUS.md `Milestone <n>:` line.
 If it does not do what the sentence says, what is missing is building work, not a finding: build it as one
 more link on the target that owns it. No critic runs before the outcome does. Tell the user, in one line, the
 command they can now run.
@@ -203,7 +231,15 @@ experiment in the one working tree.
 **Step 4 — fix rounds, only below the bar.** For each target the gate reports `CONTINUE`, one full round
 (`critique` left at its default) whose `findings` are the gate's work order: the findings on the axes below
 the bar, and no others. Everything else a critic found goes to the residual sink (Phase 5.4) and costs no
-round. Repeat until the gate says CLOSED, CAPPED or PLATEAU for every target.
+round. Repeat until the gate says CLOSED, CAPPED or PLATEAU for every target of the milestone.
+
+**Meeting the milestone.** A milestone is **met** when `gate.mjs --check` exits 0 for every one of its targets
+and its outcome command, run again after the last fix round, still does what its sentence says. Write
+`— met <date>` at the end of its STATUS.md line, tell the user in one line, and start the next milestone's
+step 1 in the same turn. If one of its targets ended CAPPED or PLATEAU, the milestone is **not met**: write
+`— NOT MET: <target>: <gate state>` on its line and never describe it as done, finished or complete. Carry on
+with every later milestone that can be built without what is missing. The run's final report opens with the
+list of milestones, each met or not met, before any score or count.
 
 To critique each link as it lands instead — the old shape — leave `critique` at its default in step 1. Do that
 only when a later target cannot be built at all on an unjudged one, and say why in STATUS.md.
@@ -364,7 +400,7 @@ machine-local; where the tool is not listed, paste the Workflow's rows as return
 score, a trajectory, or a closure claim. Hand-written prose in STATUS.md is limited to "Next action", the
 resume block, and the ledger's reason cells.
 
-**3. Resume block — rewritten every link and every critique.** Which step of Phase 2 the chain is in, target,
+**3. Resume block — rewritten every link and every critique.** Which milestone and which step of Phase 2 the chain is in, target,
 iteration N, in-flight `runId`, gate verdict, next action. This is what `--resume` reads. Because each iteration is one Workflow call, agent tokens never touch
 your context, so the orchestrator stays lean by construction — the resume block, not a token budget, is what
 survives a compaction.
@@ -404,7 +440,9 @@ once per stage, and do not edit the script to change it mid-run.
 
 ## Principles
 
-- Finish the chain before judging it. A working end-to-end result with residuals beats a first layer at 9 and nothing a person can run.
+- Everything the spec proposes is work to be done. The run is measured in milestones met, not in targets closed, scores or rounds spent.
+- A plan that is detailed up to a point and thin after it is not finished. Finish it with the user before building any of it.
+- Finish a milestone's chain before judging it. A working end-to-end result with residuals beats a first layer at 9 and nothing a person can run.
 - The hard gate is cheap and sits between every link; a critic is dear and is spent once per target, then only below the bar.
 - The gate is the referee; critics are witnesses; instruments are the record; you are the clerk. None may do another's job.
 - Two layers because they catch different lies: layer 1 catches "it isn't tested", layer 2 catches "it isn't good".
@@ -415,6 +453,9 @@ once per stage, and do not edit the script to change it mid-run.
 
 ## Don't
 
+- Don't draft a contract, take a baseline or build anything while any milestone the spec proposes is planned more thinly than the first. Stop and finish the planning with the user.
+- Don't narrow the run to part of what the spec proposes — a "priority path", a first slice, the first milestone — on your own, and don't read a yes to an order of delivery as leaving work out.
+- Don't call a milestone met unless the gate closed every target in it and its outcome command ran. Don't skip or thin the review for a later milestone.
 - Don't launch without the ultracode session toggle confirmed on, and don't substitute loose Agent calls for the iteration Workflow.
 - Don't run with an unverified engine — `--verify-engine` on every Phase 0 and every `--resume`.
 - Don't let the builder touch a test file, or the test-author touch source. Blindness is worthless if either can reach into the other's files.

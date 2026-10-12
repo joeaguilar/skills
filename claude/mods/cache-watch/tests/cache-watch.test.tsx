@@ -223,6 +223,16 @@ const start = ($: Engine) =>
   $.session.start({ cwd: '/repo', surface: 'terminal', isInteractive: true })
 
 /** The mod's line above the prompt: its words and the colour of its head; undefined when it draws none. */
+/** One of the band's selector buttons, as the terminal draws it. */
+const bandButton = async ($: Engine, key: string) => {
+  const ui = await $.ui.mount({ ...BAND, surface: 'terminal' })
+  const button = await ui.find({ type: 'Button', key })
+
+  await ui.unmount()
+
+  return button
+}
+
 const band = async ($: Engine) => {
   const ui = await $.ui.mount({ ...BAND, surface: 'terminal' })
   const parts = await ui.findAll({ type: 'Text' })
@@ -298,6 +308,34 @@ test('the band draws on every surface and keeps what other mods drew beneath it'
     expect(await ui.find({ key: 'beneath' })).toBeDefined()
     await ui.unmount()
   }
+})
+
+test('the band carries the selector: on the cache line where it fits, under it where it does not, and a press sets the mode', async ($, on) => {
+  const { clock, files, respond } = world(on)
+
+  await start($)
+  await respond($, STEADY)
+
+  const wide = await $.ui.mount({ ...BAND, surface: 'terminal' })
+
+  expect((await wide.findAll({ type: 'Button' })).map(button => button.props.label)).toEqual(['manual', 'auto', 'summary ¤'])
+  expect(await wide.find({ type: 'Button', key: 'mode-auto' })).toMatchObject({ props: { variant: 'primary' } })
+  // The outer column, the one row, the reading's own box and what is drawn beneath: no second row at 120 columns.
+  expect(await wide.findAll({ type: 'Box' })).toHaveLength(4)
+
+  await wide.press({ key: 'mode-auto+summary' })
+  await clock.settle()
+
+  expect(files.get('/repo/.cache-watch')).toContain('compact: auto+summary')
+  expect(await wide.find({ type: 'Button', key: 'mode-auto+summary' })).toMatchObject({ props: { variant: 'primary' } })
+  await wide.unmount()
+
+  const narrow = await $.ui.mount({ ...BAND, props: { ...BAND.props, bodyColumns: 80 }, surface: 'terminal' })
+
+  // At 80 columns the selector takes a row of its own under the reading.
+  expect(await narrow.findAll({ type: 'Box' })).toHaveLength(5)
+  expect(await narrow.findAll({ type: 'Button' })).toHaveLength(3)
+  await narrow.unmount()
 })
 
 test('the band stands aside while a survey holds it', async ($, on) => {
@@ -488,7 +526,7 @@ test('manual holds off the engine’s threshold compaction, says so once, and le
   expect(held.skip).toBe('Cache Watch: this project compacts by hand (.cache-watch: manual); /compact when ready')
   expect(compactions).toEqual([])
   expect(toasts).toEqual(['Cache Watch: compaction held off here (.cache-watch: manual); /compact when ready'])
-  expect((await band($))?.text).toContain('· manual')
+  expect(await bandButton($, 'mode-manual')).toMatchObject({ props: { variant: 'primary' } })
 
   await $.session.compact({ trigger: 'auto', messages: MESSAGES })
 

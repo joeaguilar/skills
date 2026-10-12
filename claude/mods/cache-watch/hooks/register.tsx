@@ -1,10 +1,13 @@
 import { atom, read, update } from 'claude-code'
 import type {
+  ButtonProps,
+  ElementConstructor,
   EngineInterface,
   ModelForkResult,
   ModelUsage,
   PluginOptions,
   Register,
+  RenderElement,
   SessionRateLimit,
   Timer,
 } from 'claude-code'
@@ -46,15 +49,15 @@ const MODE_TEXT: Record<CompactMode, string> = {
     'auto+summary ¤: a fork of the warm cache writes the handoff file first, then the wake prompt is filled',
 }
 
-/** The short mark the cache line carries for a mode other than auto. */
-const MODE_MARK: Record<CompactMode, string> = { manual: ' · manual', auto: '', 'auto+summary': ' · summary' }
-
-/** The pane's selector: one button per mode, and the letter that presses it while the pane holds the focus. */
+/** The selector: one button per mode, and the letter that presses it while the pane holds the focus. */
 const MODE_BUTTONS: readonly { mode: CompactMode; label: string; hotkey: string }[] = [
   { mode: 'manual', label: 'manual', hotkey: 'm' },
   { mode: 'auto', label: 'auto', hotkey: 'a' },
   { mode: 'auto+summary', label: 'summary ¤', hotkey: 's' },
 ]
+/** The columns the selector takes on the terminal: `[ label ]` each, one space between. */
+const SELECTOR_COLUMNS =
+  MODE_BUTTONS.reduce((width, button) => width + button.label.length + 4, 0) + MODE_BUTTONS.length - 1
 
 /** Why the fork gave no handoff, as the toast says it. */
 const REASON: Record<string, string> = {
@@ -601,7 +604,7 @@ const readingOf = (held: Ledger, at: number): Reading | undefined => {
 
   return {
     head: `cache ${bar(view.leftMs / TTL_MS[held.ttl])} ${left(view.leftMs)}`,
-    rest: ` · ${size}${price('next', view.warmUsd)}${price('cold', view.coldUsd)}${rate}${MODE_MARK[rule.mode]}`,
+    rest: ` · ${size}${price('next', view.warmUsd)}${price('cold', view.coldUsd)}${rate}`,
     tone,
   }
 }
@@ -623,6 +626,33 @@ const tallyLines = (tally: Tally, hasPrice: boolean): Line[] => {
     ...(hasPrice ? [{ text: `  input cost ${usd(tally.spentUsd)} · ${saved}` }] : []),
   ]
 }
+
+/**
+ * The selector's buttons, the mode in force drawn primary: on the band they
+ * have no hotkey (one letter per mod there), in the pane m, a and s.
+ */
+const selectorOf = (
+  $: EngineInterface,
+  Button: ElementConstructor<ButtonProps>,
+  hasHotkeys: boolean,
+): RenderElement[] =>
+  MODE_BUTTONS.map(button => (
+    <Button
+      key={`mode-${button.mode}`}
+      label={button.label}
+      hotkey={hasHotkeys ? button.hotkey : undefined}
+      variant={button.mode === rule.mode ? 'primary' : 'secondary'}
+      dimColor={button.mode !== rule.mode}
+      onPress={() => {
+        // Off the dispatch: the file is written and the readers redrawn after the press returns.
+        $.clock.after(0, () => {
+          void setMode($, button.mode)
+            .then(text => say($, text))
+            .catch(() => undefined)
+        })
+      }}
+    />
+  ))
 
 /** The pane's closing section: how the conversation compacts, and the last handoff. */
 const compactLines = (hand: Handoff, at: number): Line[] => [
@@ -1379,15 +1409,25 @@ export const register: Register = (on, options) => {
       return next(e)
     }
 
-    const { Box, Text } = $.ui.resolve(e)
+    const { Box, Text, Button } = $.ui.resolve(e)
     const below = await next(e)
+    const selector = selectorOf($, Button, false)
+    const isWide = reading.head.length + reading.rest.length + 1 + SELECTOR_COLUMNS <= e.props.bodyColumns
 
     return (
       <Box flexDirection="column">
-        <Box>
-          <Text color={reading.tone}>{reading.head}</Text>
-          <Text wrap="truncate-end">{reading.rest}</Text>
+        <Box flexDirection="row" columnGap={1}>
+          <Box>
+            <Text color={reading.tone}>{reading.head}</Text>
+            <Text wrap="truncate-end">{reading.rest}</Text>
+          </Box>
+          {isWide && selector}
         </Box>
+        {!isWide && (
+          <Box flexDirection="row" columnGap={1}>
+            {selector}
+          </Box>
+        )}
         {below}
       </Box>
     )
@@ -1413,23 +1453,7 @@ export const register: Register = (on, options) => {
         {draw(headline === undefined ? [] : lifetime === undefined ? [headline] : [headline, lifetime])}
         {draw(compactLines(hand, at))}
         <Box flexDirection="row" columnGap={1}>
-          {MODE_BUTTONS.map(button => (
-            <Button
-              key={`mode-${button.mode}`}
-              label={button.label}
-              hotkey={button.hotkey}
-              variant={button.mode === rule.mode ? 'primary' : 'secondary'}
-              dimColor={button.mode !== rule.mode}
-              onPress={() => {
-                // Off the dispatch: the file is written and the readers redrawn after the press returns.
-                $.clock.after(0, () => {
-                  void setMode($, button.mode)
-                    .then(text => say($, text))
-                    .catch(() => undefined)
-                })
-              }}
-            />
-          ))}
+          {selectorOf($, Button, true)}
         </Box>
         {draw(body)}
       </Box>

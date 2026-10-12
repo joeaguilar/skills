@@ -579,6 +579,36 @@ test('/cache-watch summary and manual write the project’s .cache-watch and app
   expect((await command($, 'later')).text).toBe('Cache Watch: /cache-watch [manual | auto | summary | wake]')
 })
 
+test('the pane’s selector sets the mode with a press, marks the one in force, and the file follows', async ($, on) => {
+  const { clock, forks, files, respond } = world(on)
+
+  await start($)
+  await respond($, STEADY)
+
+  const ui = await $.ui.mount({ ...PANE, surface: 'terminal' })
+
+  expect(await ui.find({ type: 'Button', key: 'mode-auto' })).toMatchObject({ props: { variant: 'primary' } })
+  expect(await ui.find({ type: 'Button', key: 'mode-manual' })).toMatchObject({ props: { variant: 'secondary' } })
+
+  await ui.press({ key: 'mode-manual' })
+  await clock.settle()
+
+  expect(files.get('/repo/.cache-watch')).toBe(
+    '# Cache Watch: how this project compacts. compact: manual | auto | auto+summary. threshold: 10-99 (% of the window).\ncompact: manual\n',
+  )
+  expect(await ui.find({ type: 'Button', key: 'mode-manual' })).toMatchObject({ props: { variant: 'primary' } })
+  expect(await ui.find({ type: 'Text', text: /manual: nothing compacts on its own here/ })).toBeDefined()
+  expect((await $.session.compact({ trigger: 'auto', messages: MESSAGES })).skip).toBeDefined()
+
+  await ui.press({ key: 'mode-auto+summary' })
+  await clock.settle()
+
+  expect(files.get('/repo/.cache-watch')).toContain('compact: auto+summary\n')
+  await $.session.compact({ trigger: 'auto', messages: MESSAGES })
+  expect(forks).toHaveLength(1)
+  await ui.unmount()
+})
+
 test('the project’s .cache-watch stands over the option, with its own threshold, and keeps its other lines', { options: { compact: 'manual' } }, async ($, on) => {
   const { clock, forks, files, compactions, respond, setPercent } = world(on, PLAN, {}, {
     '/repo/.cache-watch': 'threshold: 70\ncompact: auto + summary\n',

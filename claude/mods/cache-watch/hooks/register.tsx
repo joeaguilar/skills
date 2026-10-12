@@ -49,6 +49,13 @@ const MODE_TEXT: Record<CompactMode, string> = {
 /** The short mark the cache line carries for a mode other than auto. */
 const MODE_MARK: Record<CompactMode, string> = { manual: ' · manual', auto: '', 'auto+summary': ' · summary' }
 
+/** The pane's selector: one button per mode, and the letter that presses it while the pane holds the focus. */
+const MODE_BUTTONS: readonly { mode: CompactMode; label: string; hotkey: string }[] = [
+  { mode: 'manual', label: 'manual', hotkey: 'm' },
+  { mode: 'auto', label: 'auto', hotkey: 'a' },
+  { mode: 'auto+summary', label: 'summary ¤', hotkey: 's' },
+]
+
 /** Why the fork gave no handoff, as the toast says it. */
 const REASON: Record<string, string> = {
   'nothing-to-fork': 'nothing to fork yet',
@@ -878,6 +885,21 @@ const writeRule = async ($: EngineInterface, mode: CompactMode) => {
   return path
 }
 
+/** Sets the project's mode from the command or the pane: the file is written, the readers redrawn, and the result said. */
+const setMode = async ($: EngineInterface, mode: CompactMode) => {
+  let path: string
+
+  try {
+    path = await writeRule($, mode)
+  } catch {
+    return `${RULE_FILE} could not be written; nothing changed`
+  }
+
+  await tick($)
+
+  return `compaction set to ${MODE_TEXT[mode]} (${path})`
+}
+
 /** Once a session: a manual project is told its compaction was held off. */
 const warnVeto = ($: EngineInterface, percent: number | undefined) => {
   if (hasWarnedVeto) {
@@ -1175,17 +1197,7 @@ export const register: Register = (on, options) => {
     const mode = asMode(args === 'summary' ? 'auto+summary' : args)
 
     if (mode !== undefined) {
-      let path: string
-
-      try {
-        path = await writeRule($, mode)
-      } catch {
-        return { text: `Cache Watch: ${RULE_FILE} could not be written; nothing changed` }
-      }
-
-      await tick($)
-
-      return { text: `Cache Watch: compaction set to ${MODE_TEXT[mode]} (${path})` }
+      return { text: `Cache Watch: ${await setMode($, mode)}` }
     }
 
     if (args !== '') {
@@ -1382,7 +1394,7 @@ export const register: Register = (on, options) => {
   })
 
   on('ui.render', { component: 'Pane', requestId: PANE }, async ($, e) => {
-    const { Box, Text } = $.ui.resolve(e)
+    const { Box, Text, Button } = $.ui.resolve(e)
     const held = await read($, ledger)
     const hand = await read($, handoff)
     const at = Math.max(await read($, now), held.refreshedAt)
@@ -1394,6 +1406,25 @@ export const register: Register = (on, options) => {
             {line.text}
           </Text>
         ))}
+        <Box flexDirection="row" columnGap={1}>
+          {MODE_BUTTONS.map(button => (
+            <Button
+              key={`mode-${button.mode}`}
+              label={button.label}
+              hotkey={button.hotkey}
+              variant={button.mode === rule.mode ? 'primary' : 'secondary'}
+              dimColor={button.mode !== rule.mode}
+              onPress={() => {
+                // Off the dispatch: the file is written and the readers redrawn after the press returns.
+                $.clock.after(0, () => {
+                  void setMode($, button.mode)
+                    .then(text => say($, text))
+                    .catch(() => undefined)
+                })
+              }}
+            />
+          ))}
+        </Box>
       </Box>
     )
   })

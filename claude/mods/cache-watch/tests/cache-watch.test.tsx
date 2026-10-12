@@ -794,6 +794,9 @@ test('the pane lays out warmth, size, cost and the session’s totals on every s
     expect(lines).toEqual([
       '▰▰▰▰▰ warm · 57m left',
       'One-hour lifetime (subscription, within plan usage) · opus-5-5 · last request 3m ago',
+      'Compaction',
+      '  auto: the conversation compacts at the threshold, and the cache rebuilds cold',
+      '  rule from the option · compacts from 85% of the window',
       ' ',
       'Size',
       '  501k tokens in context · 50% of 1.00M',
@@ -808,10 +811,8 @@ test('the pane lays out warmth, size, cost and the session’s totals on every s
       '  input cost $4.12 · caching has cost $0.12 more so far',
       '  1 miss · 500k re-processed · $3.90 extra',
       '    3m ago · idle past the lifetime (1h01) · 500k · $3.90',
-      'Compaction',
-      '  auto: the conversation compacts at the threshold, and the cache rebuilds cold',
-      '  rule from the option · compacts from 85% of the window',
     ])
+    expect((await ui.findAll({ type: 'Button' })).map(button => button.props.label)).toEqual(['manual', 'auto', 'summary ¤'])
     expect(await ui.find({ type: 'Text', text: /warm · 57m left/ })).toMatchObject({
       props: { color: 'success' },
     })

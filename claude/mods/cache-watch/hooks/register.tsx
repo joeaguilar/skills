@@ -1399,13 +1399,19 @@ export const register: Register = (on, options) => {
     const hand = await read($, handoff)
     const at = Math.max(await read($, now), held.refreshedAt)
 
+    const draw = (lines: Line[]) =>
+      lines.map(line => (
+        <Text color={line.tone} bold={line.isBold} dimColor={line.isDim} wrap="truncate-end">
+          {line.text}
+        </Text>
+      ))
+    const [headline, lifetime, ...body] = linesOf(held, at)
+
+    // The selector sits under the headline: an inline pane shows its first rows and scrolls the rest.
     return (
       <Box flexDirection="column">
-        {[...linesOf(held, at), ...compactLines(hand, at)].map(line => (
-          <Text color={line.tone} bold={line.isBold} dimColor={line.isDim} wrap="truncate-end">
-            {line.text}
-          </Text>
-        ))}
+        {draw(headline === undefined ? [] : lifetime === undefined ? [headline] : [headline, lifetime])}
+        {draw(compactLines(hand, at))}
         <Box flexDirection="row" columnGap={1}>
           {MODE_BUTTONS.map(button => (
             <Button
@@ -1425,6 +1431,7 @@ export const register: Register = (on, options) => {
             />
           ))}
         </Box>
+        {draw(body)}
       </Box>
     )
   })

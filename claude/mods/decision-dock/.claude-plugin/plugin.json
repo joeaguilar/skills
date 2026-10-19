@@ -1,0 +1,6 @@
+{
+  "name": "decision-dock",
+  "version": "0.1.0",
+  "description": "Pins the numbered questions a reply ends with above the prompt until they are answered",
+  "types": "./types/index.d.ts"
+}

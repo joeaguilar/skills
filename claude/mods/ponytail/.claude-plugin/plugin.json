@@ -1,0 +1,6 @@
+{
+  "name": "ponytail",
+  "version": "0.1.0",
+  "description": "/ponytail on|off keeps the lazy-senior-dev mode in the system prompt for the session, where compaction cannot drop it",
+  "types": "./types/index.d.ts"
+}

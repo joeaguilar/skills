@@ -1,0 +1,5 @@
+{
+  "name": "bootstrap-docs",
+  "version": "0.1.0",
+  "description": "/bootstrap-docs writes the AGENTS, CLAUDE, GOSPEL, SOUL, APOSTLE, CONTRIBUTING and README scaffold into a folder without a model turn"
+}

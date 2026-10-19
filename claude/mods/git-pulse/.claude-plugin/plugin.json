@@ -1,0 +1,6 @@
+{
+  "name": "git-pulse",
+  "version": "0.2.0",
+  "description": "Shows what is uncommitted, what each remote is missing, and whether unpushed commits carry the public identity; /git-pulse identity audits commit identity across repositories",
+  "types": "./types/index.d.ts"
+}

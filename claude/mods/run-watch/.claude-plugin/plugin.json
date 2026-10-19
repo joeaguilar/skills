@@ -1,0 +1,6 @@
+{
+  "name": "run-watch",
+  "version": "0.1.0",
+  "description": "Shows each live agent's elapsed and quiet time in a pane, and flags runs that have gone silent",
+  "types": "./types/index.d.ts"
+}

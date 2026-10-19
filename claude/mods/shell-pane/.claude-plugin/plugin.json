@@ -1,0 +1,6 @@
+{
+  "name": "shell-pane",
+  "version": "0.2.0",
+  "description": "A pane that runs shell commands as you type them, in PowerShell or Git Bash. Output stays in the pane: nothing is sent to Claude unless you quote it into the prompt.",
+  "types": "./types/index.d.ts"
+}

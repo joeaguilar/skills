@@ -1,0 +1,6 @@
+{
+  "name": "handoff",
+  "version": "0.1.0",
+  "description": "/handoff writes the handoff document, compacts with the instructions it produced, and fills the wake prompt",
+  "types": "./types/index.d.ts"
+}

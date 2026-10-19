@@ -1,0 +1,6 @@
+{
+  "name": "unity-sync",
+  "version": "0.1.0",
+  "description": "In a Unity project with the Claude Bridge: recompiles after each .cs edit and shows the compile errors above the prompt",
+  "types": "./types/index.d.ts"
+}

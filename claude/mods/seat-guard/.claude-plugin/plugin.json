@@ -1,0 +1,6 @@
+{
+  "name": "seat-guard",
+  "version": "0.2.2",
+  "description": "Counts the session's seats by model, keeps a ledger of what each really ran on, and offers to stop or swap a planner seat that starts editing code",
+  "types": "./types/index.d.ts"
+}

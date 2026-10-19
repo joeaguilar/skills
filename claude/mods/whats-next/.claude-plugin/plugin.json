@@ -1,0 +1,14 @@
+{
+  "name": "whats-next",
+  "version": "0.1.0",
+  "description": "Names what is next for this project: the tracker, the ranked digest, the roadmap, the sprint pointer, the latest handoff and git, reconciled with no model call, with stale pointers and contradictions flagged.",
+  "types": "./types/index.d.ts",
+  "userConfig": {
+    "band": {
+      "type": "boolean",
+      "title": "Next item above the prompt",
+      "description": "Keep the one-line reading above the prompt: the next item, how many are ready, and what has gone stale. Off leaves /whats-next, /tsugi, /start and the report tool.",
+      "default": true
+    }
+  }
+}

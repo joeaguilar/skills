@@ -1,0 +1,6 @@
+{
+  "name": "queue",
+  "version": "0.2.0",
+  "description": "Stages tasks in .claude/queue.md without a turn, shows what is pending above the prompt, and runs or drains the queue when asked",
+  "types": "./types/index.d.ts"
+}

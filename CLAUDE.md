@@ -33,6 +33,7 @@ skills/                         (repo root)
 ├── claude/MODELS.md                    source of truth for the cost/intelligence/taste table + role bindings
 ├── claude/COMPLEXITY.md                grooming rubric: ticket complexity signals → tier → model route (benchmark-grounded)
 ├── claude/scripts/models.sh           `table` (inject the live table) + `check` (drift gate, wired into validate-skills.sh §6)
+├── claude/scripts/session-metrics.mjs weekly session efficiency from the local transcripts (cost, cache, gatr/kgr use)
 ├── PLATFORM_ONLY.tsv                   intentional one-tree-only primitives (parity exemptions)
 ├── codex/
 │   ├── skills/<skill>/SKILL.md + agents/openai.yaml   Codex ports
@@ -123,6 +124,7 @@ machine, before the next commit:
 - **Model values:** `claude/MODELS.md` is the single source of truth for the cost/intelligence/taste scores and the role→model bindings skills route by (bulk/generalist/taste/floor/…). Edit it, then `./validate-skills.sh` §6 names every skill table that now disagrees. Skills route by **role**, so a model swap is usually a one-line binding edit. A skill can inject the live table into its own context with `` !`claude/scripts/models.sh table` `` (dynamic context injection — re-reads MODELS.md each run, so it can't drift).
 - **Preflight facts have one home:** `claude/skills/blitz/scripts/preflight.sh` is the only copy of the verify-gate detection table and of the tracker / sprint / dirty-tree / stale-ticket facts. `blitz`, `crossfire-blitz`, `sprint`, `proof-campaign` and `feature-build` read its `key: value` lines instead of restating the table. Change detection there, run `claude/scripts/test-preflight.sh`, then copy the file over `codex/skills/blitz/scripts/preflight.sh` — `validate-skills.sh` §9 fails if the two differ or if any skill spells the Rust gate without `--all-targets`.
 - Author Claude skills in `claude/skills/`; let `install.sh` link them — never author under `~/.claude`.
+- **Session efficiency:** `node claude/scripts/session-metrics.mjs` prints one row per ISO week from `~/.claude/projects` (Workflow agents included): API-equivalent cost and cost per prompt, requests per prompt, cache hit rate, the subagent share of cost, tool errors, skill loads, how many gates went through `gatr`, kgr vs grep calls, compactions. `--record` merges the rows into `~/.claude/metrics/sessions-<os>.tsv`, outside this public repo. Transcripts are deleted after about 30 days, so the record is the history; record at least every few weeks. Prices are a table at the top of the script.
 - **Retire or park a skill, never delete it:** `git mv` it to `claude/archived/skills/` (replaced, or no longer a skill) or `claude/wip/skills/` (unfinished). Neither folder is an installed root, so nothing in them is loaded; each folder's README holds its table and rules, and `validate-skills.sh` §8 fails if a name is in both a shelf and `claude/skills`.
 
 ## Primitive tree (capability-first)

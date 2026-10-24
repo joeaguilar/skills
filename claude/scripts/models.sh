@@ -26,6 +26,10 @@ set -uo pipefail
 #                         in a prose note, e.g. a retired model kept as a fallback) to
 #                         make it legal in skills.
 #
+#                     (c) UNKNOWN ROUTE TAGS — every `route:<x>` token in a skill must name
+#                         a role in the MODELS.md Roles table, or a legal model (a legacy
+#                         tag). Catches a role renamed in MODELS.md but not in the skills.
+#
 #                     NOT covered: scores quoted in prose ("opus-5 (intelligence 8)") are
 #                     not table cells, so no checker sees them. Grep for those by hand
 #                     when scores move:  grep -rnE '\((intelligence|taste) [0-9]' claude/
@@ -78,6 +82,12 @@ case "$cmd" in
         # model would otherwise silently re-legalize every stale reference to it
         # — the exact rename blind spot this check exists to close.
         if ($0 ~ /<!--[[:space:]]*models-allow:/) names(KNOWN)
+        # Roles table: header row through the blank line that ends it.
+        if ($0 ~ /^\|[[:space:]]*Role[[:space:]]*\|[[:space:]]*Model[[:space:]]*\|/) { inroles=1; next }
+        if (inroles) {
+          if ($0 !~ /^\|/) { inroles=0 }
+          else { split($0, rf, "|"); r=trim(rf[2]); if (r !~ /^-+$/) ROLE[r]=1 }
+        }
         next
       }
       {                               # drift pass over each SKILL.md
@@ -99,6 +109,14 @@ case "$cmd" in
             printf "  WARN %s:%d  \"%s\" is not in the MODELS.md Scores table or its models-allow list\n", \
                    FILENAME, FNR, n
           }
+        }
+        s = $0                        # route tags: a role, or a legal (legacy) model
+        while (match(s, /route:[a-z][a-z0-9.-]*[a-z0-9]/)) {
+          t = substr(s, RSTART + 6, RLENGTH - 6)
+          s = substr(s, RSTART + RLENGTH)
+          if (!(t in ROLE) && !(t in KNOWN))
+            printf "  WARN %s:%d  \"route:%s\" names neither a MODELS.md role nor a legal model\n", \
+                   FILENAME, FNR, t
         }
       }
       # Only score drift is an error: an inlined copy that disagrees with the

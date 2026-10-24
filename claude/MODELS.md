@@ -84,39 +84,51 @@ haiku-4.5 and sonnet-5 (predecessors, named in history notes and retag recipes).
 
 Skills route by **role**, not by model name — so a model swap changes only the lines
 below, not the ~40 prose sites that reference a role. ("Route bulk work to **the
-generalist**" never changes when one Sol model replaces another.)
+generalist**" never changes when one Sol model replaces another.) The `route:<role>`
+tags `/groom` writes (COMPLEXITY.md) name roles too, so a swap here retags nothing.
+**Resolve a role at spawn time**: read its Model and Effort from this table, pass the
+model (and, for a GPT model, `-e <effort>` to `codex-seat.sh`), and label the seat with
+the resolved model name so the roster shows what really ran.
 
-| Role | Model | Meaning |
-|---|---|---|
-| generalist | gpt-6.1-sol | the default for agents. The Sol-class baseline |
-| bulk | gpt-6.1-sol | bulk / mechanical implementation, migrations, data transforms |
-| floor | haiku-5.5 | one-off small decisions and trivial, gated mechanical work. gpt-6-luna, gpt-5.6-terra and gpt-5.6-luna are peers (gpt-6-luna first); use one when the seat must be non-Claude (for example, a quick check of Claude output) |
-| builder | sonnet-5.5 | spec-complete, multi-file build work that stays native in the Claude harness |
-| ambiguous | gpt-6.1-sol | judgment-heavy but not user-facing, incl. reviews/judging of Opus output (Opus never judges its own work). Escalate to gpt-6-astra when the decision is final |
-| taste | opus-5.5 | user-facing / taste-critical default (taste must be > 7) |
-| taste-hero | fable-5.1 | hero / flagship taste surface — gated (`fable=on` / `--fable`) |
-| planner | fable-5.1 | planning / spec / decomposition seats. Fable's standing job is plan + review, not writing code, so spend it here and on the reviewer seat |
-| computer-use | gpt-5.6-terra | Codex real-UI runtime verification (the `codex-computer-use` skill); gpt-6-astra may take the seat |
-| reviewer | *cross-model* | any review / critique / judge seat — **never the model that wrote the work**. If a GPT model wrote it → fable-5.1, or sonnet-5.5 for cheap passes. If a Claude model wrote it → gpt-6-astra when quality matters, gpt-6.1-sol otherwise. Opus may review GPT or Sonnet work, never its own |
-| codex-default | gpt-6.1-sol | default `-m` for `codex exec` (pass it explicitly — config.toml differs) |
-| never | haiku-4.5 | retired generation; haiku-5.5 replaced it |
+| Role | Model | Effort | Meaning |
+|---|---|---|---|
+| generalist | gpt-6.1-sol | medium | the default for agents. The Sol-class baseline |
+| bulk | gpt-6.1-sol | medium | bulk / mechanical implementation, migrations, data transforms |
+| floor | haiku-5.5 | medium | one-off small decisions and trivial, gated mechanical work. gpt-6-luna, gpt-5.6-terra and gpt-5.6-luna are peers (gpt-6-luna first, at `medium`); use one when the seat must be non-Claude (for example, a quick check of Claude output) |
+| builder | sonnet-5.5 | default | spec-complete, multi-file build work that stays native in the Claude harness |
+| ambiguous | gpt-6.1-sol | high | judgment-heavy but not user-facing, incl. reviews/judging of Opus output (Opus never judges its own work). `xhigh` for the hardest; escalate to `frontier` when the decision is final |
+| frontier | gpt-6-astra | high | code that must be right the first time, a wide blast radius, the irreducible core of a C4 ticket. Never a bulk wave |
+| taste | opus-5.5 | default | user-facing / taste-critical default (taste must be > 7) |
+| taste-hero | fable-5.1 | default | hero / flagship taste surface — gated (`fable=on` / `--fable`) |
+| planner | fable-5.1 | default | planning / spec / decomposition seats. Fable's standing job is plan + review, not writing code, so spend it here and on the reviewer seat |
+| ceiling | fable-5.1 | default | top rung of the non-taste escalation ladder — gated (`fable=on` / `--fable`) |
+| computer-use | gpt-5.6-terra | high | Codex real-UI runtime verification (the `codex-computer-use` skill); `frontier` may take the seat |
+| reviewer | *cross-model* | per seat | any review / critique / judge seat — **never the model that wrote the work**. GPT-written → `builder` for cheap passes, `taste` when quality matters, `planner` when Fable is on. Claude-written → `generalist` for a standard pass, `frontier` when quality matters. Resolve the seat, then confirm its model is the other provider; if a binding swap breaks that, take the next seat listed. Opus may review GPT or Sonnet work, never its own |
+| codex-default | gpt-6.1-sol | medium | default `-m` for `codex exec` (pass it explicitly — config.toml differs) |
+| never | haiku-4.5 | — | retired generation; haiku-5.5 replaced it |
 
-**Floor guard.** The floor role (haiku-5.5, gpt-6-luna, terra, luna) takes work that is short,
+**Effort** is the `model_reasoning_effort` pin for a GPT binding (`-e` to `codex-seat.sh`;
+the Codex effort table below lists what each model accepts) and the Agent/Workflow
+`effort` for a Claude one; `default` leaves the harness default. Risky work runs a GPT
+binding at `high` or above, whatever this column says.
+
+**Floor guard.** The floor role and its peers take work that is short,
 one-off, gated by a mechanical check, Novelty 0, and not risky. Anything else starts
 at the generalist.
 
 **Escalation ladder (non-taste)** — cheapest rung first, escalate a miss without asking
-until the fable rung (gated):
-`floor (haiku-5.5 / gpt-6-luna / gpt-5.6-terra / gpt-5.6-luna) → gpt-6.1-sol → gpt-6-astra → fable-5.1`.
-A sonnet-5.5 miss enters at gpt-6.1-sol. (gpt-6-astra sits one rung below Fable: same
-intelligence, one rung cheaper, and it spends Codex allowance rather than Fable budget,
-so reach it before Fable for code.) opus-5.5 is not a non-taste rung: its intelligence 8
-is below the Sol rung, and it remains the `taste` rung.
+until the ceiling (gated). The rungs are roles:
+`floor → generalist → frontier → ceiling`.
+A `builder` miss enters at `generalist`. (Today the frontier rung sits one below the
+ceiling: gpt-6-astra matches Fable's intelligence one cost rung cheaper and spends Codex
+allowance rather than Fable budget, so it is reached before Fable for code.) The `taste`
+binding is not a non-taste rung: opus-5.5's intelligence 8 is below the Sol rung.
+**Taste ladder:** `taste → taste-hero` (gated).
 
 **Routing priority when axes conflict / for anything that ships:** intelligence > taste
-> cost. Cost is a tie-breaker only. No Sol, terra or luna model, nor haiku-5.5 or
-sonnet-5.5, clears the taste bar (> 7). Taste work goes to opus-5.5, gpt-6-astra, or
-fable-5.1.
+> cost. Cost is a tie-breaker only. Only a model whose Scores-table Taste is above 7
+clears the taste bar, so taste work goes to the `taste`, `taste-hero` or `frontier`
+binding — check the binding still clears the bar after any swap.
 
 ## Reach — how to invoke each model
 
@@ -167,6 +179,8 @@ solo seat.
 
 - `claude/skills/crossfire-blitz/SKILL.md` — the routing table (5-column, `Reached via`)
 - (any future skill that inlines a scores table is checked automatically)
+- Role names: `models.sh check` also warns on any `route:<x>` tag in a skill that is
+  neither a role in the Roles table nor a legal model name.
 
 The check scans every `claude/skills/**/SKILL.md`, matches any Markdown table row whose
 first cell is a model named above and whose next three cells are integers, and errors on

@@ -25,7 +25,11 @@ export const meta = {
 //   criticModel   string   model every Claude critic seat runs on; unset = the session model
 //   dir           string   artifact dir, default '.crucible'
 //   gateFlags     string   accepted and ignored: the hard-layer check a link uses takes no gate flags
-//   seat          string   'opus' | 'codex' — whose turn the regular critic seat is
+//   builtBy       string   model the round's build actually ran on (the ledger's build `actual`);
+//                          unset = the session model, which is Claude. The critic is the other
+//                          family: a Claude-built round gets the codex seat, a GPT-built one a
+//                          Claude critic. The panel's does-it-reproduce seat follows the same rule
+//   seat          string   'opus' | 'codex' — explicit override for the regular critic seat
 //   panel         boolean  true for a 3-critic panel with a median merge (used with --confirm >= 2)
 //   codexSeat     boolean  false when the codex seat is unavailable and the user consented to Claude-only
 //   seatScript    string   absolute path to the codex-seat skill's codex-seat.sh, or null
@@ -51,9 +55,12 @@ const brief = typeof a.brief === 'string' ? a.brief : ''
 const criticModel = a.criticModel || null
 const criticName = criticModel || 'opus'
 const criticOpts = (o) => (criticModel ? { ...o, model: criticModel } : o)
-const seat = a.seat === 'codex' ? 'codex' : 'opus'
+// The critic follows the builder: the family that did not build the round judges it.
+const builtByGpt = /^gpt-/i.test(a.builtBy || '')
+const seat = a.seat === 'codex' || a.seat === 'opus' ? a.seat : builtByGpt ? 'opus' : 'codex'
 const panel = a.panel === true
 const codexSeat = a.codexSeat !== false && !!a.seatScript
+const reproduceOnCodex = codexSeat && !builtByGpt
 const codexModel = a.codexModel || 'gpt-6-astra'
 const codexEffort = a.codexEffort || 'high'
 // The Codex critic as a read-only codex seat: the brief is the critic prompt, its final
@@ -525,14 +532,14 @@ alter a score to make the validator pass; the validator checks shape, never cont
 let critiques = []
 
 if (panel) {
-  log(`3-critic panel${codexSeat ? ' (does-it-reproduce seat on Codex)' : ' (all-Claude: codex seat unavailable)'}`)
+  log(`3-critic panel${reproduceOnCodex ? ' (does-it-reproduce seat on Codex)' : builtByGpt ? ' (all-Claude: a GPT-built round is judged by Claude)' : ' (all-Claude: codex seat unavailable)'}`)
   const lenses = [
     { lens: 'correctness and error handling — does it do what it claims at the edges', out: `${dir}/critiques/${target}_iter${iter}.opus.json`, seat: 'opus' },
     { lens: 'design and maintainability — api_design, readability, docs_dx', out: `${dir}/critiques/${target}_iter${iter}.opus2.json`, seat: 'opus' },
     {
       lens: 'does-it-reproduce — re-derive the prior round\'s measured claims from a fresh run of the registered instruments, and score ONLY what reproduces',
-      out: `${dir}/critiques/${target}_iter${iter}.${codexSeat ? 'codex' : 'opus3'}.json`,
-      seat: codexSeat ? 'codex' : 'opus',
+      out: `${dir}/critiques/${target}_iter${iter}.${reproduceOnCodex ? 'codex' : 'opus3'}.json`,
+      seat: reproduceOnCodex ? 'codex' : 'opus',
     },
   ]
 
@@ -562,9 +569,9 @@ if (panel) {
   const landed = critiques.filter(Boolean).filter((c) => c.validated)
   row(
     'critique',
-    codexSeat ? `panel:${criticName},${criticName},codex` : `panel:${criticName},${criticName},${criticName}`,
+    builtByGpt ? `panel:${criticName},${criticName},${criticName}` : `panel:${criticName},${criticName},codex`,
     `panel:${landed.length} validated`,
-    codexSeat ? null : 'SANDBOX-DOWN'
+    !builtByGpt && !codexSeat ? 'SANDBOX-DOWN' : null
   )
 
   if (landed.length >= 2) {

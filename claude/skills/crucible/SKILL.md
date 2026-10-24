@@ -257,7 +257,7 @@ thinned for a later one. Every Workflow call goes to the bundled script, never t
 
 ```
 Workflow({ scriptPath: "<dir>/tools/iteration.js", args: { target, iter, dir, mode, critique, brief,
-                                                           seat, panel, codexSeat, seatScript, codexModel, codexEffort, criticModel,
+                                                           builtBy, seat, panel, codexSeat, seatScript, codexModel, codexEffort, criticModel,
                                                            priorCritique, findings, sourceGlobs, testGlobs } })
 ```
 
@@ -359,14 +359,19 @@ mutation in the tree.
 **Validated.** Critic output lands in `critiques/` only after `gate.mjs --validate` passes. On rejection,
 respawn the critic with the validator's error appended — hand-patching the JSON yourself is score laundering.
 
-**Seats.** Regular rounds: 1 critic, alternating families by iteration parity (odd = Opus seat, even = Codex
-seat) so the ledger reconciles without judgment calls. **A round whose builder ran on Opus must be
-critiqued by the Codex seat** — MODELS.md is explicit that Opus is not effective at judging its own work —
-unless the project's own instructions set a different review rule, which then governs and is recorded in
-STATUS.md (`Judging:` line). `criticModel` puts every Claude critic seat on a named model.
+**Seats.** Regular rounds: 1 critic, and **the critic follows the builder**: the family that did not build
+the round judges it. Pass the model the build actually ran on (the ledger's `build` row) as `builtBy`; the
+script then puts a Claude-built round on the Codex seat and a GPT-built round on a Claude critic, so the
+ledger reconciles without judgment calls. The bundled script builds on the session model, so unset
+`builtBy` means Claude-built. `seat` overrides the choice; record why in STATUS.md. Opus never judges its
+own work (MODELS.md) — unless the project's own instructions set a different review rule, which then
+governs and is recorded in STATUS.md (`Judging:` line). When the other family is unavailable, a different
+model of the same family is the minimum: `criticModel` puts every Claude critic seat on a named model, and
+it must not be the builder's.
 Confirmation rounds exist only under `--confirm 2` or more (the round that could produce the last
 consecutive all-≥bar): a **3-critic panel**, run one seat at a time —
-correctness/error-handling lens, design/maintainability lens, and a **does-it-reproduce seat on Codex** that
+correctness/error-handling lens, design/maintainability lens, and a **does-it-reproduce seat from the
+other family than the builder** (Codex for a Claude-built round) that
 re-derives the prior round's measured claims from fresh instrument runs and scores only what reproduces.
 Per-axis score = median of the three; all verdicts are committed and the merged file is what the gate reads.
 One same-family opinion closing a target is the exact gameability the panel prevents.
@@ -502,8 +507,8 @@ ledger records the resolved model.
 | Builder (default) | `generalist` | Implementation work off the Claude family; keeps the Opus critic seat honest. |
 | Builder (taste-critical) | `taste` | Only for user-facing/taste surfaces. That round's critique MUST use the Codex seat. |
 | Test-author (blind) | `builder` | Behavior-driven assertions against a written spec; a different family from the generalist builder by default. |
-| Critic (regular, odd iters) | `taste` | Taste and design judgment — never over a `taste`-built round's own output. |
-| Critic (cross-model seat, even iters + panel) | `frontier` via `codex-seat.sh`, read-only (`codexModel` / `codexEffort`) | Different family, different blind spots. Failure → Opus + `SANDBOX-DOWN` row. |
+| Critic (Claude seat: GPT-built rounds + panel lenses) | `taste` | Taste and design judgment — never over a `taste`-built round's own output. |
+| Critic (cross-model seat: Claude-built rounds + panel reproduce seat) | `frontier` via `codex-seat.sh`, read-only (`codexModel` / `codexEffort`) | Different family, different blind spots. Failure → Opus + `SANDBOX-DOWN` row. |
 | Spec / Evidence / merge clerking | `builder` | Mechanical stages stay off the flagship rungs and off your context. |
 | Escalation on a missed round | `generalist` → `frontier` → `ceiling` | Non-taste ladder per MODELS.md (`ceiling` gated); record the escalation in the ledger. |
 
@@ -544,7 +549,7 @@ once per stage, and do not edit the script to change it mid-run.
 - Don't ask the user to raise the cap, lower the bar or change `confirm` mid-run, and don't change them yourself. A spent budget is reported, not negotiated.
 - Don't let a critic run instruments without `--scratch` — the evidence record is written once, by the Evidence stage.
 - Don't tell a critic anything about closure mechanics, the bar, or round significance — and don't hand the Codex seat anything Claude critics are denied.
-- Don't run an all-Claude panel while the codex seat is available, and don't route a critique of Opus output to Opus.
+- Don't put a round's critic in the family that built it while the other family is available, and don't route a critique of Opus output to Opus.
 - Don't invoke `gate.mjs` without the recorded `Gate flags:` line — the tool is stateless, and a flagless call silently drops every waiver and the cap.
 - Don't declare closure yourself — only `gate.mjs --check` exit 0 plus a reconciled ledger closes a target.
 - Don't hand-edit scores, critique JSONs, evidence reports, or STATUS score tables — regenerate them.

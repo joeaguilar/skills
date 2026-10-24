@@ -435,7 +435,7 @@ them ready to paste):
 ## Route ledger
 | iter | target | stage    | planned | actual | reason if differs |
 |------|--------|----------|---------|--------|-------------------|
-| 1    | parser | build    | gpt-5.6-sol | gpt-5.6-sol | —             |
+| 1    | parser | build    | gpt-6.1-sol | gpt-6.1-sol | —             |
 | 2    | parser | critique | codex   | opus   | SANDBOX-DOWN      |
 ```
 
@@ -492,13 +492,13 @@ transcript, or any dispatch missing a row, reopens bookkeeping. Gate exit 0 + cl
 
 | Role | Model | Notes |
 |---|---|---|
-| Builder (default) | gpt-5.6-sol | The Sol-class generalist does implementation work; keeps the Opus critic seat honest. |
+| Builder (default) | gpt-6.1-sol | The Sol-class generalist does implementation work; keeps the Opus critic seat honest. |
 | Builder (taste-critical) | opus-5.5 | Only for user-facing/taste surfaces. That round's critique MUST use the Codex seat. |
 | Test-author (blind) | sonnet-5.5 | Behavior-driven assertions against a written spec; a different family from the Sol builder by default. |
 | Critic (regular, odd iters) | opus-5.5 | Taste and design judgment — never over an `opus-5.5` builder's own output. |
 | Critic (cross-model seat, even iters + panel) | Codex via companion `task`, read-only | Different family, different blind spots. Failure → Opus + `SANDBOX-DOWN` row. |
 | Spec / Evidence / merge clerking | sonnet-5.5 | Mechanical stages stay off the flagship rungs and off your context. |
-| Escalation on a missed round | gpt-5.6-sol → gpt-6-astra → fable-5.1 | Non-taste ladder per MODELS.md; record the escalation in the ledger. |
+| Escalation on a missed round | gpt-6.1-sol → gpt-6-astra → fable-5.1 | Non-taste ladder per MODELS.md; record the escalation in the ledger. |
 
 The bundled script sets a model for the Claude critic seats only (`criticModel`). Every other seat runs on the
 session model, whatever this table plans: record that in the ledger as planned ≠ actual with `TOOL-MISSING`,

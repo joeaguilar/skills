@@ -1,6 +1,6 @@
 ---
 name: groom
-description: Complexity-score an itr backlog and route each issue to the cheapest capable model class (haiku-5.5 / gpt-5.6-sol / sonnet-5.5 / gpt-6-astra / opus-5.5 / fable-5.1) by tagging it `complexity:CN` + `route:<model>`. Trigger when the user types /groom, or asks to "groom the backlog by complexity", "complexity-score the backlog", "which tickets can go to Sonnet/GPT/Opus", "route the backlog to models", "assign models to tickets", or "triage issues by difficulty". Do NOT trigger for filing new issues (use the itr skill), sprint planning/grooming a spec into stories (use /sprint), executing the routed backlog (use /blitz or /crossfire-blitz), or reprioritizing/closing issues.
+description: Complexity-score an itr backlog and route each issue to the cheapest capable model class (haiku-5.5 / gpt-6.1-sol / sonnet-5.5 / gpt-6-astra / opus-5.5 / fable-5.1) by tagging it `complexity:CN` + `route:<model>`. Trigger when the user types /groom, or asks to "groom the backlog by complexity", "complexity-score the backlog", "which tickets can go to Sonnet/GPT/Opus", "route the backlog to models", "assign models to tickets", or "triage issues by difficulty". Do NOT trigger for filing new issues (use the itr skill), sprint planning/grooming a spec into stories (use /sprint), executing the routed backlog (use /blitz or /crossfire-blitz), or reprioritizing/closing issues.
 ---
 
 # groom — complexity-score and model-route an itr backlog
@@ -57,9 +57,9 @@ Sum (0–10) → tier → route:
 | Tier | Score | Route | Tags |
 |---|---|---|---|
 | **C0 trivial** | 0–1 | haiku-5.5 (gpt-5.6-terra or luna when the seat should be non-Claude) | `complexity:C0`, `route:haiku-5.5` |
-| **C1 routine** | 2–3 | gpt-5.6-sol at `medium` (the Sol-class baseline) | `complexity:C1`, `route:gpt-5.6-sol` |
-| **C2 standard** | 4–5 | sonnet-5.5 if spec-complete build work; gpt-5.6-sol if mechanical-heavy | `complexity:C2`, `route:sonnet-5.5` |
-| **C3 complex** | 6–7 | gpt-5.6-sol at `high`/`xhigh` (the `ambiguous` role); gpt-6-astra when it must be right the first time or the blast radius is wide | `complexity:C3`, `route:gpt-5.6-sol` |
+| **C1 routine** | 2–3 | gpt-6.1-sol at `medium` (the Sol-class baseline) | `complexity:C1`, `route:gpt-6.1-sol` |
+| **C2 standard** | 4–5 | sonnet-5.5 if spec-complete build work; gpt-6.1-sol if mechanical-heavy | `complexity:C2`, `route:sonnet-5.5` |
+| **C3 complex** | 6–7 | gpt-6.1-sol at `high`/`xhigh` (the `ambiguous` role); gpt-6-astra when it must be right the first time or the blast radius is wide | `complexity:C3`, `route:gpt-6.1-sol` |
 | **C4 frontier** | 8–10 | recommend decomposition first (fable-5.1 plans the slicing, gated); the irreducible core goes to gpt-6-astra, with fable-5.1 reviewing | `complexity:C4`, `route:gpt-6-astra` |
 
 **Hard overrides (apply after scoring, absolute):**
@@ -68,14 +68,14 @@ Sum (0–10) → tier → route:
    gpt-6-astra and fable-5.1 clear the taste bar; the Sol/terra/luna models,
    haiku-5.5 and sonnet-5.5 do not.
 2. Floor guard: haiku-5.5, gpt-5.6-terra and gpt-5.6-luna take only short,
-   one-off, gated, Novelty-0, non-risky work. Anything else starts at gpt-5.6-sol.
+   one-off, gated, Novelty-0, non-risky work. Anything else starts at gpt-6.1-sol.
 3. Every route keeps a hard verify gate; an ungated long-horizon run needs a gate
    added before it routes anywhere.
 4. Sonnet-5.5 requires a complete spec with written acceptance criteria; if the
-   spec is incomplete, the issue is Ambiguity ≥ 1 and C2 routes to gpt-5.6-sol or
+   spec is incomplete, the issue is Ambiguity ≥ 1 and C2 routes to gpt-6.1-sol or
    the score lands C3.
 5. Never route to gpt-5.5 (unreachable on this Codex login). With `--re`, retag
-   any `route:gpt-5.5` issue to `route:gpt-5.6-sol` and any `route:sonnet-5` to
+   any `route:gpt-5.5` issue to `route:gpt-6.1-sol` and any `route:sonnet-5` to
    `route:sonnet-5.5`.
 
 ## Phases
@@ -122,7 +122,7 @@ cheap run costs more than the routing delta. Note every bump and why.
 
 1. Print one grooming table: `ID | Title | H N A B T | Mod | Tier | Route | Note`.
    Notes carry bump reasons, missing gates, and sub-route choices (sonnet vs
-   gpt-5.6-sol, astra vs gpt-5.6-sol).
+   gpt-6.1-sol, astra vs gpt-6.1-sol).
 2. Unless `--dry`, apply tags:
    `itr update <id> --add-tag complexity:CN --add-tag route:<model>`
    (with `--re`, remove the old `complexity:`/`route:` tags first via

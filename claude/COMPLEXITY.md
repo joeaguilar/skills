@@ -55,12 +55,10 @@ Sum the five signals (0–10), apply the verifiability modifier, then route:
 | Tier | Score | Route | MODELS.md role | itr tags |
 |---|---|---|---|---|
 | **C0 — trivial** | 0–1 | **haiku-5.5** (native); gpt-5.6-terra/luna when a non-Claude seat is wanted | floor | `complexity:C0`, `route:haiku-5.5` |
-| **C1 — routine** | 2–3 | **gpt-5.6-sol** at `medium` | generalist | `complexity:C1`, `route:gpt-5.6-sol` |
-| **C2 — standard** | 4–5 | **sonnet-5.5** if spec-complete build work; gpt-5.6-sol if mechanical-heavy | builder / bulk | `complexity:C2`, `route:sonnet-5.5` |
-| **C3 — complex** | 6–7 | **gpt-5.6-sol** at `high`/`xhigh`; **gpt-6-astra** when it must be right the first time or the blast radius is wide | ambiguous | `complexity:C3`, `route:gpt-5.6-sol` |
+| **C1 — routine** | 2–3 | **gpt-6.1-sol** at `medium` | generalist | `complexity:C1`, `route:gpt-6.1-sol` |
+| **C2 — standard** | 4–5 | **sonnet-5.5** if spec-complete build work; gpt-6.1-sol if mechanical-heavy | builder / bulk | `complexity:C2`, `route:sonnet-5.5` |
+| **C3 — complex** | 6–7 | **gpt-6.1-sol** at `high`/`xhigh`; **gpt-6-astra** when it must be right the first time or the blast radius is wide | ambiguous | `complexity:C3`, `route:gpt-6.1-sol` |
 | **C4 — frontier** | 8–10 | **gpt-6-astra** to build it; **fable-5.1** (gated: `fable=on` / `--fable`) to plan the slicing and review — try to slice first | — / planner | `complexity:C4`, `route:gpt-6-astra` |
-
-When gpt-6.1-sol becomes reachable, it takes every gpt-5.6-sol route above (MODELS.md, Basis).
 
 ### C0 — trivial / one-off → haiku-5.5
 
@@ -73,12 +71,14 @@ hard gates, Novelty 0.** gpt-5.6-terra and gpt-5.6-luna are peers when the seat
 should be non-Claude. Luna's novel reasoning is weak (ARC ≤59.5%), so this tier is
 the only place it belongs.
 
-### C1 — routine → gpt-5.6-sol
+### C1 — routine → gpt-6.1-sol
 
 Small well-specified features and bugfixes with an in-repo pattern to follow.
-The Sol class is the GPT baseline (operator, 2026-10-23). gpt-5.6-sol led ARC-AGI-2
-for its generation (92.5% @ $1.44/task) and tops terra and luna on Artificial
-Analysis' Intelligence (59 vs 55 / 51) and Coding Agent (80 vs 77 / 75) indices.
+The Sol class is the GPT baseline (operator, 2026-10-23), and gpt-6.1-sol is its
+current model. The line's evidence: gpt-5.6-sol led ARC-AGI-2 for its generation
+(92.5% @ $1.44/task) and tops terra and luna on Artificial Analysis' Intelligence
+(59 vs 55 / 51) and Coding Agent (80 vs 77 / 75) indices; gpt-6-sol improved on it
+at about half the cost per task. gpt-6.1-sol itself is not measured yet.
 Run it at `medium`. A C1 that turns out to be a one-file, Novelty-0 change can
 drop to the floor.
 
@@ -92,12 +92,12 @@ same price: Anthropic reports SWE-Bench Pro 81.3%, and third parties report
 CursorBench 4.0 55.5%, up from 34.1%. It is the cheapest strong route that stays
 native in the Claude harness (`model: 'sonnet'` in Agent/Workflow, no Codex
 wrapper). If the C2 is mechanical-heavy rather than build-shaped (large
-migration, codemod sweep), gpt-5.6-sol is the better per-dollar route.
+migration, codemod sweep), gpt-6.1-sol is the better per-dollar route.
 
-### C3 — complex → gpt-5.6-sol at high effort, astra when it must land first time
+### C3 — complex → gpt-6.1-sol at high effort, astra when it must land first time
 
 - **Novelty- or ambiguity-dominant** (algorithm design, perf work, judgment
-  across a coupled codebase, underspecified requirements): **gpt-5.6-sol at
+  across a coupled codebase, underspecified requirements): **gpt-6.1-sol at
   `high`/`xhigh`** (the `ambiguous` role). The GPT line leads on novel reasoning
   per dollar, and Sol at intelligence 9 sits above opus-5.5 and sonnet-5.5.
 - **Wide blast radius or "must be right the first time"**: **gpt-6-astra** at
@@ -123,7 +123,7 @@ MODELS.md (`fable=on` / `--fable`).
 1. **Taste-critical → opus-5.5, gpt-6-astra, or fable-5.1, always** — Vibe Code's UI-tested
    board has Anthropic in the top four spots; the MODELS.md taste bar stands.
 2. **Floor guard** — haiku-5.5, gpt-5.6-terra and gpt-5.6-luna take only short,
-   one-off, gated, Novelty-0, non-risky work. Anything else starts at gpt-5.6-sol.
+   one-off, gated, Novelty-0, non-risky work. Anything else starts at gpt-6.1-sol.
 3. **Every route keeps a hard verify gate.** Long-horizon runs without one are where
    cheap models fake success (SWE-Marathon: GPT-5.5 had the highest reward-hacking
    share). Add the gate first or route higher.
@@ -132,8 +132,8 @@ MODELS.md (`fable=on` / `--fable`).
    SWE-Marathon). Pair Claude execution with a non-Claude reviewer (the
    `crossfire` pattern) before close. **Opus never reviews its own output.**
 5. **Escalation ladder** (MODELS.md): a miss escalates
-   `floor → gpt-5.6-sol → gpt-6-astra → fable-5.1 (gated)` without asking.
-   A sonnet-5.5 miss enters at gpt-5.6-sol. On escalation, re-tag:
+   `floor → gpt-6.1-sol → gpt-6-astra → fable-5.1 (gated)` without asking.
+   A sonnet-5.5 miss enters at gpt-6.1-sol. On escalation, re-tag:
    `--remove-tag route:X --add-tag route:Y --add-tag escalated:from-X`.
 6. **gpt-5.5 is unreachable** on this Codex login (MODELS.md, Basis). Retag any
    leftover `route:gpt-5.5` issue (recipe below).
@@ -146,15 +146,16 @@ itr update <id> --add-tag complexity:C2 --add-tag route:sonnet-5.5
 
 # pull a model's lane at execution time:
 itr list --tag route:sonnet-5.5                # Sonnet-delegable queue
-itr list --tag-any route:gpt-5.6-sol --tag-any route:gpt-6-astra   # Codex lane
+itr list --tag-any route:gpt-6.1-sol --tag-any route:gpt-6-astra   # Codex lane
 itr list --tag route:haiku-5.5                 # floor lane
 
 # bulk re-route after a benchmark refresh or model swap (e.g. the 2026-10-23 rewrite):
-itr bulk --tag route:gpt-5.5 update --add-tag route:gpt-5.6-sol --remove-tag route:gpt-5.5
+itr bulk --tag route:gpt-5.5 update --add-tag route:gpt-6.1-sol --remove-tag route:gpt-5.5
+itr bulk --tag route:gpt-5.6-sol update --add-tag route:gpt-6.1-sol --remove-tag route:gpt-5.6-sol
 itr bulk --tag route:sonnet-5 update --add-tag route:sonnet-5.5 --remove-tag route:sonnet-5
 
 # C4 decomposition: file children, wire deps, keep the epic as the C4 shell
-itr add "child slice" --parent <epic> --tag complexity:C1 --tag route:gpt-5.6-sol
+itr add "child slice" --parent <epic> --tag complexity:C1 --tag route:gpt-6.1-sol
 ```
 
 Tag `route:` values use MODELS.md model names verbatim so a model swap is a
@@ -210,4 +211,4 @@ successors.)
 Sources: Anthropic launch coverage of Haiku 5.5 and Sonnet 5.5 (computingforgeeks,
 DataCamp, Vellum), Artificial Analysis "GPT-5.6 has landed", BenchLM comparisons.
 Several are aggregators with differing harnesses; treat third-party cells as
-directional. opus-5.5, fable-5.1 and gpt-6.1-sol are still unmeasured here.
+directional. opus-5.5, fable-5.1, gpt-6.1-sol and gpt-6-luna are still unmeasured here.

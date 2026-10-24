@@ -1,11 +1,11 @@
 ---
 name: codex-computer-use
-description: "Ask Codex CLI (gpt-5.6-terra) to verify a local app with real computer use — GUI/browser automation, simulators, desktop-app launching, screenshots — as an independent runtime inspection. Trigger: \"have Codex/gpt-5.6-terra test this flow\", \"get Codex to verify the UI at runtime\". NOT for checks Claude can run itself, for driving the app with Claude's own tools (use /run or /verify), or for handing Codex a coding task (use /codex:rescue)."
+description: "Ask Codex CLI (the MODELS.md `computer-use` role) to verify a local app with real computer use — GUI/browser automation, simulators, desktop-app launching, screenshots — as an independent runtime inspection. Trigger: \"have Codex test this flow\", \"get Codex to verify the UI at runtime\". NOT for checks Claude can run itself, for driving the app with Claude's own tools (use /run or /verify), or for handing Codex a coding task (use /codex:rescue)."
 ---
 
 # Codex Computer Use
 
-Use Codex as a separate local verification agent when the task needs real UI interaction, screenshots, simulator/browser/device state, or an independent runtime check outside Claude's current context. Codex (gpt-5.6-terra) drives the machine through shell — launching apps, `xcrun simctl`, browsers, `screencapture` — and can read back the screenshots it captures.
+Use Codex as a separate local verification agent when the task needs real UI interaction, screenshots, simulator/browser/device state, or an independent runtime check outside Claude's current context. Codex (the `computer-use` role in `~/.claude/MODELS.md`) drives the machine through shell — launching apps, `xcrun simctl`, browsers, `screencapture` — and can read back the screenshots it captures.
 
 Do **not** use this for ordinary code reading, typechecking, linting, or tests Claude can run directly. Launching apps, simulators, or browsers to verify the requested work is fine without asking; ask first only if the run could disrupt the user's environment beyond that (closing their apps, changing system settings, acting on real accounts or data).
 
@@ -28,6 +28,8 @@ Command shape:
 ARTIFACT_DIR="$(mktemp -d "${TMPDIR:-/tmp}/codex-computer-use.XXXXXX")"
 REPORT="$ARTIFACT_DIR/report.md"
 PROMPT="$ARTIFACT_DIR/prompt.md"
+# the computer-use role's model and effort, read from MODELS.md at run time
+read -r CU_MODEL CU_EFFORT < <(awk -F'|' '{r=$2; gsub(/ /,"",r)} r=="computer-use"{m=$3; e=$4; gsub(/ /,"",m); gsub(/ /,"",e); print m, e; exit}' ~/.claude/MODELS.md)
 
 # ...write the self-contained prompt to "$PROMPT" (see Prompt Requirements below),
 # instructing Codex to save screenshots/logs into "$ARTIFACT_DIR" and to make its
@@ -35,15 +37,16 @@ PROMPT="$ARTIFACT_DIR/prompt.md"
 
 codex exec \
   -C "$PWD" \
-  -m gpt-5.6-terra \
-  -c model_reasoning_effort="high" \
+  -m "$CU_MODEL" \
+  -c model_reasoning_effort="$CU_EFFORT" \
   --add-dir "$ARTIFACT_DIR" \
   -s danger-full-access \
   -o "$REPORT" \
   "$(cat "$PROMPT")"
 ```
 
-- `-c model_reasoning_effort="high"` pins terra's standing default — a bare `codex exec` inherits `~/.codex/config.toml`, which may be set to `ultra` (per the Codex 5.6 rules in `claude/MODELS.md`, ultra is user-requested-only). Only bump to `ultra` if the user asked for it; this is already a solo run, so that satisfies the solo-lane half of the gate.
+- `-c model_reasoning_effort="$CU_EFFORT"` pins the role's standing effort (the MODELS.md Effort column) — a bare `codex exec` inherits `~/.codex/config.toml`, which may name `ultra` (MODELS.md: ultra is user-requested-only).
+- This skill calls `codex exec` directly, not through `codex-seat.sh`: computer use needs `-s danger-full-access`, which the seat launcher refuses on purpose. Only bump to `ultra` if the user asked for it; this is already a solo run, so that satisfies the solo-lane half of the gate.
 - `-o "$REPORT"` (the letter **o**, not zero) writes Codex's **final message** to `$REPORT` — so tell Codex its final message *is* the report; don't also ask it to write a separate `report.md` (they'd collide).
 - **`-s danger-full-access` is the mode this skill runs in.** Real computer use — launching a browser or GUI app, driving a simulator, reaching a local server on `localhost` — requires it. Under `-s workspace-write` Codex's sandbox **denies network by default (so `localhost` is unreachable) *and* blocks browser/GUI launch**, so a computer-use run there comes back **BLOCKED** without ever loading the app. If a run reports BLOCKED and never reached the UI, this is almost always why — rerun with `danger-full-access`. Only use `workspace-write` for a rare in-repo, no-network, no-GUI check, and those usually belong in `/run` or `/verify`, not here.
 - **`danger-full-access` removes *all* sandboxing** (full network, filesystem, and process access) — a real privilege escalation. Scope the prompt to the app under test on `localhost`; the "launch without asking" latitude covers launching that local app, **not** reaching real hosts, accounts, or system state (see Don't).

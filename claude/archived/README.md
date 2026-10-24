@@ -34,6 +34,7 @@ description to route by).
 | `skills/groom` | 2026-10-24 | Grooming reads `~/.claude/COMPLEXITY.md` directly (the rubric `groom` inlined) | none |
 | `skills/crossfire-review`, `codex-computer-use` | 2026-10-24 | `codex-seat` for a GPT reviewer seat; the built-in `/code-review` | none |
 | `workflows/sprint-blitz-review.js` | 2026-10-24 | Nothing: never ran. `blitz` covers the same wave loop | none |
+| `skills/plr` | 2026-10-24 | Nothing: the user retired it. The `plr` CLI was not installed on the Windows machine | stays, Codex-only |
 
 Two more
 skills gave only a part of themselves to a mod and stay installed:

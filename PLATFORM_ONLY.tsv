@@ -50,6 +50,8 @@ codex	skills	mission
 codex	skills	dual-blitz
 codex	skills	fastlane
 codex	skills	run-the-rivers-dry
+# plr (Prompt Library CLI) archived by Claude on 2026-10-24 at the user's call; the Codex port stays.
+codex	skills	plr
 
 # --- Codex-only agents (drift: Claude converted these imports to skills, then archived those
 #     skills on 2026-10-24; Codex keeps the agent form) ---

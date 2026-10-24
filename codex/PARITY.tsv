@@ -2,11 +2,11 @@
 # After re-porting a skill to codex, refresh its line:  ./validate-skills.sh --parity-hash <skill>
 # (the blob hash with <!-- claude-only --> ... <!-- /claude-only --> blocks removed; equals git hash-object when a file has none)
 alignment	a02c687b2635bc4e37ffc4744d0053151953f53c
-blitz	d642928e1a86a34201175055a6bd5838487fa60d
+blitz	782d52a7cf61ed8ebc3ac71328f1bbd59305a287
 bootstrap-project-docs	bc0c0c208f875baf4ec368007e3c653283ca68ee
 code-roast	3be7599afd8cdae38910502f22a1d4d056c67af9
 dual-blitz	d993f34560a2966eabf88f01d64ec017e5354fab
-fastlane	4f086780d8de4fb87972fff9e4d600f6128e8bd8
+fastlane	51e64479e39340dd50ca1e4a556bba584c360f76
 forge-change	5c8c18b3aa1db7206f769775ec61a1a0a58e25c7
 gauntlet	0f82b8825e4b70f4be4d30937132b2d9cfe68f8d
 gatr	c813bbe17b68ae05e6816cc940f8bd6c3609b4ac

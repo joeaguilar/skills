@@ -153,7 +153,9 @@ Do these after EVERY iteration, in order:
 
 Reason codes: `SANDBOX-DOWN`, `TOOL-MISSING`, `RATE-LIMIT`, `TASTE-REQUIRED` (mechanical stage turned out to need visual judgment), `WORKFLOW-UNAVAILABLE` (record + fix Phase 0.1). **A blank reason where planned≠actual is a closure blocker** — the prior run's Codex→Opus drift (38 of 49 dispatches) was invisible precisely because each choice was locally reasonable and nothing forced a narration.
 
+<!-- claude-only -->
 **Where `actual` comes from.** When the Seat Guard mod is loaded, its `mcp__seat-guard__ledger` tool is listed: call it with `filter: "gauntlet:<subsystem>#<iter>"` after the iteration's Workflow returns. Each row names a seat by its seat line, the model the engine sent that seat's requests to, and any Codex run it launched (one that came back as an error is marked `failed`). Copy the model into `actual` instead of writing it from memory; a seat planned for Codex that launched no Codex run, or only failed ones, did not run on Codex. The reason cell stays yours. The mod is machine-local; where the tool is not listed, fill `actual` as before and rely on Closure reconciliation.
+<!-- /claude-only -->
 
 **2. Score table** — the STATUS.md scores section is GENERATED: paste `node tools/gate.mjs` output verbatim (fenced). Never hand-edit a score, a trajectory, or a closure claim. Hand-written prose in STATUS.md is limited to "Next action" and the route ledger's reason cells. (The prior run hand-edited STATUS.md 76 times; drift between prose and ground truth was undetectable.)
 

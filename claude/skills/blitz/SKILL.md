@@ -434,12 +434,14 @@ Commit the run's work by default (the user can opt out — see the Commit policy
 
 ---
 
+<!-- claude-only -->
 ## If a run is orchestrated via the Workflow tool
 
 Waves here are Agent-tool spawns, but when a backlog is cleared through a Workflow-tool script instead, two failure classes recur:
 
 - Workflow scripts are plain JS — no TypeScript syntax. `node --check` a scratch copy before launching a large run; on a mid-run script error, edit the persisted script and relaunch with `{scriptPath, resumeFromRunId}` instead of restarting from zero.
 - Schema-returning subagents: omit `model` so they inherit the session model — never pin a haiku-class model for structured output — and keep the schema's payload small (paths, IDs, verdicts; not bulk file content). Oversized returns fail StructuredOutput validation and surface as "completed without calling StructuredOutput".
+<!-- /claude-only -->
 
 ---
 

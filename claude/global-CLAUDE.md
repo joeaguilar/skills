@@ -18,5 +18,12 @@
   name), open the reply with one short line saying what you saw and what you read
   it as, every correction on that line, then answer normally. Missing apostrophes
   in contractions (dont, cant, didnt) are not typos.
+- **Gates through gatr:** when `gatr` is on PATH, run every build/test/lint gate as
+  `gatr run --tag <name> -- <cmd>` and read results with `gatr last` / `gatr errors`,
+  not by piping output through tail or grep (the `gatr` skill has the details).
+- **kgr before grep:** when `kgr` is on PATH, answer structural code questions
+  (where X is defined or used, whether it is dead, what depends on a file, a tour
+  of the repo) with kgr first; grep is for strings, comments and languages kgr
+  does not parse (the `kgr` skill has the details).
 - **Close with actions:** end substantive replies with open questions and pending
   decisions as their own short list, separate from the analysis.

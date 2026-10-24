@@ -384,6 +384,16 @@ function computeCoverage(ctx) {
   }
   const covFile = resultsFileFor(inst, recById.get(cfg.instrument), root, notes, 'coverage');
   if (!covFile) return { coverage: null, parseFail: true };
+  // A greenfield baseline has no source to instrument, so its report names no file. The
+  // gate never reads baseline coverage (layer 1 uses each link's own report, and fails a
+  // link whose coverage is missing), so record nothing rather than fail the baseline.
+  if (ctx.iter === 0) {
+    const text = readFileSync(covFile, 'utf8');
+    if (text.trim() === '' || (inst.produces === 'lcov' && !/^SF:/m.test(text))) {
+      notes.push('coverage: baseline report names no source file yet (nothing built to instrument); coverage not recorded');
+      return { coverage: null, parseFail: false };
+    }
+  }
   const globs = (target.sourceGlobs ?? []).join(',');
   const out = runSibling(
     'cover.mjs',

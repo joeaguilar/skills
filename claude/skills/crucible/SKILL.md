@@ -38,7 +38,8 @@ order is fixed:
 
 Do not reorder, skip, add or repeat a step on your own judgement. No critic between links. No critique of a
 baseline. No closing one target before the next one is built. No round whose purpose is a higher score. No
-stopping to report between links. No bookkeeping beyond Phase 5. No reading "milestone 1" as "the run". If you
+stopping to report between links: the one line allowed between them is a `pace BEHIND` warning (Phase 5.6),
+and the chain carries on after it. No bookkeeping beyond Phase 5. No reading "milestone 1" as "the run". If you
 notice you are doing something this file does not describe, stop doing it and return to the step you left.
 
 **If the work does not fit the loop, SAY SO, in those words, and do not run it.** The work fits only when
@@ -101,6 +102,12 @@ node <dir>/tools/cover.mjs changed <cov> --format <fmt> --globs # coverage on CH
 ```
 
 Every command supports `--json`; parse that, never scrape prose output.
+
+The full report carries a `pace` block: what the progress so far should have cost (one build link and one
+critique per target) against what it did cost (every evidence report plus every scored round). Its `state`
+is `EARLY`, `ON-PACE` or `BEHIND`. `BEHIND` fires at half the expected pace, or once the run cap left cannot
+close the open targets; each reason is one string in `pace.warnings`. Pace reports and never changes a
+target's state.
 
 **gate.mjs is STATELESS** — a pure function of the critiques dir, the evidence reports, and its flags;
 `--waive`, `--cap`, `--run-cap`, `--confirm`, and `--bar` persist nothing. The durable copy lives in a single
@@ -452,7 +459,7 @@ score, a trajectory, or a closure claim. Hand-written prose in STATUS.md is limi
 resume block, and the ledger's reason cells.
 
 **3. Resume block — rewritten every link and every critique.** Which milestone and which step of Phase 2 the chain is in, target,
-iteration N, in-flight `runId`, gate verdict, next action. This is what `--resume` reads. Because each iteration is one Workflow call, agent tokens never touch
+iteration N, in-flight `runId`, gate verdict, the report's `pace` line, next action. This is what `--resume` reads. Because each iteration is one Workflow call, agent tokens never touch
 your context, so the orchestrator stays lean by construction — the resume block, not a token budget, is what
 survives a compaction.
 
@@ -462,6 +469,14 @@ append to `<dir>/RESIDUALS.md`. Residuals parked in prose are invisible to `/bli
 
 **5. Ownership-scoped commit** — `git add` the target's declared globs plus this iteration's artifacts only.
 Never `git add -A` / `git add .`; another agent's in-flight work must never be swept into a loop commit.
+
+**6. Pace — read after every link and every critique.** Take `pace` from `gate.mjs --json <Gate flags>`.
+When its `state` is `BEHIND`, tell the user at once, in one line that opens `crucible pace BEHIND:` and
+quotes every `pace.warnings` entry verbatim, plus the time since the first baseline commit. Say it each time
+a new warning appears or the ratio drops further, and not otherwise. Then carry on with the step you were
+on: the warning is for the user, who may stop the run. It is never a reason to stop, ask, change the budget
+or bar, or skip a step yourself. The run's final report gives the last `pace` line right after the list of
+milestones.
 
 **Closure reconciliation** (before declaring any target closed): reconcile the ledger against BOTH
 transcripts — `ccq` for Claude dispatches (`ccq agents -p <project> --root "C:\Users\Blue\.claude\projects"`)
@@ -517,7 +532,8 @@ once per stage, and do not edit the script to change it mid-run.
 - Don't score `test_quality` without a mutation experiment, and don't leave a mutation in the tree.
 - Don't spawn a critic on a broken rig, on missing evidence, or on a failed layer 1.
 - Don't spawn a critic on a baseline, between links, or on a target already at the bar, and don't run a round to answer findings on an axis that is at the bar — those are residuals.
-- Don't stop, summarize or ask between links; the chain runs to the outcome on its own.
+- Don't stop, summarize or ask between links; the chain runs to the outcome on its own. The one line allowed is a `pace BEHIND` warning, and the chain carries on after it.
+- Don't sit on a `pace BEHIND`. Say it the moment it appears; a run that falls behind in silence has failed its user whatever it closes.
 - Don't ask the user to raise the cap, lower the bar or change `confirm` mid-run, and don't change them yourself. A spent budget is reported, not negotiated.
 - Don't let a critic run instruments without `--scratch` — the evidence record is written once, by the Evidence stage.
 - Don't tell a critic anything about closure mechanics, the bar, or round significance — and don't hand the Codex seat anything Claude critics are denied.

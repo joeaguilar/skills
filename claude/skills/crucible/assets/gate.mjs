@@ -30,6 +30,11 @@
  *   --cap      per target (default 4)
  *   --run-cap  over every target in the run (default: none)
  *
+ * Pace (full report only): spend so far (evidence reports + scored rounds)
+ * against the ideal of one link and one critique per target. BEHIND at half
+ * the expected pace, or when the run cap left cannot close the open targets.
+ * Pace reports; it never changes a target's state.
+ *
  * States per target (critiques sorted by iteration):
  *   UNSCORED — built but not yet critiqued: an evidence report exists and no
  *              merged critique does. Layer 1 of the latest link is reported.
@@ -66,6 +71,8 @@ const MUTATION_STRING_FIELDS = ['behavior', 'mutation', 'command', 'output'];
 const DEFAULT_BAR = 8;
 const DEFAULT_CAP = 4;
 const DEFAULT_CONFIRM = 1;
+const PACE_MIN_SPEND = 4;   // below this, too little has been spent to judge a pace
+const PACE_BEHIND = 0.5;    // ideal/spent under this is BEHIND: half the expected pace
 
 const AXIS_NAME_RE = /^[a-z][a-z0-9_]*$/;
 const TARGET_NAME_RE = /^[A-Za-z0-9._-]+$/;
@@ -135,6 +142,14 @@ CLOSURE = LAYER 1 AND LAYER 2
                           instrument ran clean
   layer 2 (scored)        the <confirm> most recent critiques all-measured >= <bar>,
                           null axes waived
+
+PACE (in the full report, never in --check)
+  Each target should cost one build link and one critique. "pace" compares what
+  the progress so far should have cost (ideal) with what it did cost (spent:
+  every evidence report plus every scored round). BEHIND when spent >= ${PACE_MIN_SPEND} and
+  ideal/spent < ${PACE_BEHIND}, or when the run cap left cannot close the open
+  targets; EARLY while spent < ${PACE_MIN_SPEND}; ON-PACE otherwise. It reports and
+  never changes a target's state
 
 STATES (<bar> = effective bar, default ${DEFAULT_BAR})
   UNSCORED  built, not yet critiqued; layer 1 of the latest link is reported
@@ -1052,18 +1067,76 @@ function pushWorkOrder(blockers, latest, ls, axes, bar) {
   }
 }
 
-/** Highest N >= 1 with an evidence/<target>_iter<N>.json report, or null. */
-function latestEvidenceIteration(artifactDir, targetName) {
+/** Every N >= 1 with an evidence/<target>_iter<N>.json report, ascending. */
+function evidenceIterations(artifactDir, targetName) {
   let names;
-  try { names = fs.readdirSync(path.join(artifactDir, 'evidence')); } catch { return null; }
-  let best = null;
+  try { names = fs.readdirSync(path.join(artifactDir, 'evidence')); } catch { return []; }
+  const found = new Set();
   for (const f of names) {
     const m = /^(.+)_iter(\d+)\.json$/.exec(f);
     if (!m || m[1] !== targetName) continue;
     const n = Number(m[2]);
-    if (n >= 1 && (best === null || n > best)) best = n;
+    if (n >= 1) found.add(n);
   }
-  return best;
+  return [...found].sort((a, b) => a - b);
+}
+
+/** Highest N >= 1 with an evidence/<target>_iter<N>.json report, or null. */
+function latestEvidenceIteration(artifactDir, targetName) {
+  const all = evidenceIterations(artifactDir, targetName);
+  return all.length ? all[all.length - 1] : null;
+}
+
+/**
+ * Throughput against the plan. On the loop as written a target costs two units:
+ * one build link (an evidence report) and one critique that closes it. Anything
+ * more is a repair link, a fix round or a re-round. ideal counts the units the
+ * progress so far should have cost; spent counts what it did cost. BEHIND fires
+ * at half the expected pace, or as soon as the run's cap can no longer close
+ * the targets still open. Wall-clock and tokens are not here: the gate reads
+ * files only, so the orchestrator reports those beside this block.
+ */
+function computePace(c, targets, artifactDir, totalIterations, runCap, confirm) {
+  const rows = c.targets.map((t) => {
+    const links = evidenceIterations(artifactDir, t.name).length;
+    const sub = targets[t.name];
+    const rounds = sub ? sub.iterations : 0;
+    const state = sub ? sub.state : 'UNBUILT';
+    return { target: t.name, state, links, rounds,
+      ideal: (links > 0 ? 1 : 0) + (rounds > 0 ? 1 : 0), spent: links + rounds };
+  });
+  const n = rows.length;
+  const count = (pred) => rows.filter(pred).length;
+  const built = count((r) => r.links > 0);
+  const closed = count((r) => r.state === 'CLOSED');
+  const terminal = count((r) => r.state === 'CAPPED' || r.state === 'PLATEAU');
+  const linkIterations = rows.reduce((s, r) => s + r.links, 0);
+  const ideal = rows.reduce((s, r) => s + r.ideal, 0);
+  const spent = linkIterations + totalIterations;
+  const ratio = spent > 0 ? Math.round((ideal / spent) * 100) / 100 : null;
+  const open = n - closed - terminal;
+  const roundsLeft = runCap !== null ? Math.max(runCap - totalIterations, 0) : null;
+  const roundsNeeded = open * confirm;
+
+  const warnings = [];
+  if (spent >= PACE_MIN_SPEND && ratio !== null && ratio < PACE_BEHIND) {
+    const extra = rows.filter((r) => r.spent > r.ideal)
+      .map((r) => `${r.target} ${r.links} link(s) + ${r.rounds} round(s)`);
+    warnings.push(`spent ${spent} units for ${ideal} units of progress (${ratio} of the expected pace; `
+      + `under ${PACE_BEHIND} is behind): ${closed}/${n} targets closed, ${built}/${n} built`
+      + (extra.length ? `; extra spend on ${extra.join(', ')}` : ''));
+  }
+  if (roundsLeft !== null && open > 0 && roundsLeft < roundsNeeded) {
+    warnings.push(`run cap cannot close what is open: ${roundsLeft} scored round(s) left, `
+      + `${open} target(s) open needing at least ${roundsNeeded}`);
+  }
+  return {
+    state: warnings.length ? 'BEHIND' : spent < PACE_MIN_SPEND ? 'EARLY' : 'ON-PACE',
+    targets: n, built, closed, terminal,
+    link_iterations: linkIterations, scored_rounds: totalIterations,
+    ideal, spent, ratio, rounds_left: roundsLeft, rounds_needed: roundsNeeded,
+    warnings, by_target: rows,
+  };
 }
 
 function buildReport(opts) {
@@ -1212,6 +1285,7 @@ function buildReport(opts) {
     bar,
     total_iterations: totalIterations,
     cap_reached: capReachedGlobal,
+    pace: computePace(c, targets, artifactDir, totalIterations, runCap, confirm),
     targets,
     invalid_files: invalid,
   };
@@ -1224,6 +1298,9 @@ function renderReport(r) {
   out.push(`GATE REPORT  dir=${r.dir}`);
   out.push(`contract=${r.contract}`);
   out.push(`scored rounds ${r.total_iterations}${r.run_cap !== null ? `/${r.run_cap}` : ''}${r.cap_reached ? '  ** RUN CAP REACHED **' : ''}  cap/target=${r.cap}  confirm=${r.confirm}  bar=${r.bar}`);
+  const p = r.pace;
+  out.push(`pace ${p.state}  closed ${p.closed}/${p.targets}  built ${p.built}/${p.targets}  spent ${p.spent} (${p.link_iterations} links + ${p.scored_rounds} rounds) for ${p.ideal} ideal${p.ratio !== null ? `  ratio ${p.ratio}` : ''}`);
+  for (const w of p.warnings) out.push(`  ** BEHIND: ${w} **`);
   out.push('');
   for (const sub of Object.values(r.targets)) {
     out.push(`## ${sub.target}  —  ${sub.state}  (${sub.iterations} critiques, latest iter ${sub.latest_iteration ?? '-'})`);

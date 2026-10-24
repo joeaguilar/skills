@@ -13,7 +13,7 @@ One run, whole gamut, sealed under a pact: choose targets → strike in waves �
 
 ## The loop at a glance
 ```
-seal the pact ──► wave: strike ∥ strike ∥ gpt-5.5 ──► cross-review ──► escalate the miss
+seal the pact ──► wave: strike ∥ strike ∥ gpt-5.6-sol ──► cross-review ──► escalate the miss
       ▲                                                                        │
       └──────────────── next wave (gate green, targets remain) ◄───────────────┘
 targets done ──► last look (dual, whole diff) ──► whisper ──► gone
@@ -32,7 +32,7 @@ targets done ──► last look (dual, whole diff) ──► whisper ──► 
 | `--confirm` | off | the ONLY gate — pause after the pact is sealed |
 
 ## Roles & artifacts
-**You** — throw, then read the whisper. **Orchestrator** — chooses, routes, gates, escalates. **Strikers/reviewers** — one per target, per the routing law. Scroll: `sprint/{folder}/plan.md` + wave logs under `sprint/{folder}/blitz/`; stories in the tracker (`itr`) under one epic. Verify gate = the `verify-gate:` line of `blitz`'s preflight script (`bash <skills-dir>/blitz/scripts/preflight.sh .`, `<skills-dir>` = the dir holding this skill's folder; Cargo/npm/pytest/go/Make/just). Codex lanes (gpt-5.5 et al.) need the codex plugin authenticated — absent → run Claude-only, say so in the whisper.
+**You** — throw, then read the whisper. **Orchestrator** — chooses, routes, gates, escalates. **Strikers/reviewers** — one per target, per the routing law. Scroll: `sprint/{folder}/plan.md` + wave logs under `sprint/{folder}/blitz/`; stories in the tracker (`itr`) under one epic. Verify gate = the `verify-gate:` line of `blitz`'s preflight script (`bash <skills-dir>/blitz/scripts/preflight.sh .`, `<skills-dir>` = the dir holding this skill's folder; Cargo/npm/pytest/go/Make/just). Codex lanes (gpt-5.6-sol et al.) need the codex plugin authenticated — absent → run Claude-only, say so in the whisper.
 
 ## Voice — the silent strike
 Speaks only at the sealing (Phase 0 template) and the whisper (Phase 3 template); `--confirm` reuses the sealing as its pause. Failure, one line: `盟 — #<id> fell twice. quarantined.` 印 = 盟.
@@ -70,26 +70,26 @@ Then silence. (`--confirm` waits here.)
 ## Phase 1 — waves, shared shadow
 One checkout, disjoint file ownership per wave, ≤5 strikes/wave, blocked after blockers, **≤1 Codex strike per wave** (the Codex companion allows one active task per checkout). Full-repo verify gate is the self-healing convergence; never advance red — small obvious fix yourself and log it, else stop and surface.
 
-**Routing law** (never Haiku; never a Codex generalist/sonnet for taste): bulk/mechanical → **gpt-5.5** (the Codex generalist / agents default; **gpt-5.6-terra** is the first escalation rung); user-facing/taste-critical → **opus-5.5**; ambiguous/judgment → **gpt-5.5** (Opus 5 is knowledge 7 and not effective at judging its own work); **fable-5.1** only under `--fable`.
+**Routing law** (never a Sol/terra/luna, Haiku or Sonnet blade for taste): one-off small cut → **haiku-5.5** (floor; gated, Novelty 0); bulk/mechanical → **gpt-5.6-sol** (the Sol-class baseline); spec-complete build → **sonnet-5.5**; user-facing/taste-critical → **opus-5.5**; ambiguous/judgment → **gpt-5.6-sol** (Opus never judges its own work); **fable-5.1** only under `--fable`.
 
-**Strikers.** Claude: Agent `{model, run_in_background: true}`, shared checkout. Codex (default gpt-5.5): a `sonnet` wrapper agent, description `gpt-5.5:task-{id}`, one Bash call (explicit timeout): `codex exec -C <checkout> -m gpt-5.5 -s workspace-write "$(cat "$PROMPT")"` (swap `-m` for the task's assigned Codex model). Every prompt opens with the oath (above, verbatim), then: owned files ONLY, no tree-wide formatters, run the full verify gate to zero, no commit, end PASS/FAIL + diff summary + gate tail.
+**Strikers.** Claude: Agent `{model, run_in_background: true}`, shared checkout. Codex (default gpt-5.6-sol): a `sonnet` wrapper agent, description `gpt-5.6-sol:task-{id}`, launched per the `codex-seat` skill — one Bash call (timeout 600000): `codex-seat.sh run -d <seat> -m gpt-5.6-sol -e medium -s workspace-write -C <checkout>`, brief in `<seat>/brief.md` (swap `-m`/`-e` for the task's assigned Codex model). Every prompt opens with the oath (above, verbatim), then: owned files ONLY, no tree-wide formatters, run the full verify gate to zero, no commit, end PASS/FAIL + diff summary + gate tail.
 
-**Cross-review before close — always a different blade.** Codex work → a **different Codex blade** reviews that target's diff (gpt-5.5 work → gpt-5.6-terra reviewer); Opus judges no work but taste — never its own. Claude work → the adversarial companion:
+**Cross-review before close — always a different blade.** Codex work → a **different blade** reviews that target's diff (gpt-5.6-sol work → gpt-6-astra reviewer, or sonnet-5.5 for a cheap pass); Opus judges no work but taste — never its own. Claude work → the adversarial companion:
 ```sh
 COMPANION=$(ls -d ~/.claude/plugins/cache/openai-codex/codex/*/scripts/codex-companion.mjs | sort -V | tail -1)
 node "$COMPANION" adversarial-review --wait --base <ref> --scope branch "<focus>"
 ```
-An errored review lane is not a clean pass — retry once, else close on the striker's gate, marked degraded. P0/P1 finding → redo with the next-smarter blade (gpt-5.5 → gpt-5.6-terra → gpt-6-astra → fable-5.1 only under `--fable`), findings spliced in, re-reviewed. **Two falls → quarantine**; surface it, move on. Stop waves when: targets done · two zero-close waves · `--waves` reached.
+An errored review lane is not a clean pass — retry once, else close on the striker's gate, marked degraded. P0/P1 finding → redo with the next-smarter blade (floor → gpt-5.6-sol → gpt-6-astra → fable-5.1 only under `--fable`; a sonnet-5.5 fall enters at gpt-5.6-sol), findings spliced in, re-reviewed. **Two falls → quarantine**; surface it, move on. Stop waves when: targets done · two zero-close waves · `--waves` reached.
 
 ## Phase 2 — the last look
-One dual pass over the **whole** diff: the adversarial companion (scope branch) + one independent gpt-6-astra (fable-5.1 under `--fable`; gpt-6-sol unavailable) reviewer → dedup → P0–P3 survivors → ship/hold.
+One dual pass over the **whole** diff: the adversarial companion (scope branch) + one independent gpt-6-astra (fable-5.1 under `--fable`) reviewer → dedup → P0–P3 survivors → ship/hold.
 
 ## Phase 3 — the whisper (return)
 Fill Outcomes in the scroll, close the epic, update `sprint/CURRENT`, commit the kept diff — the blades never commit; the orchestrator does, unless the user forbade it. Speak once:
 
 ```
 盟 — the pact is kept.
-cut <n> · fell <m> · blades: <k> gpt-5.5, <j> opus<, f fable> · escalated <e>
+cut <n> · fell <m> · blades: <k> gpt-5.6-sol, <h> haiku, <s> sonnet, <j> opus<, f fable> · escalated <e>
 <smoke-only: <s> — #<id>… await PO eyes (visual-gate-only); resolve at /sprint-review>
 last look: <P0/P1/P2/P3> — <ship|hold>
 diff: <files changed, +/-> — committed (or yours, if you forbade the commit).
@@ -106,5 +106,5 @@ Then stop. Filing findings and triage follow-ups is an **offer**, never taken si
 
 ## Don't
 - No gate but `--confirm`; no push or PR — ever. No blade ever commits — only the orchestrator, at the whisper.
-- No fable under default; no Haiku anywhere; no taste work to a Codex generalist (terra/sol/luna/gpt-5.5)/sonnet.
+- No fable under default; Haiku only inside the floor guard; no taste work to a Sol/terra/luna blade, Haiku or Sonnet.
 - Don't advance a red gate, drop a quarantined target unlogged, or file findings without the word.

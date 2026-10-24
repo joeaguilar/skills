@@ -1,6 +1,6 @@
 ---
 name: groom
-description: Complexity-score an itr backlog and route each issue to the cheapest capable model class (gpt-5.5 / gpt-5.6-terra / sonnet-5 / gpt-6-astra / opus-5.5 / fable-5.1) by tagging it `complexity:CN` + `route:<model>`. Trigger when the user types /groom, or asks to "groom the backlog by complexity", "complexity-score the backlog", "which tickets can go to Sonnet/GPT/Opus", "route the backlog to models", "assign models to tickets", or "triage issues by difficulty". Do NOT trigger for filing new issues (use the itr skill), sprint planning/grooming a spec into stories (use /sprint), executing the routed backlog (use /blitz or /crossfire-blitz), or reprioritizing/closing issues.
+description: Complexity-score an itr backlog and route each issue to the cheapest capable model class (haiku-5.5 / gpt-5.6-sol / sonnet-5.5 / gpt-6-astra / opus-5.5 / fable-5.1) by tagging it `complexity:CN` + `route:<model>`. Trigger when the user types /groom, or asks to "groom the backlog by complexity", "complexity-score the backlog", "which tickets can go to Sonnet/GPT/Opus", "route the backlog to models", "assign models to tickets", or "triage issues by difficulty". Do NOT trigger for filing new issues (use the itr skill), sprint planning/grooming a spec into stories (use /sprint), executing the routed backlog (use /blitz or /crossfire-blitz), or reprioritizing/closing issues.
 ---
 
 # groom — complexity-score and model-route an itr backlog
@@ -11,9 +11,12 @@ signals, assign a tier (C0–C4), and tag it with `complexity:CN` +
 write; this skill never executes work, files stories, or changes priority.
 
 The rubric is benchmark-grounded (FrontierSWE, SWE-Marathon, ARC-AGI-2, Vals
-Vibe Code Bench — snapshot 2026-07-11): frontier boards anchor the difficulty
-ceiling, ARC anchors novel-reasoning-per-dollar, Vibe Code anchors
-spec-complete building and taste.
+Vibe Code Bench — snapshot 2026-07-11; Terminal-Bench 4.0, SWE-Bench Pro and the
+Artificial Analysis indices — snapshot 2026-10-23): frontier boards anchor the
+difficulty ceiling, ARC anchors novel-reasoning-per-dollar, Vibe Code anchors
+spec-complete building and taste. Routes follow the 2026-10-23 rules: the Sol
+class is the GPT baseline, haiku-5.5 and the GPT-5.6 models share the floor for
+one-off small decisions, and gpt-5.5 is unreachable.
 
 ## Invocation
 
@@ -53,27 +56,27 @@ Sum (0–10) → tier → route:
 
 | Tier | Score | Route | Tags |
 |---|---|---|---|
-| **C0 trivial** | 0–1 | gpt-5.5 | `complexity:C0`, `route:gpt-5.5` |
-| **C1 routine** | 2–3 | gpt-5.5 (the agents default; gpt-5.6-terra or luna for pattern-following batches) | `complexity:C1`, `route:gpt-5.5` |
-| **C2 standard** | 4–5 | sonnet-5 if spec-complete build work; gpt-5.5 if mechanical-heavy | `complexity:C2`, `route:sonnet-5` |
-| **C3 complex** | 6–7 | gpt-6-astra if novelty-dominant (gpt-6-sol's seat while sol is unavailable — MODELS.md, Availability); gpt-5.5 if ambiguity/blast-radius-dominant (the `ambiguous` role — opus-5.5 is only level with gpt-5.5 at knowledge 8, and Opus is not effective at judging its own work) | `complexity:C3`, `route:gpt-6-astra` |
+| **C0 trivial** | 0–1 | haiku-5.5 (gpt-5.6-terra or luna when the seat should be non-Claude) | `complexity:C0`, `route:haiku-5.5` |
+| **C1 routine** | 2–3 | gpt-5.6-sol at `medium` (the Sol-class baseline) | `complexity:C1`, `route:gpt-5.6-sol` |
+| **C2 standard** | 4–5 | sonnet-5.5 if spec-complete build work; gpt-5.6-sol if mechanical-heavy | `complexity:C2`, `route:sonnet-5.5` |
+| **C3 complex** | 6–7 | gpt-5.6-sol at `high`/`xhigh` (the `ambiguous` role); gpt-6-astra when it must be right the first time or the blast radius is wide | `complexity:C3`, `route:gpt-5.6-sol` |
 | **C4 frontier** | 8–10 | recommend decomposition first (fable-5.1 plans the slicing, gated); the irreducible core goes to gpt-6-astra, with fable-5.1 reviewing | `complexity:C4`, `route:gpt-6-astra` |
 
 **Hard overrides (apply after scoring, absolute):**
 
 1. Taste surface = 2 → opus-5.5 minimum, whatever the total. Only opus-5.5,
-   gpt-6-astra and fable-5.1 clear the taste bar; the Codex generalists and
-   sonnet-5 do not.
-2. Never haiku-4.5, any tier.
-3. gpt-5.5 is the agents default (knowledge 8) — route it freely, but keep a
-   hard verify gate on every run: it has the highest reward-hacking rate on
-   long-horizon benchmarks, so a weakly-gated long-horizon run still needs a
-   gate added before routing there.
-4. gpt-5.6-luna never takes work with Novelty ≥ 1 — its novel reasoning
-   underperforms its build scores.
-5. Sonnet-5 requires a complete spec with written acceptance criteria; if the
-   spec is incomplete, the issue is Ambiguity ≥ 1 and C2 routes to gpt-5.5 or
+   gpt-6-astra and fable-5.1 clear the taste bar; the Sol/terra/luna models,
+   haiku-5.5 and sonnet-5.5 do not.
+2. Floor guard: haiku-5.5, gpt-5.6-terra and gpt-5.6-luna take only short,
+   one-off, gated, Novelty-0, non-risky work. Anything else starts at gpt-5.6-sol.
+3. Every route keeps a hard verify gate; an ungated long-horizon run needs a gate
+   added before it routes anywhere.
+4. Sonnet-5.5 requires a complete spec with written acceptance criteria; if the
+   spec is incomplete, the issue is Ambiguity ≥ 1 and C2 routes to gpt-5.6-sol or
    the score lands C3.
+5. Never route to gpt-5.5 (unreachable on this Codex login). With `--re`, retag
+   any `route:gpt-5.5` issue to `route:gpt-5.6-sol` and any `route:sonnet-5` to
+   `route:sonnet-5.5`.
 
 ## Phases
 
@@ -119,7 +122,7 @@ cheap run costs more than the routing delta. Note every bump and why.
 
 1. Print one grooming table: `ID | Title | H N A B T | Mod | Tier | Route | Note`.
    Notes carry bump reasons, missing gates, and sub-route choices (sonnet vs
-   gpt-5.5, astra vs gpt-5.5).
+   gpt-5.6-sol, astra vs gpt-5.6-sol).
 2. Unless `--dry`, apply tags:
    `itr update <id> --add-tag complexity:CN --add-tag route:<model>`
    (with `--re`, remove the old `complexity:`/`route:` tags first via
@@ -155,7 +158,8 @@ can be down-tiered.
 - Don't execute, claim, or close any issue — tagging only.
 - Don't file new issues; C4 decomposition happens only on explicit user yes.
 - Don't change priority, kind, status, or assignment.
-- Don't route user-facing taste work to any GPT model or sonnet-5.
-- Don't route anything to haiku-4.5.
+- Don't route user-facing taste work to any GPT model except gpt-6-astra, nor to
+  sonnet-5.5 or haiku-5.5.
+- Don't route anything to gpt-5.5 or past the floor guard to haiku-5.5.
 - Don't re-score already-tagged issues without `--re`.
 - Don't ask permission per issue — score, tag, and report once at the end.

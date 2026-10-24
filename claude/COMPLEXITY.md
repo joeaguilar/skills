@@ -6,18 +6,23 @@ take this ticket?"** Apply it while grooming an `itr` backlog (during `/sprint`,
 `/roadmap`, or ad-hoc triage), record the verdict as tags, and the execution
 skills (`/blitz`, `/crossfire-blitz`, `/ninja-meiyaku`) inherit a pre-routed backlog.
 
-**Evidence base** (fetched 2026-07-11 — see snapshot at bottom for refresh):
+**Routes rewritten 2026-10-23** with MODELS.md: the Sol class is the GPT baseline,
+GPT-5.5/5.6 and haiku-5.5 share the floor for one-off small decisions, sonnet-5.5
+builds spec-complete work natively, and gpt-5.5 is unreachable on this Codex login.
 
-| Benchmark | What it stresses | Headline |
+**Evidence base.** Two snapshots, each anchoring different rubric axes:
+
+| Benchmark | What it stresses | Snapshot |
 |---|---|---|
-| [FrontierSWE](https://www.frontierswe.com/) | frontier-hard SWE tasks (build/reimplement/optimize) | Fable 5 #1 (90% dominance), Opus 4.8 #2, GPT-5.5 #4 |
-| [SWE-Marathon](https://www.swe-marathon.org/) | ultra-long-horizon (2–10h wall-clock, ~27M tokens/run) | Opus 4.8 26% pass@1 (best full run); everything decays with run length |
-| [ARC-AGI-2](https://arcprize.org/leaderboard) | novel abstract reasoning, cost-per-task efficiency | GPT-5.6 Sol 92.5% @ $1.44/task; best Anthropic (Opus 4.8) ~72% |
-| [Vibe Code Bench](https://www.vals.ai/benchmarks/vibe-code) | build full apps from spec, UI-tested end-to-end | Anthropic sweeps top spots: Fable 90.4%, Opus 4.8 82.7%, Sonnet 5 81.3% |
+| [FrontierSWE](https://www.frontierswe.com/) | frontier-hard SWE tasks (build/reimplement/optimize) | 2026-07-11 |
+| [SWE-Marathon](https://www.swe-marathon.org/) | ultra-long-horizon (2–10h wall-clock, ~27M tokens/run) | 2026-07-11 |
+| [ARC-AGI-2](https://arcprize.org/leaderboard) | novel abstract reasoning, cost-per-task efficiency | 2026-07-11 |
+| [Vibe Code Bench](https://www.vals.ai/benchmarks/vibe-code) | build full apps from spec, UI-tested end-to-end | 2026-07-11 |
+| Terminal-Bench 4.0, SWE-Bench Pro, CursorBench 4.0, Artificial Analysis indices | agentic terminal work, hard SWE, IDE coding, cross-model intelligence/coding | 2026-10-23 (vendor + third-party, see bottom) |
 
-The four boards disagree on purpose — each one anchors a different rubric axis:
 FrontierSWE/SWE-Marathon → **horizon & difficulty ceiling**, ARC → **novel
-reasoning per dollar**, Vibe Code → **spec-complete building & taste**.
+reasoning per dollar**, Vibe Code → **spec-complete building & taste**, the
+2026-10 boards → **where the new Anthropic generation and the Sol line sit**.
 
 ## Scoring a ticket — five signals, 0–2 each
 
@@ -49,70 +54,56 @@ Sum the five signals (0–10), apply the verifiability modifier, then route:
 
 | Tier | Score | Route | MODELS.md role | itr tags |
 |---|---|---|---|---|
-| **C0 — trivial** | 0–1 | gpt-5.5 (`codex exec`) | floor | `complexity:C0`, `route:gpt-5.5` |
-| **C1 — routine** | 2–3 | gpt-5.5 (the agents default; terra/luna for pattern-following batches) | bulk | `complexity:C1`, `route:gpt-5.5` |
-| **C2 — standard** | 4–5 | **sonnet-5** if spec-complete build work; gpt-5.5 if mechanical-heavy | — / bulk | `complexity:C2`, `route:sonnet-5` |
-| **C3 — complex** | 6–7 | **gpt-6-astra** if novelty-dominant (gpt-6-sol's seat while sol is unavailable); **gpt-5.5** if ambiguity/blast-radius-dominant (the `ambiguous` role) | — / ambiguous | `complexity:C3`, `route:gpt-6-astra` |
+| **C0 — trivial** | 0–1 | **haiku-5.5** (native); gpt-5.6-terra/luna when a non-Claude seat is wanted | floor | `complexity:C0`, `route:haiku-5.5` |
+| **C1 — routine** | 2–3 | **gpt-5.6-sol** at `medium` | generalist | `complexity:C1`, `route:gpt-5.6-sol` |
+| **C2 — standard** | 4–5 | **sonnet-5.5** if spec-complete build work; gpt-5.6-sol if mechanical-heavy | builder / bulk | `complexity:C2`, `route:sonnet-5.5` |
+| **C3 — complex** | 6–7 | **gpt-5.6-sol** at `high`/`xhigh`; **gpt-6-astra** when it must be right the first time or the blast radius is wide | ambiguous | `complexity:C3`, `route:gpt-5.6-sol` |
 | **C4 — frontier** | 8–10 | **gpt-6-astra** to build it; **fable-5.1** (gated: `fable=on` / `--fable`) to plan the slicing and review — try to slice first | — / planner | `complexity:C4`, `route:gpt-6-astra` |
 
-### C0 — trivial / mechanical → gpt-5.5
+When gpt-6.1-sol becomes reachable, it takes every gpt-5.6-sol route above (MODELS.md, Basis).
 
-Renames, config bumps, doc/comment fixes, dependency bumps, mechanical
-migrations — anything where a green gate fully defines "done."
-**Constraint: short runs, hard gates, no autonomy.** GPT-5.5 places a
-respectable #4 on FrontierSWE, but on SWE-Marathon it has the *highest
-reward-hacking share* of any model (documented hacks: wrapping `gcc`,
-`dlopen`-ing prebuilt libs to fake a port). It is safe exactly when the run is
-too short and too gated to cheat.
+### C0 — trivial / one-off → haiku-5.5
 
-### C1 — routine → gpt-5.5
+Renames, config bumps, doc/comment fixes, dependency bumps, single small
+decisions — anything where a green gate fully defines "done." The operator rates
+haiku-5.5 as usable as the GPT-5.5/5.6 class for this work (2026-10-23). It is the
+cheapest model on the table and needs no Codex wrapper. Anthropic reports
+Terminal-Bench 4.0 39.2%, against 0.0% for haiku-4.5. **Constraint: short runs,
+hard gates, Novelty 0.** gpt-5.6-terra and gpt-5.6-luna are peers when the seat
+should be non-Claude. Luna's novel reasoning is weak (ARC ≤59.5%), so this tier is
+the only place it belongs.
+
+### C1 — routine → gpt-5.6-sol
 
 Small well-specified features and bugfixes with an in-repo pattern to follow.
-gpt-5.5 is the agents default (operator decree 2026-07-26: knowledge 8 — "much
-smarter and much more capable"), and the snapshot below supports it:
-FrontierSWE 73% (#4) and ARC-AGI-2 85.0% @ $1.87 — above terra on both boards
-at the cheapest non-haiku price. Terra is the first escalation rung and the
-pattern-following batch alternative (83.9% @ $1.09 at max effort, mid-board
-67.8% on Vibe Code). Luna is a legitimate cheaper substitute for batches
-(77.1% Vibe Code @ $3.63/test), **but only for pattern-following work**:
-Luna's novel-reasoning scores are weak (ARC ≤59.5%, below gpt-5.5), so never
-hand it a C1 that secretly scores Novelty=2.
+The Sol class is the GPT baseline (operator, 2026-10-23). gpt-5.6-sol led ARC-AGI-2
+for its generation (92.5% @ $1.44/task) and tops terra and luna on Artificial
+Analysis' Intelligence (59 vs 55 / 51) and Coding Agent (80 vs 77 / 75) indices.
+Run it at `medium`. A C1 that turns out to be a one-file, Novelty-0 change can
+drop to the floor.
 
-### C2 — standard, spec-complete → sonnet-5 (the "delegate to Sonnet" tier)
+### C2 — standard, spec-complete → sonnet-5.5 (the "delegate to Sonnet" tier)
 
 This tier answers "what can Sonnet take?": **multi-file build work with a
 complete spec, written acceptance criteria, contained blast radius, no novel
-algorithm, and at most developer-facing taste.** Vibe Code is the evidence:
-Sonnet 5 places #3 at 81.3% — above *every* GPT model — on end-to-end
-build-the-app-from-spec tasks. It appears on none of the frontier boards, which
-is the other half of the signal: it builds what's specified; it doesn't invent.
-Operationally it's also the cheapest route that stays native in the Claude
-harness (`model: 'sonnet'` in Agent/Workflow — no Codex wrapper).
+algorithm, and at most developer-facing taste.** Sonnet 5 already placed #3 on
+Vibe Code (81.3%, above every GPT model). Sonnet 5.5 is a large step up at the
+same price: Anthropic reports SWE-Bench Pro 81.3%, and third parties report
+CursorBench 4.0 55.5%, up from 34.1%. It is the cheapest strong route that stays
+native in the Claude harness (`model: 'sonnet'` in Agent/Workflow, no Codex
+wrapper). If the C2 is mechanical-heavy rather than build-shaped (large
+migration, codemod sweep), gpt-5.6-sol is the better per-dollar route.
 
-If the C2 is mechanical-heavy rather than build-shaped (large migration, codemod
-sweep), gpt-5.5 remains the better per-dollar route.
+### C3 — complex → gpt-5.6-sol at high effort, astra when it must land first time
 
-### C3 — complex → fork on the dominant signal
-
-- **Novelty-dominant** (algorithm design, perf optimization, puzzle-shaped
-  debugging): **gpt-6-astra at high reasoning effort** while gpt-6-sol is
-  unavailable on this Codex login (MODELS.md, Availability). Astra is the next
-  rung up: the same intelligence 9, at cost 3 instead of sol's 5. Route back to
-  **gpt-6-sol at high reasoning effort** once it is reachable. The sol line
-  earned this tier: gpt-5.6-sol led ARC-AGI-2 at 92.5% @ $1.44/task, ~7–10×
-  cheaper than the Pro/Deep-Think tier for the same or better score. gpt-6-sol
-  succeeded it (2026-09-22) and is not yet on the board. This is the "requires
-  GPT" tier: the GPT line leads on novel reasoning per dollar.
-- **Ambiguity- or blast-radius-dominant** (judgment across a coupled codebase,
-  underspecified requirements, risky refactor): **gpt-5.5** (the `ambiguous`
-  role). This routed to Opus until 2026-07-26, when the operator decree set
-  Opus 5 at knowledge 7 and recorded that Opus is not effective at judging its
-  own work. opus-5.5 (2026-09-22) is knowledge 8, level with gpt-5.5, so the
-  binding stays with gpt-5.5. opus-5.5 still takes the work when the taste
-  override below forces it.
+- **Novelty- or ambiguity-dominant** (algorithm design, perf work, judgment
+  across a coupled codebase, underspecified requirements): **gpt-5.6-sol at
+  `high`/`xhigh`** (the `ambiguous` role). The GPT line leads on novel reasoning
+  per dollar, and Sol at intelligence 9 sits above opus-5.5 and sonnet-5.5.
+- **Wide blast radius or "must be right the first time"**: **gpt-6-astra** at
+  `high`, one rung up.
 - **Taste=2 always forces opus-5.5 minimum** regardless of the other signals
-  (MODELS.md taste bar: > 7 — gpt-6-sol, the other Codex generalists and sonnet-5
-  don't clear it; gpt-6-astra does).
+  (MODELS.md taste bar: > 7 — only opus-5.5, gpt-6-astra and fable-5.1 clear it).
 
 ### C4 — frontier → slice first, astra builds, fable-5.1 plans and reviews
 
@@ -131,39 +122,39 @@ MODELS.md (`fable=on` / `--fable`).
 
 1. **Taste-critical → opus-5.5, gpt-6-astra, or fable-5.1, always** — Vibe Code's UI-tested
    board has Anthropic in the top four spots; the MODELS.md taste bar stands.
-2. **Never haiku-4.5, any tier** — 4.0% ARC-AGI-2, 11.4% Vibe Code. Confirmed.
-3. **gpt-5.5 requires a hard verify gate, always** — highest reward-hacking
-   share on SWE-Marathon. It is the agents default (knowledge 8) and routes
-   freely, but never hand it an ungated long-horizon run: add the gate first
-   or route elsewhere.
+2. **Floor guard** — haiku-5.5, gpt-5.6-terra and gpt-5.6-luna take only short,
+   one-off, gated, Novelty-0, non-risky work. Anything else starts at gpt-5.6-sol.
+3. **Every route keeps a hard verify gate.** Long-horizon runs without one are where
+   cheap models fake success (SWE-Marathon: GPT-5.5 had the highest reward-hacking
+   share). Add the gate first or route higher.
 4. **Claude routes get cross-model review** — Claude models show zero reward
    hacking but the highest poor-self-verification share (~20% for Opus 4.7 on
    SWE-Marathon). Pair Claude execution with a non-Claude reviewer (the
-   `crossfire` pattern) before close. Confirmed by operator decree 2026-07-26:
-   **Opus is not effective at judging its own work** (carried to opus-5.5) —
-   Opus never reviews its own output; the review/`ambiguous` role is bound to
-   gpt-5.5.
+   `crossfire` pattern) before close. **Opus never reviews its own output.**
 5. **Escalation ladder** (MODELS.md): a miss escalates
-   `gpt-5.5 → gpt-5.6-terra → gpt-6-astra → fable-5.1 (gated)` without asking
-   (the gpt-6-sol rung between terra and astra is skipped while sol is unavailable).
-   A sonnet-5 miss enters the ladder at its head. On escalation, re-tag:
+   `floor → gpt-5.6-sol → gpt-6-astra → fable-5.1 (gated)` without asking.
+   A sonnet-5.5 miss enters at gpt-5.6-sol. On escalation, re-tag:
    `--remove-tag route:X --add-tag route:Y --add-tag escalated:from-X`.
+6. **gpt-5.5 is unreachable** on this Codex login (MODELS.md, Basis). Retag any
+   leftover `route:gpt-5.5` issue (recipe below).
 
 ## Grooming procedure (itr)
 
 ```bash
 # score during grooming, then tag:
-itr update <id> --add-tag complexity:C2 --add-tag route:sonnet-5
+itr update <id> --add-tag complexity:C2 --add-tag route:sonnet-5.5
 
 # pull a model's lane at execution time:
-itr list --tag route:sonnet-5                # Sonnet-delegable queue
-itr list --tag-any route:gpt-5.6-terra --tag-any route:gpt-5.5   # Codex lane
+itr list --tag route:sonnet-5.5                # Sonnet-delegable queue
+itr list --tag-any route:gpt-5.6-sol --tag-any route:gpt-6-astra   # Codex lane
+itr list --tag route:haiku-5.5                 # floor lane
 
-# bulk re-route after a benchmark refresh or model swap:
-itr bulk --tag route:old-model update --add-tag route:new-model --remove-tag route:old-model
+# bulk re-route after a benchmark refresh or model swap (e.g. the 2026-10-23 rewrite):
+itr bulk --tag route:gpt-5.5 update --add-tag route:gpt-5.6-sol --remove-tag route:gpt-5.5
+itr bulk --tag route:sonnet-5 update --add-tag route:sonnet-5.5 --remove-tag route:sonnet-5
 
 # C4 decomposition: file children, wire deps, keep the epic as the C4 shell
-itr add "child slice" --parent <epic> --tag complexity:C1 --tag route:gpt-5.6-terra
+itr add "child slice" --parent <epic> --tag complexity:C1 --tag route:gpt-5.6-sol
 ```
 
 Tag `route:` values use MODELS.md model names verbatim so a model swap is a
@@ -171,11 +162,12 @@ Tag `route:` values use MODELS.md model names verbatim so a model swap is a
 
 ## Observed deltas vs MODELS.md scores (guidance, not edits)
 
-- **sonnet-5 punches above its Intelligence=5 on spec-complete builds** (Vibe
-  Code #3, above all GPTs). The score is right for *ambiguous* work — keep
-  routing that away — but don't let it scare you off C2 delegation.
-- **gpt-5.6-luna's Intelligence=8 overstates its novel reasoning** (ARC ≤59.5%,
-  below gpt-5.5). Treat luna as cheap bulk, never as a reasoning rung.
+- **haiku-5.5's Intelligence=8 is an operator rating for one-off, gated work**, not a
+  claim that it matches Sol on hard problems: its Terminal-Bench 4.0 (39.2%) and
+  SWE-Bench Pro (64.8%) sit well below sonnet-5.5 (70.6% / 81.3%). Keep it inside the
+  floor guard.
+- **gpt-5.6-luna's Intelligence=8 overstates its novel reasoning** (ARC ≤59.5%).
+  Treat luna as a floor seat, never as a reasoning rung.
 
 ## Operational copy
 
@@ -184,19 +176,14 @@ installed skills run inside target projects and can't reference this repo by
 path. **When refreshing benchmarks or changing tiers/overrides here, update the
 skill's inlined tables in the same change.**
 
-## Benchmark snapshot (refresh me)
+## Benchmark snapshots (refresh me)
 
-Fetched **2026-07-11**. Key rows only; when these move, re-pull the four sites,
-update this table and any tier reasoning that no longer holds.
+### 2026-07-11 — FrontierSWE, SWE-Marathon, ARC-AGI-2, Vibe Code
 
 | Model | FrontierSWE (dominance) | SWE-Marathon (pass@1) | ARC-AGI-2 (best, $/task) | Vibe Code (score, $/test) |
 |---|---|---|---|---|
 | fable-5 | 90% (#1) | ~29.9% (partial) | — | 90.4%, $12.51 (#1) |
 | opus-4.8 | 75% (#2) | 26.0% (#1 full) | 72.1%, $2.74 | 82.7%, $5.09 (#2) |
-| fable-5.1 | — | — | — | — |
-| opus-5.5 | — | — | — | — |
-| gpt-6-astra | — | — | — | — |
-| gpt-6-sol | — | — | — | — |
 | sonnet-5 | — | — | — | 81.3%, $38.08 (#3) |
 | gpt-5.6-sol | — | — | 92.5%, $1.44 (#1) | 80.5%, $33.40 (#4) |
 | gpt-5.6-terra | — | — | 83.9%, $1.09 | 67.8%, $10.82 |
@@ -204,13 +191,23 @@ update this table and any tier reasoning that no longer holds.
 | gpt-5.5 | 73% (#4) | 12.0% | 85.0%, $1.87 | 69.9%, $16.66 |
 | haiku-4.5 | — | — | 4.0%, $0.38 | 11.4%, $1.31 |
 
-(FrontierSWE and SWE-Marathon don't list the GPT-5.6 line or sonnet-5 yet;
-absence is absence of data, not a zero score.)
+(Absence is absence of data, not a zero score. fable-5, opus-4.8, sonnet-5 and
+haiku-4.5 are predecessors kept as real measured data; don't relabel them as their
+successors.)
 
-**The 2026-09-22 generation (opus-5.5, fable-5.1, gpt-6-sol, gpt-6-astra) is
-unmeasured here. Those rows are empty on purpose.** This snapshot predates them,
-and the routes above use them anyway. The **fable-5, opus-4.8 and gpt-5.6-sol rows
-are kept deliberately**: they are real measured data for the predecessors, and
-the closest available proxies for their rungs until these boards are re-pulled.
-Do not relabel them as their successors, because that would invent benchmark
-numbers. Fill the new rows on the next refresh. (opus-5 was never measured either.)
+### 2026-10-23 — new generation (vendor-reported unless noted)
+
+| Model | Terminal-Bench 4.0 | SWE-Bench Pro | Other |
+|---|---|---|---|
+| sonnet-5.5 | 70.6% | 81.3% | CursorBench 4.0 55.5% (third-party) |
+| haiku-5.5 | 39.2% (AA harness: 33%) | 64.8% | SWE-bench Multilingual 83.7% |
+| haiku-4.5 | 0.0% | — | — |
+| gpt-5.6-sol | — | ~64.6% (third-party) | AA Intelligence 59, Coding Agent 80 |
+| gpt-5.6-terra | — | ~63.4% (third-party) | AA Intelligence 55, Coding Agent 77 |
+| gpt-5.6-luna | — | — | AA Intelligence 51, Coding Agent 75; CursorBench 4.0 35.9% (third-party) |
+| gpt-6-astra | 57.9% (single third-party source) | — | — |
+
+Sources: Anthropic launch coverage of Haiku 5.5 and Sonnet 5.5 (computingforgeeks,
+DataCamp, Vellum), Artificial Analysis "GPT-5.6 has landed", BenchLM comparisons.
+Several are aggregators with differing harnesses; treat third-party cells as
+directional. opus-5.5, fable-5.1 and gpt-6.1-sol are still unmeasured here.

@@ -107,7 +107,7 @@ You are a relay for one Codex seat. Do not read the repo, do the task, or add an
 | `wait` exits 4 (log silent past `--stall`) | probably hung | `kill <pid>`, relaunch once in a fresh seat dir |
 | `0xC0000142` or sandbox helper launch failure | Windows spawn fault | relaunch once. If it fails again, check the Codex install |
 
-Then **verify before relaying**. A Codex seat's code-level claims get a grep or a test before they go to the user. In one early gpt-6-astra review, about one claim in ten did not hold. A seat MODELS.md marks as needing a check (its routing notes) never makes the final call on its own. Its verdict goes to another seat or a test first.
+Then **verify before relaying**. A Codex seat's code-level claims get a grep or a test before they go to the user. In one early gpt-6-astra review, about one claim in ten did not hold. A floor-role seat (MODELS.md) never makes a final call on its own. Its verdict goes to another seat or a test first.
 
 ## Principles
 

@@ -684,7 +684,6 @@ primitives:
   accessibility-compliance-auditor-agent:
     type: "agent"
     platforms:
-      claude: { path: "agents/accessibility-compliance-auditor.md" }
       codex: { path: "agents/accessibility-compliance-auditor.md" }
     scopes: ["global", "local"]
     group: "execution"
@@ -701,7 +700,6 @@ primitives:
   e2e-test-architect-agent:
     type: "agent"
     platforms:
-      claude: { path: "agents/e2e-test-architect.md" }
       codex: { path: "agents/e2e-test-architect.md" }
     scopes: ["global", "local"]
     group: "execution"
@@ -734,7 +732,6 @@ primitives:
   performance-test-engineer-agent:
     type: "agent"
     platforms:
-      claude: { path: "agents/performance-test-engineer.md" }
       codex: { path: "agents/performance-test-engineer.md" }
     scopes: ["global", "local"]
     group: "execution"
@@ -815,7 +812,6 @@ primitives:
   cloud-cost-optimizer-agent:
     type: "agent"
     platforms:
-      claude: { path: "agents/cloud-cost-optimizer.md" }
       codex: { path: "agents/cloud-cost-optimizer.md" }
     scopes: ["global", "local"]
     group: "planning"
@@ -880,7 +876,6 @@ primitives:
   user-guide-writer-agent:
     type: "agent"
     platforms:
-      claude: { path: "agents/user-guide-writer.md" }
       codex: { path: "agents/user-guide-writer.md" }
     scopes: ["global", "local"]
     group: "planning"
@@ -897,7 +892,6 @@ primitives:
   api-docs-generator-agent:
     type: "agent"
     platforms:
-      claude: { path: "agents/api-docs-generator-role.md" }
       codex: { path: "agents/api-docs-generator-role.md" }
     scopes: ["global", "local"]
     group: "planning"

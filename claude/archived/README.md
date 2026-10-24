@@ -5,7 +5,14 @@ Primitives that are no longer installed. `install.sh` links only `claude/skills`
 folder reaches `~/.claude` or a project's `.claude/`, and no session loads it.
 
 They are kept, unedited, for reference: each file is the text its replacement was
-built from. Layout mirrors the installed roots: `claude/archived/skills/<name>/`.
+built from. Layout mirrors the installed roots: `claude/archived/skills/<name>/`,
+`claude/archived/agents/<name>.md`, `claude/archived/commands/<name>.md`.
+
+The 2026-10-24 retro archived the rows dated that day. It counted use from five
+months of typed prompts and a month of session transcripts on one machine: none of
+them was typed, loaded or named in a prompt, and the skill list had grown past what
+the harness shows (46 of 72 skills reached the model as a bare name, with no
+description to route by).
 
 | Archived | Date | Replaced by | Codex port |
 |---|---|---|---|
@@ -16,11 +23,15 @@ built from. Layout mirrors the installed roots: `claude/archived/skills/<name>/`
 | `skills/bootstrap-project-docs` | 2026-10-03 | `bootstrap-docs` mod: `/bootstrap-docs` writes the scaffold with no model turn | stays, Codex-only |
 | `skills/git-identity-check` | 2026-10-03 | Git Pulse 0.2.0: `/git-pulse identity [path…]` | stays, Codex-only |
 | `skills/queue-up-persistent` | 2026-10-03 | `queue` mod: `/queue` stages, shows, drops and clears with no model turn; `--run`, `--now` and `--drain` submit the task. Holds `QUEUE.md` (the `--queue` controls) and the `queue-up` SKILL.md as it was when it routed to them. | none |
-
 | `skills/typo` | 2026-10-03 | One always-on line, "Typos", in the global instructions (`claude/global-CLAUDE.md`): the model has to notice a typo either way, and a skill cost a tool round trip each time | none |
 | `skills/old-mission-skill-ab` | 2026-10-03 | Nothing: it is the earlier `mission` skill, kept for the 2026-07-26 A/B comparison under `artifacts/`. `mission` and `scrum` carry the work now | none |
+| `skills/analytics-events`, `api-contract-designer`, `cicd-pipeline`, `data-pipeline`, `database-schema`, `docker-compose`, `microservices`, `ml-integration` | 2026-10-24 | Nothing: design-from-requirements personas imported from agents on 2026-05-30. The model designs these from the request itself | none (Codex keeps the agent forms) |
+| `skills/code-wizard`, `css`, `emoji-translator`, `tdd-coach`, and `commands/tdd_process.md` | 2026-10-24 | Nothing: imported personas; `tdd_process` was `tdd-coach`'s companion | none |
+| `skills/cpp-review`, `react-review`, `security-audit`, `code-audit`, `changelog`, `code-roast`, `spicy-code-roast` | 2026-10-24 | The built-in `/code-review`, `/security-review` and `/simplify` | all but `cpp-review` stay, Codex-only |
+| `skills/queue-up` | 2026-10-24 | The `queue` mod and the built-in todo list | none |
+| `agents/accessibility-compliance-auditor`, `api-docs-generator-role`, `cloud-cost-optimizer`, `e2e-test-architect`, `performance-test-engineer`, `user-guide-writer` | 2026-10-24 | Nothing: installed nowhere and never run; every subagent launch used a built-in type | stay, Codex-only |
 
-`queue-up` itself stays installed for its in-session TodoList path only. Two more
+Two more
 skills gave only a part of themselves to a mod and stay installed:
 `unity-bridge` (the `unity-sync` mod runs `sync` after `.cs` edits and shows the
 result to the person) and `crucible` / `gauntlet` (Seat Guard 0.2.0 supplies the

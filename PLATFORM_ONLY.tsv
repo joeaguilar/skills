@@ -37,8 +37,17 @@ codex	skills	whats-next
 codex	skills	ponytail
 codex	skills	bootstrap-project-docs
 codex	skills	git-identity-check
+# Claude archived these on 2026-10-24 (no recorded use; the skill list had outgrown what the
+# harness shows). The Codex ports stay and are Codex-only; restore per claude/archived/README.md.
+codex	skills	changelog
+codex	skills	code-audit
+codex	skills	code-roast
+codex	skills	react-review
+codex	skills	security-audit
+codex	skills	spicy-code-roast
 
-# --- Codex-only agents (drift: Claude converted these imports to skills; Codex keeps the agent form) ---
+# --- Codex-only agents (drift: Claude converted these imports to skills, then archived those
+#     skills on 2026-10-24; Codex keeps the agent form) ---
 codex	agents	analytics-event-architect.md
 codex	agents	api-contract-designer.md
 codex	agents	backend-security-auditor.md
@@ -49,6 +58,13 @@ codex	agents	database-schema-architect.md
 codex	agents	docker-compose-architect.md
 codex	agents	prd-task-generator.md
 codex	agents	tdd-workflow-coach.md
+# Claude archived its copies of these on 2026-10-24 (installed nowhere, never run); Codex keeps them.
+codex	agents	accessibility-compliance-auditor.md
+codex	agents	api-docs-generator-role.md
+codex	agents	cloud-cost-optimizer.md
+codex	agents	e2e-test-architect.md
+codex	agents	performance-test-engineer.md
+codex	agents	user-guide-writer.md
 
 # --- Claude-only skills (intentional unless a Codex feature gap appears) ---
 claude	skills	ccq
@@ -98,35 +114,16 @@ claude	skills	relay
 claude	skills	drawn-steel
 # shuriken-storm — ONE uniform op across MANY small disjoint targets, waved parallel volley, no synthesis.
 claude	skills	shuriken-storm
-# Converted from imported agents — Claude chose skill over agent (interactive / on-demand / style
-# capabilities fit a skill better than an isolated subagent). Codex drift peers noted above.
-claude	skills	api-contract-designer
-claude	skills	code-wizard
-claude	skills	css
-claude	skills	emoji-translator
-claude	skills	tdd-coach
-# Tier-3 reviewers: native /code-review, /simplify, /security-review now do the review act, so
-# these keep their encoded standards / whole-codebase scope as skills (the asset) rather than
-# duplicating a review engine as an agent. (backend-security-auditor drift peer noted above.)
-claude	skills	cpp-review
-# Orchestrator pile distilled into the non-sprint coached track (idea -> spec -> build), sized
-# below /sprint. Replaces 5 feature/PRD/orchestrator agents. (prd-task-generator drift peer above.)
-# Architect-advisor agents -> skills: all 7 were design-from-requirements personas that interview
-# the user (an isolated subagent can't), so they fit a skill, not an agent. (5 drift peers above.)
-claude	skills	analytics-events
-claude	skills	cicd-pipeline
-claude	skills	data-pipeline
-claude	skills	database-schema
-claude	skills	docker-compose
-claude	skills	microservices
-claude	skills	ml-integration
+# (The skills converted from imported agents — api-contract-designer, code-wizard, css,
+#  emoji-translator, tdd-coach, cpp-review, analytics-events, cicd-pipeline, data-pipeline,
+#  database-schema, docker-compose, microservices, ml-integration — were archived on 2026-10-24
+#  to claude/archived/skills/. None had a Codex skill peer; their Codex agent peers are above.)
 
 # --- Claude-only agents (imported from ~/.claude/agents; awaiting Codex ports) ---
 # (none — every remaining Claude agent now has a Codex peer; see git history for the prior imports)
 
 # --- Claude-only commands (intentional unless a Codex feature gap appears) ---
-# tdd_process is the quick-reference companion to the tdd-coach skill; kept deliberately.
-claude	commands	tdd_process.md
+# (tdd_process, the companion to the tdd-coach skill, was archived with it on 2026-10-24.)
 claude	skills	scrum
 # (old-mission-skill-ab, the earlier mission skill kept for an A/B comparison, and typo, the
 #  micro-skill for flagging user-prompt typos, archived 2026-10-03 to claude/archived/skills/.
@@ -140,10 +137,8 @@ claude	skills	scrum
 # port lands, as gauntlet just did.
 claude	skills	crucible
 
-# queue-up adds the ask to the in-session TodoList. Its persistent `.claude/queue.md` controls
-# moved to the queue mod on 2026-10-03 (text kept in claude/archived/skills/queue-up-persistent).
-# Port to Codex wording when wanted, then graduate.
-claude	skills	queue-up
+# (queue-up, which added the ask to the in-session TodoList, was archived on 2026-10-24: the
+#  queue mod and the built-in todo list cover it.)
 claude	skills	itr-snapshot
 
 # Provided externally on Codex; do not vendor another copy.

@@ -98,11 +98,12 @@ See Phase 2. Regular rounds: 1 critic, **alternating families by iteration parit
 
 Per-axis score = median of the three (2-of-3 agreement). All three verdicts are validated and committed; the merged verdict is the file `gate.mjs` reads. One Opus opinion closing a subsystem is the exact gameability the panel exists to prevent (forensics §4.2 fix 1).
 
-**The cross-model seat.** A single-family jury converges on the same rabbit holes — correlated blind spots survive any number of same-model critics, which is why the seat exists. The Codex seat is a critic like any other, launched as a read-only codex seat (the `codex-seat` skill) on **gpt-6-astra**, the cross-model judge of Claude work in `~/.claude/MODELS.md`:
+**The cross-model seat.** A single-family jury converges on the same rabbit holes — correlated blind spots survive any number of same-model critics, which is why the seat exists. The Codex seat is a critic like any other, launched as a read-only codex seat (the `codex-seat` skill) on the **`frontier`** role in `~/.claude/MODELS.md`, the cross-model judge of Claude work:
 
 ```bash
+read -r CODEX_M CODEX_E < <(awk -F'|' '{r=$2; gsub(/ /,"",r)} r=="frontier"{m=$3; e=$4; gsub(/ /,"",m); gsub(/ /,"",e); print m, e; exit}' ~/.claude/MODELS.md)
 SEAT=critiques/seats/<subsystem>_iter<N>_<lens>       # brief.md = the blind critic prompt, verbatim
-bash "$SEAT_SH" run -d "$SEAT" -m gpt-6-astra -e high -s read-only   # Bash timeout 600000
+bash "$SEAT_SH" run -d "$SEAT" -m "$CODEX_M" -e "$CODEX_E" -s read-only   # Bash timeout 600000
 # a seat that may run past ~9 min: `start` instead of `run`, then `wait -d "$SEAT"` while it exits 3
 ```
 
@@ -165,7 +166,7 @@ Reason codes: `SANDBOX-DOWN`, `TOOL-MISSING`, `RATE-LIMIT`, `TASTE-REQUIRED` (me
 | Role | Model | Notes |
 |---|---|---|
 | Critic (taste lenses) | Opus-class, high effort | Taste is the product; never downgrade below flagship-class of either family. |
-| Critic (cross-model seat) | gpt-6-astra via `codex-seat.sh`, read-only | Even-parity regular rounds + the does-it-reproduce panel seat. Different family, different blind spots — the anti-rabbit-hole seat. Failure → Opus + `SANDBOX-DOWN` ledger row. |
+| Critic (cross-model seat) | `frontier` (MODELS.md) via `codex-seat.sh`, read-only | Even-parity regular rounds + the does-it-reproduce panel seat. Different family, different blind spots — the anti-rabbit-hole seat. Failure → Opus + `SANDBOX-DOWN` ledger row. |
 | Visual-polish builder fixes | Opus-class | Only builder role that earns Opus. |
 | Mechanical scaffolds, capture glue, serve/shoot plumbing | Sonnet-class | Keep mechanical work OFF the orchestrator — 170 orchestrator PowerShell calls is why context filled last run. |
 | Builders (default) | Session model | |

@@ -13,7 +13,7 @@ One run, whole gamut, sealed under a pact: choose targets → strike in waves �
 
 ## The loop at a glance
 ```
-seal the pact ──► wave: strike ∥ strike ∥ gpt-6.1-sol ──► cross-review ──► escalate the miss
+seal the pact ──► wave: strike ∥ strike ∥ codex seat ──► cross-review ──► escalate the miss
       ▲                                                                        │
       └──────────────── next wave (gate green, targets remain) ◄───────────────┘
 targets done ──► last look (dual, whole diff) ──► whisper ──► gone
@@ -28,11 +28,11 @@ targets done ──► last look (dual, whole diff) ──► whisper ──► 
 | `--sprint[=folder]` | off | take the groomed sprint (`sprint/CURRENT`, or the named folder) as the target list — skip stealth planning |
 | `--targets=N` | 5 | stealth-plan picks N targets (clamp 3–7) |
 | `--waves=N` | unset | hard cap on waves |
-| `--fable` | off | fable-5.1 available (hero taste + top escalation rung); off → taste routes to opus-5.5, fable requests noted, never spent |
+| `--fable` | off | gated roles available (`taste-hero` + `ceiling`, the top escalation rung); off → taste routes to `taste`, fable requests noted, never spent |
 | `--confirm` | off | the ONLY gate — pause after the pact is sealed |
 
 ## Roles & artifacts
-**You** — throw, then read the whisper. **Orchestrator** — chooses, routes, gates, escalates. **Strikers/reviewers** — one per target, per the routing law. Scroll: `sprint/{folder}/plan.md` + wave logs under `sprint/{folder}/blitz/`; stories in the tracker (`itr`) under one epic. Verify gate = the `verify-gate:` line of `blitz`'s preflight script (`bash <skills-dir>/blitz/scripts/preflight.sh .`, `<skills-dir>` = the dir holding this skill's folder; Cargo/npm/pytest/go/Make/just). Codex lanes (gpt-6.1-sol et al.) need the codex plugin authenticated — absent → run Claude-only, say so in the whisper.
+**You** — throw, then read the whisper. **Orchestrator** — chooses, routes, gates, escalates. **Strikers/reviewers** — one per target, per the routing law. Scroll: `sprint/{folder}/plan.md` + wave logs under `sprint/{folder}/blitz/`; stories in the tracker (`itr`) under one epic. Verify gate = the `verify-gate:` line of `blitz`'s preflight script (`bash <skills-dir>/blitz/scripts/preflight.sh .`, `<skills-dir>` = the dir holding this skill's folder; Cargo/npm/pytest/go/Make/just). Codex lanes (any role bound to a GPT model) need the codex plugin authenticated — absent → run Claude-only, say so in the whisper.
 
 ## Voice — the silent strike
 Speaks only at the sealing (Phase 0 template) and the whisper (Phase 3 template); `--confirm` reuses the sealing as its pause. Failure, one line: `盟 — #<id> fell twice. quarantined.` 印 = 盟.
@@ -70,26 +70,26 @@ Then silence. (`--confirm` waits here.)
 ## Phase 1 — waves, shared shadow
 One checkout, disjoint file ownership per wave, ≤5 strikes/wave, blocked after blockers, **≤1 Codex strike per wave** (the Codex companion allows one active task per checkout). Full-repo verify gate is the self-healing convergence; never advance red — small obvious fix yourself and log it, else stop and surface.
 
-**Routing law** (never a Sol/terra/luna, Haiku or Sonnet blade for taste): one-off small cut → **haiku-5.5** (floor; gated, Novelty 0); bulk/mechanical → **gpt-6.1-sol** (the Sol-class baseline); spec-complete build → **sonnet-5.5**; user-facing/taste-critical → **opus-5.5**; ambiguous/judgment → **gpt-6.1-sol** (Opus never judges its own work); **fable-5.1** only under `--fable`.
+**Routing law** — by MODELS.md role; resolve each to model + effort from `~/.claude/MODELS.md` at spawn (never a role below the taste bar for taste): one-off small cut → **`floor`** (gated, Novelty 0); bulk/mechanical → **`bulk`**; spec-complete build → **`builder`**; user-facing/taste-critical → **`taste`**; ambiguous/judgment → **`ambiguous`** (Opus never judges its own work); must land first time → **`frontier`**; **`taste-hero`** / **`ceiling`** only under `--fable`. `route:<role>` tags from `/groom` route as tagged; a legacy `route:<model>` tag pins that model.
 
-**Strikers.** Claude: Agent `{model, run_in_background: true}`, shared checkout. Codex (default gpt-6.1-sol): a `sonnet` wrapper agent, description `gpt-6.1-sol:task-{id}`, launched per the `codex-seat` skill — one Bash call (timeout 600000): `codex-seat.sh run -d <seat> -m gpt-6.1-sol -e medium -s workspace-write -C <checkout>`, brief in `<seat>/brief.md` (swap `-m`/`-e` for the task's assigned Codex model). Every prompt opens with the oath (above, verbatim), then: owned files ONLY, no tree-wide formatters, run the full verify gate to zero, no commit, end PASS/FAIL + diff summary + gate tail.
+**Strikers.** Claude: Agent `{model, run_in_background: true}`, shared checkout. Codex (any GPT-bound role): a `sonnet` wrapper agent, description `<model>:task-{id}` (the resolved model), launched per the `codex-seat` skill — one Bash call (timeout 600000): `codex-seat.sh run -d <seat> -m <model> -e <effort> -s workspace-write -C <checkout>`, brief in `<seat>/brief.md`. Every prompt opens with the oath (above, verbatim), then: owned files ONLY, no tree-wide formatters, run the full verify gate to zero, no commit, end PASS/FAIL + diff summary + gate tail.
 
-**Cross-review before close — always a different blade.** Codex work → a **different blade** reviews that target's diff (gpt-6.1-sol work → gpt-6-astra reviewer, or sonnet-5.5 for a cheap pass); Opus judges no work but taste — never its own. Claude work → the adversarial companion:
+**Cross-review before close — always a different blade.** Codex work → a **Claude blade** reviews that target's diff (`builder` for a cheap pass, `taste` when quality matters); Opus judges no work but taste — never its own. Claude work → the adversarial companion:
 ```sh
 COMPANION=$(ls -d ~/.claude/plugins/cache/openai-codex/codex/*/scripts/codex-companion.mjs | sort -V | tail -1)
 node "$COMPANION" adversarial-review --wait --base <ref> --scope branch "<focus>"
 ```
-An errored review lane is not a clean pass — retry once, else close on the striker's gate, marked degraded. P0/P1 finding → redo with the next-smarter blade (floor → gpt-6.1-sol → gpt-6-astra → fable-5.1 only under `--fable`; a sonnet-5.5 fall enters at gpt-6.1-sol), findings spliced in, re-reviewed. **Two falls → quarantine**; surface it, move on. Stop waves when: targets done · two zero-close waves · `--waves` reached.
+An errored review lane is not a clean pass — retry once, else close on the striker's gate, marked degraded. P0/P1 finding → redo with the next-smarter blade (`floor` → `generalist` → `frontier` → `ceiling` only under `--fable`; a `builder` fall enters at `generalist`), findings spliced in, re-reviewed. **Two falls → quarantine**; surface it, move on. Stop waves when: targets done · two zero-close waves · `--waves` reached.
 
 ## Phase 2 — the last look
-One dual pass over the **whole** diff: the adversarial companion (scope branch) + one independent gpt-6-astra (fable-5.1 under `--fable`) reviewer → dedup → P0–P3 survivors → ship/hold.
+One dual pass over the **whole** diff: the adversarial companion (scope branch) + one independent `frontier` reviewer (`planner` under `--fable`) → dedup → P0–P3 survivors → ship/hold.
 
 ## Phase 3 — the whisper (return)
 Fill Outcomes in the scroll, close the epic, update `sprint/CURRENT`, commit the kept diff — the blades never commit; the orchestrator does, unless the user forbade it. Speak once:
 
 ```
 盟 — the pact is kept.
-cut <n> · fell <m> · blades: <k> gpt-6.1-sol, <h> haiku, <s> sonnet, <j> opus<, f fable> · escalated <e>
+cut <n> · fell <m> · blades: <count per resolved model, e.g. 4 gpt-6.1-sol, 2 haiku> · escalated <e>
 <smoke-only: <s> — #<id>… await PO eyes (visual-gate-only); resolve at /sprint-review>
 last look: <P0/P1/P2/P3> — <ship|hold>
 diff: <files changed, +/-> — committed (or yours, if you forbade the commit).

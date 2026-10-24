@@ -22,6 +22,8 @@ backups/
 claude/settings.json
 # Cache Watch's per-person compaction rule for this checkout (compact: manual | auto | auto+summary)
 .cache-watch
+# Cache Watch's auto-compact handoffs, written into the working directory before a compaction
+auto-compact-handoff-*.md
 
 # Type declarations Claude Code writes beside a mod each time it loads it
 claude/mods/*/.claude-plugin/types/

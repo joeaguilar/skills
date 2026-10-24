@@ -34,6 +34,7 @@ description to route by).
 | `skills/groom` | 2026-10-24 | Grooming reads `~/.claude/COMPLEXITY.md` directly (the rubric `groom` inlined) | none |
 | `skills/crossfire-review`, `codex-computer-use` | 2026-10-24 | `codex-seat` for a GPT reviewer seat; the built-in `/code-review` | none |
 | `workflows/sprint-blitz-review.js` | 2026-10-24 | Nothing: never ran. `blitz` covers the same wave loop | none |
+| `skills/fan-of-agents`, `hundred-blades`, `first-blood`, `splitting-blade`, `the-clan`, `relay`, `whetstone`, `shadow-duel`, `scout-strike`, `drawn-steel`, `pre-mortem`, `shuriken-storm`, `feint`, `masamune`, `silent-strike`, and `DOJO.md` | 2026-10-24 | The `dojo` skill: one listing entry, the rack in its `SKILL.md`, the forge in `FORGE.md`, and each blade's body as `blades/<blade>.md` (drawn with `/dojo <blade>`; only `/<blade>` became `/dojo <blade>`) | `pre-mortem`, `scout-strike`, `shadow-duel`, `whetstone` stay, Codex-only |
 | `skills/plr` | 2026-10-24 | Nothing: the user retired it. The `plr` CLI was not installed on the Windows machine | stays, Codex-only |
 
 Two more

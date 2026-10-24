@@ -11,7 +11,7 @@ of shadow-duel; keep implementation, repair, verification, and commit ownership
 in one bounded run.
 
 This is a composed delivery workflow, not a Dojo blade. Before acting, read
-`../scout-strike/SKILL.md` and `../shadow-duel/SKILL.md` completely. Their scout,
+`../dojo/blades/scout-strike.md` and `../dojo/blades/shadow-duel.md` completely. Their scout,
 challenger, and judging contracts apply. This wrapper overrides their
 `never commit` rule only for the orchestrator's final gate; scouts, strikers,
 challengers, and proposers never commit.

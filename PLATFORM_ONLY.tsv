@@ -88,28 +88,15 @@ claude	skills	codex-seat
 # subagent + adversarial-review runtime) and cross-reviews with a different model — the Codex-plugin
 # orchestration from inside Claude Code is the dependency, so no Codex port is possible.
 claude	skills	crossfire-blitz
-# The Dojo — orchestration-primitive family (see claude/DOJO.md = the rack + forge).
-# Each is a self-contained "blade" that slices a problem a different way. Claude forged
-# these first; graduate each to parity as its codex/skills/<blade> port lands.
-claude	skills	fan-of-agents
-# (tsugi, the quiet dojo-voiced pointer, archived 2026-10-03 to claude/archived/skills/tsugi:
-#  the whats-next mod answers /tsugi with no model turn.)
-# feint is the read-only counterweight to the rack — every execution blade writes by default,
-# so feint walks the whole motion and lands nothing, handing back the would-be cut to preview.
-claude	skills	feint
-# masamune is the quiet-kin legend blade — one agent on Fable, one cut, total silence.
-claude	skills	masamune
-# silent-strike is the general-purpose quiet blade — one task to a background subagent
-# (model-routed, sonnet default), total silence, one line back. Graduate on its Codex port.
-claude	skills	silent-strike
-claude	skills	hundred-blades
-claude	skills	first-blood
-claude	skills	splitting-blade
-claude	skills	the-clan
-claude	skills	relay
-claude	skills	drawn-steel
-# shuriken-storm — ONE uniform op across MANY small disjoint targets, waved parallel volley, no synthesis.
-claude	skills	shuriken-storm
+# The Dojo — one skill since 2026-10-24: the rack in claude/skills/dojo/SKILL.md, the forge in
+# its FORGE.md, each of the 15 blades in blades/<blade>.md, loaded only when drawn. The blades
+# were separate skills before; those sit unedited in claude/archived/skills/. Codex keeps its
+# ports of four of them as separate skills (declared Codex-only below).
+claude	skills	dojo
+codex	skills	pre-mortem
+codex	skills	scout-strike
+codex	skills	shadow-duel
+codex	skills	whetstone
 # (The skills converted from imported agents — api-contract-designer, code-wizard, css,
 #  emoji-translator, tdd-coach, cpp-review, analytics-events, cicd-pipeline, data-pipeline,
 #  database-schema, docker-compose, microservices, ml-integration — were archived on 2026-10-24

@@ -103,7 +103,7 @@ the resolved model name so the roster shows what really ran.
 | planner | fable-5.1 | default | planning / spec / decomposition seats. Fable's standing job is plan + review, not writing code, so spend it here and on the reviewer seat |
 | ceiling | fable-5.1 | default | top rung of the non-taste escalation ladder — gated (`fable=on` / `--fable`) |
 | computer-use | gpt-5.6-terra | high | Codex real-UI runtime verification (the `codex-computer-use` skill); `frontier` may take the seat |
-| reviewer | *cross-model* | per seat | any review / critique / judge seat — **never the model that wrote the work**. GPT-written → `builder` for cheap passes, `taste` when quality matters, `planner` when Fable is on. Claude-written → `generalist` for a standard pass, `frontier` when quality matters. Resolve the seat, then confirm its model is the other provider; if a binding swap breaks that, take the next seat listed. Opus may review GPT or Sonnet work, never its own |
+| reviewer | *cross-model* | per seat | any review / critique / judge seat — **never the model that wrote the work**. GPT-written → `builder` for cheap passes, `taste` when quality matters, `planner` when Fable is on. Claude-written → `ambiguous` for a standard pass, `frontier` when quality matters. Resolve the seat, then confirm its model is the other provider; if a binding swap breaks that, take the next seat listed. Opus may review GPT or Sonnet work, never its own |
 | codex-default | gpt-6.1-sol | medium | default `-m` for `codex exec` (pass it explicitly — config.toml differs) |
 | never | haiku-4.5 | — | retired generation; haiku-5.5 replaced it |
 

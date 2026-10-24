@@ -5,21 +5,28 @@
 //   node claude/scripts/session-metrics.mjs                 table of every week on disk
 //   node claude/scripts/session-metrics.mjs --since 2026-10-01
 //   node claude/scripts/session-metrics.mjs --record        also merge the rows into
-//                                                           ~/.claude/metrics/sessions-<os>.tsv
+//                                                           <record dir>/sessions-<os>.tsv
+//   node claude/scripts/session-metrics.mjs --record --push commit and push that file too
+//   node claude/scripts/session-metrics.mjs --combined      every machine's recorded rows,
+//                                                           summed per week (no scan)
 //   node claude/scripts/session-metrics.mjs --record --out FILE   record somewhere else
 //   node claude/scripts/session-metrics.mjs --json          rows as JSON
 //
-// The record stays out of this repo by default: it is public, and the rows are spend.
-// Claude Code deletes transcripts after ~30 days, so --record is what keeps history:
-// a recorded week is replaced only by a recount with at least as many requests, so a
-// week half-deleted by cleanup never overwrites its complete row.
+// The record dir is the private `claude-metrics` repo cloned beside this skills checkout
+// (`gitea clone claude-metrics ../claude-metrics`), else ~/.claude/metrics. Never this
+// repo: it is public, and the rows are spend. Transcripts are deleted after
+// cleanupPeriodDays, so --record is what keeps history: a recorded week is replaced
+// only by a recount with at least as many requests, so a week half-deleted by cleanup
+// never overwrites its complete row.
 //
 // Cost is API-equivalent (what the tokens would cost at first-party API prices), not
 // what a subscription bills. GPT seats run through `codex exec` and are not counted.
 
+import { execFileSync } from 'node:child_process';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 
 // $/MTok: input, output, cache read. Writes are 1.25x input (5m TTL) and 2x (1h TTL).
 // Source: the claude-api skill's model table (cached 2026-10-06); checked against a
@@ -48,15 +55,17 @@ const COLUMNS = [
 ];
 
 function parseArgs(argv) {
-  const a = { root: process.env.CCQ_ROOT || path.join(os.homedir(), '.claude', 'projects'), since: null, record: false, json: false, out: null };
+  const a = { root: process.env.CCQ_ROOT || path.join(os.homedir(), '.claude', 'projects'), since: null, record: false, push: false, combined: false, json: false, out: null };
   for (let i = 0; i < argv.length; i++) {
     const k = argv[i];
     if (k === '--root') a.root = argv[++i];
     else if (k === '--since') a.since = new Date(argv[++i]);
     else if (k === '--record') a.record = true;
+    else if (k === '--push') a.push = a.record = true;
+    else if (k === '--combined') a.combined = true;
     else if (k === '--out') a.out = argv[++i];
     else if (k === '--json') a.json = true;
-    else if (k === '-h' || k === '--help') { console.log(fs.readFileSync(new URL(import.meta.url)).toString().split('\n').slice(1, 18).join('\n').replace(/^\/\/ ?/gm, '')); process.exit(0); }
+    else if (k === '-h' || k === '--help') { const l = fs.readFileSync(new URL(import.meta.url), 'utf8').split('\n'); console.log(l.slice(1, l.findIndex((x, i) => i > 0 && !x.startsWith('//'))).join('\n').replace(/^\/\/ ?/gm, '')); process.exit(0); }
     else { console.error(`unknown argument: ${k}`); process.exit(2); }
   }
   return a;
@@ -178,11 +187,14 @@ const pct = (a, b) => (b ? Math.round((1000 * a) / b) / 10 : 0);
 const per = (a, b, d = 2) => (b ? Number((a / b).toFixed(d)) : 0);
 
 function toRows(weeks, osName) {
-  return [...weeks.keys()].sort().map((wk) => {
-    const w = weeks.get(wk);
+  return [...weeks.keys()].sort().map((wk) => derive(wk, osName, { ...weeks.get(wk), sessions: weeks.get(wk).sessions.size }));
+}
+
+// One output row from a week's raw counts (sessions already a number).
+function derive(wk, osName, w) {
     const inputSide = w.inTok + w.cw + w.cr;
     return {
-      week: wk, os: osName, sessions: w.sessions.size, prompts: w.prompts, requests: w.requests,
+      week: wk, os: osName, sessions: w.sessions, prompts: w.prompts, requests: w.requests,
       cost_usd: Number(w.cost.toFixed(2)), usd_per_prompt: per(w.cost, w.prompts),
       requests_per_prompt: per(w.requests, w.prompts, 1), output_per_prompt: Math.round(per(w.out, w.prompts, 0)),
       cache_hit_pct: pct(w.cr, inputSide), subagent_cost_pct: pct(w.subCost, w.cost),
@@ -191,20 +203,68 @@ function toRows(weeks, osName) {
       compactions: w.compactions, input_tok: w.inTok, cache_write_tok: w.cw, cache_read_tok: w.cr,
       output_tok: w.out, unpriced_requests: w.unpriced,
     };
+}
+
+function readTsv(file) {
+  if (!fs.existsSync(file)) return [];
+  const [head, ...lines] = fs.readFileSync(file, 'utf8').trim().split('\n');
+  const cols = head.split('\t');
+  return lines.filter(Boolean).map((l) => {
+    const v = l.split('\t');
+    return Object.fromEntries(cols.map((c, i) => [c, v[i]]));
   });
+}
+
+// Every machine's recorded rows, summed per week. Shares are re-weighted from the
+// recorded percentages, so the combined figures match a scan of all machines at once.
+function combine(dir) {
+  const files = fs.existsSync(dir) ? fs.readdirSync(dir).filter((f) => /^sessions-.+\.tsv$/.test(f)) : [];
+  const by = new Map();
+  for (const f of files) {
+    for (const r of readTsv(path.join(dir, f))) {
+      const n = (c) => Number(r[c]) || 0;
+      const w = by.get(r.week) || { ...newWeek(), sessions: 0, machines: new Set() };
+      w.machines.add(r.os);
+      w.sessions += n('sessions'); w.prompts += n('prompts'); w.requests += n('requests');
+      w.cost += n('cost_usd'); w.subCost += (n('cost_usd') * n('subagent_cost_pct')) / 100;
+      w.out += n('output_tok'); w.inTok += n('input_tok'); w.cw += n('cache_write_tok'); w.cr += n('cache_read_tok');
+      w.toolCalls += n('tool_calls'); w.toolErrors += Math.round((n('tool_calls') * n('tool_error_pct')) / 100);
+      w.skills += n('skill_loads'); w.gates += n('gates_total'); w.gatr += Math.round((n('gates_total') * n('gatr_pct')) / 100);
+      w.kgr += n('kgr_calls'); w.grep += n('grep_calls'); w.compactions += n('compactions'); w.unpriced += n('unpriced_requests');
+      by.set(r.week, w);
+    }
+  }
+  return [...by.keys()].sort().map((wk) => derive(wk, [...by.get(wk).machines].sort().join('+'), by.get(wk)));
+}
+
+// The private claude-metrics clone beside this skills checkout, else ~/.claude/metrics.
+function recordDir(out) {
+  if (out) return path.dirname(path.resolve(out));
+  const repo = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '..');
+  const sibling = path.join(path.dirname(repo), 'claude-metrics');
+  return fs.existsSync(path.join(sibling, '.git')) ? sibling : path.join(os.homedir(), '.claude', 'metrics');
+}
+
+// Commit the row file and push it. A failure (off the LAN, say) leaves the commit local;
+// the next --push sends it.
+function push(dir, file, label) {
+  const git = (...a) => execFileSync('git', a, { cwd: dir, encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'] });
+  if (!fs.existsSync(path.join(dir, '.git'))) return console.error(`--push: ${dir} is not a git clone; recorded locally only`);
+  const name = path.basename(file);
+  try {
+    git('add', '--', name);
+    if (git('diff', '--cached', '--name-only', '--', name).trim()) git('commit', '-q', '-m', `chore(metrics): record ${label}`, '--', name);
+    git('pull', '-q', '--rebase');
+    git('push', '-q');
+    console.error(`--push: ${name} is on the remote`);
+  } catch (e) {
+    console.error(`--push failed, commit kept locally: ${String(e.stderr || e.message).trim().split('\n').pop()}`);
+  }
 }
 
 function record(rows, file) {
   const keep = new Map();
-  if (fs.existsSync(file)) {
-    const [head, ...lines] = fs.readFileSync(file, 'utf8').trim().split('\n');
-    const cols = head.split('\t');
-    for (const l of lines) {
-      const v = l.split('\t');
-      const r = Object.fromEntries(cols.map((c, i) => [c, v[i]]));
-      keep.set(`${r.week}\t${r.os}`, r);
-    }
-  }
+  for (const r of readTsv(file)) keep.set(`${r.week}\t${r.os}`, r);
   let changed = 0;
   for (const r of rows) {
     const k = `${r.week}\t${r.os}`;
@@ -218,10 +278,11 @@ function record(rows, file) {
   return changed;
 }
 
-function printTable(rows) {
+function printTable(rows, withOs = false) {
   const show = ['week', 'sessions', 'prompts', 'cost_usd', 'usd_per_prompt', 'requests_per_prompt', 'cache_hit_pct',
     'subagent_cost_pct', 'tool_error_pct', 'skill_loads', 'gates_total', 'gatr_pct', 'kgr_calls', 'grep_calls', 'compactions'];
   const head = ['week', 'sess', 'prompts', '$', '$/prompt', 'req/prompt', 'cache%', 'subagent$%', 'toolerr%', 'skills', 'gates', 'gatr%', 'kgr', 'grep', 'compact'];
+  if (withOs) { show.splice(1, 0, 'os'); head.splice(1, 0, 'machines'); }
   const cells = [head, ...rows.map((r) => show.map((c) => String(r[c])))];
   const width = head.map((_, i) => Math.max(...cells.map((row) => row[i].length)));
   for (const row of cells) console.log(row.map((c, i) => (i ? c.padStart(width[i]) : c.padEnd(width[i]))).join('  '));
@@ -229,12 +290,25 @@ function printTable(rows) {
 
 const args = parseArgs(process.argv.slice(2));
 const osName = { win32: 'windows', darwin: 'mac', linux: 'linux' }[process.platform] || process.platform;
-const { weeks, unknownModels } = collect(listJsonl(args.root), args.since);
-const rows = toRows(weeks, osName);
-if (args.json) console.log(JSON.stringify(rows, null, 2));
-else printTable(rows);
-if (unknownModels.size) console.error(`no price for: ${[...unknownModels].join(', ')} (their requests are counted, not costed)`);
-if (args.record) {
-  const file = args.out || path.join(os.homedir(), '.claude', 'metrics', `sessions-${osName}.tsv`);
-  console.error(`recorded ${record(rows, file)} week row(s) in ${file}`);
+const dir = recordDir(args.out);
+const showCombined = () => {
+  const all = combine(dir);
+  if (args.json) console.log(JSON.stringify(all, null, 2));
+  else if (all.length) printTable(all, true);
+  else console.error(`nothing recorded yet in ${dir}`);
+};
+if (args.combined && !args.record) {
+  showCombined();
+} else {
+  const { weeks, unknownModels } = collect(listJsonl(args.root), args.since);
+  const rows = toRows(weeks, osName);
+  if (args.json) console.log(JSON.stringify(rows, null, 2));
+  else printTable(rows);
+  if (unknownModels.size) console.error(`no price for: ${[...unknownModels].join(', ')} (their requests are counted, not costed)`);
+  if (args.record) {
+    const file = args.out || path.join(dir, `sessions-${osName}.tsv`);
+    console.error(`recorded ${record(rows, file)} week row(s) in ${file}`);
+    if (args.push) push(path.dirname(path.resolve(file)), file, `${osName} through ${rows.at(-1)?.week ?? 'no weeks'}`);
+  }
+  if (args.combined) { console.log('\nevery machine:'); showCombined(); }
 }

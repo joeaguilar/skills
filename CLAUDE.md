@@ -12,7 +12,7 @@ Author **Claude** primitives in `claude/<primitive>/`; don't hand-edit installed
 skills/                         (repo root)
 ├── install.sh                  unified installer: ./install.sh <claude|codex|both> [--apply]
 ├── validate-skills.sh          cross-tree parity + drift check
-├── claude/skills/<skill>/SKILL.md     the Claude skill sources (10 skills)
+├── claude/skills/<skill>/SKILL.md     the Claude skill sources (28 skills after the 2026-10-24 prune)
 ├── claude/agents/  claude/commands/   optional Claude primitive roots
 │                                      (commands/ also holds imported legacy commands)
 ├── claude/workflows/                  optional Claude-only primitive root: deterministic
@@ -49,7 +49,7 @@ Global installs link roots such as `~/.claude/skills`, `~/.claude/agents`, `~/.c
 
 **Sprint suite — coached, human-in-the-loop (verbose by design):** `sprint` (plan), `blitz` (parallel-wave execution), `sprint-review` (review/triage), `roadmap` (`docs/ROADMAP.md`), `story-style` (`STORY_STYLE.md`).
 **Autonomous / multi-agent execution:** `proof-campaign` (roadmap-bounded, evidence-first campaign), `rolling-campaign` (chains proof campaigns back-to-back across fresh contexts via an external headless driver), `crossfire-blitz` (blitz waves routed across Claude and GPT models, cross-reviewed), `gauntlet` and `crucible` (rubric-gated build/critique loops: pixels, or tests and metrics). `feature-build` (idea → spec → build in one sitting) and `forge-change` (one change from scout to a hardened commit) are the single-change tracks. The 2026-10-24 retro archived the other modes — `overdrive`, `mission`, `scrum`, `dual-blitz`, `ninja-meiyaku`, `run-the-rivers-dry`, the `fastlane` router and `groom` (`claude/archived/README.md`).
-**Standalone:** `itr` (file issues), `kgr` (codebase graph), `alignment` (stress-test a plan), `shell-prompt` (zsh prompt).
+**Standalone:** the CLI skills `itr` (file issues), `itr-snapshot` (track an `itr` export in git), `kgr` (codebase graph), `gatr` (verification gates), `ccq` (session history) and `gitea` (the self-hosted Gitea server); `codex-seat` (a GPT model as a subagent); `alignment` (stress-test a plan), `spec-writer` (idea → spec); `rust-best-practices` and `typescript-best-practices` (language standards); `auto-versioning` (CI release tags), `impeccable` (UI design, sourced externally), `unity-bridge` (drive a live Unity Editor), `shell-prompt` (zsh prompt).
 **The Dojo — one skill, `dojo` (autonomous, ninja-voiced, caveman register):** fifteen "blades", each slicing one task across subagents a different way, drawn with `/dojo <blade> <task>`. `claude/skills/dojo/SKILL.md` is the rack (catalog + composition), `FORGE.md` beside it is the authoring contract and the Meiyaku canon (`validate-skills.sh` §7), and each blade is `blades/<blade>.md`, loaded only when drawn. Composition lives in the rack, never in a blade file. Until 2026-10-24 each blade was its own skill (`claude/archived/skills/`, with the old `claude/archived/DOJO.md`).
 
 ## The workflows

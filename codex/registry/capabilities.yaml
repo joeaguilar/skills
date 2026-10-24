@@ -23,6 +23,9 @@ capabilities:
   rust-engineering:
     label: "Rust Engineering"
     description: "Apply idiomatic Rust ownership, API, async, testing, and tooling standards."
+  typescript-engineering:
+    label: "TypeScript Engineering"
+    description: "Apply idiomatic TypeScript and JavaScript typing, error, async, module, and tooling standards."
   minimal-engineering:
     label: "Minimal Engineering"
     description: "Prefer the shortest safe implementation, standard tools, and YAGNI decisions."

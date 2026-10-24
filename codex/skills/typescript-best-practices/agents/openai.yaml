@@ -1,0 +1,4 @@
+interface:
+  display_name: "TypeScript Best Practices"
+  short_description: "Apply idiomatic TypeScript and JavaScript standards"
+  default_prompt: "Use $typescript-best-practices to review this TypeScript or JavaScript project for tsconfig strictness, type safety, error handling, async, module hygiene, and the verify gate."

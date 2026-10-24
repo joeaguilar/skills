@@ -66,6 +66,7 @@
     "git-hosting": { "label": "Git Hosting" },
     "prompt-library": { "label": "Prompt Library" },
     "rust-engineering": { "label": "Rust Engineering" },
+    "typescript-engineering": { "label": "TypeScript Engineering" },
     "minimal-engineering": { "label": "Minimal Engineering" },
     "code-reconnaissance": { "label": "Code Reconnaissance" },
     "adversarial-verification": { "label": "Adversarial Verification" },
@@ -420,6 +421,20 @@
       "recommends": ["code-graph"],
       "unlockedBy": [],
       "position": { "x": 38, "y": 50 }
+    },
+    "typescript-best-practices": {
+      "path": "skills/typescript-best-practices",
+      "group": "foundations",
+      "tier": 0,
+      "icon": "TS",
+      "theme": "forge",
+      "title": "TypeScript Best Practices",
+      "summary": "Apply idiomatic TypeScript and JavaScript typing, error, async, module, and tooling standards.",
+      "provides": ["typescript-engineering"],
+      "requires": [],
+      "recommends": ["code-graph"],
+      "unlockedBy": [],
+      "position": { "x": 25, "y": 58 }
     },
     "ponytail": {
       "path": "skills/ponytail",

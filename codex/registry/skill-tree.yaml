@@ -314,6 +314,19 @@ skills:
     recommends: ["code-graph"]
     unlocked_by: []
     position: { x: 38, y: 50 }
+  typescript-best-practices:
+    path: "skills/typescript-best-practices"
+    group: "foundations"
+    tier: 0
+    icon: "TS"
+    theme: "forge"
+    title: "TypeScript Best Practices"
+    summary: "Apply idiomatic TypeScript and JavaScript typing, error, async, module, and tooling standards."
+    provides: ["typescript-engineering"]
+    requires: []
+    recommends: ["code-graph"]
+    unlocked_by: []
+    position: { x: 25, y: 58 }
   ponytail:
     path: "skills/ponytail"
     group: "protocols"

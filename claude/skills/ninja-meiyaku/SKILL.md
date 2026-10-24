@@ -74,7 +74,7 @@ One checkout, disjoint file ownership per wave, ≤5 strikes/wave, blocked after
 
 **Strikers.** Claude: Agent `{model, run_in_background: true}`, shared checkout. Codex (any GPT-bound role): a `sonnet` wrapper agent, description `<model>:task-{id}` (the resolved model), launched per the `codex-seat` skill — one Bash call (timeout 600000): `codex-seat.sh run -d <seat> -m <model> -e <effort> -s workspace-write -C <checkout>`, brief in `<seat>/brief.md`. Every prompt opens with the oath (above, verbatim), then: owned files ONLY, no tree-wide formatters, run the full verify gate to zero, no commit, end PASS/FAIL + diff summary + gate tail.
 
-**Cross-review before close — always a different blade.** Codex work → a **Claude blade** reviews that target's diff (`builder`; `planner` under `--fable`); Opus judges no work but taste — never its own. Claude work → the adversarial companion:
+**Cross-review before close — always the other family.** Whoever struck, the other family judges; never same-family review. Codex work → a **Claude blade** reviews that target's diff (`builder`; `planner` under `--fable`); Opus judges no work but taste — never its own. Claude work → the adversarial companion:
 ```sh
 COMPANION=$(ls -d ~/.claude/plugins/cache/openai-codex/codex/*/scripts/codex-companion.mjs | sort -V | tail -1)
 node "$COMPANION" adversarial-review --wait --base <ref> --scope branch "<focus>"
@@ -82,7 +82,7 @@ node "$COMPANION" adversarial-review --wait --base <ref> --scope branch "<focus>
 An errored review lane is not a clean pass — retry once, else close on the striker's gate, marked degraded. P0/P1 finding → redo with the next-smarter blade (`floor` → `generalist` → `frontier` → `ceiling` only under `--fable`; a `builder` fall enters at `generalist`), findings spliced in, re-reviewed. **Two falls → quarantine**; surface it, move on. Stop waves when: targets done · two zero-close waves · `--waves` reached.
 
 ## Phase 2 — the last look
-One dual pass over the **whole** diff: the adversarial companion (scope branch, the GPT eye on Claude strikes) + one `builder` reviewer over the GPT-struck targets (`planner` under `--fable`), so each family's work meets the other → dedup → P0–P3 survivors → ship/hold.
+One last pass over the **whole** diff, families switched — no blade judges its own family's strikes. Claude-struck targets → the adversarial companion (scope branch, focus = those files) + one independent `frontier` reviewer. GPT-struck targets → one `builder` reviewer (`planner` under `--fable`). → dedup → P0–P3 survivors → ship/hold.
 
 ## Phase 3 — the whisper (return)
 Fill Outcomes in the scroll, close the epic, update `sprint/CURRENT`, commit the kept diff — the blades never commit; the orchestrator does, unless the user forbade it. Speak once:

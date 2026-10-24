@@ -1,6 +1,6 @@
 ---
 name: codex-seat
-description: "Give a GPT/Codex model a seat as a subagent: pick the model by role from ~/.claude/MODELS.md, write a self-contained brief, launch it through the bundled `codex-seat.sh` (model and effort always pinned, stdin closed, done-file sentinel, detached long runs), wrap it in a thin `sonnet` agent labelled with the real model, and harvest the final message. Trigger: `/codex-seat`, \"spin up a GPT agent\", \"give gpt-6-astra a seat\", \"have Codex review/build this\", \"run this on terra\", \"get a cross-model review from GPT\", or any time routing lands a seat on a Codex model. NOT for clearing a backlog across models in waves (use /crossfire-blitz), real-UI runtime checks with screenshots (use /codex-computer-use), reviewing a git diff with the plugin's built-in contract (use /codex:adversarial-review), or Claude-model subagents (use the Agent tool's `model` param)."
+description: "Give a GPT/Codex model a seat as a subagent: pick the model by role from ~/.claude/MODELS.md, write a self-contained brief, launch it through the bundled `codex-seat.sh` (model and effort always pinned, stdin closed, done-file sentinel, detached long runs), wrap it in a thin `sonnet` agent labelled with the real model, and harvest the final message. Trigger: `/codex-seat`, \"spin up a GPT agent\", \"give gpt-6-astra a seat\", \"have Codex review/build this\", \"run this on terra\", \"get a cross-model review from GPT\", or any time routing lands a seat on a Codex model. NOT for clearing a backlog across models in waves (use /crossfire-blitz), real-UI runtime checks with screenshots, reviewing a git diff with the plugin's built-in contract (use /codex:adversarial-review), or Claude-model subagents (use the Agent tool's `model` param)."
 ---
 
 # Codex Seat
@@ -120,7 +120,7 @@ Then **verify before relaying**. A Codex seat's code-level claims get a grep or 
 ## Don't
 
 - Don't run `codex exec` by hand from a seat. Use the script, which carries the stdin, sentinel and pinning fixes.
-- Don't use `danger-full-access`. Auto mode denies it, and real-UI work belongs to `/codex-computer-use`.
+- Don't use `danger-full-access`. Auto mode denies it, and a seat is not the place for real-UI work.
 - Don't put `ultra`/`max` on a seat inside a parallel wave or fan-out.
 - Don't let a wrapper summarize, fix, or second-guess the seat's answer. That's the caller's job, after verifying.
 - Don't run two seats in one seat dir. The script refuses while one is in flight.

@@ -7,7 +7,7 @@ model-table drift check (§6) flags every skill whose inline table no longer mat
 the Scores table below, so a half-finished update can't ship silently.
 
 > Data lives here; **voice lives in the skills.** This file is data-only on purpose —
-> the verbose (`crossfire-blitz`) and caveman-register (`ninja-meiyaku`) skills keep their
+> the verbose (`crossfire-blitz`) and caveman-register (`dojo`) skills keep their
 > own prose, we don't generate it. The check only compares the *numbers*.
 
 ## Scores
@@ -85,7 +85,7 @@ haiku-4.5 and sonnet-5 (predecessors, named in history notes and retag recipes).
 Skills route by **role**, not by model name — so a model swap changes only the lines
 below, not the ~40 prose sites that reference a role. ("Route bulk work to **the
 generalist**" never changes when one Sol model replaces another.) The `route:<role>`
-tags `/groom` writes (COMPLEXITY.md) name roles too, so a swap here retags nothing.
+tags written while grooming (COMPLEXITY.md) name roles too, so a swap here retags nothing.
 **Resolve a role at spawn time**: read its Model and Effort from this table, pass the
 model (and, for a GPT model, `-e <effort>` to `codex-seat.sh`), and label the seat with
 the resolved model name so the roster shows what really ran.
@@ -102,7 +102,7 @@ the resolved model name so the roster shows what really ran.
 | taste-hero | fable-5.1 | default | hero / flagship taste surface — gated (`fable=on` / `--fable`) |
 | planner | fable-5.1 | default | planning / spec / decomposition seats. Fable's standing job is plan + review, not writing code, so spend it here and on the reviewer seat |
 | ceiling | fable-5.1 | default | top rung of the non-taste escalation ladder — gated (`fable=on` / `--fable`) |
-| computer-use | gpt-5.6-terra | high | Codex real-UI runtime verification (the `codex-computer-use` skill); `frontier` may take the seat |
+| computer-use | gpt-5.6-terra | high | Codex real-UI runtime verification; `frontier` may take the seat |
 | reviewer | *cross-model* | per seat | any review / critique / judge seat — **never the model that wrote the work**. GPT-written → `builder` for cheap passes, `taste` when quality matters, `planner` when Fable is on. Claude-written → `ambiguous` for a standard pass, `frontier` when quality matters. Prefer the other family: the reviewer's model should be the other provider from the writer's. When that is not practical, a different model is the minimum — never the writer's own. Resolve the seat, then confirm it; if a binding swap breaks that, take the next seat listed. Opus may review GPT or Sonnet work, never its own |
 | codex-default | gpt-6.1-sol | medium | default `-m` for `codex exec` (pass it explicitly — config.toml differs) |
 | never | haiku-4.5 | — | retired generation; haiku-5.5 replaced it |

@@ -65,7 +65,7 @@ Every model score below is **higher = better**; `cost` is what the user pays, so
 5. **Ambiguous / judgment-heavy but not user-facing** — needs real reasoning, cross-cutting, spec not airtight → **`ambiguous`**. Not the `taste` binding: Opus's intelligence 8 sits below the Sol rung, and Opus is not effective at judging its own work. `taste` stays the taste executor only.
 6. **Must be right the first time / wide blast radius** → **`frontier`**.
 
-**Pre-routed tasks.** A task `/groom` tagged `route:<role>` takes that role; still apply the taste bar and the floor guard. A legacy `route:<model>` tag (groomed before 2026-10-24) pins that model; one that is unreachable (gpt-5.5) routes by the rubric instead.
+**Pre-routed tasks.** A task tagged `route:<role>` while grooming (COMPLEXITY.md) takes that role; still apply the taste bar and the floor guard. A legacy `route:<model>` tag (groomed before 2026-10-24) pins that model; one that is unreachable (gpt-5.5) routes by the rubric instead.
 
 **The Fable gate (cost control).** The gated roles (`taste-hero`, `ceiling`) are the strongest seats and the most expensive, so they are **off by default** and never spent unattended:
 

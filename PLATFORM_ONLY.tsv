@@ -23,9 +23,6 @@
 # will start enforcing parity for it normally.
 
 # --- Codex-only skills ---
-# (dual-blitz, fastlane, run-the-rivers-dry graduated to parity — Claude
-#  peers now live in claude/skills/; Codex refreshes codex/PARITY.tsv on its side to clear the
-#  staleness warning.)
 codex	skills	retro-game-assets
 codex	skills	panthexia-tiled-materials
 codex	skills	panthexia-sprites
@@ -45,6 +42,14 @@ codex	skills	code-roast
 codex	skills	react-review
 codex	skills	security-audit
 codex	skills	spicy-code-roast
+# Claude kept five execution modes on 2026-10-24 (blitz, crossfire-blitz, proof-campaign and
+# rolling-campaign, gauntlet and crucible, plus feature-build and forge-change) and archived the
+# rest. These Codex ports stay and are Codex-only.
+codex	skills	overdrive
+codex	skills	mission
+codex	skills	dual-blitz
+codex	skills	fastlane
+codex	skills	run-the-rivers-dry
 
 # --- Codex-only agents (drift: Claude converted these imports to skills, then archived those
 #     skills on 2026-10-24; Codex keeps the agent form) ---
@@ -68,30 +73,19 @@ codex	agents	user-guide-writer.md
 
 # --- Claude-only skills (intentional unless a Codex feature gap appears) ---
 claude	skills	ccq
-# groom routes itr issues across Claude models + the Codex generalists (sonnet/opus/fable vs
-# gpt-5.5/5.6) — the cross-model routing vocabulary is Claude-side (MODELS.md/COMPLEXITY.md);
-# graduate when a Codex port of the rubric lands.
-claude	skills	groom
 claude	skills	proof-campaign
 # rolling-campaign chains proof campaigns across FRESH contexts via an external
 # headless driver (scripts/chain.sh) — same Claude-only lineage as proof-campaign.
 claude	skills	rolling-campaign
-# crossfire-review orchestrates the Codex-plugin reviewer + an Opus subagent from inside
-# Claude Code — the harness itself is the dependency, so no Codex port is possible.
-claude	skills	crossfire-review
-# codex-computer-use shells out to the Codex CLI (`codex exec`, gpt-5.5) from inside Claude to
-# run computer-use verification — a Codex peer would mean Codex invoking itself, so Claude-only.
-claude	skills	codex-computer-use
+# (groom, crossfire-review, codex-computer-use, ninja-meiyaku and scrum, all Claude-only, were
+#  archived on 2026-10-24 to claude/archived/skills/.)
 # codex-seat launches a GPT model as a Claude subagent (sonnet wrapper + `codex exec`) — the
 # Claude-side harness is the dependency; on Codex the model would just be launching itself.
 claude	skills	codex-seat
 # crossfire-blitz routes backlog tasks across Claude models + gpt-5.5 (Codex plugin: codex-rescue
 # subagent + adversarial-review runtime) and cross-reviews with a different model — the Codex-plugin
-# orchestration from inside Claude Code is the dependency, same Claude-only lineage as crossfire-review.
+# orchestration from inside Claude Code is the dependency, so no Codex port is possible.
 claude	skills	crossfire-blitz
-# ninja-meiyaku runs the whole plan→blitz→review gamut in stealth, routing across Claude models +
-# gpt-5.5 via the Codex plugin — same harness dependency, same Claude-only lineage as crossfire-*.
-claude	skills	ninja-meiyaku
 # The Dojo — orchestration-primitive family (see claude/DOJO.md = the rack + forge).
 # Each is a self-contained "blade" that slices a problem a different way. Claude forged
 # these first; graduate each to parity as its codex/skills/<blade> port lands.
@@ -124,7 +118,6 @@ claude	skills	shuriken-storm
 
 # --- Claude-only commands (intentional unless a Codex feature gap appears) ---
 # (tdd_process, the companion to the tdd-coach skill, was archived with it on 2026-10-24.)
-claude	skills	scrum
 # (old-mission-skill-ab, the earlier mission skill kept for an A/B comparison, and typo, the
 #  micro-skill for flagging user-prompt typos, archived 2026-10-03 to claude/archived/skills/.
 #  typo's rule is now one always-on line in claude/global-CLAUDE.md.)

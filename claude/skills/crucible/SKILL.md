@@ -60,7 +60,7 @@ because <the check that failed>."** Then name the workflow that does fit and why
 | The work is… | Use |
 |---|---|
 | a whole roadmap, many rows, closed only on proof | `/proof-campaign`, or `/rolling-campaign` when it will not fit one context |
-| greenfield, or "take this from brief to working": the smallest runnable end-to-end path first | `/mission` |
+| greenfield, or "take this from brief to working" | `/spec-writer`, then `/feature-build` (one sitting) or `/sprint` (a backlog) |
 | a backlog of independent tasks that can run side by side | `/blitz` |
 | one feature in one sitting | `/feature-build` |
 | a visual subsystem where the measurement is the pixels | `/gauntlet` |

@@ -4,7 +4,7 @@ Companion to [`MODELS.md`](MODELS.md). MODELS.md owns the scores and role→mode
 bindings; **this file owns the grooming-time question: "which role should take this
 ticket?"** Apply it while grooming an `itr` backlog (during `/sprint`,
 `/roadmap`, or ad-hoc triage), record the verdict as tags, and the execution
-skills (`/blitz`, `/crossfire-blitz`, `/ninja-meiyaku`) inherit a pre-routed backlog.
+skills (`/blitz`, `/crossfire-blitz`) inherit a pre-routed backlog.
 
 **Routes rewritten 2026-10-23** with MODELS.md: the Sol class is the GPT baseline,
 GPT-5.5/5.6 and haiku-5.5 share the floor for one-off small decisions, sonnet-5.5
@@ -184,10 +184,10 @@ effort when it spawns the seat.
 
 ## Operational copy
 
-`claude/skills/groom/SKILL.md` (the `/groom` skill) inlines this rubric —
-installed skills run inside target projects and can't reference this repo by
-path. **When refreshing benchmarks or changing tiers/overrides here, update the
-skill's inlined tables in the same change.**
+The `/groom` skill inlined this rubric until it was archived on 2026-10-24
+(`claude/archived/skills/groom/`, kept unedited). No installed skill carries a
+copy now: the config primitive installs this file as `~/.claude/COMPLEXITY.md`,
+which is where grooming and the global routing rule read it.
 
 ## Benchmark snapshots (refresh me)
 

@@ -30,6 +30,10 @@ description to route by).
 | `skills/cpp-review`, `react-review`, `security-audit`, `code-audit`, `changelog`, `code-roast`, `spicy-code-roast` | 2026-10-24 | The built-in `/code-review`, `/security-review` and `/simplify` | all but `cpp-review` stay, Codex-only |
 | `skills/queue-up` | 2026-10-24 | The `queue` mod and the built-in todo list | none |
 | `agents/accessibility-compliance-auditor`, `api-docs-generator-role`, `cloud-cost-optimizer`, `e2e-test-architect`, `performance-test-engineer`, `user-guide-writer` | 2026-10-24 | Nothing: installed nowhere and never run; every subagent launch used a built-in type | stay, Codex-only |
+| `skills/overdrive`, `mission`, `scrum`, `dual-blitz`, `ninja-meiyaku`, `run-the-rivers-dry`, `fastlane` | 2026-10-24 | The kept execution modes: `blitz` and `crossfire-blitz` (waves), `proof-campaign` and `rolling-campaign` (autonomous), `gauntlet` and `crucible` (rubric loops), `feature-build` and `forge-change` (one change). With fewer modes, the `fastlane` router has nothing to pick between | `overdrive`, `mission`, `dual-blitz`, `fastlane`, `run-the-rivers-dry` stay, Codex-only |
+| `skills/groom` | 2026-10-24 | Grooming reads `~/.claude/COMPLEXITY.md` directly (the rubric `groom` inlined) | none |
+| `skills/crossfire-review`, `codex-computer-use` | 2026-10-24 | `codex-seat` for a GPT reviewer seat; the built-in `/code-review` | none |
+| `workflows/sprint-blitz-review.js` | 2026-10-24 | Nothing: never ran. `blitz` covers the same wave loop | none |
 
 Two more
 skills gave only a part of themselves to a mod and stay installed:

@@ -103,9 +103,10 @@ function matchesGlobs(globs, path) {
 
 // ---------------------------------------------------------------- git
 
-function git(args, { allowFail = false } = {}) {
+function git(args, { allowFail = false, cwd } = {}) {
   try {
     return execFileSync('git', args, {
+      cwd,
       encoding: 'utf8',
       maxBuffer: 256 * 1024 * 1024,
       windowsHide: true,
@@ -193,6 +194,22 @@ function collectChangedFiles(base) {
       }
     }
     prev = line;
+  }
+  // `git diff` never shows an untracked file, and the loop measures a link before it is
+  // committed: without this, every brand-new source file is "0 changed lines" and the
+  // coverage clause passes vacuously. An untracked, non-ignored file is added in full.
+  const top = git(['rev-parse', '--show-toplevel']).trim();
+  const untracked = git(['ls-files', '--others', '--exclude-standard', '--full-name', '-z'], { cwd: top });
+  for (const rel of untracked.split('\0')) {
+    if (rel === '') continue;
+    const key = cmpNorm(rel);
+    if (files.has(key)) continue;
+    let text;
+    try { text = readFileSync(`${top}/${rel}`, 'utf8'); } catch { continue; }
+    const n = text === '' ? 0 : text.split('\n').length - (text.endsWith('\n') ? 1 : 0);
+    const added = new Set();
+    for (let l = 1; l <= n; l++) added.add(l);
+    files.set(key, { path: posixPath(rel), cmp: key, added });
   }
   return [...files.values()].filter((f) => f.added.size > 0);
 }
@@ -602,8 +619,10 @@ USAGE
                  [--globs <glob,glob>] [--min 0.7] [--json]
 
 BEHAVIOR
-  Changed lines come from \`git diff --unified=0 <base>\` hunk headers; deleted
-  lines count for nothing. Default base: HEAD when the working tree or index
+  Changed lines come from \`git diff --unified=0 <base>\` hunk headers, plus
+  every line of each untracked, non-ignored file (git diff never shows those,
+  and a link is measured before it is committed); deleted lines count for
+  nothing. Default base: HEAD when the working tree or index
   has uncommitted changes, else HEAD~1; in a single-commit repo with a clean
   tree, git's empty tree (so the initial commit counts as changed).
   Diff lines that are NOT executable lines in the coverage report (blank

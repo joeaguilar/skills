@@ -3,7 +3,7 @@
   "files": {
     "tools/gate.mjs": "21e7f601364d5a4c91834bfa3d155e48b34e2bb7be559f85bb726346efd03e2d",
     "tools/evidence.mjs": "f9a12b672f139391582db6139d7a509f4eb7e10c3e510b4f2c29c262e3ff575c",
-    "tools/cover.mjs": "f0b9b6cd27c75bb7af96fcfd02cd379c7f4dd117768cfb9e5c24629ae9655299",
+    "tools/cover.mjs": "022d489e05060212183ca723fc2b93112f07c9d85c56e66e6e27574be47a2f1a",
     "tools/testreport.mjs": "a6217d9f77d9c8c142e8ff0b8de5d4824dd163400ab4aa94692ac63f63f9b655",
     "tools/iteration.js": "175103242e9c8c2d7031e9f818f3683536af316192dfa57a20481951bd540828",
     "tools/SCHEMAS.md": "230c1ddc67193053ffc3fa6a777f987dfc7cb4a17a4dcb10016bd74ecdbba4f4",

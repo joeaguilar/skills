@@ -1,22 +1,23 @@
 ---
 name: groom
-description: Complexity-score an itr backlog and route each issue to the cheapest capable model class (haiku-5.5 / gpt-6.1-sol / sonnet-5.5 / gpt-6-astra / opus-5.5 / fable-5.1) by tagging it `complexity:CN` + `route:<model>`. Trigger when the user types /groom, or asks to "groom the backlog by complexity", "complexity-score the backlog", "which tickets can go to Sonnet/GPT/Opus", "route the backlog to models", "assign models to tickets", or "triage issues by difficulty". Do NOT trigger for filing new issues (use the itr skill), sprint planning/grooming a spec into stories (use /sprint), executing the routed backlog (use /blitz or /crossfire-blitz), or reprioritizing/closing issues.
+description: Complexity-score an itr backlog and route each issue to the cheapest capable MODELS.md role (floor / generalist / builder / bulk / ambiguous / frontier / taste) by tagging it `complexity:CN` + `route:<role>`. Trigger when the user types /groom, or asks to "groom the backlog by complexity", "complexity-score the backlog", "which tickets can go to Sonnet/GPT/Opus", "route the backlog to models", "assign models to tickets", or "triage issues by difficulty". Do NOT trigger for filing new issues (use the itr skill), sprint planning/grooming a spec into stories (use /sprint), executing the routed backlog (use /blitz or /crossfire-blitz), or reprioritizing/closing issues.
 ---
 
 # groom — complexity-score and model-route an itr backlog
 
 Read the open `itr` backlog, score every candidate issue on five complexity
 signals, assign a tier (C0–C4), and tag it with `complexity:CN` +
-`route:<model>` so execution can pull pre-routed lanes. Tags are the only
+`route:<role>` so execution can pull pre-routed lanes. Tags are the only
 write; this skill never executes work, files stories, or changes priority.
 
 The rubric is benchmark-grounded (FrontierSWE, SWE-Marathon, ARC-AGI-2, Vals
 Vibe Code Bench — snapshot 2026-07-11; Terminal-Bench 4.0, SWE-Bench Pro and the
 Artificial Analysis indices — snapshot 2026-10-23): frontier boards anchor the
 difficulty ceiling, ARC anchors novel-reasoning-per-dollar, Vibe Code anchors
-spec-complete building and taste. Routes follow the 2026-10-23 rules: the Sol
-class is the GPT baseline, haiku-5.5 and the GPT-5.6 models share the floor for
-one-off small decisions, and gpt-5.5 is unreachable.
+spec-complete building and taste. Routes name **roles** from `~/.claude/MODELS.md`
+(floor, generalist, bulk, builder, ambiguous, frontier, taste). The executor resolves
+each role to a model and effort when it spawns the seat, so a model swap there needs
+no retag here.
 
 ## Invocation
 
@@ -33,7 +34,7 @@ one-off small decisions, and gpt-5.5 is unreachable.
   calls resolve by the bump-up rule, not by asking per issue.
 - **User** — Product Owner: reads the grooming table, overrules any row by
   re-running `/groom <id>` with direction or editing tags directly.
-- **Artifacts** — tags on existing issues (`complexity:CN`, `route:<model>`);
+- **Artifacts** — tags on existing issues (`complexity:CN`, `route:<role>`);
   the grooming table in chat. Nothing else is created or mutated.
 
 ## The rubric
@@ -56,27 +57,28 @@ Sum (0–10) → tier → route:
 
 | Tier | Score | Route | Tags |
 |---|---|---|---|
-| **C0 trivial** | 0–1 | haiku-5.5 (gpt-6-luna, or gpt-5.6-terra/luna, when the seat should be non-Claude) | `complexity:C0`, `route:haiku-5.5` |
-| **C1 routine** | 2–3 | gpt-6.1-sol at `medium` (the Sol-class baseline) | `complexity:C1`, `route:gpt-6.1-sol` |
-| **C2 standard** | 4–5 | sonnet-5.5 if spec-complete build work; gpt-6.1-sol if mechanical-heavy | `complexity:C2`, `route:sonnet-5.5` |
-| **C3 complex** | 6–7 | gpt-6.1-sol at `high`/`xhigh` (the `ambiguous` role); gpt-6-astra when it must be right the first time or the blast radius is wide | `complexity:C3`, `route:gpt-6.1-sol` |
-| **C4 frontier** | 8–10 | recommend decomposition first (fable-5.1 plans the slicing, gated); the irreducible core goes to gpt-6-astra, with fable-5.1 reviewing | `complexity:C4`, `route:gpt-6-astra` |
+| **C0 trivial** | 0–1 | `floor` (a floor peer when the seat should be non-Claude) | `complexity:C0`, `route:floor` |
+| **C1 routine** | 2–3 | `generalist` | `complexity:C1`, `route:generalist` |
+| **C2 standard** | 4–5 | `builder` if spec-complete build work; `bulk` if mechanical-heavy | `complexity:C2`, `route:builder` or `route:bulk` |
+| **C3 complex** | 6–7 | `ambiguous`; `frontier` when it must be right the first time or the blast radius is wide | `complexity:C3`, `route:ambiguous` or `route:frontier` |
+| **C4 frontier** | 8–10 | recommend decomposition first (the `planner` slices it, gated); the irreducible core goes to `frontier`, with the `planner` reviewing | `complexity:C4`, `route:frontier` |
 
 **Hard overrides (apply after scoring, absolute):**
 
-1. Taste surface = 2 → opus-5.5 minimum, whatever the total. Only opus-5.5,
-   gpt-6-astra and fable-5.1 clear the taste bar; the Sol/terra/luna models,
-   haiku-5.5 and sonnet-5.5 do not.
-2. Floor guard: haiku-5.5, gpt-6-luna, gpt-5.6-terra and gpt-5.6-luna take only short,
-   one-off, gated, Novelty-0, non-risky work. Anything else starts at gpt-6.1-sol.
+1. Taste surface = 2 → `route:taste` minimum, whatever the total. Only the
+   `taste`, `taste-hero` and `frontier` bindings clear the taste bar (Taste > 7).
+2. Floor guard: `floor` takes only short, one-off, gated, Novelty-0, non-risky
+   work. Anything else starts at `generalist`.
 3. Every route keeps a hard verify gate; an ungated long-horizon run needs a gate
    added before it routes anywhere.
-4. Sonnet-5.5 requires a complete spec with written acceptance criteria; if the
-   spec is incomplete, the issue is Ambiguity ≥ 1 and C2 routes to gpt-6.1-sol or
+4. `builder` requires a complete spec with written acceptance criteria; if the
+   spec is incomplete, the issue is Ambiguity ≥ 1 and C2 routes to `generalist` or
    the score lands C3.
-5. Never route to gpt-5.5 (unreachable on this Codex login). With `--re`, retag
-   any `route:gpt-5.5` issue to `route:gpt-6.1-sol` and any `route:sonnet-5` to
-   `route:sonnet-5.5`.
+5. Tags name roles, never models. With `--re`, a legacy model tag (groomed before
+   2026-10-24) is replaced like any other: `route:haiku-5.5` → `route:floor`;
+   `route:sonnet-5.5` / `route:sonnet-5` → `route:builder`; `route:gpt-6.1-sol` /
+   `route:gpt-5.6-sol` / `route:gpt-5.5` → `route:generalist` (`route:ambiguous` on a
+   C3); `route:gpt-6-astra` → `route:frontier`; `route:opus-5.5` → `route:taste`.
 
 ## Phases
 
@@ -121,10 +123,10 @@ cheap run costs more than the routing delta. Note every bump and why.
 `Announce: Phase 3 — Report & tag.`
 
 1. Print one grooming table: `ID | Title | H N A B T | Mod | Tier | Route | Note`.
-   Notes carry bump reasons, missing gates, and sub-route choices (sonnet vs
-   gpt-6.1-sol, astra vs gpt-6.1-sol).
+   Notes carry bump reasons, missing gates, and sub-route choices (builder vs
+   bulk, frontier vs ambiguous).
 2. Unless `--dry`, apply tags:
-   `itr update <id> --add-tag complexity:CN --add-tag route:<model>`
+   `itr update <id> --add-tag complexity:CN --add-tag route:<role>`
    (with `--re`, remove the old `complexity:`/`route:` tags first via
    `--remove-tag`). Where a missing verify gate forced a bump, also
    `itr note <id> "groom: no verify gate specified — tier bumped; add a gate to down-tier"`.
@@ -136,7 +138,7 @@ cheap run costs more than the routing delta. Note every bump and why.
 
 `Announce: Phase 4 — Summary.`
 
-Report lane counts per route (`itr list --tag route:<model>` per lane), the
+Report lane counts per route (`itr list --tag route:<role>` per lane), the
 C4s awaiting decomposition, and any issues whose spec needs work before they
 can be down-tiered.
 
@@ -148,8 +150,8 @@ can be down-tiered.
 - **Score the ticket as written.** A vague ticket scores high on ambiguity —
   that's a signal to fix the spec, and the fix is what down-tiers the work.
 - **Bump up when torn.** Cheap-model misses waste a full run plus review.
-- **Tags use exact model names** so a future model swap is one bulk retag:
-  `itr bulk --tag route:<old> update --add-tag route:<new> --remove-tag route:<old>`.
+- **Tags name roles, not models**, so a model swap is one line in
+  `~/.claude/MODELS.md` and no retag.
 - **Routing priority: intelligence > taste > cost.** Cost breaks ties only.
 - **Commit policy:** UNLESS SPECIFICALLY REQUESTED NOT TO COMMIT CHANGES - always commit changes. Groom's only writes are tracker tags — when those land in a tracked file, commit them; a `--dry` run lands nothing and has nothing to commit.
 
@@ -158,8 +160,9 @@ can be down-tiered.
 - Don't execute, claim, or close any issue — tagging only.
 - Don't file new issues; C4 decomposition happens only on explicit user yes.
 - Don't change priority, kind, status, or assignment.
-- Don't route user-facing taste work to any GPT model except gpt-6-astra, nor to
-  sonnet-5.5 or haiku-5.5.
-- Don't route anything to gpt-5.5 or past the floor guard to haiku-5.5.
+- Don't route user-facing taste work to a role below the taste bar (`floor`,
+  `generalist`, `bulk`, `builder`, `ambiguous`).
+- Don't write a model name into a `route:` tag, and don't route past the floor
+  guard to `floor`.
 - Don't re-score already-tagged issues without `--re`.
 - Don't ask permission per issue — score, tag, and report once at the end.

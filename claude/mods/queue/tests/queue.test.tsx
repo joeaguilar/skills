@@ -75,10 +75,10 @@ const world = (on: On, files: Record<string, string> = {}) => {
 
     return e.command === 'status' ? { text: 'all good' } : {}
   })
-  on('session.append', (_$, e) => {
+  on('session.append', (_$, e, next) => {
     rows.push(e.message.content.map(block => String(block['text'] ?? '')))
 
-    return { message: e.message, uuid: e.uuid }
+    return next(e)
   })
   on('prompt.submit', (_$, e) => {
     submitted.push({ text: e.text, origin: e.origin })

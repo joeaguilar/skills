@@ -111,7 +111,7 @@ For a *visual* deliverable, use `kgr graph -f mermaid` (paste into mermaid.live)
 - **Symbol queries match by name**, not by fully-qualified path. If two modules define `normalize`, `refs`/`dead` flag `ambiguous` — disambiguate with `--defined-in` or `-l <lang>`.
 - **External deps** (npm, pypi, etc.) don't appear in the tree by default. Use `--show-external` for tree/table, or read `external_deps` from `kgr graph --format json`. `--no-external` hides them.
 - **Exit codes**: `kgr check` exits 1 on cycles or error-severity violations (used in CI) and 2 on operational failure. Don't treat exit 1 as "the tool failed" — read the JSON. **Parallel-run trap**: a `kgr check` that exits 1 can make a harness cancel sibling tool calls in the same batch. Pass `--exit-zero` when batching.
-- **Scans write `.kgr-cache.json`** into the scanned root (no flag to disable it). Don't commit it; add it to `.gitignore` if the repo lacks it.
+- **Scans write `.kgr-cache.json`** into the scanned root (and beside a single-file argument) unless `KGR_NO_CACHE=1` is set. Set it when scanning a repo you shouldn't write into; otherwise don't commit the file — add it to `.gitignore` if the repo lacks it.
 - **Don't pipe `kgr graph` tree-format into a parser**; pick `json` or `table`.
 - **`kgr upgrade`** rebuilds kgr from source. Don't run it without explicit user request — it's not a per-repo operation.
 

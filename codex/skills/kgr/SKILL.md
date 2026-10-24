@@ -95,7 +95,7 @@ Use `kgr graph --format json --no-progress .` for broad structure questions; it 
 - Symbol queries match names, not fully qualified paths. If multiple modules define `normalize`, `refs` and `dead` flag `ambiguous`; use `--defined-in` or `-l <lang>`.
 - External dependencies are hidden from tree output by default. Use `--show-external`, `--no-external`, or `external_deps` from graph JSON as appropriate.
 - `kgr check` exits 1 for detected cycles or error-severity rule violations and 2 for operational failure. Read the JSON; do not treat exit 1 alone as a tool failure. Use `--exit-zero` when batching with other commands.
-- Scans write `.kgr-cache.json` into the scanned root (no flag disables it). Do not commit it; add it to `.gitignore` if the repo lacks it.
+- Scans write `.kgr-cache.json` into the scanned root (and beside a single-file argument) unless `KGR_NO_CACHE=1` is set. Set it when scanning a repo you should not write into; otherwise do not commit the file, and add it to `.gitignore` if the repo lacks it.
 - Do not parse default tree output. Use JSON or table output for automation.
 - Do not run `kgr upgrade` without explicit user request; it rebuilds kgr from source.
 

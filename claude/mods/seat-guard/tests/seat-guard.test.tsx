@@ -342,11 +342,14 @@ test('the band counts seats by model and Codex launches in one dim line, and pin
   await step($, clock, 'wf-2', OPUS)
   await $.tool.call({ tool: 'Bash', command: 'codex exec -m gpt-6-astra "build the lane"', agentId: 'wf-1' } as never)
   await $.tool.call({ tool: 'Bash', command: 'cd lanes && timeout 600 codex exec --model gpt-6-astra "review"' })
+  // The codex-seat launcher runs `codex exec` itself; its wait mode launches nothing.
+  await $.tool.call({ tool: 'Bash', command: 'bash ~/.claude/skills/codex-seat/scripts/codex-seat.sh run -d s1 -m gpt-6.1-sol -e medium -s read-only' })
+  await $.tool.call({ tool: 'Bash', command: 'bash "$SEAT_SH" wait -d s1' })
   // Words in an echo or a search are not a launch.
   await $.tool.call({ tool: 'Bash', command: 'echo codex exec -m gpt-5.5; ccq bash --grep "codex exec"' })
   await $.turn.complete({ answer: 'ok', durationMs: 1, isAborted: false, turnId: 't-wf-2', agentId: 'wf-2', reason: 'answer' })
 
-  expect(await counts($)).toBe('seats fable-5-1 1 · opus-5-5 2 · gpt-6-astra 2 · 2 live')
+  expect(await counts($)).toBe('seats fable-5-1 1 · opus-5-5 2 · gpt-6-astra 2 · gpt-6.1-sol 1 · 2 live')
   // The engine paints a status row as a warning: the counts are never one.
   expect(status.every(text => text === undefined)).toBe(true)
 })

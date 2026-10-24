@@ -20,6 +20,12 @@ const SHELLS = new Set(['Bash', 'PowerShell'])
 /** `codex exec` where a command starts, not inside an echo or a search pattern. */
 const CODEX =
   /(?:^|[;&|(]|\n)\s*(?:\w+=\S+\s+)*(?:(?:nohup|time|timeout\s+\S+)\s+)*["']?(?:[^\s"']*[\\/])?codex(?:\.exe)?["']?\s+exec\b/
+/**
+ * The codex-seat skill's launcher, `codex-seat.sh run|start`, by path or through a
+ * `$…SEAT…` variable. It runs `codex exec` itself, so the command never says so.
+ */
+const SEAT_SCRIPT =
+  /(?:^|[;&|(]|\n)\s*(?:\w+=\S+\s+)*(?:(?:nohup|time|timeout\s+\S+)\s+)*(?:(?:ba)?sh\s+)?["']?(?:\$\{?\w*SEAT\w*\}?|[^\s"']*codex-seat\.sh)["']?\s+(?:run|start)\b/
 const CODEX_MODEL = /(?:\s-m|\s--model)[=\s]+["']?([\w.-]+)/
 /**
  * A Codex-companion run where a command starts: the script by path, or through
@@ -104,7 +110,7 @@ const codexOf = (tool: string, args: Record<string, unknown>) => {
     return ''
   }
 
-  if (CODEX.test(command)) {
+  if (CODEX.test(command) || SEAT_SCRIPT.test(command)) {
     return CODEX_MODEL.exec(command)?.[1] ?? 'codex'
   }
 

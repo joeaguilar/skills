@@ -54,7 +54,7 @@ Sum the five signals (0–10), apply the verifiability modifier, then route:
 
 | Tier | Score | Route | MODELS.md role | itr tags |
 |---|---|---|---|---|
-| **C0 — trivial** | 0–1 | **haiku-5.5** (native); gpt-5.6-terra/luna when a non-Claude seat is wanted | floor | `complexity:C0`, `route:haiku-5.5` |
+| **C0 — trivial** | 0–1 | **haiku-5.5** (native); gpt-6-luna (or gpt-5.6-terra/luna) when a non-Claude seat is wanted | floor | `complexity:C0`, `route:haiku-5.5` |
 | **C1 — routine** | 2–3 | **gpt-6.1-sol** at `medium` | generalist | `complexity:C1`, `route:gpt-6.1-sol` |
 | **C2 — standard** | 4–5 | **sonnet-5.5** if spec-complete build work; gpt-6.1-sol if mechanical-heavy | builder / bulk | `complexity:C2`, `route:sonnet-5.5` |
 | **C3 — complex** | 6–7 | **gpt-6.1-sol** at `high`/`xhigh`; **gpt-6-astra** when it must be right the first time or the blast radius is wide | ambiguous | `complexity:C3`, `route:gpt-6.1-sol` |
@@ -67,8 +67,8 @@ decisions — anything where a green gate fully defines "done." The operator rat
 haiku-5.5 as usable as the GPT-5.5/5.6 class for this work (2026-10-23). It is the
 cheapest model on the table and needs no Codex wrapper. Anthropic reports
 Terminal-Bench 4.0 39.2%, against 0.0% for haiku-4.5. **Constraint: short runs,
-hard gates, Novelty 0.** gpt-5.6-terra and gpt-5.6-luna are peers when the seat
-should be non-Claude. Luna's novel reasoning is weak (ARC ≤59.5%), so this tier is
+hard gates, Novelty 0.** gpt-6-luna (first), gpt-5.6-terra and gpt-5.6-luna are
+peers when the seat should be non-Claude. Luna's novel reasoning is weak (ARC ≤59.5%), so this tier is
 the only place it belongs.
 
 ### C1 — routine → gpt-6.1-sol
@@ -122,7 +122,7 @@ MODELS.md (`fable=on` / `--fable`).
 
 1. **Taste-critical → opus-5.5, gpt-6-astra, or fable-5.1, always** — Vibe Code's UI-tested
    board has Anthropic in the top four spots; the MODELS.md taste bar stands.
-2. **Floor guard** — haiku-5.5, gpt-5.6-terra and gpt-5.6-luna take only short,
+2. **Floor guard** — haiku-5.5, gpt-6-luna, gpt-5.6-terra and gpt-5.6-luna take only short,
    one-off, gated, Novelty-0, non-risky work. Anything else starts at gpt-6.1-sol.
 3. **Every route keeps a hard verify gate.** Long-horizon runs without one are where
    cheap models fake success (SWE-Marathon: GPT-5.5 had the highest reward-hacking
@@ -168,7 +168,7 @@ Tag `route:` values use MODELS.md model names verbatim so a model swap is a
   SWE-Bench Pro (64.8%) sit well below sonnet-5.5 (70.6% / 81.3%). Keep it inside the
   floor guard.
 - **gpt-5.6-luna's Intelligence=8 overstates its novel reasoning** (ARC ≤59.5%).
-  Treat luna as a floor seat, never as a reasoning rung.
+  Treat luna (and gpt-6-luna, scored the same until measured) as a floor seat, never as a reasoning rung.
 
 ## Operational copy
 

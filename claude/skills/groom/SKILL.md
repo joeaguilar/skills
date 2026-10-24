@@ -56,7 +56,7 @@ Sum (0–10) → tier → route:
 
 | Tier | Score | Route | Tags |
 |---|---|---|---|
-| **C0 trivial** | 0–1 | haiku-5.5 (gpt-5.6-terra or luna when the seat should be non-Claude) | `complexity:C0`, `route:haiku-5.5` |
+| **C0 trivial** | 0–1 | haiku-5.5 (gpt-6-luna, or gpt-5.6-terra/luna, when the seat should be non-Claude) | `complexity:C0`, `route:haiku-5.5` |
 | **C1 routine** | 2–3 | gpt-6.1-sol at `medium` (the Sol-class baseline) | `complexity:C1`, `route:gpt-6.1-sol` |
 | **C2 standard** | 4–5 | sonnet-5.5 if spec-complete build work; gpt-6.1-sol if mechanical-heavy | `complexity:C2`, `route:sonnet-5.5` |
 | **C3 complex** | 6–7 | gpt-6.1-sol at `high`/`xhigh` (the `ambiguous` role); gpt-6-astra when it must be right the first time or the blast radius is wide | `complexity:C3`, `route:gpt-6.1-sol` |
@@ -67,7 +67,7 @@ Sum (0–10) → tier → route:
 1. Taste surface = 2 → opus-5.5 minimum, whatever the total. Only opus-5.5,
    gpt-6-astra and fable-5.1 clear the taste bar; the Sol/terra/luna models,
    haiku-5.5 and sonnet-5.5 do not.
-2. Floor guard: haiku-5.5, gpt-5.6-terra and gpt-5.6-luna take only short,
+2. Floor guard: haiku-5.5, gpt-6-luna, gpt-5.6-terra and gpt-5.6-luna take only short,
    one-off, gated, Novelty-0, non-risky work. Anything else starts at gpt-6.1-sol.
 3. Every route keeps a hard verify gate; an ungated long-horizon run needs a gate
    added before it routes anywhere.

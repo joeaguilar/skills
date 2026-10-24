@@ -22,6 +22,7 @@ unsupervised. `Taste` = UI/UX, code quality, API design, copy.
 | gpt-6.1-sol | 5 | 9 | 7 |
 | gpt-6-sol | 5 | 9 | 7 |
 | gpt-5.6-sol | 5 | 9 | 6 |
+| gpt-6-luna | 7 | 8 | 4 |
 | gpt-5.6-terra | 6 | 8 | 5 |
 | gpt-5.6-luna | 7 | 8 | 4 |
 | gpt-5.5 | 9 | 8 | 5 |
@@ -44,8 +45,10 @@ The rules before this date were set against an older benchmark snapshot (see
   generation, and Artificial Analysis puts it above terra and luna on both its
   Intelligence Index (59 vs 55 / 51) and its Coding Agent Index (80 vs 77 / 75);
   gpt-6-sol improved on it at about half the cost per task.
-- **GPT-5.5 and GPT-5.6 (terra, luna) are for one-off small decisions.** They
-  are still good at that, so they share the `floor` role. They are not the baseline.
+- **GPT-5.5, GPT-5.6 (terra, luna) and the luna class are for one-off small decisions.**
+  They are still good at that, so they share the `floor` role. They are not the baseline.
+  **gpt-6-luna** ("fast and affordable model for easier tasks") joins the floor
+  (operator, 2026-10-23). It is unmeasured, so it carries gpt-5.6-luna's score (7 / 8 / 4).
 - **Anthropic's lineup took a substantial step.**
   - **haiku-5.5** replaces haiku-4.5 (which held the `never` role). The operator rates
     it as usable as the GPT-5.5 / 5.6 (luna) class, so intelligence 8. At $0.10 / $0.50
@@ -64,9 +67,8 @@ The rules before this date were set against an older benchmark snapshot (see
   **gpt-5.5 is unreachable**: "The 'gpt-5.5' model is not supported when using Codex
   with a ChatGPT account", and the catalog no longer lists it (last worked 2026-09-28).
   Its row stays so that skills naming it stay legal, but it holds no role; a seat that
-  would have used it for a small decision uses haiku-5.5, gpt-5.6-terra or gpt-5.6-luna.
+  would have used it for a small decision uses a floor seat.
   gpt-6-sol and gpt-5.6-sol are previous Sol generations: reachable, no role.
-  gpt-6-luna is new and unscored, so it holds no role yet.
 
 **Model names legal in skills** = the Scores table above, plus anything listed on
 an allowlist line. A skill naming anything else fails `models.sh check`. Legality
@@ -75,9 +77,8 @@ historical note like the ones above would silently re-legalize every stale
 reference to a model we just retired. To let a non-routing model be named in a
 skill, add it here on purpose:
 
-<!-- models-allow: gpt-6-luna haiku-4.5 sonnet-5 -->
-gpt-6-luna (reachable, unscored, no role yet), haiku-4.5 and sonnet-5 (predecessors,
-named in history notes and retag recipes).
+<!-- models-allow: haiku-4.5 sonnet-5 -->
+haiku-4.5 and sonnet-5 (predecessors, named in history notes and retag recipes).
 
 ## Roles → model
 
@@ -89,7 +90,7 @@ generalist**" never changes when one Sol model replaces another.)
 |---|---|---|
 | generalist | gpt-6.1-sol | the default for agents. The Sol-class baseline |
 | bulk | gpt-6.1-sol | bulk / mechanical implementation, migrations, data transforms |
-| floor | haiku-5.5 | one-off small decisions and trivial, gated mechanical work. gpt-5.6-terra and gpt-5.6-luna are peers; use one when the seat must be non-Claude (for example, a quick check of Claude output) |
+| floor | haiku-5.5 | one-off small decisions and trivial, gated mechanical work. gpt-6-luna, gpt-5.6-terra and gpt-5.6-luna are peers (gpt-6-luna first); use one when the seat must be non-Claude (for example, a quick check of Claude output) |
 | builder | sonnet-5.5 | spec-complete, multi-file build work that stays native in the Claude harness |
 | ambiguous | gpt-6.1-sol | judgment-heavy but not user-facing, incl. reviews/judging of Opus output (Opus never judges its own work). Escalate to gpt-6-astra when the decision is final |
 | taste | opus-5.5 | user-facing / taste-critical default (taste must be > 7) |
@@ -100,13 +101,13 @@ generalist**" never changes when one Sol model replaces another.)
 | codex-default | gpt-6.1-sol | default `-m` for `codex exec` (pass it explicitly — config.toml differs) |
 | never | haiku-4.5 | retired generation; haiku-5.5 replaced it |
 
-**Floor guard.** The floor role (haiku-5.5, terra, luna) takes work that is short,
+**Floor guard.** The floor role (haiku-5.5, gpt-6-luna, terra, luna) takes work that is short,
 one-off, gated by a mechanical check, Novelty 0, and not risky. Anything else starts
 at the generalist.
 
 **Escalation ladder (non-taste)** — cheapest rung first, escalate a miss without asking
 until the fable rung (gated):
-`floor (haiku-5.5 / gpt-5.6-terra / gpt-5.6-luna) → gpt-6.1-sol → gpt-6-astra → fable-5.1`.
+`floor (haiku-5.5 / gpt-6-luna / gpt-5.6-terra / gpt-5.6-luna) → gpt-6.1-sol → gpt-6-astra → fable-5.1`.
 A sonnet-5.5 miss enters at gpt-6.1-sol. (gpt-6-astra sits one rung below Fable: same
 intelligence, one rung cheaper, and it spends Codex allowance rather than Fable budget,
 so reach it before Fable for code.) opus-5.5 is not a non-taste rung: its intelligence 8
@@ -124,6 +125,7 @@ fable-5.1.
 | gpt-6-astra | Codex — `codex exec -m gpt-6-astra` (top Codex rung; high-taste code/prose writer + cross-model judge) |
 | gpt-6.1-sol | Codex — `codex exec -m gpt-6.1-sol` (the Sol-class baseline) |
 | gpt-6-sol / gpt-5.6-sol | Codex — previous Sol generations; reachable, no role |
+| gpt-6-luna | Codex — `codex exec -m gpt-6-luna` (floor peer; the first GPT floor seat) |
 | gpt-5.6-terra | Codex — `codex exec -m gpt-5.6-terra` (floor peer; computer-use seat) |
 | gpt-5.6-luna | Codex — `codex exec -m gpt-5.6-luna` (floor peer) |
 | gpt-5.5 | **Unreachable** on this login (see Basis); no role |
@@ -152,6 +154,7 @@ level these rules don't grant. Supported levels below are from the Codex model c
 | gpt-6-astra | `low` / `medium` / `high` / `xhigh` (`high` is the standing default; `none` is rejected) | **only if the user requested it, and only in a solo seat** (ultra = automatic task delegation); never inside a parallel wave/fan-out | top rung — code that must be right the first time, high-taste prose, the cross-model judge of Claude output; not for bulk waves. Declines offensive-security work (Critical cyber rating) |
 | gpt-6.1-sol | `low` / `medium` / `high` / `xhigh` (`medium` is the standing default; `high`+ for C3 or risky work) | **only if the user requested it, and only in a solo seat** | the baseline — free to route |
 | gpt-5.6-terra | `low` / `medium` / `high` / `xhigh` (`medium` is the standing default for floor seats; `high` for computer use) | **only if the user requested it, and only in a solo seat** | floor peer + computer-use seat — free to route within the floor guard |
+| gpt-6-luna | `low` / `medium` / `high` / `xhigh` (`medium` is the standing default) | `max` only if the user requested it; no `ultra` | floor peer — one-off small decisions or router-assigned batches; never risky or Novelty ≥ 1 work |
 | gpt-5.6-luna | `low` / `medium` / `high` / `xhigh` | `max` only if the user requested it; no `ultra` | floor peer — one-off small decisions or router-assigned batches; never risky or Novelty ≥ 1 work |
 | gpt-5.5 | — | — | unreachable; do not route (it also rejects `ultra`/`max` if it returns) |
 

@@ -48,6 +48,7 @@ Every model score below is **higher = better**; `cost` is what the user pays, so
 | gpt-6-sol | 5 | 9 | 7 | Previous Sol generation — reachable, no role. |
 | gpt-5.6-sol | 5 | 9 | 6 | Previous Sol generation — reachable, no role. |
 | gpt-5.6-terra | 6 | 8 | 5 | Codex — `codex-seat.sh … -m gpt-5.6-terra -e medium` (floor peer for one-off small cuts). |
+| gpt-6-luna | 7 | 8 | 4 | Codex — `codex-seat.sh … -m gpt-6-luna -e medium` (first GPT floor seat for one-off small cuts). |
 | gpt-5.6-luna | 7 | 8 | 4 | Codex — `codex-seat.sh … -m gpt-5.6-luna -e medium` (floor peer, lower taste). |
 | gpt-5.5 | 9 | 8 | 5 | **Unreachable — do not route** (MODELS.md, Basis). |
 | haiku-5.5 | 10 | 8 | 5 | Agent/Workflow `model: 'haiku'` — the floor: one-off, gated, Novelty-0 cuts only. |
@@ -58,7 +59,7 @@ Every model score below is **higher = better**; `cost` is what the user pays, so
 **Executor assignment — classify each task, then route:**
 
 1. **User-facing / taste-critical** — the task produces something a human sees or consumes (UI, UX, copy, error messages, public API/interface shape, docs). Taste must be **> 7** → **opus-5.5** (the default taste executor). **fable-5.1** is used only when `fable=on` *and* the surface is hero/flagship (or the task explicitly requested it — see the Fable gate). *Never a Sol/terra/luna model, haiku-5.5 or sonnet-5.5 for the taste call — none clears the taste bar (gpt-6-astra does, at cost 3).*
-2. **Floor** — a one-off small cut: one file, Novelty 0, a mechanical gate defines done, nothing risky → **haiku-5.5** (cheapest, native). gpt-5.6-terra or luna when the seat should be non-Claude.
+2. **Floor** — a one-off small cut: one file, Novelty 0, a mechanical gate defines done, nothing risky → **haiku-5.5** (cheapest, native). gpt-6-luna (or gpt-5.6-terra/luna) when the seat should be non-Claude.
 3. **Spec-complete build** — multi-file build work with written acceptance criteria, contained blast radius, no novel algorithm → **sonnet-5.5** (the `builder` role, native).
 4. **Bulk / mechanical** — clear-spec implementation, migrations, data transforms, mechanical refactors, backend logic with unambiguous acceptance → **gpt-6.1-sol** at `medium` (the generalist and agents default; intelligence 9).
 5. **Ambiguous / judgment-heavy but not user-facing** — needs real reasoning, cross-cutting, spec not airtight → **gpt-6.1-sol** at `high` (the `ambiguous` role). Not opus-5.5: its intelligence 8 sits below the Sol rung, and Opus is not effective at judging its own work. opus-5.5 stays the taste executor only.
@@ -70,7 +71,7 @@ Every model score below is **higher = better**; `cost` is what the user pays, so
 
 **Reviewer assignment — always a *different* model than executed the task** (that difference is the "crossfire"):
 
-- GPT-executed task (gpt-6.1-sol, the floor's terra/luna, astra) → reviewed by a **Claude model**: **sonnet-5.5** for the standard pass, **opus-5.5** when quality matters, plus **fable-5.1** when `fable=on` for taste surfaces. Opus may review GPT work; it never reviews its own.
+- GPT-executed task (gpt-6.1-sol, the floor's luna/terra seats, astra) → reviewed by a **Claude model**: **sonnet-5.5** for the standard pass, **opus-5.5** when quality matters, plus **fable-5.1** when `fable=on` for taste surfaces. Opus may review GPT work; it never reviews its own.
 - Claude-executed task (haiku-5.5, sonnet-5.5, opus-5.5, fable-5.1) → reviewed by a **GPT model**: **gpt-6.1-sol** for the standard pass, **gpt-6-astra** when quality matters or the task is taste-critical. For taste-critical work you may add **fable-5.1, only when `fable=on`**; under `fable=off`, the GPT reviewer is the sole cross-reviewer (a same-model opus-reviews-opus pass is not a crossfire).
 - A model never reviews its own output.
 

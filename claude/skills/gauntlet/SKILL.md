@@ -78,7 +78,7 @@ One builder per subsystem per iteration (files are shared; parallel builders on 
 Shoot the iteration's shots, then run `node tools/measure.mjs assert <every png> --w <W> --h <H> --json` **before any critic spawns**. A failed assert (wrong size, blank frame, truncated file, mid-transition crossfade) means the CAPTURE RIG is broken — repair the rig and re-shoot; **never spawn a critic on a bad capture**. The prior run's rig waited 800ms against a 1200ms crossfade and critics scored mid-transition frames for multiple rounds before anyone noticed.
 
 ### Critique phase
-See Phase 2. Regular rounds: 1 critic, **alternating families by iteration parity** — odd iter = Opus critic, even iter = Codex seat (deterministic, so the ledger can be reconciled without judgment calls). Confirmation rounds (the round that could produce the second consecutive all-≥8): a 3-critic panel with the does-it-reproduce seat on Codex.
+See Phase 2. Regular rounds: 1 critic, and **the critic follows the builder** — the family that did not build the round judges it: a Claude-built round gets the Codex seat, a Codex-built round an Opus critic. Read the builder from the round's `build` ledger row (deterministic, so the ledger can be reconciled without judgment calls). A round both families built is judged by the family that built the smaller share; name it in the ledger reason. When the other family is unavailable, a different model of the same family is the minimum. Confirmation rounds (the round that could produce the second consecutive all-≥8): a 3-critic panel whose does-it-reproduce seat comes from the other family than the builder.
 
 ---
 
@@ -173,7 +173,7 @@ Reason codes: `SANDBOX-DOWN`, `TOOL-MISSING`, `RATE-LIMIT`, `TASTE-REQUIRED` (me
 | Role | Model | Notes |
 |---|---|---|
 | Critic (taste lenses) | Opus-class, high effort | Taste is the product; never downgrade below flagship-class of either family. |
-| Critic (cross-model seat) | `frontier` (MODELS.md) via `codex-seat.sh`, read-only | Even-parity regular rounds + the does-it-reproduce panel seat. Different family, different blind spots — the anti-rabbit-hole seat. Failure → Opus + `SANDBOX-DOWN` ledger row. |
+| Critic (cross-model seat) | `frontier` (MODELS.md) via `codex-seat.sh`, read-only | Claude-built regular rounds + the does-it-reproduce panel seat of a Claude-built round. Different family, different blind spots — the anti-rabbit-hole seat. Failure → Opus + `SANDBOX-DOWN` ledger row. |
 | Visual-polish builder fixes | Opus-class | Only builder role that earns Opus. |
 | Mechanical scaffolds, capture glue, serve/shoot plumbing | Sonnet-class | Keep mechanical work OFF the orchestrator — 170 orchestrator PowerShell calls is why context filled last run. |
 | Builders (default) | Session model | |
@@ -196,7 +196,7 @@ Reason codes: `SANDBOX-DOWN`, `TOOL-MISSING`, `RATE-LIMIT`, `TASTE-REQUIRED` (me
 - Don't tell a critic anything about closure mechanics or round significance.
 - Don't spawn a critic on shots that haven't passed `measure.mjs assert`.
 - Don't hand-edit scores, critique JSONs, or STATUS score tables — regenerate from `gate.mjs`.
-- Don't run an all-Claude round or panel while the codex seat is available — the cross-model seat is part of the honesty chain, and skipping it without a `SANDBOX-DOWN` ledger row is a routing defect.
+- Don't judge a round with the family that built it while the other family is available — the cross-family seat is part of the honesty chain, and skipping it without a `SANDBOX-DOWN` ledger row is a routing defect.
 - Don't tell the Codex seat anything the blind contract withholds from Claude critics — cross-model does not mean cross-briefed.
 - Don't declare closure yourself — only `gate.mjs --check` exit 0 plus a reconciled ledger closes a subsystem.
 - Don't invoke `gate.mjs` without the recorded `Gate flags:` line — the tool is stateless, and a flagless call silently drops every waiver and the cap.

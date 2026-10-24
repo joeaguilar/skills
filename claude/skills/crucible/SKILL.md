@@ -257,7 +257,7 @@ thinned for a later one. Every Workflow call goes to the bundled script, never t
 
 ```
 Workflow({ scriptPath: "<dir>/tools/iteration.js", args: { target, iter, dir, mode, critique, brief,
-                                                           seat, panel, codexSeat, seatScript, codexModel, criticModel,
+                                                           seat, panel, codexSeat, seatScript, codexModel, codexEffort, criticModel,
                                                            priorCritique, findings, sourceGlobs, testGlobs } })
 ```
 
@@ -360,7 +360,7 @@ mutation in the tree.
 respawn the critic with the validator's error appended — hand-patching the JSON yourself is score laundering.
 
 **Seats.** Regular rounds: 1 critic, alternating families by iteration parity (odd = Opus seat, even = Codex
-seat) so the ledger reconciles without judgment calls. **A round whose builder ran on `opus-5.5` must be
+seat) so the ledger reconciles without judgment calls. **A round whose builder ran on Opus must be
 critiqued by the Codex seat** — MODELS.md is explicit that Opus is not effective at judging its own work —
 unless the project's own instructions set a different review rule, which then governs and is recorded in
 STATUS.md (`Judging:` line). `criticModel` puts every Claude critic seat on a named model.
@@ -371,11 +371,13 @@ re-derives the prior round's measured claims from fresh instrument runs and scor
 Per-axis score = median of the three; all verdicts are committed and the merged file is what the gate reads.
 One same-family opinion closing a target is the exact gameability the panel prevents.
 
-**The cross-model seat** is a read-only codex seat (the `codex-seat` skill) on `codexModel`, default
-**gpt-6-astra** — the cross-model judge of Claude work in `~/.claude/MODELS.md`:
+**The cross-model seat** is a read-only codex seat (the `codex-seat` skill) on the **`frontier`** role in
+`~/.claude/MODELS.md` — the cross-model judge of Claude work. Resolve it once per run and pass it to the script
+as `codexModel` / `codexEffort` (unset, the script falls back to gpt-6-astra at `high`):
 
 ```bash
-bash "$SEAT_SH" run -d <dir>/seats/<target>_iter<N> -m gpt-6-astra -e high -s read-only
+read -r CODEX_M CODEX_E < <(awk -F'|' '{r=$2; gsub(/ /,"",r)} r=="frontier"{m=$3; e=$4; gsub(/ /,"",m); gsub(/ /,"",e); print m, e; exit}' ~/.claude/MODELS.md)
+bash "$SEAT_SH" run -d <dir>/seats/<target>_iter<N> -m "$CODEX_M" -e "$CODEX_E" -s read-only
 # brief.md = the blind critic prompt, verbatim; out.md = its final message, the critique JSON
 ```
 
@@ -492,15 +494,18 @@ transcript, or any dispatch missing a row, reopens bookkeeping. Gate exit 0 + cl
 
 ## Model routing
 
-| Role | Model | Notes |
+Seats name **roles** from `~/.claude/MODELS.md`; resolve each to its model when you plan the round, and the
+ledger records the resolved model.
+
+| Seat | MODELS.md role | Notes |
 |---|---|---|
-| Builder (default) | gpt-6.1-sol | The Sol-class generalist does implementation work; keeps the Opus critic seat honest. |
-| Builder (taste-critical) | opus-5.5 | Only for user-facing/taste surfaces. That round's critique MUST use the Codex seat. |
-| Test-author (blind) | sonnet-5.5 | Behavior-driven assertions against a written spec; a different family from the Sol builder by default. |
-| Critic (regular, odd iters) | opus-5.5 | Taste and design judgment — never over an `opus-5.5` builder's own output. |
-| Critic (cross-model seat, even iters + panel) | gpt-6-astra via `codex-seat.sh`, read-only (`codexModel`) | Different family, different blind spots. Failure → Opus + `SANDBOX-DOWN` row. |
-| Spec / Evidence / merge clerking | sonnet-5.5 | Mechanical stages stay off the flagship rungs and off your context. |
-| Escalation on a missed round | gpt-6.1-sol → gpt-6-astra → fable-5.1 | Non-taste ladder per MODELS.md; record the escalation in the ledger. |
+| Builder (default) | `generalist` | Implementation work off the Claude family; keeps the Opus critic seat honest. |
+| Builder (taste-critical) | `taste` | Only for user-facing/taste surfaces. That round's critique MUST use the Codex seat. |
+| Test-author (blind) | `builder` | Behavior-driven assertions against a written spec; a different family from the generalist builder by default. |
+| Critic (regular, odd iters) | `taste` | Taste and design judgment — never over a `taste`-built round's own output. |
+| Critic (cross-model seat, even iters + panel) | `frontier` via `codex-seat.sh`, read-only (`codexModel` / `codexEffort`) | Different family, different blind spots. Failure → Opus + `SANDBOX-DOWN` row. |
+| Spec / Evidence / merge clerking | `builder` | Mechanical stages stay off the flagship rungs and off your context. |
+| Escalation on a missed round | `generalist` → `frontier` → `ceiling` | Non-taste ladder per MODELS.md (`ceiling` gated); record the escalation in the ledger. |
 
 The bundled script sets a model for the Claude critic seats only (`criticModel`). Every other seat runs on the
 session model, whatever this table plans: record that in the ledger as planned ≠ actual with `TOOL-MISSING`,
@@ -539,7 +544,7 @@ once per stage, and do not edit the script to change it mid-run.
 - Don't ask the user to raise the cap, lower the bar or change `confirm` mid-run, and don't change them yourself. A spent budget is reported, not negotiated.
 - Don't let a critic run instruments without `--scratch` — the evidence record is written once, by the Evidence stage.
 - Don't tell a critic anything about closure mechanics, the bar, or round significance — and don't hand the Codex seat anything Claude critics are denied.
-- Don't run an all-Claude panel while the codex seat is available, and don't route a critique of `opus-5.5` output to `opus-5.5`.
+- Don't run an all-Claude panel while the codex seat is available, and don't route a critique of Opus output to Opus.
 - Don't invoke `gate.mjs` without the recorded `Gate flags:` line — the tool is stateless, and a flagless call silently drops every waiver and the cap.
 - Don't declare closure yourself — only `gate.mjs --check` exit 0 plus a reconciled ledger closes a target.
 - Don't hand-edit scores, critique JSONs, evidence reports, or STATUS score tables — regenerate them.

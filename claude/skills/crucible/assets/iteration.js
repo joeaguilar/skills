@@ -29,7 +29,9 @@ export const meta = {
 //   panel         boolean  true for a 3-critic panel with a median merge (used with --confirm >= 2)
 //   codexSeat     boolean  false when the codex seat is unavailable and the user consented to Claude-only
 //   seatScript    string   absolute path to the codex-seat skill's codex-seat.sh, or null
-//   codexModel    string   model the Codex critic seat runs on, default 'gpt-6-astra'
+//   codexModel    string   model the Codex critic seat runs on: the `frontier` role in
+//                          ~/.claude/MODELS.md, resolved by the caller; default 'gpt-6-astra'
+//   codexEffort   string   that seat's -e pin (the role's Effort column); default 'high'
 //   priorCritique string   path to the previous iteration's merged critique, or null
 //   findings      array    the prior critique's findings, verbatim (cited to the builder)
 //   sourceGlobs   array    target's source globs
@@ -53,6 +55,7 @@ const seat = a.seat === 'codex' ? 'codex' : 'opus'
 const panel = a.panel === true
 const codexSeat = a.codexSeat !== false && !!a.seatScript
 const codexModel = a.codexModel || 'gpt-6-astra'
+const codexEffort = a.codexEffort || 'high'
 // The Codex critic as a read-only codex seat: the brief is the critic prompt, its final
 // message (out.md) is the critique JSON, and done says when it finished.
 const codexCritic = (p, out, seatDir) => `Run this critique as a read-only codex seat and clerk the result.
@@ -60,7 +63,7 @@ const codexCritic = (p, out, seatDir) => `Run this critique as a read-only codex
 1. mkdir -p ${seatDir}, then write the critic prompt below to ${seatDir}/brief.md, verbatim, followed by
    one line: "Your final message must be the critique JSON alone."
 2. Run, with Bash timeout 600000:
-     bash "${a.seatScript}" run -d ${seatDir} -m ${codexModel} -e high -s read-only
+     bash "${a.seatScript}" run -d ${seatDir} -m ${codexModel} -e ${codexEffort} -s read-only
    If the run may pass 9 minutes, use \`start\` in place of \`run\`, then call
    \`bash "${a.seatScript}" wait -d ${seatDir}\` again for as long as it exits 3.
 3. Once ${seatDir}/done reads exit=0, copy ${seatDir}/out.md to ${out} and run

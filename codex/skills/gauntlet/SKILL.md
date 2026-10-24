@@ -121,14 +121,15 @@ Critics are read-only and blind. Their prompt contains exactly:
 
 Do not disclose the bar, closure mechanics, iteration cap, confirmation status, or what a score triggers. Require every measured claim to cite the exact measurement command and output. Forbid ad-hoc PNG decoders.
 
-Regular rounds alternate model families when routes exist:
+Regular rounds use one critic from the family that did not build the round. Read the builder from the round's `build` ledger row:
 
-- odd iteration: read-only Opus critic through `claude -p`;
-- even iteration: read-only Codex critic subagent.
+- Codex-built round (the default here): read-only Opus critic through `claude -p`;
+- Claude-built round: read-only Codex critic subagent;
+- both families built: the family that built the smaller share judges, and the ledger reason names it.
 
-If the planned route is unavailable, use an independent read-only Codex critic and record `CROSS-MODEL-DOWN`; never silently change the jury.
+If the other family's route is unavailable, a different model of the builder's family is the minimum: use an independent read-only critic on a model other than the builder's and record `CROSS-MODEL-DOWN`; never silently change the jury.
 
-For `CONFIRM`, run three independent critics: two Opus taste lenses and one Codex reproduction lens. Write each response to a temporary JSON file, validate each with `gate.mjs --validate`, and regenerate invalid output through the same critic route. Never hand-edit a verdict. Merge the three validated verdicts with `merge-panel.mjs`; retain all source verdicts and validate the merged file.
+For `CONFIRM`, run three independent critics: two Opus taste lenses and one reproduction lens from the family that did not build the round (Opus through `claude -p` for a Codex-built round, a Codex critic for a Claude-built one). Write each response to a temporary JSON file, validate each with `gate.mjs --validate`, and regenerate invalid output through the same critic route. Never hand-edit a verdict. Merge the three validated verdicts with `merge-panel.mjs`; retain all source verdicts and validate the merged file.
 
 ### 5. Gate
 

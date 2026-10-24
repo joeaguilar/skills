@@ -65,7 +65,7 @@ Global installs link roots such as `~/.claude/skills`, `~/.claude/agents`, `~/.c
 
 ## Two ports, two registers
 
-**Claude vs Codex (per-platform wording).** Codex ports are reworded for Codex (no `AskUserQuestion`, "Codex subagent", `AGENTS.md`/`CODEX.md` instead of `CLAUDE.md`). That difference is intentional — `validate-skills.sh` checks *set parity and drift*, not content equality. Edit Claude skills in `claude/skills/`; when a change needs to reach Codex, port it in `codex/skills/` (Codex wording) and refresh that skill's line in `codex/PARITY.tsv`.
+**Claude vs Codex (per-platform wording).** Codex ports are reworded for Codex (no `AskUserQuestion`, "Codex subagent", `AGENTS.md`/`CODEX.md` instead of `CLAUDE.md`). That difference is intentional — `validate-skills.sh` checks *set parity and drift*, not content equality. Edit Claude skills in `claude/skills/`; when a change needs to reach Codex, port it in `codex/skills/` (Codex wording) and refresh that skill's line in `codex/PARITY.tsv` with `./validate-skills.sh --parity-hash <skill>`. **Wrap Claude-only passages** — Codex launch mechanics, model routing, anything the Codex port does its own way — in `<!-- claude-only -->` … `<!-- /claude-only -->` (each marker on its own line): the parity hash skips them, so editing them never marks the port stale.
 
 **The porting contract** (enforced by `codex/scripts/validate-codex-skills.sh`): every non-`.system` Codex skill needs an `agents/openai.yaml` alongside its `SKILL.md`, and the validator flags these Claude-isms as non-Codex references — `.claude/skills`, `AskUserQuestion`, `subagent_type`, `run_in_background`, `SendMessage`. Replace them with Codex-native user-input / subagent / background-session wording when porting.
 

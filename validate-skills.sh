@@ -6,10 +6,15 @@ set -uo pipefail
 # It checks:
 #   1. Set parity   — every skill in claude/skills has a sibling in codex/skills
 #                     (and vice-versa), ignoring codex-only .system/.
-#   2. Staleness    — compares each claude SKILL.md's git blob hash against the
+#   2. Staleness    — compares each claude SKILL.md's parity hash against the
 #                     baseline recorded in codex/PARITY.tsv (the claude content
 #                     the codex port was last reconciled against). A change ->
 #                     the port is probably stale -> re-port. Rename-proof.
+#                     The parity hash is the git blob hash of the SKILL.md with
+#                     every `<!-- claude-only -->` … `<!-- /claude-only -->` block
+#                     removed (markers included), so Claude-side launch mechanics
+#                     and model routing can change without flagging the port. A
+#                     file with no markers hashes exactly as `git hash-object`.
 #   3. Frontmatter  — every SKILL.md has `name:` and `description:`.
 #   3b. Primitive roots — optional agents/ and commands/ roots are present in
 #                     both platform trees when used, and markdown payloads have
@@ -34,20 +39,31 @@ set -uo pipefail
 # parity gaps are legitimate mid-port states that shouldn't.
 # --strict-staleness: make any parity staleness warning fail the command. Use
 # this in CI and before declaring a porting pass complete.
-
-FRONTMATTER_ONLY=0
-STRICT_STALENESS="${STRICT_STALENESS:-0}"
-for arg in "$@"; do
-  case "$arg" in
-    --frontmatter-only) FRONTMATTER_ONLY=1 ;;
-    --strict-staleness) STRICT_STALENESS=1 ;;
-    *) echo "Unknown option: $arg" >&2; exit 2 ;;
-  esac
-done
+# --parity-hash <skill>: print that skill's parity hash (the value its
+# codex/PARITY.tsv line records after a re-port) and exit.
 
 REPO_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd -P)"
 CLAUDE_SKILLS="$REPO_DIR/claude/skills"
 CODEX_SKILLS="$REPO_DIR/codex/skills"
+
+parity_hash() { # SKILL.md path -> blob hash with claude-only blocks removed
+  sed '/^[[:space:]]*<!-- claude-only -->[[:space:]]*$/,/^[[:space:]]*<!-- \/claude-only -->[[:space:]]*$/d' "$1" \
+    | git hash-object --stdin --path="$1"
+}
+
+FRONTMATTER_ONLY=0
+STRICT_STALENESS="${STRICT_STALENESS:-0}"
+while [ $# -gt 0 ]; do
+  case "$1" in
+    --frontmatter-only) FRONTMATTER_ONLY=1 ;;
+    --strict-staleness) STRICT_STALENESS=1 ;;
+    --parity-hash)
+      [ -f "$CLAUDE_SKILLS/${2:-}/SKILL.md" ] || { echo "usage: $0 --parity-hash <skill>" >&2; exit 2; }
+      parity_hash "$CLAUDE_SKILLS/$2/SKILL.md"; exit 0 ;;
+    *) echo "Unknown option: $1" >&2; exit 2 ;;
+  esac
+  shift
+done
 errors=0
 warns=0
 
@@ -114,7 +130,7 @@ if [ ! -f "$manifest" ]; then
 else
   while IFS= read -r s; do
     [ -z "$s" ] && continue
-    cur="$(git hash-object "$CLAUDE_SKILLS/$s/SKILL.md" 2>/dev/null)"
+    cur="$(parity_hash "$CLAUDE_SKILLS/$s/SKILL.md" 2>/dev/null)"
     base="$(awk -v k="$s" '$1==k{print $2}' "$manifest")"
     if [ -z "$base" ]; then
       echo "  WARN $s: no baseline in codex/PARITY.tsv -> reconcile the codex port, then record its line"

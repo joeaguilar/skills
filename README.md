@@ -270,8 +270,12 @@ For skill behavior changes:
    with:
 
    ```bash
-   git hash-object claude/skills/<skill>/SKILL.md
+   ./validate-skills.sh --parity-hash <skill>
    ```
+
+   That hash skips `<!-- claude-only -->` … `<!-- /claude-only -->` blocks, so
+   Claude-only passages (launch mechanics, model routing) can change without
+   marking the Codex port stale. Without markers it equals `git hash-object`.
 
 For Claude-only or Codex-only primitives, use `PLATFORM_ONLY.tsv` instead of
 creating an empty stub on the other side. When a primitive graduates to parity,

@@ -27,8 +27,9 @@ export const meta = {
 //   gateFlags     string   accepted and ignored: the hard-layer check a link uses takes no gate flags
 //   seat          string   'opus' | 'codex' — whose turn the regular critic seat is
 //   panel         boolean  true for a 3-critic panel with a median merge (used with --confirm >= 2)
-//   codexSeat     boolean  false when the companion is absent and the user consented to Claude-only
-//   companion     string   absolute path to codex-companion.mjs, or null
+//   codexSeat     boolean  false when the codex seat is unavailable and the user consented to Claude-only
+//   seatScript    string   absolute path to the codex-seat skill's codex-seat.sh, or null
+//   codexModel    string   model the Codex critic seat runs on, default 'gpt-6-astra'
 //   priorCritique string   path to the previous iteration's merged critique, or null
 //   findings      array    the prior critique's findings, verbatim (cited to the builder)
 //   sourceGlobs   array    target's source globs
@@ -50,7 +51,28 @@ const criticName = criticModel || 'opus'
 const criticOpts = (o) => (criticModel ? { ...o, model: criticModel } : o)
 const seat = a.seat === 'codex' ? 'codex' : 'opus'
 const panel = a.panel === true
-const codexSeat = a.codexSeat !== false && !!a.companion
+const codexSeat = a.codexSeat !== false && !!a.seatScript
+const codexModel = a.codexModel || 'gpt-6-astra'
+// The Codex critic as a read-only codex seat: the brief is the critic prompt, its final
+// message (out.md) is the critique JSON, and done says when it finished.
+const codexCritic = (p, out, seatDir) => `Run this critique as a read-only codex seat and clerk the result.
+
+1. mkdir -p ${seatDir}, then write the critic prompt below to ${seatDir}/brief.md, verbatim, followed by
+   one line: "Your final message must be the critique JSON alone."
+2. Run, with Bash timeout 600000:
+     bash "${a.seatScript}" run -d ${seatDir} -m ${codexModel} -e high -s read-only
+   If the run may pass 9 minutes, use \`start\` in place of \`run\`, then call
+   \`bash "${a.seatScript}" wait -d ${seatDir}\` again for as long as it exits 3.
+3. Once ${seatDir}/done reads exit=0, copy ${seatDir}/out.md to ${out} and run
+     node ${TOOLS}/gate.mjs --validate ${out} --json
+   If the validator rejects it, launch a fresh seat dir (${seatDir}-r2, -r3, …) with the validator's error
+   appended to the brief. You are the clerk: transcribing is your job, editing the verdict is score
+   laundering. If the seat cannot run at all (done non-zero, empty out.md), say so plainly and return
+   validated:false — do not critique it yourself.
+
+--- CRITIC PROMPT (verbatim, do not add or remove a word) ---
+${p}
+--- END CRITIC PROMPT ---`
 const sourceGlobs = a.sourceGlobs || []
 const testGlobs = a.testGlobs || []
 const findings = a.findings || []
@@ -500,7 +522,7 @@ alter a score to make the validator pass; the validator checks shape, never cont
 let critiques = []
 
 if (panel) {
-  log(`3-critic panel${codexSeat ? ' (does-it-reproduce seat on Codex)' : ' (all-Claude: companion unavailable)'}`)
+  log(`3-critic panel${codexSeat ? ' (does-it-reproduce seat on Codex)' : ' (all-Claude: codex seat unavailable)'}`)
   const lenses = [
     { lens: 'correctness and error handling — does it do what it claims at the edges', out: `${dir}/critiques/${target}_iter${iter}.opus.json`, seat: 'opus' },
     { lens: 'design and maintainability — api_design, readability, docs_dx', out: `${dir}/critiques/${target}_iter${iter}.opus2.json`, seat: 'opus' },
@@ -518,22 +540,8 @@ if (panel) {
       if (l.seat === 'codex') {
         return seated(
           'critique:codex',
-          `Run this critique through the Codex companion, read-only, and clerk the result.
-
-Command:
-  node "${a.companion}" task "<the critic prompt below, passed verbatim>"
-
-Pass NO --write flag and leave model/effort unset. Instruct Codex that its stdout must be the critique JSON
-alone. Write that stdout to ${l.out} only after
-  node ${TOOLS}/gate.mjs --validate ${l.out} --json
-passes. If the validator rejects it, re-invoke the companion fresh with the validator's error appended —
-you are the clerk: transcribing is your job, editing the verdict is score laundering. If the companion
-cannot run at all, say so plainly and return validated:false — do not silently critique it yourself.
-
---- CRITIC PROMPT (verbatim, do not add or remove a word) ---
-${p}
---- END CRITIC PROMPT ---`,
-          { label: `critic:codex:${target}#${iter}`, phase: 'Critique', schema: CRITIQUE_SCHEMA }
+          codexCritic(p, l.out, `${dir}/seats/${target}_iter${iter}_reproduce`),
+          { label: `${codexModel}:critic:${target}#${iter}`, phase: 'Critique', schema: CRITIQUE_SCHEMA }
         )
       }
       return seated(`critique:${criticName}`, p, criticOpts({ label: `critic:${criticName}:${target}#${iter}`, phase: 'Critique', schema: CRITIQUE_SCHEMA }))
@@ -586,20 +594,8 @@ and return the path. This merged file is the one the gate reads.`,
   const c = useCodex
     ? await seated(
         'critique:codex',
-        `Run this critique through the Codex companion, read-only, and clerk the result.
-
-Command:
-  node "${a.companion}" task "<the critic prompt below, passed verbatim>"
-
-Pass NO --write flag and leave model/effort unset. Codex's stdout must be the critique JSON alone. Write it
-to ${out} only after \`node ${TOOLS}/gate.mjs --validate ${out} --json\` passes. On rejection, re-invoke the
-companion fresh with the validator error appended. Transcribing is clerking; editing the verdict is score
-laundering. If the companion cannot run, return validated:false and say so — do not critique it yourself.
-
---- CRITIC PROMPT (verbatim, do not add or remove a word) ---
-${p}
---- END CRITIC PROMPT ---`,
-        { label: `critic:codex:${target}#${iter}`, phase: 'Critique', schema: CRITIQUE_SCHEMA }
+        codexCritic(p, out, `${dir}/seats/${target}_iter${iter}`),
+        { label: `${codexModel}:critic:${target}#${iter}`, phase: 'Critique', schema: CRITIQUE_SCHEMA }
       )
     : await seated(`critique:${criticName}`, p, criticOpts({ label: `critic:${criticName}:${target}#${iter}`, phase: 'Critique', schema: CRITIQUE_SCHEMA }))
 

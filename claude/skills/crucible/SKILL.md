@@ -216,11 +216,11 @@ when toggles and engine copies have been lost.
    (c) only if neither can produce the number, write a small probe, commit it to the target repo, and
    register it as `kind:"probe"`. Every instrument gets a registry line or it does not exist. An axis with no
    instrument scores `null` and blocks closure until measured or waived with cited evidence.
-6. **Codex companion present** (powers the cross-model critic seat):
-   `COMPANION=$(ls -d ~/.claude/plugins/cache/openai-codex/codex/*/scripts/codex-companion.mjs 2>/dev/null | sort -V | tail -1)`
-   non-empty and `node`-runnable. Missing → `/codex:setup` fixes it. If the user declines, **offer the
+6. **Codex seat ready** (powers the cross-model critic seat): `codex login status` succeeds and the
+   `codex-seat` skill's launcher exists — `<skills-dir>/codex-seat/scripts/codex-seat.sh`, passed to the
+   script as `seatScript` (absolute path). Missing → `codex login` / install the skill. If the user declines, **offer the
    all-Claude fallback explicitly at this gate and record their choice**: set `codexSeat: false` in
-   CONTRACT.json, write `Judging: all-claude (companion declined <date>)` in STATUS.md, and every critique
+   CONTRACT.json, write `Judging: all-claude (codex seat declined <date>)` in STATUS.md, and every critique
    ledger row from then on carries `SANDBOX-DOWN`. A silent all-Claude jury is a routing defect; a consented
    one is a recorded degradation.
 7. **Residual sink**: `itr stats` succeeds (`.itr.db` present) — else create `<dir>/RESIDUALS.md` and use it.
@@ -257,7 +257,7 @@ thinned for a later one. Every Workflow call goes to the bundled script, never t
 
 ```
 Workflow({ scriptPath: "<dir>/tools/iteration.js", args: { target, iter, dir, mode, critique, brief,
-                                                           seat, panel, codexSeat, companion, criticModel,
+                                                           seat, panel, codexSeat, seatScript, codexModel, criticModel,
                                                            priorCritique, findings, sourceGlobs, testGlobs } })
 ```
 
@@ -371,15 +371,17 @@ re-derives the prior round's measured claims from fresh instrument runs and scor
 Per-axis score = median of the three; all verdicts are committed and the merged file is what the gate reads.
 One same-family opinion closing a target is the exact gameability the panel prevents.
 
-**The cross-model seat** runs through the codex plugin's companion runtime, read-only:
+**The cross-model seat** is a read-only codex seat (the `codex-seat` skill) on `codexModel`, default
+**gpt-6-astra** — the cross-model judge of Claude work in `~/.claude/MODELS.md`:
 
 ```bash
-node "$COMPANION" task "<the blind critic prompt, verbatim>"     # NO --write, model/effort unset
+bash "$SEAT_SH" run -d <dir>/seats/<target>_iter<N> -m gpt-6-astra -e high -s read-only
+# brief.md = the blind critic prompt, verbatim; out.md = its final message, the critique JSON
 ```
 
 Same contract, no exceptions: Codex runs the registered instruments itself and must cite commands and outputs
-like any critic; it learns nothing about closure mechanics. You transcribe its stdout after `--validate`
-passes. Companion failure → the seat reroutes to Opus AND the ledger row records `SANDBOX-DOWN`. The reroute
+like any critic; it learns nothing about closure mechanics. You transcribe `out.md` after `done` reads
+`exit=0` and `--validate` passes. Seat failure → the seat reroutes to Opus AND the ledger row records `SANDBOX-DOWN`. The reroute
 is legal; the silent all-Claude panel is not.
 
 **Constraint caps.** When a critic proves a *constraint* (not effort) bounds an axis, append
@@ -496,7 +498,7 @@ transcript, or any dispatch missing a row, reopens bookkeeping. Gate exit 0 + cl
 | Builder (taste-critical) | opus-5.5 | Only for user-facing/taste surfaces. That round's critique MUST use the Codex seat. |
 | Test-author (blind) | sonnet-5.5 | Behavior-driven assertions against a written spec; a different family from the Sol builder by default. |
 | Critic (regular, odd iters) | opus-5.5 | Taste and design judgment — never over an `opus-5.5` builder's own output. |
-| Critic (cross-model seat, even iters + panel) | Codex via companion `task`, read-only | Different family, different blind spots. Failure → Opus + `SANDBOX-DOWN` row. |
+| Critic (cross-model seat, even iters + panel) | gpt-6-astra via `codex-seat.sh`, read-only (`codexModel`) | Different family, different blind spots. Failure → Opus + `SANDBOX-DOWN` row. |
 | Spec / Evidence / merge clerking | sonnet-5.5 | Mechanical stages stay off the flagship rungs and off your context. |
 | Escalation on a missed round | gpt-6.1-sol → gpt-6-astra → fable-5.1 | Non-taste ladder per MODELS.md; record the escalation in the ledger. |
 
@@ -537,7 +539,7 @@ once per stage, and do not edit the script to change it mid-run.
 - Don't ask the user to raise the cap, lower the bar or change `confirm` mid-run, and don't change them yourself. A spent budget is reported, not negotiated.
 - Don't let a critic run instruments without `--scratch` — the evidence record is written once, by the Evidence stage.
 - Don't tell a critic anything about closure mechanics, the bar, or round significance — and don't hand the Codex seat anything Claude critics are denied.
-- Don't run an all-Claude panel while the companion is available, and don't route a critique of `opus-5.5` output to `opus-5.5`.
+- Don't run an all-Claude panel while the codex seat is available, and don't route a critique of `opus-5.5` output to `opus-5.5`.
 - Don't invoke `gate.mjs` without the recorded `Gate flags:` line — the tool is stateless, and a flagless call silently drops every waiver and the cap.
 - Don't declare closure yourself — only `gate.mjs --check` exit 0 plus a reconciled ledger closes a target.
 - Don't hand-edit scores, critique JSONs, evidence reports, or STATUS score tables — regenerate them.

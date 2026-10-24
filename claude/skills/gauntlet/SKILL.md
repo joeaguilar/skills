@@ -55,7 +55,7 @@ Run every check; a failure is fixed before any iteration starts. Never skip on `
 4. **Gate + measure exist — THE SKILL CREATES THEM.** If `tools/gate.mjs` or `tools/measure.mjs` is missing from the project, create it now by copying from this skill's bundled assets: `<skill>/assets/gate.mjs` and `<skill>/assets/measure.mjs`, where `<skill>` is the directory containing this SKILL.md (typically `~/.claude/skills/gauntlet/` or `<project>/.claude/skills/gauntlet/`; if unsure, glob for `**/skills/gauntlet/assets/gate.mjs`). They are zero-dependency ESM, Node ≥18. **NEVER regenerate either tool from memory or write your own** — the bundled copies are verified artifacts (they reproduce the Cyberfunk run's full closure record and critic-published pixel numbers exactly); a hand-rewritten gate is an unverified closure authority and voids every closure it grants. If the assets cannot be found, STOP and tell the user — do not improvise the tools. After copying: `mkdir critiques shots` if missing (gate exits 2 on a missing dir, 0 with a valid empty report on an empty one), then prove both runnable — `node tools/gate.mjs --json` exit 0 and `node tools/measure.mjs --help` exit 0 (use `assert` against a real shot once the capture rig produces one). Commit the created tools before iteration 1.
 5. **itr initialized**: `itr stats` succeeds (`.itr.db` present). Residuals are filed here, not in prose.
 6. **Route ledger table present in STATUS.md** (format in Phase 4). Create the empty table if missing.
-7. **Codex companion present** (powers the cross-model critic seat, Phase 2): `COMPANION=$(ls -d ~/.claude/plugins/cache/openai-codex/codex/*/scripts/codex-companion.mjs 2>/dev/null | sort -V | tail -1)` non-empty and `node` runnable. Missing → `/codex:setup` fixes it; proceeding anyway is legal but is a DEGRADED all-Claude judging run — record `Judging: all-claude (companion missing)` in STATUS.md now, and every critique ledger row from then on carries `SANDBOX-DOWN`.
+7. **Codex seat ready** (powers the cross-model critic seat, Phase 2): `codex login status` succeeds and the `codex-seat` skill's launcher exists (`SEAT_SH=<skills-dir>/codex-seat/scripts/codex-seat.sh`, `<skills-dir>` = the directory holding this skill's folder). Missing → `codex login` / install the skill; proceeding anyway is legal but is a DEGRADED all-Claude judging run — record `Judging: all-claude (codex seat missing)` in STATUS.md now, and every critique ledger row from then on carries `SANDBOX-DOWN`.
 8. Record the cap (and bar, if not 8) in the STATUS.md `Gate flags:` line (e.g. `Gate flags: --cap 40 --bar 9`). Running `gate.mjs --cap N` once records nothing — the flag is per-invocation, so the STATUS.md line is the record and every subsequent gate call carries it.
 
 ---
@@ -98,14 +98,15 @@ See Phase 2. Regular rounds: 1 critic, **alternating families by iteration parit
 
 Per-axis score = median of the three (2-of-3 agreement). All three verdicts are validated and committed; the merged verdict is the file `gate.mjs` reads. One Opus opinion closing a subsystem is the exact gameability the panel exists to prevent (forensics §4.2 fix 1).
 
-**The cross-model seat.** A single-family jury converges on the same rabbit holes — correlated blind spots survive any number of same-model critics, which is why the seat exists. The Codex seat is a critic like any other, run through the codex plugin's companion runtime:
+**The cross-model seat.** A single-family jury converges on the same rabbit holes — correlated blind spots survive any number of same-model critics, which is why the seat exists. The Codex seat is a critic like any other, launched as a read-only codex seat (the `codex-seat` skill) on **gpt-6-astra**, the cross-model judge of Claude work in `~/.claude/MODELS.md`:
 
 ```bash
-COMPANION=$(ls -d ~/.claude/plugins/cache/openai-codex/codex/*/scripts/codex-companion.mjs 2>/dev/null | sort -V | tail -1)
-node "$COMPANION" task "<the blind critic prompt>"        # read-only: NO --write, model/effort unset
+SEAT=critiques/seats/<subsystem>_iter<N>_<lens>       # brief.md = the blind critic prompt, verbatim
+bash "$SEAT_SH" run -d "$SEAT" -m gpt-6-astra -e high -s read-only   # Bash timeout 600000
+# a seat that may run past ~9 min: `start` instead of `run`, then `wait -d "$SEAT"` while it exits 3
 ```
 
-Same contract, no exceptions: the prompt is EXACTLY the blind critic prompt (rubric contents, shot paths, prior critique path, the `measure.mjs` command block) — Codex runs `measure.mjs` itself in its sandbox and must cite commands and outputs like any critic; it learns nothing about closure mechanics or round significance. Instruct it that stdout must be the critique JSON alone. You (clerk) write that stdout to `critiques/<subsystem>_iter<N>.json` only after `gate.mjs --validate` passes — transcription is clerking; editing it is score laundering. On validation rejection, re-invoke `task` fresh with the validator's error appended, same as respawning any critic. Companion invocation fails or is absent → the seat reroutes to Opus AND the ledger row records it (`planned=codex, actual=opus, SANDBOX-DOWN`) — the reroute is legal, the silent all-Claude panel is not.
+Same contract, no exceptions: the prompt is EXACTLY the blind critic prompt (rubric contents, shot paths, prior critique path, the `measure.mjs` command block) — Codex runs `measure.mjs` itself in its sandbox and must cite commands and outputs like any critic; it learns nothing about closure mechanics or round significance. End the brief with one line telling it that its final message must be the critique JSON alone; the seat writes that message to `$SEAT/out.md`. You (clerk) copy `out.md` to `critiques/<subsystem>_iter<N>.json` only after `$SEAT/done` reads `exit=0` and `gate.mjs --validate` passes — transcription is clerking; editing it is score laundering. On validation rejection, launch a fresh seat dir with the validator's error appended to the brief, same as respawning any critic. The seat fails (`done` non-zero, empty `out.md`) or Codex is unreachable → the seat reroutes to Opus AND the ledger row records it (`planned=codex, actual=opus, SANDBOX-DOWN`) — the reroute is legal, the silent all-Claude panel is not.
 
 **Constraint caps.** When a critic proves a constraint (not effort) bounds an axis, append `--waive <subsystem>:<axis>` to the STATUS.md `Gate flags:` line AND append the evidence to RUBRIC.md "Known caps". `gate.mjs` persists nothing — the waiver only exists on gate calls that carry the flag, which is why the `Gate flags:` line rides every invocation. Waivers without a cited measurement are invalid. (Null `performance` is the one axis live_checks.json coverage auto-waives; everything else needs this explicit flag.)
 
@@ -164,11 +165,11 @@ Reason codes: `SANDBOX-DOWN`, `TOOL-MISSING`, `RATE-LIMIT`, `TASTE-REQUIRED` (me
 | Role | Model | Notes |
 |---|---|---|
 | Critic (taste lenses) | Opus-class, high effort | Taste is the product; never downgrade below flagship-class of either family. |
-| Critic (cross-model seat) | Codex via companion `task`, read-only | Even-parity regular rounds + the does-it-reproduce panel seat. Different family, different blind spots — the anti-rabbit-hole seat. Failure → Opus + `SANDBOX-DOWN` ledger row. |
+| Critic (cross-model seat) | gpt-6-astra via `codex-seat.sh`, read-only | Even-parity regular rounds + the does-it-reproduce panel seat. Different family, different blind spots — the anti-rabbit-hole seat. Failure → Opus + `SANDBOX-DOWN` ledger row. |
 | Visual-polish builder fixes | Opus-class | Only builder role that earns Opus. |
 | Mechanical scaffolds, capture glue, serve/shoot plumbing | Sonnet-class | Keep mechanical work OFF the orchestrator — 170 orchestrator PowerShell calls is why context filled last run. |
 | Builders (default) | Session model | |
-| Non-taste bulk builders / image-gen | Codex (`codex:rescue`) | Max one active. On Codex failure: reroute per this table AND write the ledger row with `SANDBOX-DOWN` — the reroute is legal, the silent drift back is not. Any later return to Codex also gets a row. |
+| Non-taste bulk builders / image-gen | The generalist (MODELS.md) via `codex-seat.sh`, `-s workspace-write` (`-i` for reference images) | Max one active. On Codex failure: reroute per this table AND write the ledger row with `SANDBOX-DOWN` — the reroute is legal, the silent drift back is not. Any later return to Codex also gets a row. |
 
 ---
 
@@ -186,7 +187,7 @@ Reason codes: `SANDBOX-DOWN`, `TOOL-MISSING`, `RATE-LIMIT`, `TASTE-REQUIRED` (me
 - Don't tell a critic anything about closure mechanics or round significance.
 - Don't spawn a critic on shots that haven't passed `measure.mjs assert`.
 - Don't hand-edit scores, critique JSONs, or STATUS score tables — regenerate from `gate.mjs`.
-- Don't run an all-Claude round or panel while the companion is available — the cross-model seat is part of the honesty chain, and skipping it without a `SANDBOX-DOWN` ledger row is a routing defect.
+- Don't run an all-Claude round or panel while the codex seat is available — the cross-model seat is part of the honesty chain, and skipping it without a `SANDBOX-DOWN` ledger row is a routing defect.
 - Don't tell the Codex seat anything the blind contract withholds from Claude critics — cross-model does not mean cross-briefed.
 - Don't declare closure yourself — only `gate.mjs --check` exit 0 plus a reconciled ledger closes a subsystem.
 - Don't invoke `gate.mjs` without the recorded `Gate flags:` line — the tool is stateless, and a flagless call silently drops every waiver and the cap.

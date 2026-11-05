@@ -21,6 +21,13 @@
 //
 // Cost is API-equivalent (what the tokens would cost at first-party API prices), not
 // what a subscription bills. GPT seats run through `codex exec` and are not counted.
+//
+// red_checks and review_agents measure the global "Tests prove themselves" and
+// "Adversarial review" rules: a red check is a `gatr run --tag red-<name>`; a review
+// agent is an Agent call whose description names a review, critique, judge or
+// challenger seat, or a main-thread `codex-seat run|start` whose seat directory names a
+// review. Workflow agent() calls are not tool calls in the parent transcript, so they
+// are not counted.
 
 import { execFileSync } from 'node:child_process';
 import fs from 'node:fs';
@@ -50,7 +57,7 @@ const COLUMNS = [
   'week', 'os', 'sessions', 'prompts', 'requests', 'cost_usd', 'usd_per_prompt',
   'requests_per_prompt', 'output_per_prompt', 'cache_hit_pct', 'subagent_cost_pct',
   'tool_calls', 'tool_error_pct', 'skill_loads', 'gates_total', 'gatr_pct',
-  'kgr_calls', 'grep_calls', 'compactions', 'input_tok', 'cache_write_tok',
+  'kgr_calls', 'grep_calls', 'red_checks', 'review_agents', 'compactions', 'input_tok', 'cache_write_tok',
   'cache_read_tok', 'output_tok', 'unpriced_requests',
 ];
 
@@ -107,6 +114,67 @@ function cost(model, u) {
 }
 
 const GATE_RE = /\b(cargo (test|clippy|build|check|nextest)|npm (run )?(test|lint|typecheck|build)|pnpm (test|lint|typecheck)|npx (tsc|vitest|jest|eslint)|tsc( |$)|pytest|go (test|vet|build)|node --test|dotnet test|make (check|test)|just (check|test))\b/;
+const REVIEW_RE = /\b(review(s|er|ers|ing)?|critiques?|critics?|judges?|judging|challengers?|adversarial)\b/i;
+
+// Shell text reduced to what runs, so a command that only mentions `gatr run` or
+// `codex-seat` (an echo, a commit message, a doc) is not a run. Heredoc bodies,
+// PowerShell here-strings and comments go; line continuations join. A quoted string
+// becomes one word, its whitespace and separators turned to `_`: `--tag "red-x"` is
+// still a tag and a quoted path with spaces is still one -d value, while a quoted
+// sentence that mentions `gatr run` no longer reads as a command. Quoted text that does
+// run is parsed in turn: the script of `bash -c '...'` / `pwsh -Command "..."`, and an
+// unescaped "$(...)". PowerShell escapes with a backtick, the shells with a backslash.
+// A heuristic over transcript text, not a shell parser.
+function shellCode(cmd, ps = false) {
+  const esc = ps ? '`' : '\\';
+  let s = cmd
+    .replace(/<<-?[ \t]*(['"]?)([A-Za-z_][\w.-]*)\1([^\n]*)\n(?:[\s\S]*?\n)?[ \t]*\2[ \t]*(?=\r?\n|$)/g, ' $3')
+    .replace(/@(['"])\r?\n[\s\S]*?\r?\n\1@/g, ' ')
+    .replace(/\\\r?\n|`\r?\n/g, ' ');
+  if (ps) s = s.replace(/<#[\s\S]*?#>/g, ' ');
+  let out = '';
+  for (let i = 0; i < s.length; i++) {
+    const c = s[i];
+    if (c === '#' && (i === 0 || /\s/.test(s[i - 1]))) {
+      while (i + 1 < s.length && s[i + 1] !== '\n') i++;
+    } else if (c === "'" || c === '"') {
+      let body = '';
+      for (i++; i < s.length && s[i] !== c; i++) {
+        if (c === '"' && s[i] === esc && i + 1 < s.length) body += s[i++];
+        body += s[i];
+      }
+      if (/(^|\s)-(l?c|Command)\s+$/.test(out)) { out += ` ${shellCode(body, ps)} `; continue; }
+      out += body.replace(/[\s;&|]+/g, '_');
+      if (c === '"') {
+        const sub = ps ? /(?<!`)\$\(([^()]*)\)/g : /(?<!\\)\$\(([^()]*)\)/g;
+        for (const m of body.matchAll(sub)) out += ` ; ${shellCode(m[1], ps)} ; `;
+      }
+    } else if (c === esc && i + 1 < s.length) {
+      out += c + s[++i];
+    } else {
+      out += c;
+    }
+  }
+  return out;
+}
+
+// `gatr run --tag red-<name>` invocations. gatr's own options end at a bare `--`.
+function redRuns(code) {
+  let n = 0;
+  for (const m of code.matchAll(/(^|[\s;&|(])gatr\s+run\b([^;&|\n]*)/g)) {
+    if (/(^|\s)--tag(=|\s+)red-/.test(m[2].split(/\s--(?:\s|$)/)[0])) n++;
+  }
+  return n;
+}
+
+// `codex-seat run|start` invocations whose own -d seat directory names a review.
+function reviewSeats(code) {
+  let n = 0;
+  for (const m of code.matchAll(/(^|[\s;&|(/])codex-seat(\.sh)?\s+(run|start)\b([^;&|\n]*)/g)) {
+    if (/(^|\s)-d\s+(\S*[/\\_.-])?review/i.test(m[4])) n++;
+  }
+  return n;
+}
 const NOT_HUMAN = /^(<|Another Claude session|\[Request interrupted|Caveat:|This session is being continued)/;
 
 function humanText(content) {
@@ -119,7 +187,7 @@ function humanText(content) {
 
 function newWeek() {
   return { sessions: new Set(), prompts: 0, requests: 0, cost: 0, subCost: 0, out: 0, inTok: 0, cw: 0, cr: 0,
-    toolCalls: 0, toolErrors: 0, skills: 0, gates: 0, gatr: 0, kgr: 0, grep: 0, compactions: 0, unpriced: 0 };
+    toolCalls: 0, toolErrors: 0, skills: 0, gates: 0, gatr: 0, kgr: 0, grep: 0, red: 0, review: 0, compactions: 0, unpriced: 0 };
 }
 
 function collect(files, since) {
@@ -161,12 +229,17 @@ function collect(files, since) {
           const inp = b.input || {};
           if (b.name === 'Skill') w.skills++;
           if (b.name === 'Grep') w.grep++;
+          if ((b.name === 'Agent' || b.name === 'Task') && REVIEW_RE.test(String(inp.description || ''))) w.review++;
           if (b.name === 'Bash' || b.name === 'PowerShell') {
             const cmd = String(inp.command || '');
             if (/(^|[\s;&|(])gatr\s+run\b/.test(cmd)) { w.gates++; w.gatr++; }
             else if (GATE_RE.test(cmd)) w.gates++;
             if (/(^|[\s;&|(])kgr\s+[a-z]/.test(cmd)) w.kgr++;
             if (/(^|[\s;&|(])(grep|rg)\s/.test(cmd)) w.grep++;
+            const code = shellCode(cmd, b.name === 'PowerShell');
+            w.red += redRuns(code);
+            // Inside a subagent this is a codex-seat wrapper's run; the parent's Agent call counted it.
+            if (!sub && !o.isSidechain) w.review += reviewSeats(code);
           }
         }
       } else if (o.type === 'user') {
@@ -200,7 +273,7 @@ function derive(wk, osName, w) {
       cache_hit_pct: pct(w.cr, inputSide), subagent_cost_pct: pct(w.subCost, w.cost),
       tool_calls: w.toolCalls, tool_error_pct: pct(w.toolErrors, w.toolCalls), skill_loads: w.skills,
       gates_total: w.gates, gatr_pct: pct(w.gatr, w.gates), kgr_calls: w.kgr, grep_calls: w.grep,
-      compactions: w.compactions, input_tok: w.inTok, cache_write_tok: w.cw, cache_read_tok: w.cr,
+      red_checks: w.red, review_agents: w.review, compactions: w.compactions, input_tok: w.inTok, cache_write_tok: w.cw, cache_read_tok: w.cr,
       output_tok: w.out, unpriced_requests: w.unpriced,
     };
 }
@@ -230,7 +303,8 @@ function combine(dir) {
       w.out += n('output_tok'); w.inTok += n('input_tok'); w.cw += n('cache_write_tok'); w.cr += n('cache_read_tok');
       w.toolCalls += n('tool_calls'); w.toolErrors += Math.round((n('tool_calls') * n('tool_error_pct')) / 100);
       w.skills += n('skill_loads'); w.gates += n('gates_total'); w.gatr += Math.round((n('gates_total') * n('gatr_pct')) / 100);
-      w.kgr += n('kgr_calls'); w.grep += n('grep_calls'); w.compactions += n('compactions'); w.unpriced += n('unpriced_requests');
+      w.kgr += n('kgr_calls'); w.grep += n('grep_calls');
+      w.red += n('red_checks'); w.review += n('review_agents'); w.compactions += n('compactions'); w.unpriced += n('unpriced_requests');
       by.set(r.week, w);
     }
   }
@@ -280,8 +354,8 @@ function record(rows, file) {
 
 function printTable(rows, withOs = false) {
   const show = ['week', 'sessions', 'prompts', 'cost_usd', 'usd_per_prompt', 'requests_per_prompt', 'cache_hit_pct',
-    'subagent_cost_pct', 'tool_error_pct', 'skill_loads', 'gates_total', 'gatr_pct', 'kgr_calls', 'grep_calls', 'compactions'];
-  const head = ['week', 'sess', 'prompts', '$', '$/prompt', 'req/prompt', 'cache%', 'subagent$%', 'toolerr%', 'skills', 'gates', 'gatr%', 'kgr', 'grep', 'compact'];
+    'subagent_cost_pct', 'tool_error_pct', 'skill_loads', 'gates_total', 'gatr_pct', 'kgr_calls', 'grep_calls', 'red_checks', 'review_agents', 'compactions'];
+  const head = ['week', 'sess', 'prompts', '$', '$/prompt', 'req/prompt', 'cache%', 'subagent$%', 'toolerr%', 'skills', 'gates', 'gatr%', 'kgr', 'grep', 'red', 'review', 'compact'];
   if (withOs) { show.splice(1, 0, 'os'); head.splice(1, 0, 'machines'); }
   const cells = [head, ...rows.map((r) => show.map((c) => String(r[c])))];
   const width = head.map((_, i) => Math.max(...cells.map((row) => row[i].length)));

@@ -31,7 +31,12 @@ with the tools available. Distinguish unavailable verification from a pass.
 
 Review the final diff against the original request. Fix demonstrated omissions
 and regressions, avoiding unrelated cleanup. `--strict` means stronger evidence
-and review of material risks, not repeated subjective letter grades. If the user
+and review of material risks, not repeated subjective letter grades: each test
+that proves a behavior was seen failing without the change (or with a changed
+line deliberately broken and restored), and a fresh Codex subagent that did not
+write the change, on a different model where one is available, tries to break
+the diff. Count its findings only when they come with a failing input or
+counterexample. If the user
 requests `--blitz`, prepare bounded tasks and use the available backlog executor;
 do not create an unrequested tracker merely to satisfy this flag.
 

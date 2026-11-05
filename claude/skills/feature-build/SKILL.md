@@ -1,6 +1,6 @@
 ---
 name: feature-build
-description: "Coached workflow to build one feature end-to-end — Understand → Plan (with file touch-list) → Implement → Verify — with optional `--strict` graded-review iteration until A-grade. More than a task, less than a sprint: no epic, goal, or ceremony. Trigger: `/feature-build`, \"build this feature\", \"implement X end-to-end with tests\". NOT for a sprint's worth of stories (use /sprint) or an existing backlog (use /blitz)."
+description: "Coached workflow to build one feature end-to-end — Understand → Plan (with file touch-list) → Implement → Verify — with optional `--strict` iteration until a separate reviewer grades it A-. More than a task, less than a sprint: no epic, goal, or ceremony. Trigger: `/feature-build`, \"build this feature\", \"implement X end-to-end with tests\". NOT for a sprint's worth of stories (use /sprint) or an existing backlog (use /blitz)."
 ---
 
 # feature-build
@@ -10,7 +10,7 @@ The coached, **non-sprint** implementation workflow. Reach for it when the work 
 | invocation | effect |
 |---|---|
 | `/feature-build <request \| spec path>` | run the four phases on a request or a `spec-writer` doc |
-| `--strict` | add the discover-standards → graded-review → iterate loop |
+| `--strict` | add the discover-standards → red-checked tests → independent graded review → iterate loop |
 | `--blitz` | after planning, file the tasks as `itr` issues and hand execution to `/blitz` |
 
 ## Where it sits
@@ -37,8 +37,8 @@ Wrap Phases 1–3 in a quality loop (condensed from the strict-feat workflow):
 
 1. **Discover patterns** — frameworks, conventions, test setup, lint config from the actual repo.
 2. **Generate standards** — a short project-specific standards list grounded in what you found (not ideals).
-3. **Implement** against those standards.
-4. **Graded review** — score the change A–F. Severity weighting: Critical −2 grades, High −1, Medium −½, Low −⅓ per 3. Output issues with location + exact fix.
+3. **Implement** against those standards. Every test that proves a behavior is red-checked: seen failing on the code without the change, or with a changed line deliberately broken and restored (`gatr run --tag red-<name>`).
+4. **Graded review, by someone else** — a fresh agent on the `reviewer` role (never the model that wrote the change, and never this context grading its own work) tries to break the diff against the plan and the step-2 standards, then scores it A–F. Severity weighting: Critical −2 grades, High −1, Medium −½, Low −⅓ per 3. A finding counts only with a failing input, a counterexample, or a quoted line plus the standard it breaks. Output issues with location + exact fix. The brief is in `~/.claude/ADVERSARIAL-REVIEW-AND-RED-CHECKS.md`; use a new reviewer each round.
 5. **Iterate** Steps 3–4 until **≥ A-**. Cap at 5 rounds, then escalate to the user. Prefer minimal fixes over rewrites.
 
 ## Principles

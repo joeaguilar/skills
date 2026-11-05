@@ -7,6 +7,15 @@
   Open those files only at that moment; do not read them up front.
 - **Reviewer ≠ writer:** any review, critique, or judge seat runs on a different
   model than the one that wrote the work (the `reviewer` role in `~/.claude/MODELS.md`).
+- **Adversarial review:** before calling a behavior change done, have a fresh
+  agent on the `reviewer` role try to break it against the acceptance criteria;
+  your own review agrees with your own reasoning. A finding counts only with a
+  failing input or counterexample. The brief, severities and round cap are in
+  `~/.claude/ADVERSARIAL-REVIEW-AND-RED-CHECKS.md`; open it at that moment.
+- **Tests prove themselves:** a test is evidence only after you have seen it fail,
+  on the code without the change or with a changed line deliberately broken and
+  restored. A test written by reading the code passes by construction. Run that
+  red run as `gatr run --tag red-<name> -- <cmd>`; the how-to is in the same file.
 - **Commits:** commit each completed unit of work unless told not to. In synced
   repos run `git fetch` first; the remote may have been rewritten from another
   machine. Do not add `Co-Authored-By` or session-attribution trailers — Codex

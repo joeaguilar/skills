@@ -42,7 +42,8 @@ Options:
                        on Codex) and is skipped as optional for codex under
                        --all-primitives. `config` links individual home files
                        (claude: CLAUDE.md, MODELS.md, COMPLEXITY.md,
-                       settings.json, statusline.sh) rather than a
+                       ADVERSARIAL-REVIEW-AND-RED-CHECKS.md, settings.json,
+                       statusline.sh) rather than a
                        directory root; it is opt-in and is NOT included in
                        --all-primitives.
   --primitives LIST    Comma-separated primitive roots.
@@ -469,7 +470,8 @@ adopt_local_source() {
 # Claude manages the global CLAUDE.md (source: claude/global-CLAUDE.md — named so
 # Claude Code never auto-loads it as a nested memory file inside this repo),
 # MODELS.md + COMPLEXITY.md (so the routing pointer in the global CLAUDE.md
-# resolves from any project), settings.json (a gitignored local slot, adopted
+# resolves from any project), ADVERSARIAL-REVIEW-AND-RED-CHECKS.md (likewise, for
+# the review and red-check rules), settings.json (a gitignored local slot, adopted
 # from the live file on first install — see adopt_local_source), and
 # statusline.sh; codex has no managed config files yet. Each file is linked
 # independently: one missing source is reported and does not block the others.
@@ -481,6 +483,8 @@ install_config() {
       install_file claude "$REPO_DIR/claude/global-CLAUDE.md" "$home/CLAUDE.md"     || rc=1
       install_file claude "$REPO_DIR/claude/MODELS.md"        "$home/MODELS.md"     || rc=1
       install_file claude "$REPO_DIR/claude/COMPLEXITY.md"    "$home/COMPLEXITY.md" || rc=1
+      install_file claude "$REPO_DIR/claude/ADVERSARIAL-REVIEW-AND-RED-CHECKS.md" \
+                          "$home/ADVERSARIAL-REVIEW-AND-RED-CHECKS.md"            || rc=1
       adopt_local_source claude "$REPO_DIR/claude/settings.json" "$home/settings.json"
       install_file claude "$REPO_DIR/claude/settings.json"    "$home/settings.json" || rc=1
       install_file claude "$REPO_DIR/statusline.sh"           "$home/statusline.sh" || rc=1

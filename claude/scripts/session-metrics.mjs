@@ -28,6 +28,19 @@
 // challenger seat, or a main-thread `codex-seat run|start` whose seat directory names a
 // review. Workflow agent() calls are not tool calls in the parent transcript, so they
 // are not counted.
+//
+// The tool-economics columns watch whether gatr and kgr pay for themselves; token counts
+// are result characters / 4. A gate episode is one gate call (the gates_total set) plus
+// the read-backs among the six calls after it, stopping early at an edit or another gate
+// (a read-back: gatr last/errors/log at command position, a .log viewed or searched, a
+// Read or Grep of a .log). gate_tok is its mean size. gate_followup_pct is the share of
+// gate calls with such a read-back, or with a rerun of the same gate command anywhere
+// before the next edit: each one more request that re-reads the whole context. A code
+// lookup is grep/rg/Select-String (or the Grep tool, or a kgr query) at command position,
+// not a `| grep` filter or a log search; its episode adds the Read / cat / sed -n views
+// among the eight calls right after it, stopping at the first call that is not one.
+// lookup_tok is the mean episode size and kgr_lookup_pct kgr's share of lookups. Rows
+// recorded before these columns existed carry no values for them.
 
 import { execFileSync } from 'node:child_process';
 import fs from 'node:fs';
@@ -59,6 +72,7 @@ const COLUMNS = [
   'tool_calls', 'tool_error_pct', 'skill_loads', 'gates_total', 'gatr_pct',
   'kgr_calls', 'grep_calls', 'red_checks', 'review_agents', 'compactions', 'input_tok', 'cache_write_tok',
   'cache_read_tok', 'output_tok', 'unpriced_requests',
+  'gate_tok', 'gate_followup_pct', 'lookup_calls', 'kgr_lookup_pct', 'lookup_tok',
 ];
 
 function parseArgs(argv) {
@@ -113,6 +127,8 @@ function cost(model, u) {
   return fast * (inTok * p.in + w5m * p.in * 1.25 + w1h * p.in * 2 + cr * p.read + (u.output_tokens || 0) * p.out) / 1e6;
 }
 
+// Shell interpreters whose -c / -Command argument is itself shell code.
+const SHELLS = 'bash|sh|zsh|dash|ksh|pwsh|powershell';
 const GATE_RE = /\b(cargo (test|clippy|build|check|nextest)|npm (run )?(test|lint|typecheck|build)|pnpm (test|lint|typecheck)|npx (tsc|vitest|jest|eslint)|tsc( |$)|pytest|go (test|vet|build)|node --test|dotnet test|make (check|test)|just (check|test))\b/;
 const REVIEW_RE = /\b(review(s|er|ers|ing)?|critiques?|critics?|judges?|judging|challengers?|adversarial)\b/i;
 
@@ -125,6 +141,7 @@ const REVIEW_RE = /\b(review(s|er|ers|ing)?|critiques?|critics?|judges?|judging|
 // run is parsed in turn: the script of `bash -c '...'` / `pwsh -Command "..."`, and an
 // unescaped "$(...)". PowerShell escapes with a backtick, the shells with a backslash.
 // A heuristic over transcript text, not a shell parser.
+const SHELL_TAIL = new RegExp(String.raw`(^|[\s;&|(])(\S*[\\/])?(${SHELLS})(\.exe)?(\s+-\S+)*\s+-(l?c|Command)\s+$`, 'i');
 function shellCode(cmd, ps = false) {
   const esc = ps ? '`' : '\\';
   let s = cmd
@@ -135,7 +152,7 @@ function shellCode(cmd, ps = false) {
   let out = '';
   for (let i = 0; i < s.length; i++) {
     const c = s[i];
-    if (c === '#' && (i === 0 || /\s/.test(s[i - 1]))) {
+    if (c === '#' && (i === 0 || /\s/.test(s[i - 1]) || (/[;&|(]/.test(s[i - 1]) && s[i - 2] !== esc))) {
       while (i + 1 < s.length && s[i + 1] !== '\n') i++;
     } else if (c === "'" || c === '"') {
       let body = '';
@@ -143,7 +160,7 @@ function shellCode(cmd, ps = false) {
         if (c === '"' && s[i] === esc && i + 1 < s.length) body += s[i++];
         body += s[i];
       }
-      if (/(^|\s)-(l?c|Command)\s+$/.test(out)) { out += ` ${shellCode(body, ps)} `; continue; }
+      if (SHELL_TAIL.test(out)) { out += ` ${shellCode(body, ps)} `; continue; }
       out += body.replace(/[\s;&|]+/g, '_');
       if (c === '"') {
         const sub = ps ? /(?<!`)\$\(([^()]*)\)/g : /(?<!\\)\$\(([^()]*)\)/g;
@@ -175,6 +192,164 @@ function reviewSeats(code) {
   }
   return n;
 }
+// Shell text split into what runs. Redirections go first: an output target is written, not
+// read, so it is dropped; an input file stays as an operand; neither swallows a separator.
+// Escaped separators (\; `;) split nothing.
+const clean = (code) => code.replace(/\d?>&\d|&>\s*[^\s;&|]+/g, ' ').replace(/\d*>>?\s*[^\s;&|]+/g, ' ')
+  .replace(/<\s*([^\s;&|]+)/g, ' $1').replace(/[\\`][;&|]/g, '_');
+// Pull each balanced $(...) (and bash `...`) out of a text: the text keeps a placeholder
+// word \u0001<n>, and each body is parsed as commands of its own.
+function unnest(text, ps) {
+  const inner = [];
+  let out = '';
+  for (let i = 0; i < text.length; i++) {
+    if (text[i] === '$' && text[i + 1] === '(') {
+      let depth = 1, j = i + 2;
+      for (; j < text.length && depth; j++) { if (text[j] === '(') depth++; else if (text[j] === ')') depth--; }
+      inner.push(text.slice(i + 2, depth ? j : j - 1));
+      out += ` \u0001${inner.length - 1} `;
+      i = j - 1;
+    } else if (!ps && text[i] === '`' && text.indexOf('`', i + 1) > i) {
+      const j = text.indexOf('`', i + 1);
+      inner.push(text.slice(i + 1, j));
+      out += ` \u0001${inner.length - 1} `;
+      i = j;
+    } else out += text[i];
+  }
+  return { out, inner };
+}
+// Every command chain in a shell text, substitutions included: { text, pipes, subs }, where
+// pipes is the chain split on single | and subs the substitution bodies its text names.
+function chainsOf(code, ps = false) {
+  const chains = [];
+  const walk = (text) => {
+    const { out, inner } = unnest(text, ps);
+    for (const chain of out.split(/\|\||&&|[;&\n]/)) {
+      const subs = [...chain.matchAll(/\u0001(\d+)/g)].map((m) => inner[Number(m[1])]);
+      chains.push({ text: chain, pipes: chain.split('|').map((s) => s.trim()), subs });
+    }
+    for (const body of inner) walk(body);
+  };
+  walk(clean(code));
+  return chains;
+}
+const pipelines = (code, ps = false) => chainsOf(code, ps).map((c) => c.pipes);
+// A pipeline element with its leading subshell, keyword, VAR=x and `bash -c` prefixes removed.
+const PREFIX = new RegExp(String.raw`^([({!]\s*|(do|then|else|elif|if|while|until|time|exec|command|xargs)\s+|[A-Za-z_]\w*=\S*\s+|(\S*[\\/])?(${SHELLS})(\.exe)?\s+(-\S+\s+)*?-(l?c|Command)\s+)+`, 'i');
+const head = (seg) => seg.replace(PREFIX, '');
+const LOOKUP_CMD = /^(\S*[\\/])?(grep|egrep|rg|ag|Select-String|sls|findstr)(\.exe)?(\s|$)/i;
+const LIST_CMD = /^(\S*[\\/])?(Get-ChildItem|gci|dir|ls|find)(\.exe)?(\s|$)/i;
+// File viewers. type and gc are Get-Content only in PowerShell; in bash, type is a builtin.
+const VIEW_SH = /^(\S*[\\/])?(cat|head|tail|sed\s+-n|bat|less|more|Get-Content)(\.exe)?\s/i;
+const VIEW_PS = /^(\S*[\\/])?(cat|head|tail|Get-Content|gc|type|more)(\.exe)?\s/i;
+const isView = (seg, ps) => (ps ? VIEW_PS : VIEW_SH).test(seg);
+const KGR_QUERY = /^(\S*[\\/])?kgr(\.exe)?\s+(refs|dead|show|impact|query|symbols|skeleton|def|graph|check|orient|hotspots|slice)\b/;
+// A gatr record read (gatr last|errors|log) at command position, and a variable set from one.
+const RECORD_CMD = /^(\S*[\\/])?gatr(\.exe)?\s+(last|errors|log)\b/;
+const RECORD_VAR = /([A-Za-z_]\w*)=\$\(\s*(?:\S*[\\/])?gatr(?:\.exe)?\s+(?:last|errors|log)\b/g;
+const EDIT_TOOLS = new Set(['Edit', 'Write', 'MultiEdit', 'NotebookEdit']);
+// A .log file or glob, judged by its last path segment, so a .log directory is not one.
+const isLog = (f) => /\.log$/i.test(String(f).replace(/[\\/]+$/, '').split(/[\\/]/).pop() || '');
+
+// Does this pipeline element view or search a .log file? Options are parsed first: a
+// search's pattern is its -e/--regexp/-f/-Pattern value, else its first operand, and its
+// files come after the pattern or from -g/--glob/--include/-Path; an option that takes a
+// value (--type rust, -A 5) skips it. A viewer's operands are files, except sed's first,
+// which is its program.
+const PATTERN_OPT = /^(-e|--regexp|-f|--file|-Pattern)$/i;
+const FILE_OPT = /^(-g|--i?glob|--include|-Path|-LiteralPath|-Include)$/i;
+const VALUE_OPT = /^(-t|--type|-T|--type-not|-A|-B|-C|--context|--after-context|--before-context|-m|--max-count|-d|--max-depth|--max-filesize|-j|--threads|-M|--max-columns|--colou?rs?|--sortr?|--exclude|--exclude-dir|--encoding|-Encoding|-Context|-Exclude)$/;
+function readsLog(seg, ps) {
+  const [cmd = '', ...words] = seg.split(/\s+/).map((w) => w.replace(/[)"']+$/, '')).filter(Boolean);
+  const view = isView(seg, ps), sed = /(^|[\\/])sed(\.exe)?$/i.test(cmd);
+  if (!view && !LOOKUP_CMD.test(seg)) return false;
+  const files = [], operands = [];
+  let pattern = false;
+  for (let i = 0; i < words.length; i++) {
+    const w = words[i], eq = w.startsWith('--') ? w.indexOf('=') : -1;
+    const name = eq > 0 ? w.slice(0, eq) : w, inline = eq > 0 ? w.slice(eq + 1) : null;
+    if (sed ? /^(-e|-f|--expression|--file)$/.test(name) : !view && PATTERN_OPT.test(name)) { pattern = true; if (inline === null) i++; }
+    else if (!view && /^-e./.test(w)) pattern = true;
+    else if (!view && FILE_OPT.test(name)) { const v = inline ?? words[++i]; if (v) files.push(v); }
+    else if ((view ? (sed ? /^$/ : /^(-n|-c|--lines|--bytes)$/) : VALUE_OPT).test(name)) { if (inline === null) i++; }
+    else if (!w.startsWith('-')) operands.push(w);
+  }
+  const named = view && !sed ? operands : operands.slice(pattern ? 0 : 1);
+  return [...files, ...named].some(isLog);
+}
+
+// The gate command a call runs, normalized so a rerun under a different tag, tail, quoting
+// or redirect still compares equal: the command after gatr's `--`, else the gate element.
+// Read from the raw command: a `bash -c '...'` runs its body; a quoted argument loses its
+// quotes, and one holding spaces or separators is kept whole (URI-encoded), so
+// "unit or slow" stays one argument; comments and continuations go.
+const SHELL_C = new RegExp(String.raw`(\S*[\\/])?(${SHELLS})(\.exe)?((?:\s+-\S+)*?)\s+-(l?c|Command)\s+(?:'([^']*)'|"((?:[^"\\]|\\.)*)")`, 'gi');
+function gateKey(cmd) {
+  const c = cmd.replace(/\\\r?\n/g, ' ').replace(SHELL_C, (...m) => ` ${m[6] ?? m[7]} `)
+    .replace(/'([^']*)'|"((?:[^"\\]|\\.)*)"/g, (q, a, b) => { const v = a ?? b; return v === '' || /[\s;&|<>()`$#]/.test(v) ? encodeURIComponent(v) : v; })
+    .replace(/(^|\s)#[^\n]*/g, ' ')
+    .replace(/\d*>>?&?\s*[^\s;&|]+|&>\s*[^\s;&|]+|<\s*[^\s;&|]+/g, ' ');
+  const norm = (s) => s.replace(/\s+/g, ' ').trim();
+  const g = c.match(/(^|[\s;&|(])gatr\s+run\b[^;&|\n]*?\s--\s+([^;&|\n]*)/);
+  if (g) return norm(g[2]);
+  for (const p of pipelines(c)) if (GATE_RE.test(head(p[0]))) return norm(head(p[0]));
+  return null;
+}
+
+// What one tool call is to the tool-economics columns.
+function classify(name, input, code, ps) {
+  if (name === 'Grep') return isLog(String(input.path || '')) || isLog(String(input.glob || '')) ? { readBack: true } : { lookup: true };
+  if (name === 'Read') return { readBack: isLog(String(input.file_path || '')), view: true };
+  if (code === null) return {};
+  // A chain that reads a gatr record (piped from one, fed one by $(...), or through a
+  // variable set from one) searches the log it names, not the code.
+  const vars = [...code.matchAll(RECORD_VAR)].map((m) => m[1]);
+  const fromRecord = (chain) => RECORD_CMD.test(head(chain.pipes[0]))
+    || chain.subs.some((b) => RECORD_CMD.test(head(b.trim())))
+    || vars.some((v) => new RegExp(`\\$\\{?${v}\\b`).test(chain.text));
+  let readBack = false, lookup = false, kgr = false, view = false;
+  for (const chain of chainsOf(code, ps)) {
+    const p = chain.pipes, first = head(p[0]);
+    if (RECORD_CMD.test(first)) { readBack = true; continue; }
+    if (p.some((s) => readsLog(head(s), ps))) { readBack = true; if (isView(first, ps)) view = true; continue; }
+    if (KGR_QUERY.test(first)) kgr = true;
+    else if (LOOKUP_CMD.test(first) || (LIST_CMD.test(first) && p.slice(1).some((s) => LOOKUP_CMD.test(head(s))))) { if (fromRecord(chain)) readBack = true; else lookup = true; }
+    else if (isView(first, ps)) { view = true; if (fromRecord(chain)) readBack = true; }
+  }
+  return { readBack, lookup: lookup || kgr, kgr, view: view && !lookup && !kgr };
+}
+
+// Fold one transcript's ordered calls into gate and lookup episodes on their weeks.
+function tally(seq, resChars) {
+  const size = (it) => resChars.get(it.id) || 0;
+  seq.forEach((it, k) => {
+    if (it.gate) {
+      // Read-backs in the six calls after the gate, up to the next edit or gate, add tokens.
+      let chars = size(it), follow = false;
+      for (let j = k + 1; j < seq.length && j <= k + 6; j++) {
+        const n = seq[j];
+        if (EDIT_TOOLS.has(n.name) || n.gate) break;
+        if (n.readBack) { chars += size(n); follow = true; }
+      }
+      // A rerun of the same gate command before the next edit, however far, is a follow-up.
+      for (let j = k + 1; !follow && it.key && j < seq.length && !EDIT_TOOLS.has(seq[j].name); j++) {
+        if (seq[j].gate && seq[j].key === it.key) follow = true;
+      }
+      it.w.gateChars += chars;
+      if (follow) it.w.gateFollow++;
+    }
+    if (it.lookup) {
+      let chars = size(it);
+      for (let j = k + 1; j < seq.length && j <= k + 8 && seq[j].view; j++) chars += size(seq[j]);
+      it.w.lookups++; it.w.lookupChars += chars;
+      if (it.kgr) it.w.kgrLookups++;
+    }
+  });
+}
+
+const resultChars = (c) => (typeof c === 'string' ? c.length
+  : Array.isArray(c) ? c.reduce((n, b) => n + (b?.type === 'text' ? String(b.text || '').length : 0), 0) : 0);
+
 const NOT_HUMAN = /^(<|Another Claude session|\[Request interrupted|Caveat:|This session is being continued)/;
 
 function humanText(content) {
@@ -187,7 +362,8 @@ function humanText(content) {
 
 function newWeek() {
   return { sessions: new Set(), prompts: 0, requests: 0, cost: 0, subCost: 0, out: 0, inTok: 0, cw: 0, cr: 0,
-    toolCalls: 0, toolErrors: 0, skills: 0, gates: 0, gatr: 0, kgr: 0, grep: 0, red: 0, review: 0, compactions: 0, unpriced: 0 };
+    toolCalls: 0, toolErrors: 0, skills: 0, gates: 0, gatr: 0, kgr: 0, grep: 0, red: 0, review: 0, compactions: 0, unpriced: 0,
+    gateChars: 0, gateFollow: 0, lookups: 0, kgrLookups: 0, lookupChars: 0 };
 }
 
 function collect(files, since) {
@@ -199,6 +375,8 @@ function collect(files, since) {
     const sub = /[\\/]subagents[\\/]|[\\/]agent-[^\\/]*\.jsonl$/.test(file);
     let text;
     try { text = fs.readFileSync(file, 'utf8'); } catch { continue; }
+    const seq = [];
+    const resChars = new Map();
     for (const line of text.split('\n')) {
       if (!line || (!line.includes('"assistant"') && !line.includes('"user"'))) continue;
       let o;
@@ -230,21 +408,27 @@ function collect(files, since) {
           if (b.name === 'Skill') w.skills++;
           if (b.name === 'Grep') w.grep++;
           if ((b.name === 'Agent' || b.name === 'Task') && REVIEW_RE.test(String(inp.description || ''))) w.review++;
+          let code = null, gate = false;
           if (b.name === 'Bash' || b.name === 'PowerShell') {
             const cmd = String(inp.command || '');
-            if (/(^|[\s;&|(])gatr\s+run\b/.test(cmd)) { w.gates++; w.gatr++; }
-            else if (GATE_RE.test(cmd)) w.gates++;
+            if (/(^|[\s;&|(])gatr\s+run\b/.test(cmd)) { w.gates++; w.gatr++; gate = true; }
+            else if (GATE_RE.test(cmd)) { w.gates++; gate = true; }
             if (/(^|[\s;&|(])kgr\s+[a-z]/.test(cmd)) w.kgr++;
             if (/(^|[\s;&|(])(grep|rg)\s/.test(cmd)) w.grep++;
-            const code = shellCode(cmd, b.name === 'PowerShell');
+            code = shellCode(cmd, b.name === 'PowerShell');
             w.red += redRuns(code);
             // Inside a subagent this is a codex-seat wrapper's run; the parent's Agent call counted it.
             if (!sub && !o.isSidechain) w.review += reviewSeats(code);
           }
+          seq.push({ id: b.id, name: b.name, w, gate, key: gate ? gateKey(String(inp.command || '')) : null, ...classify(b.name, inp, code, b.name === 'PowerShell') });
         }
       } else if (o.type === 'user') {
         if (Array.isArray(msg.content)) {
-          for (const b of msg.content) if (b?.type === 'tool_result' && b.is_error) w.toolErrors++;
+          for (const b of msg.content) {
+            if (b?.type !== 'tool_result') continue;
+            if (b.is_error) w.toolErrors++;
+            resChars.set(b.tool_use_id, resultChars(b.content));
+          }
         }
         if (o.isCompactSummary) { w.compactions++; continue; }
         if (sub || o.isSidechain || o.isMeta) continue;
@@ -252,6 +436,7 @@ function collect(files, since) {
         if (t && !NOT_HUMAN.test(t.trimStart())) { w.prompts++; if (o.sessionId) w.sessions.add(o.sessionId); }
       }
     }
+    tally(seq, resChars);
   }
   return { weeks, unknownModels };
 }
@@ -275,6 +460,9 @@ function derive(wk, osName, w) {
       gates_total: w.gates, gatr_pct: pct(w.gatr, w.gates), kgr_calls: w.kgr, grep_calls: w.grep,
       red_checks: w.red, review_agents: w.review, compactions: w.compactions, input_tok: w.inTok, cache_write_tok: w.cw, cache_read_tok: w.cr,
       output_tok: w.out, unpriced_requests: w.unpriced,
+      gate_tok: w.gates ? Math.round(w.gateChars / 4 / w.gates) : 0, gate_followup_pct: pct(w.gateFollow, w.gates),
+      lookup_calls: w.lookups, kgr_lookup_pct: pct(w.kgrLookups, w.lookups),
+      lookup_tok: w.lookups ? Math.round(w.lookupChars / 4 / w.lookups) : 0,
     };
 }
 
@@ -305,6 +493,9 @@ function combine(dir) {
       w.skills += n('skill_loads'); w.gates += n('gates_total'); w.gatr += Math.round((n('gates_total') * n('gatr_pct')) / 100);
       w.kgr += n('kgr_calls'); w.grep += n('grep_calls');
       w.red += n('red_checks'); w.review += n('review_agents'); w.compactions += n('compactions'); w.unpriced += n('unpriced_requests');
+      w.gateChars += n('gate_tok') * 4 * n('gates_total'); w.gateFollow += Math.round((n('gates_total') * n('gate_followup_pct')) / 100);
+      w.lookups += n('lookup_calls'); w.kgrLookups += Math.round((n('lookup_calls') * n('kgr_lookup_pct')) / 100);
+      w.lookupChars += n('lookup_tok') * 4 * n('lookup_calls');
       by.set(r.week, w);
     }
   }
@@ -354,11 +545,13 @@ function record(rows, file) {
 
 function printTable(rows, withOs = false) {
   const show = ['week', 'sessions', 'prompts', 'cost_usd', 'usd_per_prompt', 'requests_per_prompt', 'cache_hit_pct',
-    'subagent_cost_pct', 'tool_error_pct', 'skill_loads', 'gates_total', 'gatr_pct', 'kgr_calls', 'grep_calls', 'red_checks', 'review_agents', 'compactions'];
-  const head = ['week', 'sess', 'prompts', '$', '$/prompt', 'req/prompt', 'cache%', 'subagent$%', 'toolerr%', 'skills', 'gates', 'gatr%', 'kgr', 'grep', 'red', 'review', 'compact'];
-  if (withOs) { show.splice(1, 0, 'os'); head.splice(1, 0, 'machines'); }
-  const cells = [head, ...rows.map((r) => show.map((c) => String(r[c])))];
-  const width = head.map((_, i) => Math.max(...cells.map((row) => row[i].length)));
+    'subagent_cost_pct', 'tool_error_pct', 'skill_loads', 'gates_total', 'gatr_pct', 'kgr_calls', 'grep_calls', 'red_checks', 'review_agents', 'compactions',
+    'gate_tok', 'gate_followup_pct', 'lookup_calls', 'kgr_lookup_pct', 'lookup_tok'];
+  const titles = ['week', 'sess', 'prompts', '$', '$/prompt', 'req/prompt', 'cache%', 'subagent$%', 'toolerr%', 'skills', 'gates', 'gatr%', 'kgr', 'grep', 'red', 'review', 'compact',
+    'gate_tok', 'followup%', 'lookups', 'kgr%', 'lookup_tok'];
+  if (withOs) { show.splice(1, 0, 'os'); titles.splice(1, 0, 'machines'); }
+  const cells = [titles, ...rows.map((r) => show.map((c) => String(r[c] ?? '')))];
+  const width = titles.map((_, i) => Math.max(...cells.map((row) => row[i].length)));
   for (const row of cells) console.log(row.map((c, i) => (i ? c.padStart(width[i]) : c.padEnd(width[i]))).join('  '));
 }
 

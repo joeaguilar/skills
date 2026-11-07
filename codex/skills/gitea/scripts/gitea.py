@@ -658,7 +658,49 @@ def _is_missing_ref(f, ref):
     return not any(ln.startswith(("fatal:", "error:")) for ln in lines[:-1])
 
 
-def cmd_ship(cfg, args):
+def _tmp_prefixes(r):
+    return (f"refs/ship-tmp/{r}/heads/", f"refs/ship-tmp/{r}/tags/")
+
+
+def _clear_tmp(r):
+    """Delete ship's temporary tracking namespace for remote r (best effort, never raises)."""
+    try:
+        refs = []
+        for pre in _tmp_prefixes(r):
+            refs += _git("for-each-ref", "--format=%(refname)", pre).stdout.split()
+        if refs:
+            _git("update-ref", "-z", "--stdin", input="".join(f"delete {x}\0\0" for x in refs))
+    except Exception:
+        pass
+
+
+def _remote_tips(r, created):
+    """Commits a destination already has: fetch all its branches and tags into refs/ship-tmp/<r>/ and
+    return their commit shas (tags peeled). The namespace is removed by cmd_ship when it exits."""
+    _clear_tmp(r)  # leftovers of a killed run must not count as "already there"
+    created.append(r)
+    f = _git("-c", f"remote.{r}.followRemoteHEAD=never", "-c", "transfer.bundleURI=false",
+             "-c", "fetch.bundleURI=", "fetch", "--porcelain", "--no-tags", "--no-prune", "--no-prune-tags",
+             "--recurse-submodules=no", "--refmap=", r,
+             f"+refs/heads/*:refs/ship-tmp/{r}/heads/*", f"+refs/tags/*:refs/ship-tmp/{r}/tags/*")
+    if f.returncode != 0:
+        die(f"git fetch {r} (all branches and tags) failed: {f.stderr.strip()}", 2)
+    bad = [ln for ln in f.stdout.splitlines() if ln.strip() and ln[:1] not in (" ", "+", "*", "=", "t")]
+    if bad:
+        die(f"git fetch {r} (all branches and tags) rejected some refs: {bad[0]}", 2)
+    fmt = "--format=%(objecttype) %(objectname) %(*objecttype) %(*objectname)"
+    out = _need("for-each-ref", fmt, *_tmp_prefixes(r))
+    tips = set()
+    for ln in out.splitlines():
+        kind, obj, pkind, pobj = (ln.split(" ") + ["", "", "", ""])[:4]
+        if kind == "commit":
+            tips.add(obj)
+        elif kind == "tag" and pkind == "commit":
+            tips.add(pobj)
+    return tips
+
+
+def _ship(cfg, args, created):
     """Fetch the branch from each remote, refuse if behind or wrongly attributed, then push one snapshot."""
     if _git("rev-parse", "--git-dir").returncode != 0:
         die("not inside a git repo", 2)
@@ -778,16 +820,8 @@ def cmd_ship(cfg, args):
     plan, behind_any = [], []
     for r in remotes:
         old = sha_of[r]
-        # what this destination already has: every advertised sha (heads, tags, peeled tags) that exists here
-        adv = _need("ls-remote", r)
-        shas = list(dict.fromkeys(ln.split("\t")[0] for ln in adv.splitlines() if "\t" in ln))
-        have = set([old] if old else [])
-        if shas:
-            chk = _git("cat-file", "--batch-check", input="".join(f"{x}^{{commit}}\n" for x in shas))
-            rows = chk.stdout.splitlines()
-            if chk.returncode != 0 or len(rows) != len(shas):
-                die(f"git cat-file failed while checking what {r} already has: {chk.stderr.strip()}", 2)
-            have.update(x for x, row in zip(shas, rows) if not row.endswith(" missing"))
+        # what this destination already has: the branch plus every branch and tag it holds
+        have = set([old] if old else []) | _remote_tips(r, created)
         revs = tip + "\n" + "".join(f"^{x}\n" for x in sorted(have))
         ahead = _git("rev-list", "--stdin", input=revs)
         if ahead.returncode != 0:
@@ -851,7 +885,7 @@ def cmd_ship(cfg, args):
         return 1
 
     # h. push the snapshot
-    todo = [(r, old, ahead) for r, old, ahead in plan if old is None or ahead]
+    todo = [(r, old, ahead) for r, old, ahead in plan if old is None or old != tip]  # the branch alone decides
     if not todo:
         print(f"nothing to push: {branch} is level with {', '.join(remotes)}")
         return 0
@@ -892,6 +926,15 @@ def cmd_ship(cfg, args):
         if r not in [t[0] for t in todo]:
             print(f"{r}: up to date")
     return 2 if failed else 0
+
+
+def cmd_ship(cfg, args):
+    created = []
+    try:
+        return _ship(cfg, args, created)
+    finally:
+        for r in created:
+            _clear_tmp(r)
 
 
 # --- CLI ---------------------------------------------------------------------

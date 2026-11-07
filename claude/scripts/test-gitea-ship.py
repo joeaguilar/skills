@@ -673,7 +673,7 @@ class TestShip(ShipCase):
         real, fetches = mod.run, []
 
         def spy(cmd, *a, **k):
-            if "fetch" in cmd:
+            if "fetch" in cmd and not any("ship-tmp" in x for x in cmd):
                 fetches.append(cmd)
                 return subprocess.CompletedProcess(cmd, 128, "", "fatal: spy")
             return real(cmd, *a, **k)
@@ -786,7 +786,7 @@ class TestShip(ShipCase):
         warn = "Warning: Permanently added 'host' (ED25519) to the list of known hosts."
 
         def fake(cmd, *a, **k):
-            if "fetch" in cmd:
+            if "fetch" in cmd and not any("ship-tmp" in x for x in cmd):
                 return subprocess.CompletedProcess(
                     cmd, 128, "", warn + chr(10) + "fatal: couldn" + chr(39) + "t find remote ref refs/heads/feature" + chr(10))
             return real(cmd, *a, **k)
@@ -826,7 +826,7 @@ class TestShip(ShipCase):
         real, pushed = mod.run, []
 
         def fake(cmd, *a, **k):
-            if "fetch" in cmd:
+            if "fetch" in cmd and not any("ship-tmp" in x for x in cmd):
                 return subprocess.CompletedProcess(cmd, 0, stdout, "")
             if "push" in cmd:
                 pushed.append(cmd)
@@ -926,6 +926,62 @@ class TestShip(ShipCase):
         r = self.ship()
         self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
         self.assertEqual(self.remote_head(paths["origin"]), self.head())
+
+    # --- review round 13 ----------------------------------------------------
+
+    def _tmp_refs(self):
+        return self.git("for-each-ref", "refs/ship-tmp").stdout
+
+    def test_push_decision_comes_from_the_branch_not_the_audit_set(self):
+        paths = self.seed("origin", "backup")
+        self.commit("T")
+        self.git("push", "-q", "backup", "main:staging")  # backup already holds T, but not on main
+        r = self.ship()
+        self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
+        self.assertEqual(self.remote_head(paths["origin"]), self.head())
+        self.assertEqual(self.remote_head(paths["backup"]), self.head())
+
+    def test_advanced_remote_branch_does_not_make_shared_history_foreign(self):
+        alice = dict(GIT_AUTHOR_NAME="Alice", GIT_AUTHOR_EMAIL="alice@example.com",
+                     GIT_COMMITTER_NAME="Alice", GIT_COMMITTER_EMAIL="alice@example.com")
+        self.commit("alice work", **alice)
+        paths = self.seed("origin")
+        other = self.other_clone(paths["origin"])
+        self.commit("B moves main on", repo=other, **alice)
+        self.git("push", "-q", "origin", "HEAD:main", cwd=other)  # origin/main advanced; never fetched here
+        self.git("checkout", "-q", "-b", "feature")
+        self.commit("F")
+        r = self.ship("--branch", "feature", "--remote", "origin")
+        self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
+        self.assertEqual(self.remote_head(paths["origin"], "feature"), self.head())
+        self.assertEqual(self._tmp_refs(), "")
+
+    def test_no_temporary_refs_survive_a_push_a_refusal_or_an_error(self):
+        paths = self.seed("origin")
+        # a stale leftover from a killed run must not hide a foreign commit, and must be cleaned up
+        self.commit("foreign", GIT_AUTHOR_NAME="Someone Else", GIT_AUTHOR_EMAIL="else@example.com")
+        foreign = self.head()
+        self.git("update-ref", "refs/ship-tmp/origin/heads/junk", foreign)
+        r = self.ship()
+        self.assertEqual(r.returncode, 1, r.stdout + r.stderr)
+        self.assertIn(foreign[:7], r.stdout + r.stderr)
+        self.assertEqual(self._tmp_refs(), "")
+        # a push that goes through
+        self.git("reset", "-q", "--hard", "HEAD~1")
+        self.commit("clean")
+        r = self.ship()
+        self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
+        self.assertEqual(self._tmp_refs(), "")
+        # a push the remote rejects (exit 2)
+        hook = paths["origin"] / "hooks" / "pre-receive"
+        hook.write_text("#!/bin/sh" + chr(10) + "exit 1" + chr(10), encoding="utf-8")
+        hook.chmod(0o755)
+        subprocess.run(["git", "config", "core.hooksPath", str(hook.parent)], cwd=paths["origin"],
+                       env=self.env, check=True)
+        self.commit("rejected")
+        r = self.ship()
+        self.assertEqual(r.returncode, 2, r.stdout + r.stderr)
+        self.assertEqual(self._tmp_refs(), "")
 
 
 if __name__ == "__main__":

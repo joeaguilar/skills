@@ -34,5 +34,9 @@
   (where X is defined or used, whether it is dead, what depends on a file, a tour
   of the repo) with kgr first; grep is for strings, comments and languages kgr
   does not parse (the `kgr` skill has the details).
+- **Read big files in ranges:** for a source file longer than a few hundred lines,
+  read only the part you need (`Read` with `offset`/`limit`, or `kgr skeleton` /
+  `kgr show` for its outline or one definition), and never `cat` a source file. A
+  whole-file dump stays in context and is re-read on every later turn.
 - **Close with actions:** end substantive replies with open questions and pending
   decisions as their own short list, separate from the analysis.

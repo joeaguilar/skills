@@ -701,8 +701,8 @@ class TestShip(ShipCase):
         before = self.head()
         self.git("config", "remote.origin.fetch", "+refs/*:refs/*")
         r = self.ship("--branch", "main", "--remote", "origin")
-        self.assertEqual(r.returncode, 1, r.stdout + r.stderr)
-        self.assertIn("behind", r.stdout + r.stderr)
+        self.assertEqual(r.returncode, 2, r.stdout + r.stderr)  # refused before any fetch
+        self.assertIn("refs/*", r.stdout + r.stderr)
         self.assertEqual(self.git("rev-parse", "refs/heads/main").stdout.strip(), before)
 
     # --- review round 9: config that widens fetch or push --------------------
@@ -758,6 +758,62 @@ class TestShip(ShipCase):
         self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
         for ref in ("refs/remotes/origin/other", "refs/tags/stale-tag"):
             self.assertEqual(self.git("rev-parse", "-q", "--verify", ref, check=False).returncode, 0, ref)
+
+    # --- review round 10 ----------------------------------------------------
+
+    def test_fetch_refspec_mapping_outside_remote_namespace_refuses(self):
+        paths = self.seed("origin")
+        self.git("branch", "vendor-main")
+        before = self.git("rev-parse", "refs/heads/vendor-main").stdout.strip()
+        self.git("config", "remote.origin.fetch", "+refs/heads/main:refs/heads/vendor-main")
+        self.commit("second")
+        r = self.ship()
+        self.assertEqual(r.returncode, 2, r.stdout + r.stderr)
+        self.assertIn("refs/heads/vendor-main", r.stdout + r.stderr)
+        self.assertEqual(self.git("rev-parse", "refs/heads/vendor-main").stdout.strip(), before)
+        self.assertNotEqual(self.remote_head(paths["origin"]), self.head())
+
+    def test_known_hosts_warning_before_the_missing_ref_diagnostic_is_absence(self):
+        import importlib.util
+        from unittest import mock
+        spec = importlib.util.spec_from_file_location("gitea_under_test4", GITEA)
+        mod = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(mod)
+        paths = self.seed("origin")
+        self.git("checkout", "-q", "-b", "feature")
+        self.commit("feature work")
+        real = mod.run
+        warn = "Warning: Permanently added 'host' (ED25519) to the list of known hosts."
+
+        def fake(cmd, *a, **k):
+            if "fetch" in cmd:
+                return subprocess.CompletedProcess(
+                    cmd, 128, "", warn + chr(10) + "fatal: couldn" + chr(39) + "t find remote ref refs/heads/feature" + chr(10))
+            return real(cmd, *a, **k)
+
+        cwd = os.getcwd()
+        os.chdir(self.repo)
+        try:
+            with mock.patch.dict(os.environ, self.env, clear=True), mock.patch.object(mod, "run", fake):
+                try:
+                    code = mod.main(["ship", "--remote", "origin"])
+                except SystemExit as e:
+                    code = e.code
+        finally:
+            os.chdir(cwd)
+        self.assertEqual(code, 0)
+        self.assertEqual(self.remote_head(paths["origin"], "feature"), self.head())
+
+    def test_fetch_bundle_uri_cannot_import_bundle_refs(self):
+        paths = self.seed("origin")
+        self.commit("second")
+        bundle = self.tmp / "b.bundle"
+        self.git("bundle", "create", str(bundle), "main")
+        self.git("config", "--local", "fetch.bundleURI", bundle.as_uri())
+        r = self.ship("--dry-run")
+        listing = self.git("for-each-ref", "refs/bundles").stdout
+        self.assertEqual(listing, "", "bundle refs appeared: " + listing)
+        self.assertIn(r.returncode, (0, 2), r.stdout + r.stderr)
 
 
 if __name__ == "__main__":

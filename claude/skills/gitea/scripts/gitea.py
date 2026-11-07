@@ -648,6 +648,16 @@ def _config(*a):
     return r.stdout.strip()
 
 
+def _is_missing_ref(f, ref):
+    """True when a failed fetch means only "the remote has no such branch": exit 128, the last non-empty
+    stderr line is exactly the C-locale diagnostic, and no other line is a fatal: or error: line (earlier
+    lines such as OpenSSH's known-hosts warning are fine)."""
+    lines = [ln for ln in f.stderr.splitlines() if ln.strip()]
+    if f.returncode != 128 or not lines or lines[-1] != f"fatal: couldn't find remote ref {ref}":
+        return False
+    return not any(ln.startswith(("fatal:", "error:")) for ln in lines[:-1])
+
+
 def cmd_ship(cfg, args):
     """Fetch the branch from each remote, refuse if behind or wrongly attributed, then push one snapshot."""
     if _git("rev-parse", "--git-dir").returncode != 0:
@@ -696,11 +706,20 @@ def cmd_ship(cfg, args):
     for r in candidates:
         cfgd = _git("config", "-z", "--get-all", f"remote.{r}.url")
         raw = cfgd.stdout.split("\0")[:-1] if cfgd.returncode == 0 else []
+        specs = _git("config", "-z", "--get-all", f"remote.{r}.fetch")
+        specs = specs.stdout.split("\0")[:-1] if specs.returncode == 0 else []
         info[r] = (raw, _raw("remote", "get-url", r), _raw("remote", "get-url", "--all", r),
-                   _raw("remote", "get-url", "--all", "--push", r))
+                   _raw("remote", "get-url", "--all", "--push", r), specs)
 
     def vouch(r):
-        raw, _, eff, push = info[r]
+        raw, _, eff, push, specs = info[r]
+        for spec in specs:  # a successful push updates local refs through these, so keep them in refs/remotes/<r>/
+            if spec.startswith("^"):
+                continue
+            dst = spec.lstrip("+").partition(":")[2]
+            if dst and not dst.startswith(f"refs/remotes/{r}/"):
+                die(f"remote {r}: fetch refspec {spec} maps outside refs/remotes/{r}/; a push would update "
+                    f"those local refs too", 2)
         if len(raw) != 1 or eff != raw[0] or push != raw[0]:
             die(f"remote {r}: a selected remote must use one plain URL, with no rewrite and no different push "
                 f"URL (pushurl, several urls, insteadOf); ship plans against fetched state and cannot vouch "
@@ -726,11 +745,11 @@ def cmd_ship(cfg, args):
         # remote.<r>.promisor and partialclonefilter (object filtering only), fetch.recurseSubmodules' per-
         # submodule overrides (covered by the command line).
         f = _git("-c", f"remote.{r}.followRemoteHEAD=never", "-c", "transfer.bundleURI=false",
-                 "fetch", "--no-tags", "--no-prune", "--no-prune-tags", "--recurse-submodules=no",
+                 "-c", "fetch.bundleURI=", "fetch", "--no-tags", "--no-prune", "--no-prune-tags", "--recurse-submodules=no",
                  "--refmap=", r, f"+{ref}:{track}")
         if f.returncode == 0:
             sha_of[r] = _need("rev-parse", "--verify", track)
-        elif f.stderr in (f"fatal: couldn't find remote ref {ref}", f"fatal: couldn't find remote ref {ref}\n"):
+        elif _is_missing_ref(f, ref):
             sha_of[r] = None
         else:
             die(f"git fetch {r} failed: {f.stderr.strip()}", 2)

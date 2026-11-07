@@ -615,7 +615,7 @@ def cmd_api(cfg, args):
 def _git(*a, **kw):
     """git with replacement objects off (so `git replace` cannot change what ship audits) and a C
     locale (so the diagnostics ship matches on are the English ones)."""
-    env = dict(os.environ, LC_ALL="C", LANG="C", LANGUAGE="")
+    env = dict(os.environ, LC_ALL="C", LANG="C", LANGUAGE="", GIT_GRAFT_FILE=os.devnull)
     return run(["git", "--no-replace-objects", *a], env=env, **kw)
 
 
@@ -625,6 +625,17 @@ def _need(*a):
     if r.returncode != 0:
         die(f"git {' '.join(a[:2])} failed: {r.stderr.strip()}", 2)
     return r.stdout.strip()
+
+
+def _raw(*a):
+    """Like _need but unstripped, minus the one trailing record terminator (URLs may end in spaces)."""
+    r = _git(*a)
+    if r.returncode != 0:
+        die(f"git {' '.join(a[:2])} failed: {r.stderr.strip()}", 2)
+    out = r.stdout
+    if out.endswith("\r\n"):
+        return out[:-2]
+    return out[:-1] if out.endswith("\n") else out
 
 
 def _config(*a):
@@ -641,6 +652,10 @@ def cmd_ship(cfg, args):
     """Fetch the branch from each remote, refuse if behind or wrongly attributed, then push one snapshot."""
     if _git("rev-parse", "--git-dir").returncode != 0:
         die("not inside a git repo", 2)
+    grafts = os.path.join(_need("rev-parse", "--git-dir"), "info", "grafts")  # not --git-path: GIT_GRAFT_FILE moves that
+    if os.path.isfile(grafts) and os.path.getsize(grafts) > 0:
+        die(f"{grafts} is not empty: grafts hide ancestors from the audit; remove it or run "
+            f"git replace --convert-graft-file", 2)
 
     # a. the branch, as a full ref (no abbreviation, so tags and expressions cannot stand in)
     shallow = _need("rev-parse", "--is-shallow-repository")
@@ -673,12 +688,22 @@ def cmd_ship(cfg, args):
             die(f"no such remote: {', '.join(unknown)} (have: {', '.join(existing) or 'none'})", 2)
     else:
         candidates = existing
+    # freeze every remote's URLs now; nothing that runs during a fetch or push can move the destination
+    info = {}  # remote -> (configured urls, effective fetch url, all effective fetch urls, all push urls)
+    for r in candidates:
+        cfgd = _git("config", "-z", "--get-all", f"remote.{r}.url")
+        raw = cfgd.stdout.split("\0")[:-1] if cfgd.returncode == 0 else []
+        info[r] = (raw, _raw("remote", "get-url", r), _raw("remote", "get-url", "--all", r),
+                   _raw("remote", "get-url", "--all", "--push", r))
     sha_of = {}  # remote -> SHA of its branch, or None when it lacks the branch
     for r in candidates:
-        f = _git("fetch", "--no-tags", r, f"+{ref}:refs/remotes/{r}/{branch}")
+        track = f"refs/remotes/{r}/{branch}"
+        if _git("symbolic-ref", "-q", track).returncode == 0:
+            die(f"{track} is a symbolic ref; a fetch would write through it. Delete it and run ship again", 2)
+        f = _git("fetch", "--no-tags", info[r][1], f"+{ref}:{track}")
         if f.returncode == 0:
-            sha_of[r] = _need("rev-parse", "--verify", f"refs/remotes/{r}/{branch}")
-        elif any(ln.strip() == f"fatal: couldn't find remote ref {ref}" for ln in f.stderr.splitlines()):
+            sha_of[r] = _need("rev-parse", "--verify", track)
+        elif f.stderr in (f"fatal: couldn't find remote ref {ref}", f"fatal: couldn't find remote ref {ref}\n"):
             sha_of[r] = None
         else:
             die(f"git fetch {r} failed: {f.stderr.strip()}", 2)
@@ -688,14 +713,14 @@ def cmd_ship(cfg, args):
     if not remotes:
         print(f"gitea: no remote has branch {branch}; name the target with --remote NAME", file=sys.stderr)
         return 1
-    dest = {}  # remote -> the one URL validated here; the push goes to it, not to the (mutable) name
+    dest = {}  # remote -> the one plain URL; the push goes to it, never to the (mutable) remote name
     for r in remotes:
-        urls = _need("remote", "get-url", "--all", r).splitlines()
-        push = _need("remote", "get-url", "--all", "--push", r).splitlines()
-        if len(urls) != 1 or push != urls:
-            die(f"remote {r}: push destination is not its single fetch url (pushurl, several urls or "
-                f"pushInsteadOf); ship plans against fetched state and cannot vouch for it", 2)
-        dest[r] = urls[0]
+        raw, _, eff, push = info[r]
+        if len(raw) != 1 or eff != raw[0] or push != raw[0]:
+            die(f"remote {r}: a selected remote must use one plain URL, with no rewrite and no different push "
+                f"URL (pushurl, several urls, insteadOf); ship plans against fetched state and cannot vouch "
+                f"for another destination", 2)
+        dest[r] = raw[0]
 
     # e. plan from the snapshot SHAs only; every behind check happens before the first push
     plan, behind_any = [], []
@@ -781,7 +806,7 @@ def cmd_ship(cfg, args):
             note(p.stderr.strip())
         else:
             print(f"{r}: {(old[:7] + '..' + new) if old else 'new branch ' + branch + ' at ' + new}")
-            if _git("update-ref", f"refs/remotes/{r}/{branch}", tip).returncode != 0:
+            if _git("update-ref", "--no-deref", f"refs/remotes/{r}/{branch}", tip).returncode != 0:
                 note(f"gitea: warning: could not update refs/remotes/{r}/{branch}")
     for r in remotes:
         if r not in [t[0] for t in todo]:

@@ -462,6 +462,107 @@ class TestShip(ShipCase):
         self.assertEqual(r.returncode, 2, r.stdout + r.stderr)
         self.assertNotEqual(self.remote_head(paths["origin"]), self.head())
 
+    # --- review round 4 -----------------------------------------------------
+
+    def test_grafts_file_refuses(self):
+        paths = self.seed("origin")
+        self.commit("foreign", GIT_AUTHOR_NAME="Someone Else", GIT_AUTHOR_EMAIL="else@example.com")
+        self.commit("clean G")
+        g = self.head()
+        grafts = self.repo / ".git" / "info" / "grafts"
+        grafts.parent.mkdir(exist_ok=True)
+        grafts.write_text(g + chr(10), encoding="utf-8")  # G becomes parentless: F is hidden
+        r = self.ship()
+        self.assertEqual(r.returncode, 2, r.stdout + r.stderr)
+        self.assertNotEqual(self.remote_head(paths["origin"]), g)
+
+    def test_chained_insteadof_rewrite_refuses(self):
+        paths = self.seed("origin")
+        y = self.bare("rewrite-y")
+        z = self.bare("rewrite-z")
+        self.git("config", f"url.{y}.insteadOf", str(paths["origin"]))
+        self.git("config", f"url.{z}.insteadOf", str(y))
+        self.commit("second")
+        r = self.ship("--remote", "origin")
+        self.assertEqual(r.returncode, 2, r.stdout + r.stderr)
+        for bare in (y, z):
+            self.assertIsNone(self.remote_head(bare))
+
+    def test_symbolic_tracking_ref_refuses(self):
+        paths = self.seed("origin")
+        other = self.other_clone(paths["origin"])
+        self.git("checkout", "-q", "-b", "feature", cwd=other)
+        self.commit("remote feature", repo=other)
+        self.git("push", "-q", "origin", "feature", cwd=other)
+        self.git("checkout", "-q", "-b", "feature")
+        self.commit("local feature")
+        main_before = self.git("rev-parse", "refs/heads/main").stdout.strip()
+        self.git("symbolic-ref", "refs/remotes/origin/feature", "refs/heads/main")
+        r = self.ship("--remote", "origin")
+        self.assertEqual(r.returncode, 2, r.stdout + r.stderr)
+        self.assertEqual(self.git("rev-parse", "refs/heads/main").stdout.strip(), main_before)
+
+    def test_destination_is_frozen_before_the_fetch(self):
+        paths = self.seed("origin")
+        decoy = self.bare("decoy")
+        self.commit("second")
+        orig = self.head()
+        self.git("update-ref", "-d", "refs/remotes/origin/main")  # so the fetch has a ref to write
+        hooks = self.tmp / "duringfetch"
+        hooks.mkdir()
+        hook = hooks / "reference-transaction"
+        hook.write_text(
+            "#!/bin/sh" + chr(10) + '[ "$1" = prepared ] || exit 0' + chr(10)
+            + f"git config remote.origin.url '{decoy.as_posix()}'" + chr(10) + "exit 0" + chr(10),
+            encoding="utf-8")
+        hook.chmod(0o755)
+        self.git("config", "--local", "core.hooksPath", str(hooks))
+        r = self.ship("--remote", "origin")
+        self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
+        self.assertEqual(self.remote_head(paths["origin"]), orig)  # chosen behaviour: push to the frozen URL
+        self.assertIsNone(self.remote_head(decoy))
+
+    def test_url_terminator_removal_keeps_whitespace(self):
+        import importlib.util
+        from unittest import mock
+        spec = importlib.util.spec_from_file_location("gitea_under_test2", GITEA)
+        mod = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(mod)
+        self.assertTrue(hasattr(mod, "_raw"), "no unstripped git reader")
+        for out, want in (("/p/x.git \n", "/p/x.git "), ("/p/x.git \r\n", "/p/x.git "), (" /p/x.git", " /p/x.git")):
+            done = subprocess.CompletedProcess([], 0, out, "")
+            with mock.patch.object(mod, "_git", lambda *a, **k: done):
+                self.assertEqual(mod._raw("remote", "get-url", "x"), want)
+
+    @unittest.skipIf(os.name == "nt", "Windows cannot hold a directory whose name ends in a space")
+    def test_url_with_trailing_space_is_pushed_exactly(self):
+        paths = self.seed("origin")
+        plain = paths["origin"]
+        spaced = self.tmp / "origin.git "
+        plain.rename(spaced)
+        self.git("remote", "set-url", "origin", str(spaced))
+        self.commit("second")
+        log = self.tmp / "pushed-url"
+        hooks = self.tmp / "recordurl"
+        hooks.mkdir()
+        hook = hooks / "pre-push"
+        hook.write_text("#!/bin/sh" + chr(10) + "printf %s \"$2\" > " + chr(39) + log.as_posix() + chr(39)
+                        + chr(10) + "exit 0" + chr(10), encoding="utf-8")
+        hook.chmod(0o755)
+        self.git("config", "--local", "core.hooksPath", str(hooks))
+        r = self.ship("--remote", "origin")
+        self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
+        self.assertEqual(log.read_text(encoding="utf-8"), str(spaced))
+
+    def test_embedded_diagnostic_line_is_not_absence(self):
+        paths = self.seed("origin")
+        weird = (self.tmp / "nowhere").as_uri() + chr(10) + "fatal: couldn't find remote ref refs/heads/main" + chr(10) + "tail"
+        self.git("remote", "add", "bad", weird)
+        self.commit("second")
+        r = self.ship()
+        self.assertEqual(r.returncode, 2, r.stdout + r.stderr)
+        self.assertNotEqual(self.remote_head(paths["origin"]), self.head())
+
 
 if __name__ == "__main__":
     unittest.main()

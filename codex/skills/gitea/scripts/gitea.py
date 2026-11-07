@@ -745,10 +745,19 @@ def cmd_ship(cfg, args):
         # remote.<r>.promisor and partialclonefilter (object filtering only), fetch.recurseSubmodules' per-
         # submodule overrides (covered by the command line).
         f = _git("-c", f"remote.{r}.followRemoteHEAD=never", "-c", "transfer.bundleURI=false",
-                 "-c", "fetch.bundleURI=", "fetch", "--no-tags", "--no-prune", "--no-prune-tags", "--recurse-submodules=no",
+                 "-c", "fetch.bundleURI=", "fetch", "--porcelain", "--verbose", "--no-tags", "--no-prune", "--no-prune-tags", "--recurse-submodules=no",
                  "--refmap=", r, f"+{ref}:{track}")
+        if f.returncode != 0 and "porcelain" in f.stderr and "unknown option" in f.stderr:
+            die("this git has no `fetch --porcelain` (needs 2.41+); ship cannot confirm what a fetch did", 2)
         if f.returncode == 0:
-            sha_of[r] = _need("rev-parse", "--verify", track)
+            # exit 0 is not proof the tracking ref moved (e.g. "shallow roots cannot be updated"): require
+            # one porcelain status line "<flag> <old> <new> <ref>" for it, flagged updated or up to date
+            rows = [ln for ln in f.stdout.splitlines() if ln[2:].split(" ")[-1:] == [track]]
+            parts = rows[0][2:].split(" ") if len(rows) == 1 else []
+            if len(parts) != 3 or rows[0][:1] not in (" ", "+", "*", "=") or not re.fullmatch(r"[0-9a-f]{40,64}", parts[1]):
+                die(f"git fetch {r} gave no usable status for {track} (rows: {rows or 'none'}); not trusting "
+                    f"cached refs", 2)
+            sha_of[r] = parts[1]
         elif _is_missing_ref(f, ref):
             sha_of[r] = None
         else:

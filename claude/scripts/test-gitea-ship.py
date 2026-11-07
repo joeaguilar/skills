@@ -815,6 +815,53 @@ class TestShip(ShipCase):
         self.assertEqual(listing, "", "bundle refs appeared: " + listing)
         self.assertIn(r.returncode, (0, 2), r.stdout + r.stderr)
 
+    # --- review round 11 ----------------------------------------------------
+
+    def _ship_with_fake_fetch(self, stdout):
+        import importlib.util
+        from unittest import mock
+        spec = importlib.util.spec_from_file_location("gitea_under_test5", GITEA)
+        mod = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(mod)
+        real, pushed = mod.run, []
+
+        def fake(cmd, *a, **k):
+            if "fetch" in cmd:
+                return subprocess.CompletedProcess(cmd, 0, stdout, "")
+            if "push" in cmd:
+                pushed.append(cmd)
+            return real(cmd, *a, **k)
+
+        cwd = os.getcwd()
+        os.chdir(self.repo)
+        try:
+            with mock.patch.dict(os.environ, self.env, clear=True), mock.patch.object(mod, "run", fake):
+                try:
+                    code = mod.main(["ship"])
+                except SystemExit as e:
+                    code = e.code
+        finally:
+            os.chdir(cwd)
+        return code, pushed
+
+    def test_fetch_with_no_status_line_for_the_tracking_ref_exits_two(self):
+        paths = self.seed("origin")
+        self.commit("second")
+        code, pushed = self._ship_with_fake_fetch("")
+        self.assertEqual(code, 2)
+        self.assertEqual(pushed, [])
+        self.assertNotEqual(self.remote_head(paths["origin"]), self.head())
+
+    def test_fetch_that_rejects_the_tracking_ref_exits_two(self):
+        paths = self.seed("origin")
+        self.commit("second")
+        zero = "0" * 40
+        line = "! " + zero + " " + zero + " refs/remotes/origin/main" + chr(10)
+        code, pushed = self._ship_with_fake_fetch(line)
+        self.assertEqual(code, 2)
+        self.assertEqual(pushed, [])
+        self.assertNotEqual(self.remote_head(paths["origin"]), self.head())
+
 
 if __name__ == "__main__":
     unittest.main()

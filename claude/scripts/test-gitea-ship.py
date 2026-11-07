@@ -344,7 +344,7 @@ class TestShip(ShipCase):
         real, pushed = mod.run, []
 
         def flaky(cmd, *a, **k):
-            if "rev-list" in cmd and "--not" in cmd:
+            if "rev-list" in cmd and "--stdin" in cmd:
                 return subprocess.CompletedProcess(cmd, 128, "", "fatal: injected rev-list failure")
             if "push" in cmd:
                 pushed.append(cmd)
@@ -861,6 +861,71 @@ class TestShip(ShipCase):
         self.assertEqual(code, 2)
         self.assertEqual(pushed, [])
         self.assertNotEqual(self.remote_head(paths["origin"]), self.head())
+
+    # --- review round 12 ----------------------------------------------------
+
+    def _alice_then_feature(self, feature_author):
+        who = dict(GIT_AUTHOR_NAME="Alice", GIT_AUTHOR_EMAIL="alice@example.com",
+                   GIT_COMMITTER_NAME="Alice", GIT_COMMITTER_EMAIL="alice@example.com")
+        self.commit("alice work", **who)
+        alice = self.git("rev-parse", "--short", "HEAD").stdout.strip()
+        paths = self.seed("origin")
+        self.git("checkout", "-q", "-b", "feature")
+        self.commit("feature work", **feature_author)
+        return paths, alice
+
+    def test_new_branch_audits_only_commits_the_remote_lacks(self):
+        paths, alice = self._alice_then_feature({})
+        r = self.ship("--branch", "feature", "--remote", "origin")
+        self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
+        self.assertEqual(self.remote_head(paths["origin"], "feature"), self.head())
+
+    def test_new_branch_refuses_a_foreign_new_commit_and_names_only_it(self):
+        carol = dict(GIT_AUTHOR_NAME="Carol", GIT_AUTHOR_EMAIL="carol@example.com",
+                     GIT_COMMITTER_NAME="Carol", GIT_COMMITTER_EMAIL="carol@example.com")
+        paths, alice = self._alice_then_feature(carol)
+        mine = self.git("rev-parse", "--short", "HEAD").stdout.strip()
+        r = self.ship("--branch", "feature", "--remote", "origin")
+        self.assertEqual(r.returncode, 1, r.stdout + r.stderr)
+        self.assertIn(mine, r.stdout + r.stderr)
+        self.assertNotIn(alice, r.stdout + r.stderr)
+        self.assertIsNone(self.remote_head(paths["origin"], "feature"))
+
+    def test_failed_update_ref_after_a_push_exits_two(self):
+        import importlib.util
+        from unittest import mock
+        spec = importlib.util.spec_from_file_location("gitea_under_test6", GITEA)
+        mod = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(mod)
+        paths = self.seed("origin")
+        self.commit("second")
+        real = mod.run
+
+        def fake(cmd, *a, **k):
+            if "update-ref" in cmd:
+                return subprocess.CompletedProcess(cmd, 1, "", "error: injected update-ref failure")
+            return real(cmd, *a, **k)
+
+        cwd = os.getcwd()
+        os.chdir(self.repo)
+        try:
+            with mock.patch.dict(os.environ, self.env, clear=True), mock.patch.object(mod, "run", fake):
+                try:
+                    code = mod.main(["ship"])
+                except SystemExit as e:
+                    code = e.code
+        finally:
+            os.chdir(cwd)
+        self.assertEqual(code, 2)
+        self.assertEqual(self.remote_head(paths["origin"]), self.head())  # the push itself went through
+
+    def test_graft_file_set_to_the_null_device_does_not_refuse(self):
+        paths = self.seed("origin")
+        self.commit("second")
+        self.env["GIT_GRAFT_FILE"] = os.devnull
+        r = self.ship()
+        self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
+        self.assertEqual(self.remote_head(paths["origin"]), self.head())
 
 
 if __name__ == "__main__":

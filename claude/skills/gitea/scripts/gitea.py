@@ -662,8 +662,10 @@ def cmd_ship(cfg, args):
     """Fetch the branch from each remote, refuse if behind or wrongly attributed, then push one snapshot."""
     if _git("rev-parse", "--git-dir").returncode != 0:
         die("not inside a git repo", 2)
-    if os.environ.get("GIT_GRAFT_FILE"):
-        die("GIT_GRAFT_FILE is set; grafts hide ancestors from the audit. Unset it and run ship again", 2)
+    env_grafts = os.environ.get("GIT_GRAFT_FILE")
+    if env_grafts and os.path.isfile(env_grafts) and os.path.getsize(env_grafts) > 0:
+        die("GIT_GRAFT_FILE names a non-empty file; grafts hide ancestors from the audit. Unset it and run "
+            "ship again", 2)
     # the common dir, not --git-dir (a linked worktree's own dir has no info/grafts) and not --git-path
     grafts = os.path.join(_need("rev-parse", "--git-common-dir"), "info", "grafts")
     if os.path.isfile(grafts) and os.path.getsize(grafts) > 0:
@@ -776,15 +778,27 @@ def cmd_ship(cfg, args):
     plan, behind_any = [], []
     for r in remotes:
         old = sha_of[r]
+        # what this destination already has: every advertised sha (heads, tags, peeled tags) that exists here
+        adv = _need("ls-remote", r)
+        shas = list(dict.fromkeys(ln.split("\t")[0] for ln in adv.splitlines() if "\t" in ln))
+        have = set([old] if old else [])
+        if shas:
+            chk = _git("cat-file", "--batch-check", input="".join(f"{x}^{{commit}}\n" for x in shas))
+            rows = chk.stdout.splitlines()
+            if chk.returncode != 0 or len(rows) != len(shas):
+                die(f"git cat-file failed while checking what {r} already has: {chk.stderr.strip()}", 2)
+            have.update(x for x, row in zip(shas, rows) if not row.endswith(" missing"))
+        revs = tip + "\n" + "".join(f"^{x}\n" for x in sorted(have))
+        ahead = _git("rev-list", "--stdin", input=revs)
+        if ahead.returncode != 0:
+            die(f"git rev-list failed for {r}: {ahead.stderr.strip()}", 2)
+        ahead = ahead.stdout.split()
         if old:
             counts = _need("rev-list", "--left-right", "--count", f"{old}...{tip}").split()
             if len(counts) != 2:
                 die(f"cannot compare {r}/{branch}", 2)
-            ahead = _need("rev-list", tip, "--not", old).split()
             if int(counts[0]):
                 behind_any.append((r, int(counts[0]), len(ahead)))
-        else:
-            ahead = _need("rev-list", tip).split()
         plan.append((r, old, ahead))
     if behind_any:
         print(f"refusing: {branch} is behind; nothing was pushed")
@@ -869,8 +883,11 @@ def cmd_ship(cfg, args):
             note(p.stderr.strip())
         else:
             print(f"{r}: {(old[:7] + '..' + new) if old else 'new branch ' + branch + ' at ' + new}")
-            if _git("update-ref", "--no-deref", f"refs/remotes/{r}/{branch}", tip).returncode != 0:
-                note(f"gitea: warning: could not update refs/remotes/{r}/{branch}")
+            u = _git("update-ref", "--no-deref", f"refs/remotes/{r}/{branch}", tip)
+            if u.returncode != 0:
+                failed = True
+                print(f"{r}: pushed, but could not update refs/remotes/{r}/{branch}")
+                note(u.stderr.strip())
     for r in remotes:
         if r not in [t[0] for t in todo]:
             print(f"{r}: up to date")

@@ -705,6 +705,60 @@ class TestShip(ShipCase):
         self.assertIn("behind", r.stdout + r.stderr)
         self.assertEqual(self.git("rev-parse", "refs/heads/main").stdout.strip(), before)
 
+    # --- review round 9: config that widens fetch or push --------------------
+
+    def test_push_follow_tags_does_not_publish_unplanned_tags(self):
+        paths = self.seed("origin")
+        self.git("config", "--local", "push.followTags", "true")
+        self.commit("second")
+        self.git("tag", "-a", "v1", "-m", "release")
+        r = self.ship()
+        self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
+        self.assertEqual(self.remote_head(paths["origin"]), self.head())
+        tag = subprocess.run(["git", "rev-parse", "-q", "--verify", "refs/tags/v1"], cwd=paths["origin"],
+                             env=self.env, capture_output=True, text=True)
+        self.assertNotEqual(tag.returncode, 0, "an unplanned tag was pushed")
+
+    def test_mirror_remote_still_pushes_the_branch(self):
+        paths = self.seed("origin")
+        self.git("config", "remote.origin.mirror", "true")
+        self.commit("second")
+        r = self.ship()
+        self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
+        self.assertEqual(self.remote_head(paths["origin"]), self.head())
+
+    def test_fetch_recurse_submodules_leaves_submodule_refs_alone(self):
+        sub_bare = self.tmp / "sub.git"
+        subprocess.run(["git", "init", "-q", "--bare", str(sub_bare)], env=self.env, check=True)
+        sub_src = self.tmp / "sub-src"
+        subprocess.run(["git", "clone", "-q", str(sub_bare), str(sub_src)], env=self.env, check=True)
+        self.commit("sub one", repo=sub_src)
+        self.git("push", "-q", "origin", "HEAD:refs/heads/main", cwd=sub_src)
+        self.git("submodule", "add", "-q", str(sub_bare), "sm")
+        self.git("commit", "-q", "-m", "add submodule")
+        paths = self.seed("origin")
+        self.commit("sub two", repo=sub_src)
+        self.git("push", "-q", "origin", "HEAD:refs/heads/main", cwd=sub_src)  # the submodule's remote advanced
+        self.git("config", "--local", "fetch.recurseSubmodules", "true")
+        self.commit("second")
+        sm = self.repo / "sm"
+        before = self.git("for-each-ref", cwd=sm).stdout
+        r = self.ship("--dry-run")
+        self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
+        self.assertEqual(self.git("for-each-ref", cwd=sm).stdout, before, "the submodule was fetched")
+
+    def test_fetch_prune_config_does_not_delete_other_refs(self):
+        self.seed("origin")
+        self.git("config", "--local", "fetch.prune", "true")
+        self.git("config", "--local", "fetch.pruneTags", "true")
+        self.git("update-ref", "refs/remotes/origin/other", "HEAD")
+        self.git("tag", "stale-tag")
+        self.commit("second")
+        r = self.ship("--dry-run")
+        self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
+        for ref in ("refs/remotes/origin/other", "refs/tags/stale-tag"):
+            self.assertEqual(self.git("rev-parse", "-q", "--verify", ref, check=False).returncode, 0, ref)
+
 
 if __name__ == "__main__":
     unittest.main()

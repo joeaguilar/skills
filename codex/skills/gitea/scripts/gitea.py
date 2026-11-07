@@ -715,7 +715,19 @@ def cmd_ship(cfg, args):
         track = f"refs/remotes/{r}/{branch}"
         if _git("symbolic-ref", "-q", track).returncode == 0:
             die(f"{track} is a symbolic ref; a fetch would write through it. Delete it and run ship again", 2)
-        f = _git("fetch", "--no-tags", "--refmap=", r, f"+{ref}:{track}")
+        # Fetch must touch exactly one ref (the tracking ref), whatever the repo config says. Neutralized:
+        # --refmap= (remote.<r>.fetch, e.g. a mirror refspec, would also update local branches), --no-tags
+        # (remote.<r>.tagOpt, auto-following), --no-prune / --no-prune-tags (fetch.prune, fetch.pruneTags,
+        # remote.<r>.prune, remote.<r>.pruneTags), --recurse-submodules=no (fetch.recurseSubmodules,
+        # submodule.recurse, submodule.<n>.fetchRecurseSubmodules), remote.<r>.followRemoteHEAD=never
+        # (would write refs/remotes/<r>/HEAD), transfer.bundleURI=false (bundle-uri writes refs/bundles/*).
+        # Checked and harmless here: fetch.all and remote.<r>.skipFetchAll (a remote is named), fetch.parallel,
+        # fetch.fsck/unpackLimit/writeCommitGraph/negotiationAlgorithm/output/showForcedUpdates (no refs),
+        # remote.<r>.promisor and partialclonefilter (object filtering only), fetch.recurseSubmodules' per-
+        # submodule overrides (covered by the command line).
+        f = _git("-c", f"remote.{r}.followRemoteHEAD=never", "-c", "transfer.bundleURI=false",
+                 "fetch", "--no-tags", "--no-prune", "--no-prune-tags", "--recurse-submodules=no",
+                 "--refmap=", r, f"+{ref}:{track}")
         if f.returncode == 0:
             sha_of[r] = _need("rev-parse", "--verify", track)
         elif f.stderr in (f"fatal: couldn't find remote ref {ref}", f"fatal: couldn't find remote ref {ref}\n"):
@@ -815,7 +827,14 @@ def cmd_ship(cfg, args):
             failed = True
             print(f"{r}: skipped, its push URL changed since planning (was {vouched[r]})")
             continue
-        p = _git("push", "--no-recurse-submodules", r, f"{tip}:{ref}")
+        # Push must send exactly one ref update. Neutralized: -c remote.<r>.mirror=false (a mirror push
+        # refuses refspecs), --no-follow-tags (push.followTags would publish tags), --no-recurse-submodules
+        # (push.recurseSubmodules, incl. "only"), --no-signed (push.gpgSign). Checked and harmless: the
+        # explicit refspec overrides remote.<r>.push and push.default, push.autoSetupRemote, push.negotiate,
+        # push.useForceIfIncludes, push.pushOption (server-side hooks, trusted), branch.<n>.pushRemote and
+        # remote.pushDefault (the remote is named); the destination is the vouched remote.<r>.url/pushurl.
+        p = _git("-c", f"remote.{r}.mirror=false", "push", "--no-follow-tags", "--no-recurse-submodules",
+                 "--no-signed", r, f"{tip}:{ref}")
         if p.returncode != 0:
             failed = True
             print(f"{r}: push failed")

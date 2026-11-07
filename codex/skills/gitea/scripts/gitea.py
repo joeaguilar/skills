@@ -56,8 +56,10 @@ def die(msg, code=1):
     sys.exit(code)
 
 
-def run(cmd):
-    return subprocess.run(cmd, capture_output=True, text=True, encoding="utf-8", errors="replace")
+def run(cmd, **kw):
+    opts = dict(capture_output=True, text=True, encoding="utf-8", errors="replace")
+    opts.update(kw)
+    return subprocess.run(cmd, **opts)
 
 
 def passthrough(cmd):
@@ -610,12 +612,11 @@ def cmd_api(cfg, args):
     return 0
 
 
-def _git(*a, input_=None):
-    """git with replacement objects off, so `git replace` cannot change what ship audits."""
-    if input_ is None:
-        return run(["git", "--no-replace-objects", *a])
-    return subprocess.run(["git", "--no-replace-objects", *a], input=input_, capture_output=True,
-                          text=True, encoding="utf-8", errors="replace")
+def _git(*a, **kw):
+    """git with replacement objects off (so `git replace` cannot change what ship audits) and a C
+    locale (so the diagnostics ship matches on are the English ones)."""
+    env = dict(os.environ, LC_ALL="C", LANG="C", LANGUAGE="")
+    return run(["git", "--no-replace-objects", *a], env=env, **kw)
 
 
 def _need(*a):
@@ -642,8 +643,13 @@ def cmd_ship(cfg, args):
         die("not inside a git repo", 2)
 
     # a. the branch, as a full ref (no abbreviation, so tags and expressions cannot stand in)
-    if args.branch:
+    shallow = _need("rev-parse", "--is-shallow-repository")
+    if shallow == "true":
+        die("this is a shallow clone, so behind/ahead counts would be wrong; run: git fetch --unshallow", 2)
+    if args.branch is not None:
         branch = args.branch
+        if not branch:
+            die("--branch needs a branch name", 2)
         chk = _git("check-ref-format", "--branch", branch)
         if chk.returncode != 0 or chk.stdout.strip() != branch:
             die(f"not a branch name: {branch}", 2)
@@ -672,7 +678,7 @@ def cmd_ship(cfg, args):
         f = _git("fetch", "--no-tags", r, f"+{ref}:refs/remotes/{r}/{branch}")
         if f.returncode == 0:
             sha_of[r] = _need("rev-parse", "--verify", f"refs/remotes/{r}/{branch}")
-        elif "couldn't find remote ref" in f.stderr:
+        elif any(ln.strip() == f"fatal: couldn't find remote ref {ref}" for ln in f.stderr.splitlines()):
             sha_of[r] = None
         else:
             die(f"git fetch {r} failed: {f.stderr.strip()}", 2)
@@ -682,12 +688,14 @@ def cmd_ship(cfg, args):
     if not remotes:
         print(f"gitea: no remote has branch {branch}; name the target with --remote NAME", file=sys.stderr)
         return 1
+    dest = {}  # remote -> the one URL validated here; the push goes to it, not to the (mutable) name
     for r in remotes:
         urls = _need("remote", "get-url", "--all", r).splitlines()
         push = _need("remote", "get-url", "--all", "--push", r).splitlines()
         if len(urls) != 1 or push != urls:
             die(f"remote {r}: push destination is not its single fetch url (pushurl, several urls or "
                 f"pushInsteadOf); ship plans against fetched state and cannot vouch for it", 2)
+        dest[r] = urls[0]
 
     # e. plan from the snapshot SHAs only; every behind check happens before the first push
     plan, behind_any = [], []
@@ -731,8 +739,11 @@ def cmd_ship(cfg, args):
     if outgoing:
         # g. NUL-separated records, so tabs in names and signature output cannot shift fields
         fmt = "--format=%H%x00%an%x00%ae%x00%cn%x00%ce%x00%s%x00"
-        lg = _git("-c", "log.showSignature=false", "log", "--no-walk=unsorted", "--stdin", fmt,
-                  input_="\n".join(outgoing) + "\n")
+        try:
+            lg = _git("-c", "log.showSignature=false", "-c", "i18n.logOutputEncoding=UTF-8", "log",
+                      "--no-walk=unsorted", "--stdin", fmt, errors="strict", input="\n".join(outgoing) + "\n")
+        except UnicodeDecodeError:
+            die("git log output for the outgoing commits is not valid UTF-8", 2)
         if lg.returncode != 0:
             die(f"git log failed: {lg.stderr.strip()}", 2)
         toks = lg.stdout.split("\0")
@@ -763,13 +774,15 @@ def cmd_ship(cfg, args):
     new = tip[:7]
     failed = False
     for r, old, _ in todo:
-        p = _git("push", r, f"{tip}:{ref}")
+        p = _git("push", dest[r], f"{tip}:{ref}")
         if p.returncode != 0:
             failed = True
             print(f"{r}: push failed")
             note(p.stderr.strip())
         else:
             print(f"{r}: {(old[:7] + '..' + new) if old else 'new branch ' + branch + ' at ' + new}")
+            if _git("update-ref", f"refs/remotes/{r}/{branch}", tip).returncode != 0:
+                note(f"gitea: warning: could not update refs/remotes/{r}/{branch}")
     for r in remotes:
         if r not in [t[0] for t in todo]:
             print(f"{r}: up to date")

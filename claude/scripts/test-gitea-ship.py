@@ -399,6 +399,69 @@ class TestShip(ShipCase):
         self.assertIn("no remote has", r.stdout + r.stderr)
         self.assertIsNone(self.remote_head(path))
 
+    # --- review round 3 -----------------------------------------------------
+
+    def test_push_goes_to_the_url_validated_during_planning(self):
+        paths = self.seed("origin", "gitea")
+        decoy = self.bare("decoy")
+        self.commit("second")
+        orig = self.head()
+        hooks = self.tmp / "retarget"
+        hooks.mkdir()
+        marker = (self.tmp / "retargeted").as_posix()
+        hook = hooks / "pre-push"
+        hook.write_text(
+            "#!/bin/sh" + chr(10) + f"[ -e '{marker}' ] && exit 0" + chr(10) + f"touch '{marker}'" + chr(10)
+            + f"git config remote.gitea.pushurl '{decoy.as_posix()}'" + chr(10) + "exit 0" + chr(10),
+            encoding="utf-8")
+        hook.chmod(0o755)
+        self.git("config", "--local", "core.hooksPath", str(hooks))
+        r = self.ship("--remote", "origin", "--remote", "gitea")
+        self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
+        self.assertEqual(self.remote_head(paths["origin"]), orig)
+        self.assertEqual(self.remote_head(paths["gitea"]), orig)
+        self.assertIsNone(self.remote_head(decoy))
+        tracked = self.git("rev-parse", "refs/remotes/gitea/main").stdout.strip()
+        self.assertEqual(tracked, orig)
+
+    def test_fetch_failure_mentioning_missing_ref_is_not_absence(self):
+        paths = self.seed("origin")
+        self.git("remote", "add", "bad", str(self.tmp / "couldn't find remote ref nowhere"))
+        self.commit("second")
+        r = self.ship()
+        self.assertEqual(r.returncode, 2, r.stdout + r.stderr)
+        self.assertNotEqual(self.remote_head(paths["origin"]), self.head())
+
+    def test_shallow_clone_refuses(self):
+        paths = self.seed("origin")
+        self.commit("second")
+        self.git("push", "-q", "origin", "main")
+        clone = self.tmp / "shallow"
+        subprocess.run(["git", "clone", "-q", "--depth", "1", paths["origin"].as_uri(), str(clone)],
+                       env=self.env, check=True)
+        self.commit("third", repo=clone)
+        before = self.remote_head(paths["origin"])
+        self.repo = clone
+        r = self.ship()
+        self.assertEqual(r.returncode, 2, r.stdout + r.stderr)
+        self.assertIn("unshallow", r.stdout + r.stderr)
+        self.assertEqual(self.remote_head(paths["origin"]), before)
+
+    def test_non_utf8_log_encoding_config_does_not_break_the_audit(self):
+        paths = self.seed("origin")
+        self.git("config", "--local", "i18n.logOutputEncoding", "UTF-16")
+        self.commit("second")
+        r = self.ship()
+        self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
+        self.assertEqual(self.remote_head(paths["origin"]), self.head())
+
+    def test_empty_branch_name_is_a_usage_error(self):
+        paths = self.seed("origin")
+        self.commit("second")
+        r = self.ship("--branch", "")
+        self.assertEqual(r.returncode, 2, r.stdout + r.stderr)
+        self.assertNotEqual(self.remote_head(paths["origin"]), self.head())
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -186,6 +186,99 @@ class TestShip(ShipCase):
         r = self.ship()
         self.assertEqual(r.returncode, 2, r.stdout + r.stderr)
 
+    # --- review round: accepted findings -----------------------------------
+
+    def test_narrow_fetch_refspec_still_sees_remote_branch(self):
+        paths = self.seed("origin", "gitea")
+        self.git("config", "remote.origin.fetch", "+refs/heads/main:refs/remotes/origin/main")
+        self.git("checkout", "-q", "-b", "feature")
+        self.commit("local feature")
+        other = self.other_clone(paths["origin"])
+        self.git("checkout", "-q", "-b", "feature", cwd=other)
+        self.commit("remote feature", repo=other)
+        self.git("push", "-q", "origin", "feature", cwd=other)
+        r = self.ship("--remote", "gitea", "--remote", "origin")
+        self.assertEqual(r.returncode, 1, r.stdout + r.stderr)
+        self.assertIsNone(self.remote_head(paths["gitea"], "feature"), "pushed before the behind check")
+
+    def test_replace_objects_cannot_hide_a_foreign_commit(self):
+        paths = self.seed("origin")
+        self.commit("sneaky", GIT_AUTHOR_NAME="Someone Else", GIT_AUTHOR_EMAIL="else@example.com")
+        foreign = self.head()
+        self.git("checkout", "-q", "--detach", "HEAD~1")
+        self.commit("sneaky")
+        twin = self.head()
+        self.git("checkout", "-q", "main")
+        self.git("replace", foreign, twin)
+        r = self.ship()
+        self.assertEqual(r.returncode, 1, r.stdout + r.stderr)
+        self.assertIn("Someone Else", r.stdout + r.stderr)
+        self.assertNotEqual(self.remote_head(paths["origin"]), foreign)
+
+    def test_branch_tip_is_snapshotted_before_pushing(self):
+        paths = self.seed("origin", "gitea")
+        self.commit("second")
+        orig = self.head()
+        hooks = self.tmp / "prepush"
+        hooks.mkdir()
+        marker = (self.tmp / "hook-ran").as_posix()
+        hook = hooks / "pre-push"
+        hook.write_text(
+            "#!/bin/sh" + chr(10) + f"[ -e '{marker}' ] && exit 0" + chr(10) + f"touch '{marker}'" + chr(10)
+            + "git commit -q --allow-empty -m hooked --author='Evil <evil@example.com>'" + chr(10) + "exit 0" + chr(10),
+            encoding="utf-8")
+        hook.chmod(0o755)
+        self.git("config", "--local", "core.hooksPath", str(hooks))
+        r = self.ship("--remote", "origin", "--remote", "gitea")
+        self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
+        self.assertEqual(self.remote_head(paths["origin"]), orig)
+        self.assertEqual(self.remote_head(paths["gitea"]), orig)
+        self.assertIn(orig[:7], r.stdout)
+
+    def test_pushurl_differing_from_url_refuses(self):
+        paths = self.seed("origin")
+        other = self.bare("elsewhere")
+        self.git("config", "remote.origin.pushurl", str(other))
+        self.commit("second")
+        r = self.ship()
+        self.assertEqual(r.returncode, 2, r.stdout + r.stderr)
+        self.assertIn("pushurl", r.stdout + r.stderr)
+        self.assertNotEqual(self.remote_head(paths["origin"]), self.head())
+        self.assertIsNone(self.remote_head(other))
+
+    def test_included_identity_override_refuses(self):
+        paths = self.seed("origin")
+        self.commit("second")
+        inc = self.tmp / "extra.cfg"
+        inc.write_text("[user]" + chr(10) + chr(9) + "email = inc@elsewhere.example" + chr(10), encoding="utf-8")
+        self.git("config", "--local", "include.path", inc.as_posix())
+        r = self.ship()
+        self.assertEqual(r.returncode, 1, r.stdout + r.stderr)
+        self.assertIn("user.email", r.stdout + r.stderr)
+        self.assertNotEqual(self.remote_head(paths["origin"]), self.head())
+
+    # --- review round: pinned behaviour ------------------------------------
+
+    def test_audit_covers_commits_missing_from_any_destination(self):
+        backup = self.seed("backup")["backup"]  # backup at P
+        self.commit("foreign", GIT_AUTHOR_NAME="Someone Else", GIT_AUTHOR_EMAIL="else@example.com")
+        foreign = self.git("rev-parse", "--short", "HEAD").stdout.strip()
+        self.bare("origin")
+        self.git("push", "-q", "origin", "main")  # origin at F
+        self.commit("clean G")
+        r = self.ship("--remote", "origin", "--remote", "backup")
+        self.assertEqual(r.returncode, 1, r.stdout + r.stderr)
+        self.assertIn(foreign, r.stdout + r.stderr)
+        self.assertNotEqual(self.remote_head(backup), self.head())
+
+    def test_detached_head_with_explicit_branch_is_allowed(self):
+        self.seed("origin")
+        self.commit("second")
+        self.git("checkout", "-q", "--detach")
+        r = self.ship("--branch", "main", "--dry-run")
+        self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
+        self.assertIn("dry run", r.stdout + r.stderr)
+
 
 if __name__ == "__main__":
     unittest.main()

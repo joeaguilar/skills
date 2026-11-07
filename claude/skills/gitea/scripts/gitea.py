@@ -652,7 +652,10 @@ def cmd_ship(cfg, args):
     """Fetch the branch from each remote, refuse if behind or wrongly attributed, then push one snapshot."""
     if _git("rev-parse", "--git-dir").returncode != 0:
         die("not inside a git repo", 2)
-    grafts = os.path.join(_need("rev-parse", "--git-dir"), "info", "grafts")  # not --git-path: GIT_GRAFT_FILE moves that
+    if os.environ.get("GIT_GRAFT_FILE"):
+        die("GIT_GRAFT_FILE is set; grafts hide ancestors from the audit. Unset it and run ship again", 2)
+    # the common dir, not --git-dir (a linked worktree's own dir has no info/grafts) and not --git-path
+    grafts = os.path.join(_need("rev-parse", "--git-common-dir"), "info", "grafts")
     if os.path.isfile(grafts) and os.path.getsize(grafts) > 0:
         die(f"{grafts} is not empty: grafts hide ancestors from the audit; remove it or run "
             f"git replace --convert-graft-file", 2)
@@ -695,6 +698,18 @@ def cmd_ship(cfg, args):
         raw = cfgd.stdout.split("\0")[:-1] if cfgd.returncode == 0 else []
         info[r] = (raw, _raw("remote", "get-url", r), _raw("remote", "get-url", "--all", r),
                    _raw("remote", "get-url", "--all", "--push", r))
+
+    def vouch(r):
+        raw, _, eff, push = info[r]
+        if len(raw) != 1 or eff != raw[0] or push != raw[0]:
+            die(f"remote {r}: a selected remote must use one plain URL, with no rewrite and no different push "
+                f"URL (pushurl, several urls, insteadOf); ship plans against fetched state and cannot vouch "
+                f"for another destination", 2)
+        return raw[0]
+
+    if args.remote:  # named remotes are validated before any fetch can touch their tracking refs
+        for r in candidates:
+            vouch(r)
     sha_of = {}  # remote -> SHA of its branch, or None when it lacks the branch
     for r in candidates:
         track = f"refs/remotes/{r}/{branch}"
@@ -715,12 +730,7 @@ def cmd_ship(cfg, args):
         return 1
     dest = {}  # remote -> the one plain URL; the push goes to it, never to the (mutable) remote name
     for r in remotes:
-        raw, _, eff, push = info[r]
-        if len(raw) != 1 or eff != raw[0] or push != raw[0]:
-            die(f"remote {r}: a selected remote must use one plain URL, with no rewrite and no different push "
-                f"URL (pushurl, several urls, insteadOf); ship plans against fetched state and cannot vouch "
-                f"for another destination", 2)
-        dest[r] = raw[0]
+        dest[r] = vouch(r)
 
     # e. plan from the snapshot SHAs only; every behind check happens before the first push
     plan, behind_any = [], []
@@ -799,7 +809,7 @@ def cmd_ship(cfg, args):
     new = tip[:7]
     failed = False
     for r, old, _ in todo:
-        p = _git("push", dest[r], f"{tip}:{ref}")
+        p = _git("push", "--no-recurse-submodules", dest[r], f"{tip}:{ref}")
         if p.returncode != 0:
             failed = True
             print(f"{r}: push failed")

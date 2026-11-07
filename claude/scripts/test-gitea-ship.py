@@ -563,6 +563,50 @@ class TestShip(ShipCase):
         self.assertEqual(r.returncode, 2, r.stdout + r.stderr)
         self.assertNotEqual(self.remote_head(paths["origin"]), self.head())
 
+    # --- review round 5 -----------------------------------------------------
+
+    def test_push_recurse_submodules_only_still_pushes_the_superproject(self):
+        paths = self.seed("origin")
+        self.git("config", "--local", "push.recurseSubmodules", "only")
+        self.commit("second")
+        r = self.ship()
+        self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
+        self.assertEqual(self.remote_head(paths["origin"]), self.head())
+
+    def test_explicit_remote_is_validated_before_any_fetch(self):
+        self.seed("origin")
+        backup = self.seed("backup")["backup"]
+        decoy = self.bare("decoy")
+        self.git("config", "remote.backup.pushurl", str(decoy))
+        self.git("update-ref", "-d", "refs/remotes/backup/main")
+        self.commit("second")
+        r = self.ship("--remote", "backup")
+        self.assertEqual(r.returncode, 2, r.stdout + r.stderr)
+        gone = self.git("rev-parse", "--verify", "-q", "refs/remotes/backup/main", check=False)
+        self.assertNotEqual(gone.returncode, 0, "the tracking ref was fetched before validation")
+        self.assertIsNone(self.remote_head(decoy))
+
+    def test_grafts_in_the_common_dir_refuse_from_a_linked_worktree(self):
+        self.seed("origin")
+        wt = self.tmp / "wt"
+        self.git("worktree", "add", "-q", str(wt), "-b", "wtbranch")
+        grafts = self.repo / ".git" / "info" / "grafts"
+        grafts.parent.mkdir(exist_ok=True)
+        grafts.write_text(self.head() + chr(10), encoding="utf-8")
+        self.repo = wt
+        r = self.ship("--remote", "origin")
+        self.assertEqual(r.returncode, 2, r.stdout + r.stderr)
+
+    def test_inherited_graft_file_env_refuses(self):
+        paths = self.seed("origin")
+        self.commit("second")
+        graft = self.tmp / "grafts-elsewhere"
+        graft.write_text(self.head() + chr(10), encoding="utf-8")
+        self.env["GIT_GRAFT_FILE"] = str(graft)
+        r = self.ship()
+        self.assertEqual(r.returncode, 2, r.stdout + r.stderr)
+        self.assertNotEqual(self.remote_head(paths["origin"]), self.head())
+
 
 if __name__ == "__main__":
     unittest.main()

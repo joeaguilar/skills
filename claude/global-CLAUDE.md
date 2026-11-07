@@ -38,5 +38,8 @@
   read only the part you need (`Read` with `offset`/`limit`, or `kgr skeleton` /
   `kgr show` for its outline or one definition), and never `cat` a source file. A
   whole-file dump stays in context and is re-read on every later turn.
+- **Bash over PowerShell:** on Windows, run commands and scripts in the Bash tool;
+  use PowerShell only for what needs it (cmdlets, the registry, Windows-only APIs).
+  PowerShell calls fail about three times as often as Bash ones.
 - **Close with actions:** end substantive replies with open questions and pending
   decisions as their own short list, separate from the analysis.

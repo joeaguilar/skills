@@ -1,6 +1,6 @@
 ---
 name: ccq
-description: "Use the `ccq` CLI to answer questions about past Claude Code sessions instead of hand-rolling find/jq pipelines over ~/.claude/projects. Trigger for ANY session-history or transcript-mining ask — \"what commands did we run\", \"what errored recently\", \"find the session that touched <file>\" — and when YOU need transcript evidence. NOT for the live conversation, the issue tracker (itr), or the code graph (kgr)."
+description: "Use the `ccq` CLI to answer questions about past Claude Code sessions instead of hand-rolling find/jq pipelines over ~/.claude/projects. Trigger for ANY session-history or transcript-mining ask — \"what commands did we run\", \"what errored recently\", \"find the session that touched <file>\" — and when YOU need transcript evidence. For Codex session history (~/.codex rollouts), use the sibling `cxq` CLI the same way. NOT for the live conversation, the issue tracker (itr), or the code graph (kgr)."
 ---
 
 # ccq — query Claude Code transcripts
@@ -8,6 +8,10 @@ description: "Use the `ccq` CLI to answer questions about past Claude Code sessi
 `ccq` is a read-only CLI over `~/.claude/projects/*/` session transcripts (already on PATH). It never writes inside `~/.claude/`, streams arbitrarily large files, and tolerates schema drift (malformed lines are counted on stderr, never fatal).
 
 **Before the first query in a session,** run `ccq --help` once if unsure — every subcommand also has `--help` with examples. Flags below may lag the binary; trust `--help`.
+
+**Codex sessions:** `cxq` (also on PATH) is the same kind of read-only CLI over Codex rollouts under `CODEX_HOME` (`~/.codex/sessions`, `archived_sessions`). Its subcommands are `projects`, `sessions`, `prompts`, `bash`, `writes`, `tools`, `grep` and `show`, with the same `-p`/`-s`/`--since`/`-f` flags; run `cxq --help`. Use it whenever the question is about what Codex did.
+
+**Blind spots (ccq v0.2.x):** ccq reads only each project's top-level session files, not the subagent and Workflow-agent transcripts under `<session>/subagents/` (most tool traffic), so `--sidechain only` returns nothing. `ccq bash` lists Bash calls only, not PowerShell. Both are open (ccq #1, #2 in `~/AI/AI_projects/ccq`). For usage counts or subagent behavior, scan `~/.claude/projects/**` directly or use `claude/scripts/session-metrics.mjs`, which walks subagents.
 
 ## Scope and output (every subcommand)
 

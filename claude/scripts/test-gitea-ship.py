@@ -279,6 +279,126 @@ class TestShip(ShipCase):
         self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
         self.assertIn("dry run", r.stdout + r.stderr)
 
+    # --- review round 2 -----------------------------------------------------
+
+    def test_slash_named_remote_cannot_stand_in_for_its_prefix(self):
+        other = self.bare("origin/other")
+        self.commit("foreign", GIT_AUTHOR_NAME="Someone Else", GIT_AUTHOR_EMAIL="else@example.com")
+        foreign = self.git("rev-parse", "--short", "HEAD").stdout.strip()
+        self.git("push", "-q", "origin/other", "main")
+        empty = self.bare("origin")
+        self.git("config", "remote.origin.fetch", "+refs/heads/main:refs/remotes/origin/main")  # no prune of origin/other/*
+        r = self.ship("--remote", "origin")
+        self.assertEqual(r.returncode, 1, r.stdout + r.stderr)
+        self.assertIn(foreign, r.stdout + r.stderr)
+        self.assertIsNone(self.remote_head(empty))
+
+    def test_selected_remote_with_two_pushurls_refuses(self):
+        paths = self.seed("origin")
+        self.git("config", "--add", "remote.origin.pushurl", str(paths["origin"]))
+        self.git("config", "--add", "remote.origin.pushurl", str(paths["origin"]))
+        self.commit("second")
+        r = self.ship()
+        self.assertEqual(r.returncode, 2, r.stdout + r.stderr)
+        self.assertNotEqual(self.remote_head(paths["origin"]), self.head())
+
+    def test_selected_remote_with_push_insteadof_refuses(self):
+        paths = self.seed("origin")
+        elsewhere = self.bare("rewritten")
+        self.git("config", f"url.{elsewhere.as_posix()}/.pushInsteadOf", str(paths["origin"]))
+        self.commit("second")
+        r = self.ship()
+        self.assertEqual(r.returncode, 2, r.stdout + r.stderr)
+        self.assertNotEqual(self.remote_head(paths["origin"]), self.head())
+        self.assertIsNone(self.remote_head(elsewhere))
+
+    def test_selected_remote_with_two_urls_refuses(self):
+        paths = self.seed("origin")
+        other = self.bare("elsewhere")
+        self.git("config", "--add", "remote.origin.url", str(other))
+        self.commit("second")
+        r = self.ship()
+        self.assertEqual(r.returncode, 2, r.stdout + r.stderr)
+        self.assertNotEqual(self.remote_head(paths["origin"]), self.head())
+        self.assertIsNone(self.remote_head(other))
+
+    def test_unselected_remote_with_pushurl_does_not_block(self):
+        paths = self.seed("origin")
+        side = self.bare("side")
+        decoy = self.bare("decoy")
+        self.git("config", "remote.side.pushurl", str(decoy))
+        self.commit("second")
+        r = self.ship()
+        self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
+        self.assertEqual(self.remote_head(paths["origin"]), self.head())
+        self.assertIsNone(self.remote_head(side))
+
+    def test_rev_list_failure_is_exit_two_with_no_push(self):
+        import importlib.util
+        from unittest import mock
+        spec = importlib.util.spec_from_file_location("gitea_under_test", GITEA)
+        mod = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(mod)
+        paths = self.seed("origin")
+        self.commit("second")
+        real, pushed = mod.run, []
+
+        def flaky(cmd, *a, **k):
+            if "rev-list" in cmd and "--not" in cmd:
+                return subprocess.CompletedProcess(cmd, 128, "", "fatal: injected rev-list failure")
+            if "push" in cmd:
+                pushed.append(cmd)
+            return real(cmd, *a, **k)
+
+        cwd = os.getcwd()
+        os.chdir(self.repo)
+        try:
+            with mock.patch.dict(os.environ, self.env, clear=True), mock.patch.object(mod, "run", flaky):
+                with self.assertRaises(SystemExit) as cm:
+                    mod.main(["ship"])
+        finally:
+            os.chdir(cwd)
+        self.assertEqual(cm.exception.code, 2)
+        self.assertEqual(pushed, [])
+        self.assertNotEqual(self.remote_head(paths["origin"]), self.head())
+
+    def test_tag_named_like_the_branch_resolves_the_branch(self):
+        paths = self.seed("origin")
+        self.commit("second")
+        self.git("tag", "main", "HEAD~1")
+        r = self.ship()
+        self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
+        self.assertEqual(self.remote_head(paths["origin"]), self.head())
+
+    def test_revision_expression_is_not_a_branch(self):
+        paths = self.seed("origin")
+        self.commit("second")
+        r = self.ship("--branch", "main~0")
+        self.assertEqual(r.returncode, 2, r.stdout + r.stderr)
+        self.assertNotEqual(self.remote_head(paths["origin"]), self.head())
+
+    def test_tab_in_identity_and_show_signature_parse(self):
+        name = "Tes" + chr(9) + "ter"
+        self.gcfg.write_text(self.gcfg.read_text(encoding="utf-8").replace(
+            "name = Tester", 'name = "Tes' + chr(92) + 'tter"'), encoding="utf-8")
+        paths = self.seed("origin")
+        self.git("config", "--local", "log.showSignature", "true")
+        self.commit("second")
+        who = self.git("log", "-1", "--format=%an", "HEAD").stdout.strip()
+        self.assertEqual(who, name)
+        r = self.ship()
+        self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
+        self.assertEqual(self.remote_head(paths["origin"]), self.head())
+
+    def test_suffix_match_does_not_count_as_holding_the_branch(self):
+        path = self.bare("origin")
+        self.git("push", "-q", "origin", "main:refs/heads/extra/refs/heads/main")
+        self.commit("second")
+        r = self.ship()
+        self.assertEqual(r.returncode, 1, r.stdout + r.stderr)
+        self.assertIn("no remote has", r.stdout + r.stderr)
+        self.assertIsNone(self.remote_head(path))
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -610,78 +610,98 @@ def cmd_api(cfg, args):
     return 0
 
 
-def _git(*a):
+def _git(*a, input_=None):
     """git with replacement objects off, so `git replace` cannot change what ship audits."""
-    return run(["git", "--no-replace-objects", *a])
+    if input_ is None:
+        return run(["git", "--no-replace-objects", *a])
+    return subprocess.run(["git", "--no-replace-objects", *a], input=input_, capture_output=True,
+                          text=True, encoding="utf-8", errors="replace")
 
 
-def _git_out(*a):
+def _need(*a):
+    """Stdout of a git command ship relies on; any failure ends the run (exit 2) before a push."""
     r = _git(*a)
-    return r.stdout.strip() if r.returncode == 0 else None
+    if r.returncode != 0:
+        die(f"git {' '.join(a[:2])} failed: {r.stderr.strip()}", 2)
+    return r.stdout.strip()
+
+
+def _config(*a):
+    """A config value, or None when the key is unset (git exits 1); other failures exit 2."""
+    r = _git("config", *a)
+    if r.returncode == 1:
+        return None
+    if r.returncode != 0:
+        die(f"git config {' '.join(a)} failed: {r.stderr.strip()}", 2)
+    return r.stdout.strip()
 
 
 def cmd_ship(cfg, args):
-    """Fetch, refuse if behind or wrongly attributed, then push the branch to each remote."""
-    if _git_out("rev-parse", "--git-dir") is None:
+    """Fetch the branch from each remote, refuse if behind or wrongly attributed, then push one snapshot."""
+    if _git("rev-parse", "--git-dir").returncode != 0:
         die("not inside a git repo", 2)
-    branch = args.branch or _git_out("symbolic-ref", "--short", "-q", "HEAD")
-    if not branch:
-        die("detached HEAD: check out a branch or pass --branch", 2)
-    ref = f"refs/heads/{branch}"
-    tip = _git_out("rev-parse", "--verify", "-q", ref)  # snapshot: audited and pushed as-is
-    if tip is None:
-        die(f"no local branch {branch}", 2)
-    existing = (_git_out("remote") or "").split()
 
-    # 1. which remotes, and which of them already hold the branch
-    held = {}
+    # a. the branch, as a full ref (no abbreviation, so tags and expressions cannot stand in)
+    if args.branch:
+        branch = args.branch
+        chk = _git("check-ref-format", "--branch", branch)
+        if chk.returncode != 0 or chk.stdout.strip() != branch:
+            die(f"not a branch name: {branch}", 2)
+    else:
+        head = _git("symbolic-ref", "-q", "HEAD")
+        if head.returncode != 0 or not head.stdout.strip().startswith("refs/heads/"):
+            die("detached HEAD: check out a branch or pass --branch", 2)
+        branch = head.stdout.strip()[len("refs/heads/"):]
+    ref = f"refs/heads/{branch}"
+    if _git("show-ref", "--verify", "--quiet", ref).returncode != 0:
+        die(f"no local branch {branch}", 2)
+    # b. snapshot: this SHA is audited and pushed, whatever a hook does to the branch meanwhile
+    tip = _need("rev-parse", "--verify", ref)
+
+    # c. one fetch per candidate decides both "does it hold the branch" and "at which SHA"
+    existing = _need("remote").split()
     if args.remote:
-        remotes = list(dict.fromkeys(args.remote))
-        unknown = [r for r in remotes if r not in existing]
+        candidates = list(dict.fromkeys(args.remote))
+        unknown = [r for r in candidates if r not in existing]
         if unknown:
             die(f"no such remote: {', '.join(unknown)} (have: {', '.join(existing) or 'none'})", 2)
     else:
-        remotes = existing
-    for r in remotes:
-        url = _git_out("config", "--get", f"remote.{r}.url")
-        pushurl = _git_out("config", "--get", f"remote.{r}.pushurl")
-        if pushurl and pushurl != url:
-            die(f"remote {r} has a pushurl ({pushurl}) different from its url; ship plans against "
-                f"fetched state and cannot vouch for another push destination", 2)
-        ls = _git("ls-remote", "--heads", r, ref)
-        if ls.returncode != 0:
-            die(f"git ls-remote {r} failed: {ls.stderr.strip()}", 2)
-        held[r] = bool(ls.stdout.strip())
-    if not args.remote:
-        remotes = [r for r in existing if held[r]]
-        if not remotes:
-            print(f"gitea: no remote has branch {branch}; name the target with --remote NAME", file=sys.stderr)
-            return 1
-
-    # 2. fetch (the branch explicitly, so a narrow fetch refspec cannot leave its ref stale)
-    for r in remotes:
-        f = _git("fetch", r, "--prune", "--quiet")
-        if f.returncode == 0 and held[r]:
-            f = _git("fetch", r, "--quiet", f"+{ref}:refs/remotes/{r}/{branch}")
-        if f.returncode != 0:
+        candidates = existing
+    sha_of = {}  # remote -> SHA of its branch, or None when it lacks the branch
+    for r in candidates:
+        f = _git("fetch", "--no-tags", r, f"+{ref}:refs/remotes/{r}/{branch}")
+        if f.returncode == 0:
+            sha_of[r] = _need("rev-parse", "--verify", f"refs/remotes/{r}/{branch}")
+        elif "couldn't find remote ref" in f.stderr:
+            sha_of[r] = None
+        else:
             die(f"git fetch {r} failed: {f.stderr.strip()}", 2)
 
-    # 3. ahead/behind per remote: the whole plan, before any push
-    plan = []  # (remote, old sha or None, ahead commits)
-    behind_any = []
+    # d. select, then vouch for the push destination of the selected remotes only
+    remotes = candidates if args.remote else [r for r in candidates if sha_of[r]]
+    if not remotes:
+        print(f"gitea: no remote has branch {branch}; name the target with --remote NAME", file=sys.stderr)
+        return 1
     for r in remotes:
-        rref = f"refs/remotes/{r}/{branch}"
-        old = _git_out("rev-parse", "--verify", "-q", rref) if held[r] else None
+        urls = _need("remote", "get-url", "--all", r).splitlines()
+        push = _need("remote", "get-url", "--all", "--push", r).splitlines()
+        if len(urls) != 1 or push != urls:
+            die(f"remote {r}: push destination is not its single fetch url (pushurl, several urls or "
+                f"pushInsteadOf); ship plans against fetched state and cannot vouch for it", 2)
+
+    # e. plan from the snapshot SHAs only; every behind check happens before the first push
+    plan, behind_any = [], []
+    for r in remotes:
+        old = sha_of[r]
         if old:
-            counts = (_git_out("rev-list", "--left-right", "--count", f"{rref}...{tip}") or "").split()
+            counts = _need("rev-list", "--left-right", "--count", f"{old}...{tip}").split()
             if len(counts) != 2:
                 die(f"cannot compare {r}/{branch}", 2)
-            behind = int(counts[0])
-            ahead = (_git_out("rev-list", tip, "--not", rref) or "").split()
-            if behind:
-                behind_any.append((r, behind, len(ahead)))
+            ahead = _need("rev-list", tip, "--not", old).split()
+            if int(counts[0]):
+                behind_any.append((r, int(counts[0]), len(ahead)))
         else:
-            ahead = (_git_out("rev-list", tip, "--not", f"--remotes={r}") or "").split()
+            ahead = _need("rev-list", tip).split()
         plan.append((r, old, ahead))
     if behind_any:
         print(f"refusing: {branch} is behind; nothing was pushed")
@@ -690,15 +710,15 @@ def cmd_ship(cfg, args):
             note(f"integrate with: git merge {r}/{branch}")
         return 1
 
-    # 4. identity audit
-    name = _git_out("config", "--global", "user.name")
-    email = _git_out("config", "--global", "user.email")
+    # identity audit
+    name = _config("--global", "user.name")
+    email = _config("--global", "user.email")
     if not name or not email:
         print("refusing: global git user.name / user.email are not both set (the intended identity)")
         return 1
     bad_local = []
     for key, want in (("user.name", name), ("user.email", email)):
-        got = _git_out("config", "--local", "--includes", "--get", key)
+        got = _config("--local", "--includes", "--get", key)
         if got is not None and got != want:
             bad_local.append((key, got, want))
     if bad_local:
@@ -706,20 +726,31 @@ def cmd_ship(cfg, args):
         table(bad_local, ("key", "local", "global"))
         note("remove it with: git config --local --unset <key>")
         return 1
-    outgoing = list(dict.fromkeys(c for _, _, ahead in plan for c in ahead))
+    outgoing = list(dict.fromkeys(c for _, _, ahead in plan for c in ahead))  # union over destinations
     offenders = []
-    for c in outgoing:
-        line = _git_out("log", "-1", "--format=%h%x09%an%x09%ae%x09%cn%x09%ce%x09%s", c) or ""
-        h, an, ae, cn, ce, subj = (line.split("\t", 5) + [""] * 6)[:6]
-        if (an, ae, cn, ce) != (name, email, name, email):
-            offenders.append((h, f"{an} <{ae}>", f"{cn} <{ce}>", clip(subj, 60)))
+    if outgoing:
+        # g. NUL-separated records, so tabs in names and signature output cannot shift fields
+        fmt = "--format=%H%x00%an%x00%ae%x00%cn%x00%ce%x00%s%x00"
+        lg = _git("-c", "log.showSignature=false", "log", "--no-walk=unsorted", "--stdin", fmt,
+                  input_="\n".join(outgoing) + "\n")
+        if lg.returncode != 0:
+            die(f"git log failed: {lg.stderr.strip()}", 2)
+        toks = lg.stdout.split("\0")
+        tail = toks.pop()
+        if tail.strip() or len(toks) != 6 * len(outgoing):
+            die("could not parse git log output for the outgoing commits", 2)
+        for i in range(0, len(toks), 6):
+            h, an, ae, cn, ce, subj = toks[i:i + 6]
+            h = h.lstrip("\n")
+            if (an, ae, cn, ce) != (name, email, name, email):
+                offenders.append((h[:7], f"{an} <{ae}>", f"{cn} <{ce}>", clip(subj, 60)))
     if offenders:
         print(f"refusing: {len(offenders)} outgoing commit(s) not authored and committed as {name} <{email}>")
         table(offenders, ("commit", "author", "committer", "subject"))
         note("history is never rewritten here; fix the commits yourself, then run ship again")
         return 1
 
-    # 5. push
+    # h. push the snapshot
     todo = [(r, old, ahead) for r, old, ahead in plan if old is None or ahead]
     if not todo:
         print(f"nothing to push: {branch} is level with {', '.join(remotes)}")

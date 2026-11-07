@@ -401,7 +401,7 @@ class TestShip(ShipCase):
 
     # --- review round 3 -----------------------------------------------------
 
-    def test_push_goes_to_the_url_validated_during_planning(self):
+    def test_destination_changed_by_a_hook_skips_that_remote(self):
         paths = self.seed("origin", "gitea")
         decoy = self.bare("decoy")
         self.commit("second")
@@ -417,12 +417,11 @@ class TestShip(ShipCase):
         hook.chmod(0o755)
         self.git("config", "--local", "core.hooksPath", str(hooks))
         r = self.ship("--remote", "origin", "--remote", "gitea")
-        self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
+        self.assertEqual(r.returncode, 2, r.stdout + r.stderr)
         self.assertEqual(self.remote_head(paths["origin"]), orig)
-        self.assertEqual(self.remote_head(paths["gitea"]), orig)
+        self.assertNotEqual(self.remote_head(paths["gitea"]), orig)
         self.assertIsNone(self.remote_head(decoy))
-        tracked = self.git("rev-parse", "refs/remotes/gitea/main").stdout.strip()
-        self.assertEqual(tracked, orig)
+        self.assertIn("gitea", r.stdout + r.stderr)
 
     def test_fetch_failure_mentioning_missing_ref_is_not_absence(self):
         paths = self.seed("origin")
@@ -502,7 +501,7 @@ class TestShip(ShipCase):
         self.assertEqual(r.returncode, 2, r.stdout + r.stderr)
         self.assertEqual(self.git("rev-parse", "refs/heads/main").stdout.strip(), main_before)
 
-    def test_destination_is_frozen_before_the_fetch(self):
+    def test_url_rewritten_during_the_fetch_is_refused(self):
         paths = self.seed("origin")
         decoy = self.bare("decoy")
         self.commit("second")
@@ -518,8 +517,8 @@ class TestShip(ShipCase):
         hook.chmod(0o755)
         self.git("config", "--local", "core.hooksPath", str(hooks))
         r = self.ship("--remote", "origin")
-        self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
-        self.assertEqual(self.remote_head(paths["origin"]), orig)  # chosen behaviour: push to the frozen URL
+        self.assertEqual(r.returncode, 2, r.stdout + r.stderr)  # chosen behaviour: detect the change and skip
+        self.assertNotEqual(self.remote_head(paths["origin"]), orig)
         self.assertIsNone(self.remote_head(decoy))
 
     def test_url_terminator_removal_keeps_whitespace(self):
@@ -621,15 +620,6 @@ class TestShip(ShipCase):
         self.assertEqual(self.remote_head(local), self.head())
         self.assertIsNone(self.remote_head(other))
 
-    def test_remote_transport_setting_refuses(self):
-        paths = self.seed("origin")
-        self.git("config", "remote.origin.receivepack", "git-receive-pack")
-        self.commit("second")
-        r = self.ship()
-        self.assertEqual(r.returncode, 2, r.stdout + r.stderr)
-        self.assertIn("receivepack", r.stdout + r.stderr)
-        self.assertNotEqual(self.remote_head(paths["origin"]), self.head())
-
     def test_global_identity_behind_an_include_is_read(self):
         paths = self.seed("origin")
         inc = self.tmp / "identity.cfg"
@@ -643,6 +633,62 @@ class TestShip(ShipCase):
         r = self.ship()
         self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
         self.assertEqual(self.remote_head(paths["origin"]), self.head())
+
+    # --- review round 7 -----------------------------------------------------
+
+    def test_relative_url_is_pushed_where_plain_git_push_would_go(self):
+        paths = self.seed("origin")
+        other = self.bare("rewritten")
+        self.git("remote", "set-url", "origin", "../origin.git")  # relative to the work tree
+        self.git("config", f"url.{other}.pushInsteadOf", str(paths["origin"]))  # matches the absolute path only
+        self.commit("second")
+        r = self.ship("--remote", "origin")
+        self.assertEqual(r.returncode, 0, r.stdout + r.stderr)  # chosen behaviour: the plain-URL check passes
+        self.assertEqual(self.remote_head(paths["origin"]), self.head())
+        self.assertIsNone(self.remote_head(other))
+
+    def test_unselected_remote_with_uploadpack_is_still_fetched_by_name(self):
+        paths = self.seed("origin")
+        side = self.bare("side")
+        log = self.tmp / "uploadpack.log"
+        wrapper = self.tmp / "wrap-upload-pack.sh"
+        wrapper.write_text("#!/bin/sh" + chr(10) + f"echo called >> '{log.as_posix()}'" + chr(10)
+                           + 'exec git upload-pack "$@"' + chr(10), encoding="utf-8")
+        wrapper.chmod(0o755)
+        self.git("config", "remote.side.uploadpack", f"sh '{wrapper.as_posix()}'")
+        self.commit("second")
+        r = self.ship()
+        self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
+        self.assertEqual(self.remote_head(paths["origin"]), self.head())
+        self.assertIsNone(self.remote_head(side))
+        self.assertTrue(log.exists(), "remote.side.uploadpack was not honoured")
+
+    def test_scp_style_url_with_one_letter_host_is_not_rewritten(self):
+        import importlib.util
+        from unittest import mock
+        spec = importlib.util.spec_from_file_location("gitea_under_test3", GITEA)
+        mod = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(mod)
+        self.git("remote", "add", "origin", "g:team/repo.git")
+        real, fetches = mod.run, []
+
+        def spy(cmd, *a, **k):
+            if "fetch" in cmd:
+                fetches.append(cmd)
+                return subprocess.CompletedProcess(cmd, 128, "", "fatal: spy")
+            return real(cmd, *a, **k)
+
+        cwd = os.getcwd()
+        os.chdir(self.repo)
+        try:
+            with mock.patch.dict(os.environ, self.env, clear=True), mock.patch.object(mod, "run", spy):
+                with self.assertRaises(SystemExit):
+                    mod.main(["ship"])
+        finally:
+            os.chdir(cwd)
+        self.assertEqual(len(fetches), 1)
+        self.assertIn("origin", fetches[0])
+        self.assertFalse([a for a in fetches[0] if "team" in a], fetches[0])
 
 
 if __name__ == "__main__":

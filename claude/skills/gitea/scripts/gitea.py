@@ -648,18 +648,6 @@ def _config(*a):
     return r.stdout.strip()
 
 
-def _absolute_url(url, top):
-    """A local-path URL made absolute, so git can never read a bare word as a remote name.
-    Not local: anything with a scheme (`x://`, `ext::`) or scp-style `host:path`; a one-letter
-    `C:` prefix is a Windows drive."""
-    m = re.match(r"^([^/\\:]+):", url)
-    if m and len(m.group(1)) > 1:
-        return url
-    if url.startswith("/") or os.path.isabs(url):
-        return url
-    return os.path.abspath(os.path.join(top, url))
-
-
 def cmd_ship(cfg, args):
     """Fetch the branch from each remote, refuse if behind or wrongly attributed, then push one snapshot."""
     if _git("rev-parse", "--git-dir").returncode != 0:
@@ -694,9 +682,6 @@ def cmd_ship(cfg, args):
     # b. snapshot: this SHA is audited and pushed, whatever a hook does to the branch meanwhile
     tip = _need("rev-parse", "--verify", ref)
 
-    top = _git("rev-parse", "--show-toplevel")
-    top = top.stdout.rstrip("\r\n") if top.returncode == 0 and top.stdout.strip() else os.getcwd()
-
     # c. one fetch per candidate decides both "does it hold the branch" and "at which SHA"
     existing = _need("remote").split()
     if args.remote:
@@ -706,12 +691,12 @@ def cmd_ship(cfg, args):
             die(f"no such remote: {', '.join(unknown)} (have: {', '.join(existing) or 'none'})", 2)
     else:
         candidates = existing
-    # freeze every remote's URLs now; nothing that runs during a fetch or push can move the destination
+    # what each remote's URLs are now; re-checked right before the push
     info = {}  # remote -> (configured urls, effective fetch url, all effective fetch urls, all push urls)
     for r in candidates:
         cfgd = _git("config", "-z", "--get-all", f"remote.{r}.url")
         raw = cfgd.stdout.split("\0")[:-1] if cfgd.returncode == 0 else []
-        info[r] = (raw, _absolute_url(_raw("remote", "get-url", r), top), _raw("remote", "get-url", "--all", r),
+        info[r] = (raw, _raw("remote", "get-url", r), _raw("remote", "get-url", "--all", r),
                    _raw("remote", "get-url", "--all", "--push", r))
 
     def vouch(r):
@@ -720,11 +705,7 @@ def cmd_ship(cfg, args):
             die(f"remote {r}: a selected remote must use one plain URL, with no rewrite and no different push "
                 f"URL (pushurl, several urls, insteadOf); ship plans against fetched state and cannot vouch "
                 f"for another destination", 2)
-        for key in ("uploadpack", "receivepack", "proxy", "proxyAuthMethod", "vcs"):
-            if _config("--get", f"remote.{r}.{key}") is not None:
-                die(f"remote {r}: remote.{r}.{key} is set; pushing to the bare URL would drop that "
-                    f"remote-specific transport setting, so ship refuses", 2)
-        return _absolute_url(raw[0], top)
+        return raw[0]
 
     if args.remote:  # named remotes are validated before any fetch can touch their tracking refs
         for r in candidates:
@@ -734,7 +715,7 @@ def cmd_ship(cfg, args):
         track = f"refs/remotes/{r}/{branch}"
         if _git("symbolic-ref", "-q", track).returncode == 0:
             die(f"{track} is a symbolic ref; a fetch would write through it. Delete it and run ship again", 2)
-        f = _git("fetch", "--no-tags", info[r][1], f"+{ref}:{track}")
+        f = _git("fetch", "--no-tags", r, f"+{ref}:{track}")
         if f.returncode == 0:
             sha_of[r] = _need("rev-parse", "--verify", track)
         elif f.stderr in (f"fatal: couldn't find remote ref {ref}", f"fatal: couldn't find remote ref {ref}\n"):
@@ -747,9 +728,9 @@ def cmd_ship(cfg, args):
     if not remotes:
         print(f"gitea: no remote has branch {branch}; name the target with --remote NAME", file=sys.stderr)
         return 1
-    dest = {}  # remote -> the one plain URL; the push goes to it, never to the (mutable) remote name
+    vouched = {}  # remote -> the one plain URL validated now; re-read just before its push
     for r in remotes:
-        dest[r] = vouch(r)
+        vouched[r] = vouch(r)
 
     # e. plan from the snapshot SHAs only; every behind check happens before the first push
     plan, behind_any = [], []
@@ -828,7 +809,13 @@ def cmd_ship(cfg, args):
     new = tip[:7]
     failed = False
     for r, old, _ in todo:
-        p = _git("push", "--no-recurse-submodules", dest[r], f"{tip}:{ref}")
+        # a hook may have edited config since planning: push only where the plan was validated
+        now = _git("remote", "get-url", "--push", r)
+        if now.returncode != 0 or (now.stdout[:-1] if now.stdout.endswith("\n") else now.stdout) != vouched[r]:
+            failed = True
+            print(f"{r}: skipped, its push URL changed since planning (was {vouched[r]})")
+            continue
+        p = _git("push", "--no-recurse-submodules", r, f"{tip}:{ref}")
         if p.returncode != 0:
             failed = True
             print(f"{r}: push failed")

@@ -354,11 +354,10 @@ class TestShip(ShipCase):
         os.chdir(self.repo)
         try:
             with mock.patch.dict(os.environ, self.env, clear=True), mock.patch.object(mod, "run", flaky):
-                with self.assertRaises(SystemExit) as cm:
-                    mod.main(["ship"])
+                code = mod.main(["ship"])
         finally:
             os.chdir(cwd)
-        self.assertEqual(cm.exception.code, 2)
+        self.assertEqual(code, 2)
         self.assertEqual(pushed, [])
         self.assertNotEqual(self.remote_head(paths["origin"]), self.head())
 
@@ -682,8 +681,7 @@ class TestShip(ShipCase):
         os.chdir(self.repo)
         try:
             with mock.patch.dict(os.environ, self.env, clear=True), mock.patch.object(mod, "run", spy):
-                with self.assertRaises(SystemExit):
-                    mod.main(["ship"])
+                self.assertEqual(mod.main(["ship"]), 2)
         finally:
             os.chdir(cwd)
         self.assertEqual(len(fetches), 1)
@@ -982,6 +980,59 @@ class TestShip(ShipCase):
         r = self.ship()
         self.assertEqual(r.returncode, 2, r.stdout + r.stderr)
         self.assertEqual(self._tmp_refs(), "")
+
+    # --- review round 14 ----------------------------------------------------
+
+    def test_stale_tmp_ref_from_an_older_run_cannot_hide_a_commit(self):
+        paths = self.seed("origin")
+        self.commit("foreign", GIT_AUTHOR_NAME="Someone Else", GIT_AUTHOR_EMAIL="else@example.com")
+        foreign = self.head()
+        self.git("update-ref", "refs/ship-tmp/old-run/origin/heads/x", foreign)
+        r = self.ship()
+        self.assertEqual(r.returncode, 1, r.stdout + r.stderr)
+        self.assertIn(foreign[:7], r.stdout + r.stderr)
+        self.assertEqual(self._tmp_refs(), "", "leftovers of older runs were not cleaned")
+        self.assertNotEqual(self.remote_head(paths["origin"]), foreign)
+
+    def test_failed_tmp_cleanup_exits_two(self):
+        import importlib.util
+        from unittest import mock
+        spec = importlib.util.spec_from_file_location("gitea_under_test7", GITEA)
+        mod = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(mod)
+        paths = self.seed("origin")
+        self.commit("second")
+        real = mod.run
+
+        def fake(cmd, *a, **k):
+            if "update-ref" in cmd and "-z" in cmd:
+                return subprocess.CompletedProcess(cmd, 1, "", "error: injected cleanup failure")
+            return real(cmd, *a, **k)
+
+        cwd = os.getcwd()
+        os.chdir(self.repo)
+        try:
+            with mock.patch.dict(os.environ, self.env, clear=True), mock.patch.object(mod, "run", fake):
+                try:
+                    code = mod.main(["ship"])
+                except SystemExit as e:
+                    code = e.code
+        finally:
+            os.chdir(cwd)
+        self.assertEqual(code, 2)
+        self.assertEqual(self.remote_head(paths["origin"]), self.head())
+
+    def test_behind_refusal_reports_the_branchs_own_counts(self):
+        a = self.head()
+        paths = self.seed("origin")
+        other = self.other_clone(paths["origin"])
+        self.commit("B", repo=other)
+        self.git("push", "-q", "origin", "HEAD:main", cwd=other)
+        self.commit("C")
+        self.git("push", "-q", "origin", "HEAD:refs/heads/staging")  # origin already holds C, elsewhere
+        r = self.ship("--remote", "origin")
+        self.assertEqual(r.returncode, 1, r.stdout + r.stderr)
+        self.assertIn("1 behind, 1 ahead", r.stdout + r.stderr)
 
 
 if __name__ == "__main__":

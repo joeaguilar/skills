@@ -658,38 +658,47 @@ def _is_missing_ref(f, ref):
     return not any(ln.startswith(("fatal:", "error:")) for ln in lines[:-1])
 
 
-def _tmp_prefixes(r):
-    return (f"refs/ship-tmp/{r}/heads/", f"refs/ship-tmp/{r}/tags/")
+def _tmp_prefixes(run_id, r):
+    return (f"refs/ship-tmp/{run_id}/{r}/heads/", f"refs/ship-tmp/{run_id}/{r}/tags/")
 
 
-def _clear_tmp(r):
-    """Delete ship's temporary tracking namespace for remote r (best effort, never raises)."""
+def _delete_refs(prefixes):
+    """Delete every ref under the given prefixes; True when git accepted the deletion."""
     try:
         refs = []
-        for pre in _tmp_prefixes(r):
-            refs += _git("for-each-ref", "--format=%(refname)", pre).stdout.split()
-        if refs:
-            _git("update-ref", "-z", "--stdin", input="".join(f"delete {x}\0\0" for x in refs))
+        for pre in prefixes:
+            listing = _git("for-each-ref", "--format=%(refname)", pre)
+            if listing.returncode != 0:
+                return False
+            refs += listing.stdout.split()
+        if not refs:
+            return True
+        return _git("update-ref", "-z", "--stdin", input="".join(f"delete {x}\0\0" for x in refs)).returncode == 0
     except Exception:
-        pass
+        return False
 
 
-def _remote_tips(r, created):
-    """Commits a destination already has: fetch all its branches and tags into refs/ship-tmp/<r>/ and
+def _clear_tmp(run_id, r):
+    """Delete this run's temporary tracking namespace for remote r; False if that failed."""
+    return _delete_refs(_tmp_prefixes(run_id, r))
+
+
+def _remote_tips(run_id, r, created):
+    """Commits a destination already has: fetch all its branches and tags into refs/ship-tmp/<run>/<r>/ and
     return their commit shas (tags peeled). The namespace is removed by cmd_ship when it exits."""
-    _clear_tmp(r)  # leftovers of a killed run must not count as "already there"
     created.append(r)
     f = _git("-c", f"remote.{r}.followRemoteHEAD=never", "-c", "transfer.bundleURI=false",
              "-c", "fetch.bundleURI=", "fetch", "--porcelain", "--no-tags", "--no-prune", "--no-prune-tags",
              "--recurse-submodules=no", "--refmap=", r,
-             f"+refs/heads/*:refs/ship-tmp/{r}/heads/*", f"+refs/tags/*:refs/ship-tmp/{r}/tags/*")
+             f"+refs/heads/*:refs/ship-tmp/{run_id}/{r}/heads/*",
+             f"+refs/tags/*:refs/ship-tmp/{run_id}/{r}/tags/*")
     if f.returncode != 0:
         die(f"git fetch {r} (all branches and tags) failed: {f.stderr.strip()}", 2)
     bad = [ln for ln in f.stdout.splitlines() if ln.strip() and ln[:1] not in (" ", "+", "*", "=", "t")]
     if bad:
         die(f"git fetch {r} (all branches and tags) rejected some refs: {bad[0]}", 2)
     fmt = "--format=%(objecttype) %(objectname) %(*objecttype) %(*objectname)"
-    out = _need("for-each-ref", fmt, *_tmp_prefixes(r))
+    out = _need("for-each-ref", fmt, *_tmp_prefixes(run_id, r))
     tips = set()
     for ln in out.splitlines():
         kind, obj, pkind, pobj = (ln.split(" ") + ["", "", "", ""])[:4]
@@ -700,10 +709,13 @@ def _remote_tips(r, created):
     return tips
 
 
-def _ship(cfg, args, created):
+def _ship(cfg, args, created, run_id):
     """Fetch the branch from each remote, refuse if behind or wrongly attributed, then push one snapshot."""
     if _git("rev-parse", "--git-dir").returncode != 0:
         die("not inside a git repo", 2)
+    # leftovers of interrupted runs live in other namespaces and are never read; remove them if we can
+    if not _delete_refs(("refs/ship-tmp/",)):
+        note("gitea: warning: could not remove old refs/ship-tmp/* leftovers")
     env_grafts = os.environ.get("GIT_GRAFT_FILE")
     if env_grafts and os.path.isfile(env_grafts) and os.path.getsize(env_grafts) > 0:
         die("GIT_GRAFT_FILE names a non-empty file; grafts hide ancestors from the audit. Unset it and run "
@@ -821,7 +833,7 @@ def _ship(cfg, args, created):
     for r in remotes:
         old = sha_of[r]
         # what this destination already has: the branch plus every branch and tag it holds
-        have = set([old] if old else []) | _remote_tips(r, created)
+        have = set([old] if old else []) | _remote_tips(run_id, r, created)
         revs = tip + "\n" + "".join(f"^{x}\n" for x in sorted(have))
         ahead = _git("rev-list", "--stdin", input=revs)
         if ahead.returncode != 0:
@@ -832,11 +844,11 @@ def _ship(cfg, args, created):
             if len(counts) != 2:
                 die(f"cannot compare {r}/{branch}", 2)
             if int(counts[0]):
-                behind_any.append((r, int(counts[0]), len(ahead)))
+                behind_any.append((r, int(counts[0]), int(counts[1])))
         plan.append((r, old, ahead))
     if behind_any:
         print(f"refusing: {branch} is behind; nothing was pushed")
-        table([(r, f"{b} behind", f"{a} ahead") for r, b, a in behind_any], ("remote", "behind", "ahead"))
+        table([(r, f"{b} behind, {a} ahead") for r, b, a in behind_any], ("remote", "status"))
         for r, _, _ in behind_any:
             note(f"integrate with: git merge {r}/{branch}")
         return 1
@@ -929,12 +941,21 @@ def _ship(cfg, args, created):
 
 
 def cmd_ship(cfg, args):
-    created = []
+    created, code = [], 2
+    run_id = f"{os.getpid()}-{os.urandom(4).hex()}"  # this run's own namespace under refs/ship-tmp/
     try:
-        return _ship(cfg, args, created)
-    finally:
+        code = _ship(cfg, args, created, run_id)
+    except SystemExit as e:
+        code = e.code if isinstance(e.code, int) else 2
+    except BaseException:
         for r in created:
-            _clear_tmp(r)
+            _clear_tmp(run_id, r)
+        raise
+    stuck = [r for r in created if not _clear_tmp(run_id, r)]
+    if stuck:
+        note(f"gitea: could not remove refs/ship-tmp/{run_id}/ for {', '.join(stuck)}; delete them by hand")
+        code = 2
+    return code
 
 
 # --- CLI ---------------------------------------------------------------------

@@ -610,6 +610,126 @@ def cmd_api(cfg, args):
     return 0
 
 
+def _git_out(*a):
+    r = run(["git", *a])
+    return r.stdout.strip() if r.returncode == 0 else None
+
+
+def cmd_ship(cfg, args):
+    """Fetch, refuse if behind or wrongly attributed, then push the branch to each remote."""
+    if _git_out("rev-parse", "--git-dir") is None:
+        die("not inside a git repo", 2)
+    branch = args.branch or _git_out("symbolic-ref", "--short", "-q", "HEAD")
+    if not branch:
+        die("detached HEAD: check out a branch or pass --branch", 2)
+    if _git_out("rev-parse", "--verify", "-q", f"refs/heads/{branch}") is None:
+        die(f"no local branch {branch}", 2)
+    ref = f"refs/heads/{branch}"
+    existing = (_git_out("remote") or "").split()
+
+    # 1. which remotes
+    if args.remote:
+        remotes = list(dict.fromkeys(args.remote))
+        unknown = [r for r in remotes if r not in existing]
+        if unknown:
+            die(f"no such remote: {', '.join(unknown)} (have: {', '.join(existing) or 'none'})", 2)
+    else:
+        remotes = []
+        for r in existing:
+            ls = run(["git", "ls-remote", "--heads", r, ref])
+            if ls.returncode != 0:
+                die(f"git ls-remote {r} failed: {ls.stderr.strip()}", 2)
+            if ls.stdout.strip():
+                remotes.append(r)
+        if not remotes:
+            print(f"gitea: no remote has branch {branch}; name the target with --remote NAME", file=sys.stderr)
+            return 1
+
+    # 2. fetch
+    for r in remotes:
+        f = run(["git", "fetch", r, "--prune", "--quiet"])
+        if f.returncode != 0:
+            die(f"git fetch {r} failed: {f.stderr.strip()}", 2)
+
+    # 3. ahead/behind per remote
+    plan = []  # (remote, old sha or None, ahead commits)
+    behind_any = []
+    for r in remotes:
+        rref = f"refs/remotes/{r}/{branch}"
+        old = _git_out("rev-parse", "--verify", "-q", rref)
+        if old:
+            counts = (_git_out("rev-list", "--left-right", "--count", f"{rref}...{ref}") or "").split()
+            if len(counts) != 2:
+                die(f"cannot compare {r}/{branch}", 2)
+            behind = int(counts[0])
+            ahead = (_git_out("rev-list", ref, "--not", rref) or "").split()
+            if behind:
+                behind_any.append((r, behind, len(ahead)))
+        else:
+            ahead = (_git_out("rev-list", ref, "--not", f"--remotes={r}") or "").split()
+        plan.append((r, old, ahead))
+    if behind_any:
+        print(f"refusing: {branch} is behind; nothing was pushed")
+        table([(r, f"{b} behind", f"{a} ahead") for r, b, a in behind_any], ("remote", "behind", "ahead"))
+        for r, _, _ in behind_any:
+            note(f"integrate with: git merge {r}/{branch}")
+        return 1
+
+    # 4. identity audit
+    name = _git_out("config", "--global", "user.name")
+    email = _git_out("config", "--global", "user.email")
+    if not name or not email:
+        print("refusing: global git user.name / user.email are not both set (the intended identity)")
+        return 1
+    bad_local = []
+    for key, want in (("user.name", name), ("user.email", email)):
+        got = _git_out("config", "--local", "--get", key)
+        if got is not None and got != want:
+            bad_local.append((key, got, want))
+    if bad_local:
+        print("refusing: this repo overrides the global identity")
+        table(bad_local, ("key", "local", "global"))
+        note("remove it with: git config --local --unset <key>")
+        return 1
+    outgoing = list(dict.fromkeys(c for _, _, ahead in plan for c in ahead))
+    offenders = []
+    for c in outgoing:
+        line = _git_out("log", "-1", "--format=%h%x09%an%x09%ae%x09%cn%x09%ce%x09%s", c) or ""
+        h, an, ae, cn, ce, subj = (line.split("\t", 5) + [""] * 6)[:6]
+        if (an, ae, cn, ce) != (name, email, name, email):
+            offenders.append((h, f"{an} <{ae}>", f"{cn} <{ce}>", clip(subj, 60)))
+    if offenders:
+        print(f"refusing: {len(offenders)} outgoing commit(s) not authored and committed as {name} <{email}>")
+        table(offenders, ("commit", "author", "committer", "subject"))
+        note("history is never rewritten here; fix the commits yourself, then run ship again")
+        return 1
+
+    # 5. push
+    todo = [(r, old, ahead) for r, old, ahead in plan if old is None or ahead]
+    if not todo:
+        print(f"nothing to push: {branch} is level with {', '.join(remotes)}")
+        return 0
+    if args.dry_run:
+        print(f"dry run: would push {branch} to {len(todo)} remote(s); identity ok ({name} <{email}>)")
+        table([(r, "new branch" if old is None else "update", f"{len(ahead)} commit(s)") for r, old, ahead in todo],
+              ("remote", "kind", "outgoing"))
+        return 0
+    new = _git_out("rev-parse", "--short", ref)
+    failed = False
+    for r, old, _ in todo:
+        p = run(["git", "push", r, f"{ref}:{ref}"])
+        if p.returncode != 0:
+            failed = True
+            print(f"{r}: push failed")
+            note(p.stderr.strip())
+        else:
+            print(f"{r}: {(old[:7] + '..' + new) if old else 'new branch ' + branch + ' at ' + new}")
+    for r in remotes:
+        if r not in [t[0] for t in todo]:
+            print(f"{r}: up to date")
+    return 2 if failed else 0
+
+
 # --- CLI ---------------------------------------------------------------------
 
 
@@ -683,6 +803,11 @@ def build_parser():
     for t in pr.choices.values():
         t.add_argument("--repo", help="owner/name (default: this clone's Gitea remote)")
 
+    s = sub.add_parser("ship", help="fetch, check behind/identity, push the branch to every remote that has it")
+    s.add_argument("--dry-run", action="store_true", help="print the plan, push nothing")
+    s.add_argument("--remote", action="append", help="remote to push to (repeatable; may be new for the branch)")
+    s.add_argument("--branch", help="default: the current branch")
+
     s = sub.add_parser("api", help="raw API call, e.g. api GET /repos/OWNER/NAME/issues")
     s.add_argument("method", type=str.upper, choices=("GET", "POST", "PATCH", "PUT", "DELETE"))
     s.add_argument("path", help="path under /api/v1")
@@ -692,7 +817,7 @@ def build_parser():
 
 COMMANDS = {"doctor": cmd_doctor, "repos": cmd_repos, "exists": cmd_exists, "url": cmd_url,
             "clone": cmd_clone, "remote": cmd_remote, "create": cmd_create, "branches": cmd_branches,
-            "prune-merged": cmd_prune_merged, "pr": cmd_pr, "api": cmd_api}
+            "prune-merged": cmd_prune_merged, "ship": cmd_ship, "pr": cmd_pr, "api": cmd_api}
 
 
 def main(argv=None):

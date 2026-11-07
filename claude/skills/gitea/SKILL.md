@@ -1,6 +1,6 @@
 ---
 name: gitea
-description: "Use the bundled `gitea` helper for anything that talks to the user's self-hosted Gitea server (SSH alias `gitea`, remotes like `gitea:blue/<repo>.git`, sometimes a remote named `nas`) instead of hand-rolling ls-remote probes, curl calls, or guessing hosts, ports, and repo names. Trigger whenever the user asks to clone or pull a repo \"from gitea\" or \"from the NAS\", push a project to Gitea or create a new Gitea repo, list their Gitea repos, add a Gitea remote, find the newest branch or which branches are merged or stale, clean up merged remote branches, or list/view/create/merge a pull request on Gitea — even when they just say \"the repo\" and its remote is `gitea:`. Do NOT trigger for GitHub repos or PRs (use `gh`), for filing or tracking issues (use itr), or for purely local git work (commits, rebases, local branches) that never talks to the server."
+description: "Use the bundled `gitea` helper for anything that talks to the user's self-hosted Gitea server (SSH alias `gitea`, remotes like `gitea:blue/<repo>.git`, sometimes a remote named `nas`) instead of hand-rolling ls-remote probes, curl calls, or guessing hosts, ports, and repo names. Trigger whenever the user asks to clone or pull a repo \"from gitea\" or \"from the NAS\", push a project to Gitea or create a new Gitea repo, list their Gitea repos, add a Gitea remote, find the newest branch or which branches are merged or stale, clean up merged remote branches, push to both remotes (\"ship this branch\", \"push everywhere\"), or list/view/create/merge a pull request on Gitea — even when they just say \"the repo\" and its remote is `gitea:`. Do NOT trigger for GitHub repos or PRs (use `gh`), for filing or tracking issues (use itr), or for purely local git work (commits, rebases, local branches) that never talks to the server."
 ---
 
 # gitea — drive the self-hosted Gitea
@@ -20,6 +20,7 @@ description: "Use the bundled `gitea` helper for anything that talks to the user
 | newest branch, which are merged | `gitea branches [--unmerged] [--base B] [--json]` inside a clone | no |
 | branches of a repo not cloned | `gitea branches X` (names + SHAs only) | no |
 | delete merged remote branches | `gitea prune-merged [--match GLOB] [--keep GLOB]` → add `--apply` | no* |
+| push this branch to every remote | `gitea ship [--dry-run] [--remote NAME ...] [--branch B]` — fetches, refuses if behind or any outgoing commit has the wrong identity, then pushes (plain git, any host) | no |
 | list my repos | `gitea repos [filter] [--json]` | yes |
 | new repo / push this project | `gitea create NAME [--public] [-d TEXT] [--remote] [--push]` | yes |
 | pull requests | `gitea pr list [--state all]`, `pr view N`, `pr diff N`, `pr create [--title T] [--push]`, `pr merge N [--style squash] [--delete-branch]` | yes |

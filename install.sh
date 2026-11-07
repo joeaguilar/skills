@@ -43,7 +43,7 @@ Options:
                        --all-primitives. `config` links individual home files
                        (claude: CLAUDE.md, MODELS.md, COMPLEXITY.md,
                        ADVERSARIAL-REVIEW-AND-RED-CHECKS.md, settings.json,
-                       statusline.sh) rather than a
+                       statusline.sh; codex: AGENTS.md) rather than a
                        directory root; it is opt-in and is NOT included in
                        --all-primitives.
   --primitives LIST    Comma-separated primitive roots.
@@ -66,7 +66,7 @@ Examples:
 
 Codex skills must contain `.system`; installation seeds a real Codex-owned copy
 and links non-system children individually. Other primitive roots are optional
-unless selected directly. `config` is Claude-only today; for codex it is a no-op.
+unless selected directly. `config` for codex links only the global AGENTS.md.
 `workflows` is Claude-only by design (no Workflow tool on Codex); it is skipped
 for codex under --all-primitives and errors if selected directly for codex.
 USAGE
@@ -473,7 +473,8 @@ adopt_local_source() {
 # resolves from any project), ADVERSARIAL-REVIEW-AND-RED-CHECKS.md (likewise, for
 # the review and red-check rules), settings.json (a gitignored local slot, adopted
 # from the live file on first install — see adopt_local_source), and
-# statusline.sh; codex has no managed config files yet. Each file is linked
+# statusline.sh. Codex manages its global AGENTS.md (source: codex/global-AGENTS.md,
+# named so Codex never reads it as that folder's project guidance). Each file is linked
 # independently: one missing source is reported and does not block the others.
 install_config() {
   local platform="$1" home rc=0
@@ -490,7 +491,7 @@ install_config() {
       install_file claude "$REPO_DIR/statusline.sh"           "$home/statusline.sh" || rc=1
       ;;
     codex)
-      echo "[codex/config] no managed config files defined; skipping"
+      install_file codex "$REPO_DIR/codex/global-AGENTS.md" "$home/AGENTS.md" || rc=1
       ;;
   esac
   return $rc

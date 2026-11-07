@@ -607,6 +607,43 @@ class TestShip(ShipCase):
         self.assertEqual(r.returncode, 2, r.stdout + r.stderr)
         self.assertNotEqual(self.remote_head(paths["origin"]), self.head())
 
+    # --- review round 6 -----------------------------------------------------
+
+    def test_relative_url_naming_another_remote_is_pushed_as_a_path(self):
+        other = self.bare("backup")  # a remote named backup, elsewhere
+        self.commit("second")
+        local = self.repo / "backup"  # a directory that shares the remote's name
+        subprocess.run(["git", "init", "-q", "--bare", str(local)], env=self.env, check=True)
+        self.git("push", "-q", str(local), "HEAD~1:refs/heads/main")
+        self.git("remote", "add", "origin", "backup")
+        r = self.ship("--remote", "origin")
+        self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
+        self.assertEqual(self.remote_head(local), self.head())
+        self.assertIsNone(self.remote_head(other))
+
+    def test_remote_transport_setting_refuses(self):
+        paths = self.seed("origin")
+        self.git("config", "remote.origin.receivepack", "git-receive-pack")
+        self.commit("second")
+        r = self.ship()
+        self.assertEqual(r.returncode, 2, r.stdout + r.stderr)
+        self.assertIn("receivepack", r.stdout + r.stderr)
+        self.assertNotEqual(self.remote_head(paths["origin"]), self.head())
+
+    def test_global_identity_behind_an_include_is_read(self):
+        paths = self.seed("origin")
+        inc = self.tmp / "identity.cfg"
+        inc.write_text("[user]" + chr(10) + chr(9) + f"name = {NAME}" + chr(10) + chr(9) + f"email = {EMAIL}" + chr(10),
+                       encoding="utf-8")
+        text = self.gcfg.read_text(encoding="utf-8")
+        head, rest = text.split("[core]", 1)
+        self.gcfg.write_text("[core]" + rest + "[include]" + chr(10) + chr(9) + f"path = {inc.as_posix()}" + chr(10),
+                             encoding="utf-8")
+        self.commit("second")
+        r = self.ship()
+        self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
+        self.assertEqual(self.remote_head(paths["origin"]), self.head())
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -648,6 +648,18 @@ def _config(*a):
     return r.stdout.strip()
 
 
+def _absolute_url(url, top):
+    """A local-path URL made absolute, so git can never read a bare word as a remote name.
+    Not local: anything with a scheme (`x://`, `ext::`) or scp-style `host:path`; a one-letter
+    `C:` prefix is a Windows drive."""
+    m = re.match(r"^([^/\\:]+):", url)
+    if m and len(m.group(1)) > 1:
+        return url
+    if url.startswith("/") or os.path.isabs(url):
+        return url
+    return os.path.abspath(os.path.join(top, url))
+
+
 def cmd_ship(cfg, args):
     """Fetch the branch from each remote, refuse if behind or wrongly attributed, then push one snapshot."""
     if _git("rev-parse", "--git-dir").returncode != 0:
@@ -682,6 +694,9 @@ def cmd_ship(cfg, args):
     # b. snapshot: this SHA is audited and pushed, whatever a hook does to the branch meanwhile
     tip = _need("rev-parse", "--verify", ref)
 
+    top = _git("rev-parse", "--show-toplevel")
+    top = top.stdout.rstrip("\r\n") if top.returncode == 0 and top.stdout.strip() else os.getcwd()
+
     # c. one fetch per candidate decides both "does it hold the branch" and "at which SHA"
     existing = _need("remote").split()
     if args.remote:
@@ -696,7 +711,7 @@ def cmd_ship(cfg, args):
     for r in candidates:
         cfgd = _git("config", "-z", "--get-all", f"remote.{r}.url")
         raw = cfgd.stdout.split("\0")[:-1] if cfgd.returncode == 0 else []
-        info[r] = (raw, _raw("remote", "get-url", r), _raw("remote", "get-url", "--all", r),
+        info[r] = (raw, _absolute_url(_raw("remote", "get-url", r), top), _raw("remote", "get-url", "--all", r),
                    _raw("remote", "get-url", "--all", "--push", r))
 
     def vouch(r):
@@ -705,7 +720,11 @@ def cmd_ship(cfg, args):
             die(f"remote {r}: a selected remote must use one plain URL, with no rewrite and no different push "
                 f"URL (pushurl, several urls, insteadOf); ship plans against fetched state and cannot vouch "
                 f"for another destination", 2)
-        return raw[0]
+        for key in ("uploadpack", "receivepack", "proxy", "proxyAuthMethod", "vcs"):
+            if _config("--get", f"remote.{r}.{key}") is not None:
+                die(f"remote {r}: remote.{r}.{key} is set; pushing to the bare URL would drop that "
+                    f"remote-specific transport setting, so ship refuses", 2)
+        return _absolute_url(raw[0], top)
 
     if args.remote:  # named remotes are validated before any fetch can touch their tracking refs
         for r in candidates:
@@ -754,8 +773,8 @@ def cmd_ship(cfg, args):
         return 1
 
     # identity audit
-    name = _config("--global", "user.name")
-    email = _config("--global", "user.email")
+    name = _config("--global", "--includes", "--get", "user.name")
+    email = _config("--global", "--includes", "--get", "user.email")
     if not name or not email:
         print("refusing: global git user.name / user.email are not both set (the intended identity)")
         return 1

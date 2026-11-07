@@ -690,6 +690,21 @@ class TestShip(ShipCase):
         self.assertIn("origin", fetches[0])
         self.assertFalse([a for a in fetches[0] if "team" in a], fetches[0])
 
+    # --- review round 8 -----------------------------------------------------
+
+    def test_mirror_style_fetch_refspec_does_not_move_local_branches(self):
+        paths = self.seed("origin")
+        other = self.other_clone(paths["origin"])
+        self.commit("remote only", repo=other)
+        self.git("push", "-q", "origin", "HEAD:main", cwd=other)
+        self.commit("local only")
+        before = self.head()
+        self.git("config", "remote.origin.fetch", "+refs/*:refs/*")
+        r = self.ship("--branch", "main", "--remote", "origin")
+        self.assertEqual(r.returncode, 1, r.stdout + r.stderr)
+        self.assertIn("behind", r.stdout + r.stderr)
+        self.assertEqual(self.git("rev-parse", "refs/heads/main").stdout.strip(), before)
+
 
 if __name__ == "__main__":
     unittest.main()

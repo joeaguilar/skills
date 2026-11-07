@@ -715,7 +715,7 @@ def cmd_ship(cfg, args):
         track = f"refs/remotes/{r}/{branch}"
         if _git("symbolic-ref", "-q", track).returncode == 0:
             die(f"{track} is a symbolic ref; a fetch would write through it. Delete it and run ship again", 2)
-        f = _git("fetch", "--no-tags", r, f"+{ref}:{track}")
+        f = _git("fetch", "--no-tags", "--refmap=", r, f"+{ref}:{track}")
         if f.returncode == 0:
             sha_of[r] = _need("rev-parse", "--verify", track)
         elif f.stderr in (f"fatal: couldn't find remote ref {ref}", f"fatal: couldn't find remote ref {ref}\n"):

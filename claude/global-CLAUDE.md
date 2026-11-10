@@ -18,7 +18,9 @@
   red run as `gatr run --tag red-<name> -- <cmd>`; the how-to is in the same file.
 - **Commits:** commit each completed unit of work unless told not to. In synced
   repos run `git fetch` first; the remote may have been rewritten from another
-  machine. Do not add `Co-Authored-By` or session-attribution trailers — Codex
+  machine. Every commit message is one line, `type(scope): summary`, with no body:
+  the scope is required and names the work the commit belongs to (`fix(gitea): …`).
+  Do not add `Co-Authored-By` or session-attribution trailers — Codex
   seats often write the code, so the attribution would be wrong.
 - **Trust stated verification:** when the user says something already works, do
   not rerun the expensive step. If a check is inconclusive, write a different

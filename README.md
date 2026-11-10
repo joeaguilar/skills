@@ -33,12 +33,18 @@ Do not expect byte-for-byte parity.
 
 ## Repository Map
 
+Codex now uses a [lean fleet](codex/FLEET.md): one substantive build workflow
+(`mission`), one parallel executor (`blitz`), focused utilities, and on-demand
+specialists. Retired Codex workflows and role prompts are preserved outside
+installable roots in `codex/archived/`. Claude's payloads are unchanged.
+
 - `claude/skills/`: Claude skill sources.
 - `claude/agents/`, `claude/commands/`: Claude primitive roots.
 - `claude/settings.json`: gitignored local slot for `~/.claude/settings.json`,
   adopted from the live file on the first `config` install and then linked.
 - `codex/skills/`: Codex skill ports plus `.system` Codex system skills.
 - `codex/agents/`, `codex/commands/`: Codex primitive roots.
+- `codex/archived/`: retired Codex payloads and historical references; never installed.
 - `codex/registry/`: primitive metadata, capabilities, dependencies, and
   provider routing.
 - `codex/explorer/`: static Claude/Codex primitive installer UI.
@@ -277,6 +283,11 @@ For skill behavior changes:
    Claude-only passages (launch mechanics, model routing) can change without
    marking the Codex port stale. Without markers it equals `git hash-object`.
 
+The lean Codex fleet is an intentional platform-specific consolidation. Preserve
+its documented differences in `codex/FLEET.md`; do not recreate retired peers
+or copy Claude ceremony into Codex to make the trees look alike. Active parity
+baselines still flag later source changes for review.
+
 For Claude-only or Codex-only primitives, use `PLATFORM_ONLY.tsv` instead of
 creating an empty stub on the other side. When a primitive graduates to parity,
 add the peer payload and remove its platform-only line.
@@ -288,6 +299,7 @@ retiring them. Backups are written under:
 
 - `backups/` for root `install.sh` operations.
 - `codex/backups/` for Codex-specific helper operations.
+- `<codex-home>/primitive-backups/` for verified archived-payload retirement.
 
 Do not edit backup directories unless you are intentionally restoring or
 cleaning backup state.

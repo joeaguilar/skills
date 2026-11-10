@@ -41,7 +41,9 @@ skills/                         (repo root)
 │   ├── global-AGENTS.md               canonical ~/.codex/AGENTS.md (config primitive): the always-on
 │   │                                  gatr, kgr and read-in-ranges rules for Codex sessions
 │   ├── skills/<skill>/SKILL.md + agents/openai.yaml   Codex ports
-│   ├── agents/  commands/             optional Codex primitive roots
+│   ├── agents/  commands/             optional Codex primitive roots (agents/ is empty since 2026-11-06)
+│   ├── archived/                      retired Codex skills, role agents and commands plus manifest.json;
+│   │                                  never installed or registered (codex/FLEET.md has the replacements)
 │   ├── skills/.system/                Codex system skills (Codex-only)
 │   ├── PARITY.tsv                      per-skill reconcile baseline (drift check)
 │   ├── registry/  explorer/  scripts/  backups/
@@ -139,7 +141,7 @@ machine, before the next commit:
 
 ## Primitive tree (capability-first)
 
-The primitives form a dependency graph keyed on **capabilities**, not skill names — so a future Linear/Jira skill could satisfy `issue-tracker` the way `itr` does today. Cross-type dependencies are allowed: agents can require skills, skills can require agents or commands, and commands can require skills. `itr` provides `issue-tracker`; `kgr` provides `code-graph`; `sprint` requires both and provides `sprint-planning`; `primitive-architect-agent` requires `skill-authoring`; both primitive audit commands require `primitive-architecture` and provide `primitive-audit`, so provider selection is exercised. This graph is encoded in `codex/registry/` — `capabilities.yaml` and `skill-tree.{json,yaml}` (legacy filename, primitive-aware schema), which **must be kept in sync with each other**. `codex/explorer/` is a static web UI that renders the tree with tabs for skills, agents, commands, and future types, switches between Claude/Codex platform state, can scan selected folders for managed/unmanaged primitive payloads, and renders selected markdown sources.
+The primitives form a dependency graph keyed on **capabilities**, not skill names — so a future Linear/Jira skill could satisfy `issue-tracker` the way `itr` does today. Cross-type dependencies are allowed: agents can require skills, skills can require agents or commands, and commands can require skills. `itr` provides `issue-tracker`; `kgr` provides `code-graph`; `sprint` recommends both and provides `sprint-planning`; `mission` provides `feature-delivery`; the one audit command provides `primitive-audit`. Since the Codex lean-fleet retirement of 2026-11-06 (`codex/FLEET.md`) the active entries recommend capabilities instead of requiring them, and the retired Codex skills, role agents and second audit command sit in `codex/archived/`, outside the registry. This graph is encoded in `codex/registry/` — `capabilities.yaml` and `skill-tree.{json,yaml}` (legacy filename, primitive-aware schema), which **must be kept in sync with each other**. `codex/explorer/` is a static web UI that renders the tree with tabs for skills, agents, commands, and future types, switches between Claude/Codex platform state, can scan selected folders for managed/unmanaged primitive payloads, and renders selected markdown sources.
 
 ## codex/ tooling
 
@@ -148,7 +150,7 @@ A Codex-compatible export: `codex/skills/` (ports + `.system`), optional `codex/
 ```bash
 node codex/scripts/skill-tree.js validate        # registry consistency
 node codex/scripts/skill-tree.js status --project /path   # a project's enabled primitives
-node codex/scripts/skill-tree.js provider primitive-audit primitive-audit-summary-command --project /path
+node codex/scripts/skill-tree.js provider feature-delivery mission --project /path
 node codex/scripts/skill-tree.js status --scope global    # global Codex primitive state
 node --check codex/explorer/app.js && node --check codex/scripts/skill-tree.js   # after JS edits
 python3 -m http.server 8765                      # serve repo-root installer at /

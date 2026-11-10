@@ -222,7 +222,7 @@ The skill tree installer is "real" when:
 - Unmanaged user files are never deleted or overwritten without backup.
 - Claude and Codex config payloads can diverge cleanly.
 
-## Initial Skill Progression
+## Current Codex Fleet
 
 Foundations:
 
@@ -233,23 +233,27 @@ Foundations:
 
 Planning:
 
-- `story-style` unlocks after `itr` and provides `story-conventions`.
-- `sprint` unlocks after `itr` and `kgr`, then provides `sprint-planning`.
-- `roadmap` unlocks after `story-style` and provides `product-roadmap`.
+- `sprint` provides durable task breakdown when work spans sessions or contributors.
+- `roadmap` provides cross-sprint scope and evidence tracking when requested.
+- Both are standalone; an existing tracker and code graph are optional enhancements.
 
 Execution:
 
-- `blitz` unlocks after `sprint` and provides `backlog-execution`.
-- `sprint-review` unlocks after `sprint` and provides `sprint-review`.
-- `dual-blitz` unlocks after `blitz` and provides `dual-blitz-orchestration`.
+- `mission` is the substantive build workflow; routine edits need no workflow.
+- `blitz` is the explicitly invoked parallel executor for independent workstreams.
+- `sprint-review` reviews delivered work against requirements and evidence.
+- Each is standalone; supporting capabilities are recommendations, not locks.
 
-Autonomy:
+Consolidation:
 
-- `overdrive` unlocks after `blitz` and `sprint-review`, then provides `autonomous-orchestration`.
+- Redundant Codex workflows and role agents are preserved under `codex/archived/`.
+- See [FLEET.md](FLEET.md) for replacements, routing, and safe installation migration.
+- Claude's fleet remains unchanged.
 
 Core utilities:
 
-- `.system/imagegen`, `.system/openai-docs`, `.system/plugin-creator`, `.system/skill-creator`, and `.system/skill-installer` are represented as utility skills.
+- `gatr` captures substantial verification gates; short checks run directly.
+- Five bundled `.system` skills remain represented as utilities in the registry.
 
 ## Definition of Done
 

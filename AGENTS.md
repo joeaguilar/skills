@@ -47,6 +47,10 @@ setup" for the audit). Per machine, once:
   then `../githooks/setup.sh` (sets the global `core.hooksPath`). This
   installs the Conventional Commits gate and the delegate that runs this repo's
   `.githooks/pre-commit` frontmatter check.
+- **Commit messages:** always one line, `type(scope): summary`, with no body and no
+  trailers. The scope is required and names the work the commit belongs to
+  (`fix(gitea): …`, `docs(codex-fleet): …`). The hooks do not enforce the scope or the
+  missing body, so the author does.
 - **Remotes:** `main` lives on both `origin` (GitHub) and `gitea`; fetch and merge
   before pushing, then push to both.
 

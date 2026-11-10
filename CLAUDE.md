@@ -119,6 +119,11 @@ machine, before the next commit:
    They enforce Conventional Commits (`type(scope): summary` — `feat:queue-up skill`
    is rejected, `feat: queue-up skill` passes), secret/whitespace/size checks, and
    this repo's frontmatter gate (`validate-skills.sh --frontmatter-only`).
+   **Every commit message here is one line**: `type(scope): summary`, no body and no
+   trailers, and the scope is never left out — it names the work the commit belongs to
+   (`fix(gitea): …`, `docs(codex-fleet): …`, `chore(mtg): …`). The hooks accept a missing
+   scope and a body, so this rule is on the author. Keep the line within the hook's 72
+   characters where it fits; what a body would have said goes in the changed files.
 3. **Remotes** — `origin` (GitHub) and `gitea` both carry `main`. `git fetch --all`
    and merge before pushing, then push to **both**. Pushing to one remote only is how
    the August commits diverged; merge `ffad83a` (2026-09-26) reconciled them.

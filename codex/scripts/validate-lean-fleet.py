@@ -2,6 +2,7 @@
 """Check active discovery, registry parity, and archive boundaries (requires PyYAML)."""
 import json
 import re
+import subprocess
 from pathlib import Path
 
 import yaml
@@ -18,6 +19,16 @@ def normalize(value):
     if isinstance(value, list):
         return [normalize(item) for item in value]
     return value
+
+
+def gitignored(path):
+    """True when git ignores the path: an externally sourced payload a clone may lack."""
+    try:
+        result = subprocess.run(["git", "check-ignore", "-q", "--", path.relative_to(ROOT).as_posix()],
+                                cwd=ROOT, capture_output=True)
+    except OSError:
+        return False
+    return result.returncode == 0
 
 
 def main():
@@ -51,7 +62,7 @@ def main():
         payload = ROOT / platform / kind / name
         if kind == "skills":
             payload /= "SKILL.md"
-        assert payload.exists(), f"Platform-only entry has no active payload: {line}"
+        assert payload.exists() or gitignored(payload), f"Platform-only entry has no active payload: {line}"
 
     # A preserved archive must not remain a routing dependency in current instructions.
     for folder in (CODEX / "skills", CODEX / "commands"):

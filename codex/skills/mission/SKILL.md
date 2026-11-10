@@ -1,6 +1,6 @@
 ---
 name: mission
-description: "Use to take a project brief to a working result by building the smallest runnable core first, then finishing demonstrated gaps. Suitable for greenfield and existing projects; not a planning-only or speculative backlog workflow."
+description: "Use to deliver a feature or project brief through a runnable core and verified completion. Fits substantive implementation; skip routine known-file edits and planning-only requests."
 ---
 
 # Mission
@@ -32,6 +32,18 @@ commands that actually work in the project. Inspect runtime behavior as well as
 build/test results. If acceptance explicitly depends on the user's judgment,
 show the concrete result and keep that verdict pending until received.
 
+## Investigate consequential unknowns
+
+For unfamiliar or coupled code, identify the entry point, callers, state
+read/write paths, compatibility constraints, and checks that could disprove the
+planned edit. Use `kgr` for supported structural questions, `rg` for text, and
+direct reads for known files. Stop investigating when remaining uncertainty
+does not change the implementation or its verification.
+
+Delegate independent questions only when authorized and useful; do not prescribe
+a scout count. Give implementers relevant findings and unresolved risks rather
+than a transcript. Broaden investigation only when new evidence requires it.
+
 ## Finish the brief
 
 Compare the running core with the original requirements. Track concrete missing
@@ -49,6 +61,25 @@ when available, authorized, and justified by complexity; lack of one does not
 block a small task. Reproduce material findings, fix confirmed failures, and run
 the final qualified checks plus the original core action again. Do not replace
 evidence with critic scores or an arbitrary number of review rounds.
+
+Use `gatr` for substantial or noisy verification gates whose records matter.
+Short checks can run directly. If the work becomes an independently executable
+backlog and parallel execution is authorized, use `blitz` rather than creating
+another orchestration layer.
+
+## Optional stronger review and commit
+
+When requested (`--strict`) or justified by a risky boundary, verify that the
+important regression check fails without the fix or against a controlled
+counterexample. Use one independent reviewer when authorized and available;
+expand review only when findings or unresolved risks justify it. Require a
+failing scenario or concrete evidence, not a score. Record an unavailable
+required review as a limitation; never invent independence.
+
+Neither this skill nor `--strict` authorizes a commit. If the user requests one,
+inspect the final diff and index, stage only agreed paths, follow repository
+identity and hook rules, and commit after required checks and acceptance.
+Preserve pre-existing work; never infer push or release authority.
 
 ## Finish or resume
 

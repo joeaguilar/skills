@@ -31,5 +31,5 @@ Save to the project's spec location, defaulting to `docs/specs/<short-name>.md`,
 when asked to write a spec. Use conversation output for a discussion-only ask.
 Update an existing requested spec in place instead of producing competing copies.
 Finish with the artifact and any decisions still needed. When a next workflow is
-useful, suggest an available `$feature-build`, `$sprint`, or `$roadmap` according
+useful, suggest an available `$mission`, `$sprint`, or `$roadmap` according
 to scope; do not launch implementation merely because the spec is finished.

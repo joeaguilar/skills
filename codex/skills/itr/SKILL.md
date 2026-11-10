@@ -1,58 +1,62 @@
 ---
 name: itr
-description: "Use only when the user asks to file, create, log, open, or track one or more bugs, tickets, tasks, epics, or backlog items in itr. Check conventions and duplicates before writing. Do not use to claim, start, update, close, or merely report issue state."
+description: "Use for filing, reading, claiming, updating, or closing work in an existing itr tracker, especially across sessions or contributors. Do not create a tracker or tickets for a small untracked edit."
 ---
 
-# itr - File Issues
+# itr — tracked work lifecycle
 
-`itr` is the project's issue tracker CLI and should already be on `PATH`. For filing, use `itr add`; for bulk filing, use `itr batch add`.
+Use the established tracker when work needs durable ownership, dependencies,
+deferred findings, or continuity. A status question authorizes reads, not starting
+work. Implementation of a tracked item normally includes routine claiming,
+progress, and evidence-backed closure, subject to project rules and acceptance
+reserved for the user.
 
-## Before Filing
+## Establish conventions once
 
-1. Run `itr stats` once per session to confirm a database exists. If it says to run `itr init`, surface that to the user and confirm before creating `.itr.db`.
-2. Run `itr agent-info` once per session for current flags, urgency rules, and conventions. Prefer that output over examples in this skill.
-3. Look up project story conventions before writing titles, bodies, acceptance criteria, and tags:
-   - Prefer `./STORY_STYLE.md`.
-   - Then scan `AGENTS.md`, `CODEX.md`, or other repo-local agent instruction files for issue or story style.
-   - If no style file exists, continue with the defaults below and print one soft suggestion: `No STORY_STYLE.md found - consider $story-style to capture project conventions.` Skip the suggestion if the user already declined it this session.
+Run `itr stats` and `itr agent-info` once per session. Use the latter for current
+commands, flags, transitions, and attribution. If no database exists, use the
+requested source or a checklist; initialize only when tracker setup is requested.
 
-When a style exists, follow it for title shape, body template, acceptance format, tags, priority scheme, terminology, and voice.
+Read `STORY_STYLE.md` when present, then repository instructions. Otherwise use
+[the short issue template](references/issue-template.md). No style interview is
+required. Set `ITR_AGENT=codex` for writes when unset, using the shell's syntax.
 
-## Single Issue Command
+## Read and file
 
-```bash
-itr add "<title>" -p <priority> -k <kind> -c "<context>" -a "<acceptance>" --tags "<a,b>" --files "<path1,path2>" -f json
+Use bounded JSON results (`-f json`, `--fields`) when parsing. Discover state
+with `next`, `ready`, `wip`, `get`, or `search` as documented by `agent-info`.
+For re-entry across conflicting sources, use `whats-next` when available.
+
+Search before creating an issue. Reuse a clear existing match; resolve ambiguity
+before adding a duplicate. Capture the actual returned ID.
+
+```text
+itr search "<terms>" -f json --fields id,title,status
+itr add "<title>" -k <kind> -c "<context>" -a "<acceptance>" --files "<paths>" -f json
 ```
 
-- `title`: imperative and specific, such as `Fix race in upload queue`.
-- `-p`: `critical`, `high`, `medium`, or `low`. Default to `medium` unless the user signals otherwise.
-- `-k`: `bug`, `feature`, `task`, or `epic`. Ask only when genuinely ambiguous.
-- `-c` / `--body`: why the issue matters and any reproduction or implementation context.
-- `-a`: concrete acceptance criteria. Omit only if the user explicitly wants a placeholder.
-- `--files`: relative paths implicated by the issue.
-- `--tags` / `--skills`: comma-separated values. Use existing tags when possible; inspect with `itr list -f json --fields tags`.
-- `--blocked-by` / `--parent`: set when the user names a dependency or parent epic.
+For batches, send a JSON array to `itr batch add` via stdin. Check the installed
+interface and use `--dry-run` when supported. Capture each result and retry only
+failed items after checking partial success. Do not upgrade the executable just
+because an example flag is unavailable.
 
-If `ITR_AGENT` is unset, prefix filing commands with `ITR_AGENT=codex` for audit attribution unless `itr agent-info` or project conventions specify another value.
+## Claim, update, and close
 
-## Bulk Filing
+- Read the item and dependencies before claiming. Resolve competing ownership
+  instead of stealing another active claim; continue independent ready work.
+- Use `claim` and `update` per `agent-info`. Record changes to scope, dependencies,
+  ownership, and continuation state when useful, not after every tool call.
+- Close only after original acceptance and required verification pass. Attach
+  changed behavior, check results, and a durable log or commit reference when
+  available. A commit message or worker assertion alone is insufficient.
+- In parallel work, workers report evidence and the coordinator closes after
+  integration. Failed checks and outstanding human acceptance remain open.
+- When authorized recovery removes implementation, reopen affected items with
+  the reason and evidence; never erase history or alter unrelated issues.
 
-When the user gives a list of issues, use `itr batch add` with a JSON array on stdin instead of one command per issue. The schema mirrors `itr add`; `parent` and `parent_id` both set the parent epic. Validate a payload without writing anything using `itr batch add --dry-run < payload.json`, which returns the same per-item verdicts, including resolved priority and kind defaults. Confirm exact field names with `itr agent-info`.
+Use existing `gatr` records for failed-gate evidence (`last --json`, `errors`, log
+path). Do not rerun a completed gate merely to manufacture an attachment. Retain
+available evidence and its limitations when no durable record exists.
 
-This requires itr 3.4.0 or newer, which carries critical database fixes and `batch add --dry-run`. If `itr --version` reports an older release, update first with `install.ps1 -Update` on Windows, `install.sh --update`, or `itr upgrade`.
-
-## Workflow
-
-1. Gather the minimum clear title, priority signal, kind, and acceptance criteria. Ask one focused question if the request is too vague to file responsibly.
-2. Check for duplicates with `itr search "<key terms>" -f json --fields id,title,status`. If a likely match exists, ask whether to relate to it instead of creating a duplicate.
-3. File with JSON output and capture the new issue ID.
-4. Report the issue ID and a one-line summary. Do not dump full JSON.
-
-When filing from a failed build or test gate, do not rerun the gate or paste raw logs. If it ran through `gatr`, take the evidence from its record: `gatr last --json` gives the exit code and error and warning counts, `gatr errors` gives the exact error blocks to quote in `-c`, and the `log=` path goes in the context so the next owner can open the full log. If the gate did not run through `gatr`, run it once as `gatr run --tag <name> -- <cmd>` and file from that record.
-
-## Guardrails
-
-- Do not invent priority, kind, or acceptance criteria the user did not imply; ask or omit the optional field.
-- Do not use absolute tool paths; `itr` should be on `PATH`.
-- Do not file the same issue twice.
-- Do not claim, start, update, or close issues from this skill.
+Report IDs, final state, and unresolved next actions. Do not dump JSON or invent
+priority, requirements, dependencies, or completion evidence.

@@ -1,6 +1,6 @@
 ---
 name: typescript-best-practices
-description: "Use for TypeScript or JavaScript (.ts, .tsx, .js, .mjs) reviews, implementations, and refactors where idiomatic strict typing, unknown over any, discriminated unions, readonly, error handling, async and AbortController, ESM modules, runtime validation at trust boundaries, node:test or vitest, and the tsc plus eslint verify gate matter; plain JS is in scope via JSDoc and // @ts-check. Fits Node CLIs, small browser apps, Manifest V3 Chrome extensions, and Claude Code mods. Do not use for Rust, for UI or visual design work, or as a generic language-independent diff review."
+description: "Use for consequential TypeScript/JavaScript type design, async cancellation, runtime boundaries, or module interoperability. Skip mechanical edits, visual design, and routine checks already covered by project tooling."
 ---
 
 # TypeScript Best Practices

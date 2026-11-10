@@ -28,5 +28,5 @@ model. When current dependency or platform behavior matters, verify against
 primary advisories and official documentation.
 
 Return findings and focused remediation guidance. Apply fixes only when included
-in the task; do not weaken controls to make a test pass. The existing
-`backend-security-auditor` agent delegates backend portions using this method.
+in the task; do not weaken controls to make a test pass. Delegated backend review
+uses this same method; no separate role is required.

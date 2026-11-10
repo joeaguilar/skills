@@ -1,6 +1,6 @@
 interface:
   display_name: "itr"
-  short_description: "File issues with the itr CLI"
-  default_prompt: "Use $itr to file a clear issue in this project's itr tracker."
+  short_description: "Manage tracked work with evidence"
+  default_prompt: "Use $itr to manage this project's tracked work and record verified outcomes."
 policy:
-  allow_implicit_invocation: false
+  allow_implicit_invocation: true

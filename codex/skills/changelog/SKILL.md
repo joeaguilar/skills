@@ -25,5 +25,5 @@ Return notes in conversation or update the requested changelog/release document.
 Preserve manual content and existing history when editing. Drafting notes does
 not itself publish a release, create a tag, or send a stakeholder message.
 
-The `changelog-curator` agent is the delegation entry point for this same
-capability; use these instructions rather than maintaining two checklists.
+If research is delegated, pass this method and the specific range and audience
+rather than maintaining a separate role checklist.

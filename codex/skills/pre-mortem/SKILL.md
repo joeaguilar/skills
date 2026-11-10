@@ -27,12 +27,12 @@ will succeed; assume it failed and inspect why.
 
 1. **State the failed plan.** Restate the plan in one paragraph, then declare the
    failure scenario: the plan was attempted and failed.
-2. **Pick failure axes.** Choose 3-6 axes that fit the plan. Common axes:
+2. **Pick failure axes.** Choose only consequential axes for this plan. Common axes:
    technical, dependency/integration, scope/complexity, rollout/operations,
    adoption/UX, security/privacy, timeline/business window.
-3. **Investigate each axis.** If subagents are available, assign one axis per
-   agent. Otherwise run separate passes. Keep each axis focused on its own way
-   the plan died.
+3. **Investigate each axis.** Delegate only when authorized and an independent
+   investigation would change the decision. Do not spawn one agent per category
+   by default. Keep each investigation focused on a concrete failure scenario.
 4. **Rank the modes.** Deduplicate overlapping failures and rank by likelihood
    multiplied by impact. Cross-axis agreement should raise priority.
 5. **Derive guardrails.** For each important failure mode, name an early-warning

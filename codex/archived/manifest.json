@@ -1,0 +1,156 @@
+{
+  "version": 1,
+  "date": "2026-11-06",
+  "entries": [
+    {
+      "root": "skills",
+      "name": "fastlane",
+      "replacement": "mission or blitz, chosen directly"
+    },
+    {
+      "root": "skills",
+      "name": "dual-blitz",
+      "replacement": "blitz with one coordinator"
+    },
+    {
+      "root": "skills",
+      "name": "overdrive",
+      "replacement": "blitz --commit-waves when explicitly requested"
+    },
+    {
+      "root": "skills",
+      "name": "run-the-rivers-dry",
+      "replacement": "mission or blitz within requested scope"
+    },
+    {
+      "root": "skills",
+      "name": "forge-change",
+      "replacement": "mission with risk-based review and explicit commit policy"
+    },
+    {
+      "root": "skills",
+      "name": "bootstrap-project-docs",
+      "replacement": "a concise project AGENTS.md and requested docs"
+    },
+    {
+      "root": "skills",
+      "name": "story-style",
+      "replacement": "itr/references/issue-template.md"
+    },
+    {
+      "root": "skills",
+      "name": "ponytail",
+      "replacement": "proportional scope in normal work"
+    },
+    {
+      "root": "skills",
+      "name": "whetstone",
+      "replacement": "bounded revision in normal work"
+    },
+    {
+      "root": "skills",
+      "name": "feature-build",
+      "replacement": "mission"
+    },
+    {
+      "root": "skills",
+      "name": "scout-strike",
+      "replacement": "mission investigation step"
+    },
+    {
+      "root": "skills",
+      "name": "gauntlet",
+      "replacement": "archived measurement tools; experimental workflow only"
+    },
+    {
+      "root": "agents",
+      "name": "accessibility-compliance-auditor.md",
+      "replacement": "on-demand role reference; no separate installed agent"
+    },
+    {
+      "root": "agents",
+      "name": "analytics-event-architect.md",
+      "replacement": "on-demand role reference; no separate installed agent"
+    },
+    {
+      "root": "agents",
+      "name": "api-contract-designer.md",
+      "replacement": "on-demand role reference; no separate installed agent"
+    },
+    {
+      "root": "agents",
+      "name": "api-docs-generator-role.md",
+      "replacement": "on-demand role reference; no separate installed agent"
+    },
+    {
+      "root": "agents",
+      "name": "backend-security-auditor.md",
+      "replacement": "on-demand role reference; no separate installed agent"
+    },
+    {
+      "root": "agents",
+      "name": "changelog-curator.md",
+      "replacement": "on-demand role reference; no separate installed agent"
+    },
+    {
+      "root": "agents",
+      "name": "cicd-pipeline-architect.md",
+      "replacement": "on-demand role reference; no separate installed agent"
+    },
+    {
+      "root": "agents",
+      "name": "cloud-cost-optimizer.md",
+      "replacement": "on-demand role reference; no separate installed agent"
+    },
+    {
+      "root": "agents",
+      "name": "data-pipeline-architect.md",
+      "replacement": "on-demand role reference; no separate installed agent"
+    },
+    {
+      "root": "agents",
+      "name": "database-schema-architect.md",
+      "replacement": "on-demand role reference; no separate installed agent"
+    },
+    {
+      "root": "agents",
+      "name": "docker-compose-architect.md",
+      "replacement": "on-demand role reference; no separate installed agent"
+    },
+    {
+      "root": "agents",
+      "name": "e2e-test-architect.md",
+      "replacement": "on-demand role reference; no separate installed agent"
+    },
+    {
+      "root": "agents",
+      "name": "performance-test-engineer.md",
+      "replacement": "on-demand role reference; no separate installed agent"
+    },
+    {
+      "root": "agents",
+      "name": "prd-task-generator.md",
+      "replacement": "on-demand role reference; no separate installed agent"
+    },
+    {
+      "root": "agents",
+      "name": "primitive-architect.md",
+      "replacement": "on-demand role reference; no separate installed agent"
+    },
+    {
+      "root": "agents",
+      "name": "tdd-workflow-coach.md",
+      "replacement": "on-demand role reference; no separate installed agent"
+    },
+    {
+      "root": "agents",
+      "name": "user-guide-writer.md",
+      "replacement": "on-demand role reference; no separate installed agent"
+    },
+    {
+      "root": "commands",
+      "name": "primitive-audit-summary.md",
+      "replacement": "primitive-audit --detail when needed"
+    }
+  ]
+}

@@ -1,133 +1,37 @@
-# Intentional platform-only primitives — exempt from cross-tree parity in validate-skills.sh.
-#
-# Drift between the two trees is LEGITIMATE in both directions:
-#   - Claude carries legacy/native payloads not yet ported to Codex (the commands below).
-#   - Codex carries skills Claude can't run (e.g. image generation) — declare those here too.
-#
-# Columns (whitespace-separated):
-#   platform   root        name
-#   --------   ----        ----
-#   claude     skills      <skill-dir>          a skill intentionally Claude-only
-#   codex      skills      <skill-dir>          a skill intentionally Codex-only (e.g. image-gen)
-#   claude     commands    <file>.md            a command intentionally Claude-only
-#   codex      commands    <file>.md            a command intentionally Codex-only
-#   <platform> agents      <file>.md            an agent intentionally one-tree-only
-#
-# Effects:
-#   - Parity: the named primitive is NOT required to have a peer in the other tree.
-#   - Frontmatter lint: agents/commands payloads listed here are imported as-is and skip
-#     the managed-frontmatter check. SKILL.md frontmatter stays required regardless.
-#
-# Graduating a primitive to parity: once a Codex process adds the peer (e.g.
-# codex/commands/<name>.md, reworded for Codex), DELETE its line here and the validator
-# will start enforcing parity for it normally.
-
-# --- Codex-only skills ---
-codex	skills	retro-game-assets
-codex	skills	panthexia-tiled-materials
-codex	skills	panthexia-sprites
-# Claude retired these four to claude/archived/skills/ on 2026-10-03: Claude Code mods took over
-# their work (the whats-next, ponytail and bootstrap-docs mods, and Git Pulse's identity audit).
-# Codex has no mods, so its ports stay and are Codex-only. To bring one back to parity, restore
-# the Claude skill (claude/archived/README.md) and delete its line here.
-codex	skills	whats-next
-codex	skills	ponytail
-codex	skills	bootstrap-project-docs
-codex	skills	git-identity-check
-# Claude archived these on 2026-10-24 (no recorded use; the skill list had outgrown what the
-# harness shows). The Codex ports stay and are Codex-only; restore per claude/archived/README.md.
+# Intentional platform-only ACTIVE primitives; archives are not installable.
+# Columns: platform root name (whitespace-separated).
+# Listed agents/commands skip managed frontmatter lint; skills do not.
+# Remove an entry when its peer returns to active parity.
+# Codex lean-fleet retirement (2026-11-06) leaves Claude payloads unchanged.
+# See codex/FLEET.md and codex/archived/manifest.json for replacements.
+claude	agents	primitive-architect.md
+claude	commands	primitive-audit-summary.md
+claude	skills	ccq
+claude	skills	codex-seat
+claude	skills	council
+claude	skills	crossfire-blitz
+claude	skills	crucible
+claude	skills	dojo
+claude	skills	feature-build
+claude	skills	forge-change
+claude	skills	gauntlet
+claude	skills	impeccable
+claude	skills	itr-snapshot
+claude	skills	proof-campaign
+claude	skills	rolling-campaign
+claude	skills	story-style
 codex	skills	changelog
 codex	skills	code-audit
 codex	skills	code-roast
-codex	skills	react-review
-codex	skills	security-audit
-codex	skills	spicy-code-roast
-# Claude kept five execution modes on 2026-10-24 (blitz, crossfire-blitz, proof-campaign and
-# rolling-campaign, gauntlet and crucible, plus feature-build and forge-change) and archived the
-# rest. These Codex ports stay and are Codex-only.
-codex	skills	overdrive
+codex	skills	git-identity-check
 codex	skills	mission
-codex	skills	dual-blitz
-codex	skills	fastlane
-codex	skills	run-the-rivers-dry
-# plr (Prompt Library CLI) archived by Claude on 2026-10-24 at the user's call; the Codex port stays.
+codex	skills	panthexia-sprites
+codex	skills	panthexia-tiled-materials
 codex	skills	plr
-
-# --- Codex-only agents (drift: Claude converted these imports to skills, then archived those
-#     skills on 2026-10-24; Codex keeps the agent form) ---
-codex	agents	analytics-event-architect.md
-codex	agents	api-contract-designer.md
-codex	agents	backend-security-auditor.md
-codex	agents	changelog-curator.md
-codex	agents	cicd-pipeline-architect.md
-codex	agents	data-pipeline-architect.md
-codex	agents	database-schema-architect.md
-codex	agents	docker-compose-architect.md
-codex	agents	prd-task-generator.md
-codex	agents	tdd-workflow-coach.md
-# Claude archived its copies of these on 2026-10-24 (installed nowhere, never run); Codex keeps them.
-codex	agents	accessibility-compliance-auditor.md
-codex	agents	api-docs-generator-role.md
-codex	agents	cloud-cost-optimizer.md
-codex	agents	e2e-test-architect.md
-codex	agents	performance-test-engineer.md
-codex	agents	user-guide-writer.md
-
-# --- Claude-only skills (intentional unless a Codex feature gap appears) ---
-claude	skills	ccq
-claude	skills	proof-campaign
-# rolling-campaign chains proof campaigns across FRESH contexts via an external
-# headless driver (scripts/chain.sh) — same Claude-only lineage as proof-campaign.
-claude	skills	rolling-campaign
-# (groom, crossfire-review, codex-computer-use, ninja-meiyaku and scrum, all Claude-only, were
-#  archived on 2026-10-24 to claude/archived/skills/.)
-# codex-seat launches a GPT model as a Claude subagent (sonnet wrapper + `codex exec`) — the
-# Claude-side harness is the dependency; on Codex the model would just be launching itself.
-claude	skills	codex-seat
-# council (2026-11-05, extracted from the archived scrum/mission councils) seats GPT models
-# through codex-seat, so it shares that dependency. Graduate it with a Codex port that seats
-# Codex subagents plus `claude -p` for the Claude seat, the route codex/skills/gauntlet uses.
-claude	skills	council
-# crossfire-blitz routes backlog tasks across Claude models + gpt-5.5 (Codex plugin: codex-rescue
-# subagent + adversarial-review runtime) and cross-reviews with a different model — the Codex-plugin
-# orchestration from inside Claude Code is the dependency, so no Codex port is possible.
-claude	skills	crossfire-blitz
-# The Dojo — one skill since 2026-10-24: the rack in claude/skills/dojo/SKILL.md, the forge in
-# its FORGE.md, each of the 15 blades in blades/<blade>.md, loaded only when drawn. The blades
-# were separate skills before; those sit unedited in claude/archived/skills/. Codex keeps its
-# ports of four of them as separate skills (declared Codex-only below).
-claude	skills	dojo
 codex	skills	pre-mortem
-codex	skills	scout-strike
+codex	skills	react-review
+codex	skills	retro-game-assets
+codex	skills	security-audit
 codex	skills	shadow-duel
-codex	skills	whetstone
-# (The skills converted from imported agents — api-contract-designer, code-wizard, css,
-#  emoji-translator, tdd-coach, cpp-review, analytics-events, cicd-pipeline, data-pipeline,
-#  database-schema, docker-compose, microservices, ml-integration — were archived on 2026-10-24
-#  to claude/archived/skills/. None had a Codex skill peer; their Codex agent peers are above.)
-
-# --- Claude-only agents (imported from ~/.claude/agents; awaiting Codex ports) ---
-# (none — every remaining Claude agent now has a Codex peer; see git history for the prior imports)
-
-# --- Claude-only commands (intentional unless a Codex feature gap appears) ---
-# (tdd_process, the companion to the tdd-coach skill, was archived with it on 2026-10-24.)
-# (old-mission-skill-ab, the earlier mission skill kept for an A/B comparison, and typo, the
-#  micro-skill for flagging user-prompt typos, archived 2026-10-03 to claude/archived/skills/.
-#  typo's rule is now one always-on line in claude/global-CLAUDE.md.)
-# (start, the generic convention-discovering counterpart to whats-next, archived 2026-10-03 to
-#  claude/archived/skills/start: the whats-next mod's /start submits its text as the prompt.)
-
-# crucible is the generic sibling of gauntlet: it depends on the Workflow tool (no Codex
-# equivalent), the ultracode session toggle, and the Codex-companion critic seat driven from
-# inside Claude Code — same harness lineage as crossfire-*. Graduate when a goal-backed Codex
-# port lands, as gauntlet just did.
-claude	skills	crucible
-
-# (queue-up, which added the ask to the in-session TodoList, was archived on 2026-10-24: the
-#  queue mod and the built-in todo list cover it.)
-claude	skills	itr-snapshot
-
-# Provided externally on Codex; do not vendor another copy.
-claude	skills	impeccable
-# (heroic, an unfinished Claude workflow draft, moved to claude/wip/skills/ on 2026-10-03:
-#  it is outside the installed root, so it needs no line here until it graduates.)
+codex	skills	spicy-code-roast
+codex	skills	whats-next

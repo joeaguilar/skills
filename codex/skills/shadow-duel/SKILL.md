@@ -28,8 +28,9 @@ artifact, if it survives.
 
 1. **Frame the artifact.** State the exact claim, design, fix, or artifact under
    test and the bar it must clear.
-2. **Run challengers.** Use 1-3 independent challenge passes. If subagents are
-   available, keep them blind to each other. Each challenger must produce one
+2. **Run a challenger.** Start with one focused independent challenge pass.
+   Add another only for a material unresolved risk. When delegation is authorized,
+   keep challengers blind to each other. Each challenger must produce one
    concrete strongest strike, not a vague concern list.
 3. **Judge the strikes.** Classify each strike against the bar:
    `fatal`, `wound`, `scratch`, or `miss`. Discard off-bar or unsupported attacks.

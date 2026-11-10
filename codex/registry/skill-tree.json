@@ -12,13 +12,28 @@
     }
   },
   "primitiveTypes": {
-    "skill": { "label": "Skills", "root": "skills" },
-    "agent": { "label": "Agents", "root": "agents" },
-    "command": { "label": "Slash Commands", "root": "commands" }
+    "skill": {
+      "label": "Skills",
+      "root": "skills"
+    },
+    "agent": {
+      "label": "Agents",
+      "root": "agents"
+    },
+    "command": {
+      "label": "Slash Commands",
+      "root": "commands"
+    }
   },
   "scopes": {
-    "global": { "label": "Global", "summary": "Installed into the user agent home." },
-    "local": { "label": "Local", "summary": "Installed or enabled inside a target project." }
+    "global": {
+      "label": "Global",
+      "summary": "Installed into the user agent home."
+    },
+    "local": {
+      "label": "Local",
+      "summary": "Installed or enabled inside a target project."
+    }
   },
   "groups": {
     "core": {
@@ -29,12 +44,12 @@
     "foundations": {
       "label": "Foundations",
       "accent": "#f0c866",
-      "description": "Base project capabilities that unlock serious workflows."
+      "description": "Project utilities and focused engineering references."
     },
     "protocols": {
       "label": "Focused Protocols",
       "accent": "#5da9ff",
-      "description": "Single-task protocols for scouting, polishing, adversarial checks, and risk inversion."
+      "description": "Focused interviews, risk analysis, and adversarial review."
     },
     "planning": {
       "label": "Planning",
@@ -44,12 +59,7 @@
     "execution": {
       "label": "Execution",
       "accent": "#ff7f50",
-      "description": "Skills that move planned work through agent waves."
-    },
-    "autonomy": {
-      "label": "Autonomy",
-      "accent": "#d778ff",
-      "description": "End-to-end autonomous orchestration."
+      "description": "One core-first build workflow and one parallel backlog executor."
     },
     "forge": {
       "label": "Forge",
@@ -58,66 +68,95 @@
     }
   },
   "capabilities": {
-    "agent-alignment": { "label": "Agent Alignment" },
-    "issue-tracker": { "label": "Issue Tracker" },
-    "code-graph": { "label": "Code Graph" },
-    "gate-runner": { "label": "Gate Runner" },
-    "git-identity-audit": { "label": "Git Identity Audit" },
-    "git-hosting": { "label": "Git Hosting" },
-    "prompt-library": { "label": "Prompt Library" },
-    "rust-engineering": { "label": "Rust Engineering" },
-    "typescript-engineering": { "label": "TypeScript Engineering" },
-    "minimal-engineering": { "label": "Minimal Engineering" },
-    "code-reconnaissance": { "label": "Code Reconnaissance" },
-    "adversarial-verification": { "label": "Adversarial Verification" },
-    "hardened-change-delivery": { "label": "Hardened Change Delivery" },
-    "artifact-refinement": { "label": "Artifact Refinement" },
-    "premortem-risk": { "label": "Pre-Mortem Risk" },
-    "story-conventions": { "label": "Story Conventions" },
-    "product-roadmap": { "label": "Product Roadmap" },
-    "next-work-report": { "label": "Next-Work Report" },
-    "sprint-planning": { "label": "Sprint Planning" },
-    "backlog-execution": { "label": "Backlog Execution" },
-    "dual-blitz-orchestration": { "label": "Dual Blitz Orchestration" },
-    "sprint-review": { "label": "Sprint Review" },
-    "autonomous-orchestration": { "label": "Autonomous Orchestration" },
-    "maximum-autonomy": { "label": "Maximum Autonomy" },
-    "orchestration-selection": { "label": "Orchestration Selection" },
-    "shell-customization": { "label": "Shell Customization" },
-    "image-generation": { "label": "Image Generation" },
-    "game-assets": { "label": "Game Assets" },
-    "panthexia-sprites": { "label": "Panthexia Sprites" },
-    "panthexia-tiled-materials": { "label": "Panthexia Tiled Materials" },
-    "openai-docs": { "label": "OpenAI Docs" },
-    "plugin-authoring": { "label": "Plugin Authoring" },
-    "skill-authoring": { "label": "Skill Authoring" },
-    "skill-installation": { "label": "Skill Installation" },
-    "project-memory-bootstrap": { "label": "Project Memory Bootstrap" },
-    "primitive-architecture": { "label": "Primitive Architecture" },
-    "primitive-audit": { "label": "Primitive Audit" },
-    "accessibility-audit": { "label": "Accessibility Audit" },
-    "e2e-test-design": { "label": "E2E Test Design" },
-    "backend-security-audit": { "label": "Backend Security Audit" },
-    "performance-testing": { "label": "Performance Testing" },
-    "api-contract-design": { "label": "API Contract Design" },
-    "database-schema-design": { "label": "Database Schema Design" },
-    "docker-compose-design": { "label": "Docker Compose Design" },
-    "cicd-pipeline-design": { "label": "CI/CD Pipeline Design" },
-    "cloud-cost-optimization": { "label": "Cloud Cost Optimization" },
-    "analytics-event-design": { "label": "Analytics Event Design" },
-    "data-pipeline-design": { "label": "Data Pipeline Design" },
-    "changelog-curation": { "label": "Changelog Curation" },
-    "user-documentation": { "label": "User Documentation" },
-    "api-documentation": { "label": "API Documentation" },
-    "tdd-coaching": { "label": "TDD Coaching" },
-    "prd-task-breakdown": { "label": "PRD Task Breakdown" },
-    "code-roast": { "label": "Code Roast" },
-    "spicy-code-roast": { "label": "Spicy Code Roast" },
+    "agent-alignment": {
+      "label": "Agent Alignment"
+    },
+    "issue-tracker": {
+      "label": "Issue Tracker"
+    },
+    "code-graph": {
+      "label": "Code Graph"
+    },
+    "gate-runner": {
+      "label": "Gate Runner"
+    },
+    "git-identity-audit": {
+      "label": "Git Identity Audit"
+    },
+    "git-hosting": {
+      "label": "Git Hosting"
+    },
+    "prompt-library": {
+      "label": "Prompt Library"
+    },
+    "rust-engineering": {
+      "label": "Rust Engineering"
+    },
+    "typescript-engineering": {
+      "label": "TypeScript Engineering"
+    },
+    "adversarial-verification": {
+      "label": "Adversarial Verification"
+    },
+    "premortem-risk": {
+      "label": "Pre-Mortem Risk"
+    },
+    "product-roadmap": {
+      "label": "Product Roadmap"
+    },
+    "next-work-report": {
+      "label": "Next-Work Report"
+    },
+    "sprint-planning": {
+      "label": "Sprint Planning"
+    },
+    "backlog-execution": {
+      "label": "Backlog Execution"
+    },
+    "sprint-review": {
+      "label": "Sprint Review"
+    },
+    "shell-customization": {
+      "label": "Shell Customization"
+    },
+    "image-generation": {
+      "label": "Image Generation"
+    },
+    "game-assets": {
+      "label": "Game Assets"
+    },
+    "panthexia-sprites": {
+      "label": "Panthexia Sprites"
+    },
+    "panthexia-tiled-materials": {
+      "label": "Panthexia Tiled Materials"
+    },
+    "openai-docs": {
+      "label": "OpenAI Docs"
+    },
+    "plugin-authoring": {
+      "label": "Plugin Authoring"
+    },
+    "skill-authoring": {
+      "label": "Skill Authoring"
+    },
+    "skill-installation": {
+      "label": "Skill Installation"
+    },
+    "primitive-audit": {
+      "label": "Primitive Audit"
+    },
+    "code-roast": {
+      "label": "Code Roast"
+    },
+    "spicy-code-roast": {
+      "label": "Spicy Code Roast"
+    },
     "feature-specification": {
       "label": "Spec Writer"
     },
     "feature-delivery": {
-      "label": "Feature Build"
+      "label": "Feature Delivery"
     },
     "core-first-delivery": {
       "label": "Mission"
@@ -150,11 +189,16 @@
       "theme": "water",
       "title": "OpenAI Docs",
       "summary": "Current official OpenAI API and product documentation.",
-      "provides": ["openai-docs"],
+      "provides": [
+        "openai-docs"
+      ],
       "requires": [],
       "recommends": [],
       "unlockedBy": [],
-      "position": { "x": 8, "y": 18 }
+      "position": {
+        "x": 8,
+        "y": 18
+      }
     },
     "imagegen": {
       "path": "skills/.system/imagegen",
@@ -164,11 +208,16 @@
       "theme": "prism",
       "title": "Imagegen",
       "summary": "Bitmap image generation and editing.",
-      "provides": ["image-generation"],
+      "provides": [
+        "image-generation"
+      ],
       "requires": [],
       "recommends": [],
       "unlockedBy": [],
-      "position": { "x": 8, "y": 46 }
+      "position": {
+        "x": 8,
+        "y": 46
+      }
     },
     "retro-game-assets": {
       "path": "skills/retro-game-assets",
@@ -178,11 +227,20 @@
       "theme": "prism",
       "title": "Retro Game Assets",
       "summary": "Create cohesive SVG and bitmap art assets for retro games.",
-      "provides": ["game-assets"],
-      "requires": ["image-generation"],
+      "provides": [
+        "game-assets"
+      ],
+      "requires": [
+        "image-generation"
+      ],
       "recommends": [],
-      "unlockedBy": ["imagegen"],
-      "position": { "x": 25, "y": 4 }
+      "unlockedBy": [
+        "imagegen"
+      ],
+      "position": {
+        "x": 25,
+        "y": 4
+      }
     },
     "panthexia-sprites": {
       "path": "skills/panthexia-sprites",
@@ -192,11 +250,22 @@
       "theme": "prism",
       "title": "Panthexia Sprites",
       "summary": "Create Panthexia runtime sprite assets and manifest entries.",
-      "provides": ["panthexia-sprites"],
-      "requires": ["image-generation"],
-      "recommends": ["game-assets"],
-      "unlockedBy": ["imagegen"],
-      "position": { "x": 38, "y": 4 }
+      "provides": [
+        "panthexia-sprites"
+      ],
+      "requires": [
+        "image-generation"
+      ],
+      "recommends": [
+        "game-assets"
+      ],
+      "unlockedBy": [
+        "imagegen"
+      ],
+      "position": {
+        "x": 38,
+        "y": 4
+      }
     },
     "panthexia-tiled-materials": {
       "path": "skills/panthexia-tiled-materials",
@@ -206,11 +275,22 @@
       "theme": "prism",
       "title": "Panthexia Tiled Materials",
       "summary": "Create projection-aware seamless Panthexia environment materials.",
-      "provides": ["panthexia-tiled-materials"],
-      "requires": ["image-generation"],
-      "recommends": ["game-assets"],
-      "unlockedBy": ["imagegen"],
-      "position": { "x": 38, "y": 12 }
+      "provides": [
+        "panthexia-tiled-materials"
+      ],
+      "requires": [
+        "image-generation"
+      ],
+      "recommends": [
+        "game-assets"
+      ],
+      "unlockedBy": [
+        "imagegen"
+      ],
+      "position": {
+        "x": 38,
+        "y": 12
+      }
     },
     "code-roast": {
       "path": "skills/code-roast",
@@ -220,11 +300,18 @@
       "theme": "fire",
       "title": "Code Roast",
       "summary": "Turns serious code findings into memorable, funny teaching moments.",
-      "provides": ["code-roast"],
+      "provides": [
+        "code-roast"
+      ],
       "requires": [],
-      "recommends": ["code-graph"],
+      "recommends": [
+        "code-graph"
+      ],
       "unlockedBy": [],
-      "position": { "x": 25, "y": 88 }
+      "position": {
+        "x": 25,
+        "y": 88
+      }
     },
     "spicy-code-roast": {
       "path": "skills/spicy-code-roast",
@@ -234,11 +321,22 @@
       "theme": "plasma",
       "title": "Spicy Code Roast",
       "summary": "Adds explicit opt-in current-event joke research to code roasts.",
-      "provides": ["spicy-code-roast"],
-      "requires": ["code-roast"],
-      "recommends": ["code-graph"],
-      "unlockedBy": ["code-roast"],
-      "position": { "x": 38, "y": 88 }
+      "provides": [
+        "spicy-code-roast"
+      ],
+      "requires": [
+        "code-roast"
+      ],
+      "recommends": [
+        "code-graph"
+      ],
+      "unlockedBy": [
+        "code-roast"
+      ],
+      "position": {
+        "x": 38,
+        "y": 88
+      }
     },
     "skill-creator": {
       "path": "skills/.system/skill-creator",
@@ -248,11 +346,16 @@
       "theme": "forge",
       "title": "Skill Creator",
       "summary": "Create or update Codex skills.",
-      "provides": ["skill-authoring"],
+      "provides": [
+        "skill-authoring"
+      ],
       "requires": [],
       "recommends": [],
       "unlockedBy": [],
-      "position": { "x": 8, "y": 74 }
+      "position": {
+        "x": 8,
+        "y": 74
+      }
     },
     "plugin-creator": {
       "path": "skills/.system/plugin-creator",
@@ -262,11 +365,20 @@
       "theme": "electric",
       "title": "Plugin Creator",
       "summary": "Scaffold Codex plugin bundles and manifests.",
-      "provides": ["plugin-authoring"],
-      "requires": ["skill-authoring"],
+      "provides": [
+        "plugin-authoring"
+      ],
+      "requires": [
+        "skill-authoring"
+      ],
       "recommends": [],
-      "unlockedBy": ["skill-creator"],
-      "position": { "x": 25, "y": 66 }
+      "unlockedBy": [
+        "skill-creator"
+      ],
+      "position": {
+        "x": 25,
+        "y": 66
+      }
     },
     "skill-installer": {
       "path": "skills/.system/skill-installer",
@@ -276,25 +388,20 @@
       "theme": "wind",
       "title": "Skill Installer",
       "summary": "Install curated or external Codex skills.",
-      "provides": ["skill-installation"],
-      "requires": ["skill-authoring"],
+      "provides": [
+        "skill-installation"
+      ],
+      "requires": [
+        "skill-authoring"
+      ],
       "recommends": [],
-      "unlockedBy": ["skill-creator"],
-      "position": { "x": 25, "y": 82 }
-    },
-    "bootstrap-project-docs": {
-      "path": "skills/bootstrap-project-docs",
-      "group": "foundations",
-      "tier": 0,
-      "icon": "DOCS",
-      "theme": "ink",
-      "title": "Bootstrap Project Docs",
-      "summary": "Create the standard project-memory documentation scaffold.",
-      "provides": ["project-memory-bootstrap"],
-      "requires": [],
-      "recommends": [],
-      "unlockedBy": [],
-      "position": { "x": 25, "y": 26 }
+      "unlockedBy": [
+        "skill-creator"
+      ],
+      "position": {
+        "x": 25,
+        "y": 82
+      }
     },
     "alignment": {
       "path": "skills/alignment",
@@ -304,11 +411,16 @@
       "theme": "aether",
       "title": "Alignment",
       "summary": "Interrogate plans and designs until expectations are explicit.",
-      "provides": ["agent-alignment"],
+      "provides": [
+        "agent-alignment"
+      ],
       "requires": [],
       "recommends": [],
       "unlockedBy": [],
-      "position": { "x": 25, "y": 18 }
+      "position": {
+        "x": 25,
+        "y": 18
+      }
     },
     "shell-prompt": {
       "path": "skills/shell-prompt",
@@ -318,11 +430,16 @@
       "theme": "electric",
       "title": "Shell Prompt",
       "summary": "Install a lightweight git-aware zsh prompt.",
-      "provides": ["shell-customization"],
+      "provides": [
+        "shell-customization"
+      ],
       "requires": [],
       "recommends": [],
       "unlockedBy": [],
-      "position": { "x": 25, "y": 34 }
+      "position": {
+        "x": 25,
+        "y": 34
+      }
     },
     "itr": {
       "path": "skills/itr",
@@ -331,12 +448,17 @@
       "icon": "ITR",
       "theme": "fire",
       "title": "itr",
-      "summary": "File and structure project backlog items.",
-      "provides": ["issue-tracker"],
+      "summary": "Manage existing tracked work from filing through evidence-backed closure.",
+      "provides": [
+        "issue-tracker"
+      ],
       "requires": [],
       "recommends": [],
       "unlockedBy": [],
-      "position": { "x": 25, "y": 50 }
+      "position": {
+        "x": 25,
+        "y": 50
+      }
     },
     "kgr": {
       "path": "skills/kgr",
@@ -346,11 +468,16 @@
       "theme": "water",
       "title": "kgr",
       "summary": "Navigate codebases through dependency and symbol graphs.",
-      "provides": ["code-graph"],
+      "provides": [
+        "code-graph"
+      ],
       "requires": [],
       "recommends": [],
       "unlockedBy": [],
-      "position": { "x": 38, "y": 66 }
+      "position": {
+        "x": 38,
+        "y": 66
+      }
     },
     "gatr": {
       "path": "skills/gatr",
@@ -360,11 +487,16 @@
       "theme": "forge",
       "title": "gatr",
       "summary": "Run verification gates with durable logs and compact summaries.",
-      "provides": ["gate-runner"],
+      "provides": [
+        "gate-runner"
+      ],
       "requires": [],
       "recommends": [],
       "unlockedBy": [],
-      "position": { "x": 38, "y": 42 }
+      "position": {
+        "x": 38,
+        "y": 42
+      }
     },
     "git-identity-check": {
       "path": "skills/git-identity-check",
@@ -374,11 +506,16 @@
       "theme": "ink",
       "title": "Git Identity Check",
       "summary": "Audit git author identity across local repositories.",
-      "provides": ["git-identity-audit"],
+      "provides": [
+        "git-identity-audit"
+      ],
       "requires": [],
       "recommends": [],
       "unlockedBy": [],
-      "position": { "x": 25, "y": 42 }
+      "position": {
+        "x": 25,
+        "y": 42
+      }
     },
     "gitea": {
       "path": "skills/gitea",
@@ -388,11 +525,16 @@
       "theme": "earth",
       "title": "Gitea",
       "summary": "Work with self-hosted Gitea repos, remotes, branches, and pull requests.",
-      "provides": ["git-hosting"],
+      "provides": [
+        "git-hosting"
+      ],
       "requires": [],
       "recommends": [],
       "unlockedBy": [],
-      "position": { "x": 38, "y": 58 }
+      "position": {
+        "x": 38,
+        "y": 58
+      }
     },
     "plr": {
       "path": "skills/plr",
@@ -402,11 +544,16 @@
       "theme": "aether",
       "title": "plr",
       "summary": "Store, retrieve, and organize reusable prompts.",
-      "provides": ["prompt-library"],
+      "provides": [
+        "prompt-library"
+      ],
       "requires": [],
       "recommends": [],
       "unlockedBy": [],
-      "position": { "x": 38, "y": 34 }
+      "position": {
+        "x": 38,
+        "y": 34
+      }
     },
     "rust-best-practices": {
       "path": "skills/rust-best-practices",
@@ -416,11 +563,18 @@
       "theme": "forge",
       "title": "Rust Best Practices",
       "summary": "Apply idiomatic Rust ownership, API, async, testing, and tooling standards.",
-      "provides": ["rust-engineering"],
+      "provides": [
+        "rust-engineering"
+      ],
       "requires": [],
-      "recommends": ["code-graph"],
+      "recommends": [
+        "code-graph"
+      ],
       "unlockedBy": [],
-      "position": { "x": 38, "y": 50 }
+      "position": {
+        "x": 38,
+        "y": 50
+      }
     },
     "typescript-best-practices": {
       "path": "skills/typescript-best-practices",
@@ -430,39 +584,18 @@
       "theme": "forge",
       "title": "TypeScript Best Practices",
       "summary": "Apply idiomatic TypeScript and JavaScript typing, error, async, module, and tooling standards.",
-      "provides": ["typescript-engineering"],
+      "provides": [
+        "typescript-engineering"
+      ],
       "requires": [],
-      "recommends": ["code-graph"],
+      "recommends": [
+        "code-graph"
+      ],
       "unlockedBy": [],
-      "position": { "x": 25, "y": 58 }
-    },
-    "ponytail": {
-      "path": "skills/ponytail",
-      "group": "protocols",
-      "tier": 1,
-      "icon": "MIN",
-      "theme": "ink",
-      "title": "Ponytail",
-      "summary": "Lazy senior developer mode for the smallest safe solution.",
-      "provides": ["minimal-engineering"],
-      "requires": [],
-      "recommends": [],
-      "unlockedBy": [],
-      "position": { "x": 45, "y": 4 }
-    },
-    "scout-strike": {
-      "path": "skills/scout-strike",
-      "group": "protocols",
-      "tier": 1,
-      "icon": "SCT",
-      "theme": "water",
-      "title": "Scout Strike",
-      "summary": "Map unfamiliar code or system terrain before a focused change.",
-      "provides": ["code-reconnaissance"],
-      "requires": [],
-      "recommends": ["code-graph"],
-      "unlockedBy": [],
-      "position": { "x": 45, "y": 10 }
+      "position": {
+        "x": 25,
+        "y": 58
+      }
     },
     "shadow-duel": {
       "path": "skills/shadow-duel",
@@ -472,39 +605,16 @@
       "theme": "ink",
       "title": "Shadow Duel",
       "summary": "Red-team a claim, plan, design, or fix before trusting it.",
-      "provides": ["adversarial-verification"],
+      "provides": [
+        "adversarial-verification"
+      ],
       "requires": [],
       "recommends": [],
       "unlockedBy": [],
-      "position": { "x": 45, "y": 22 }
-    },
-    "forge-change": {
-      "path": "skills/forge-change",
-      "group": "protocols",
-      "tier": 2,
-      "icon": "FRG",
-      "theme": "forge",
-      "title": "Forge Change",
-      "summary": "Recon, implement, adversarially harden, verify, and commit one bounded change.",
-      "provides": ["hardened-change-delivery"],
-      "requires": ["code-reconnaissance", "adversarial-verification"],
-      "recommends": ["code-graph", "gate-runner", "git-identity-audit", "issue-tracker"],
-      "unlockedBy": ["scout-strike", "shadow-duel"],
-      "position": { "x": 58, "y": 28 }
-    },
-    "whetstone": {
-      "path": "skills/whetstone",
-      "group": "protocols",
-      "tier": 1,
-      "icon": "WHT",
-      "theme": "earth",
-      "title": "Whetstone",
-      "summary": "Polish one artifact through critique and revision passes.",
-      "provides": ["artifact-refinement"],
-      "requires": [],
-      "recommends": [],
-      "unlockedBy": [],
-      "position": { "x": 45, "y": 34 }
+      "position": {
+        "x": 45,
+        "y": 22
+      }
     },
     "pre-mortem": {
       "path": "skills/pre-mortem",
@@ -514,25 +624,18 @@
       "theme": "fire",
       "title": "Pre-Mortem",
       "summary": "Assume a risky plan failed and derive ranked guardrails.",
-      "provides": ["premortem-risk"],
+      "provides": [
+        "premortem-risk"
+      ],
       "requires": [],
-      "recommends": ["agent-alignment"],
+      "recommends": [
+        "agent-alignment"
+      ],
       "unlockedBy": [],
-      "position": { "x": 58, "y": 16 }
-    },
-    "story-style": {
-      "path": "skills/story-style",
-      "group": "planning",
-      "tier": 1,
-      "icon": "STY",
-      "theme": "ink",
-      "title": "Story Style",
-      "summary": "Capture project issue-writing conventions.",
-      "provides": ["story-conventions"],
-      "requires": ["issue-tracker"],
-      "recommends": [],
-      "unlockedBy": ["itr"],
-      "position": { "x": 45, "y": 42 }
+      "position": {
+        "x": 58,
+        "y": 16
+      }
     },
     "sprint": {
       "path": "skills/sprint",
@@ -541,12 +644,20 @@
       "icon": "SPN",
       "theme": "aether",
       "title": "Sprint Planning",
-      "summary": "Turn specs or plans into groomed sprint backlogs.",
-      "provides": ["sprint-planning"],
-      "requires": ["issue-tracker"],
-      "recommends": ["code-graph", "story-conventions", "product-roadmap"],
-      "unlockedBy": ["itr"],
-      "position": { "x": 57, "y": 54 }
+      "summary": "Plan durable handoffs, acceptance, and real dependencies.",
+      "provides": [
+        "sprint-planning"
+      ],
+      "requires": [],
+      "recommends": [
+        "issue-tracker",
+        "code-graph"
+      ],
+      "unlockedBy": [],
+      "position": {
+        "x": 57,
+        "y": 54
+      }
     },
     "roadmap": {
       "path": "skills/roadmap",
@@ -555,12 +666,19 @@
       "icon": "MAP",
       "theme": "earth",
       "title": "Roadmap",
-      "summary": "Bridge locked specs to live backlog and sprint trajectory.",
-      "provides": ["product-roadmap"],
-      "requires": ["issue-tracker", "story-conventions"],
-      "recommends": ["code-graph"],
-      "unlockedBy": ["story-style"],
-      "position": { "x": 57, "y": 32 }
+      "summary": "Resolve cross-feature priorities and release boundaries.",
+      "provides": [
+        "product-roadmap"
+      ],
+      "requires": [],
+      "recommends": [
+        "issue-tracker"
+      ],
+      "unlockedBy": [],
+      "position": {
+        "x": 57,
+        "y": 32
+      }
     },
     "whats-next": {
       "path": "skills/whats-next",
@@ -570,11 +688,22 @@
       "theme": "water",
       "title": "What's Next",
       "summary": "Reconcile tracker, roadmap, sprint, and git into one what-is-next report.",
-      "provides": ["next-work-report"],
-      "requires": ["issue-tracker"],
-      "recommends": ["product-roadmap"],
-      "unlockedBy": ["itr"],
-      "position": { "x": 45, "y": 52 }
+      "provides": [
+        "next-work-report"
+      ],
+      "requires": [
+        "issue-tracker"
+      ],
+      "recommends": [
+        "product-roadmap"
+      ],
+      "unlockedBy": [
+        "itr"
+      ],
+      "position": {
+        "x": 45,
+        "y": 52
+      }
     },
     "blitz": {
       "path": "skills/blitz",
@@ -583,26 +712,21 @@
       "icon": "BLZ",
       "theme": "fire",
       "title": "Blitz",
-      "summary": "Run conflict-free parallel backlog execution waves.",
-      "provides": ["backlog-execution"],
+      "summary": "Execute independent backlog work with one coordinator and integrated verification.",
+      "provides": [
+        "backlog-execution"
+      ],
       "requires": [],
-      "recommends": ["issue-tracker", "sprint-planning", "code-graph", "gate-runner"],
+      "recommends": [
+        "issue-tracker",
+        "code-graph",
+        "gate-runner"
+      ],
       "unlockedBy": [],
-      "position": { "x": 76, "y": 44 }
-    },
-    "dual-blitz": {
-      "path": "skills/dual-blitz",
-      "group": "execution",
-      "tier": 4,
-      "icon": "D2",
-      "theme": "electric",
-      "title": "Dual Blitz",
-      "summary": "Split backlog execution into two isolated main-agent lanes.",
-      "provides": ["dual-blitz-orchestration"],
-      "requires": ["backlog-execution"],
-      "recommends": ["code-graph", "gate-runner", "sprint-review"],
-      "unlockedBy": ["blitz"],
-      "position": { "x": 88, "y": 36 }
+      "position": {
+        "x": 76,
+        "y": 44
+      }
     },
     "sprint-review": {
       "path": "skills/sprint-review",
@@ -611,68 +735,20 @@
       "icon": "REV",
       "theme": "water",
       "title": "Sprint Review",
-      "summary": "Review completed sprint work and file follow-ups.",
-      "provides": ["sprint-review"],
-      "requires": ["sprint-planning"],
-      "recommends": ["story-conventions", "gate-runner"],
-      "unlockedBy": ["sprint"],
-      "position": { "x": 76, "y": 64 }
-    },
-    "fastlane": {
-      "path": "skills/fastlane",
-      "group": "autonomy",
-      "tier": 3,
-      "icon": "FST",
-      "theme": "electric",
-      "title": "Fastlane",
-      "summary": "Choose the safest fast multi-agent workflow for a project.",
-      "provides": ["orchestration-selection"],
+      "summary": "Reconcile delivered outcomes, required acceptance, and carryover.",
+      "provides": [
+        "sprint-review"
+      ],
       "requires": [],
-      "recommends": ["issue-tracker", "code-graph", "sprint-planning", "backlog-execution", "dual-blitz-orchestration", "sprint-review", "autonomous-orchestration", "maximum-autonomy", "product-roadmap", "story-conventions", "gate-runner"],
+      "recommends": [
+        "issue-tracker",
+        "gate-runner"
+      ],
       "unlockedBy": [],
-      "position": { "x": 76, "y": 78 }
-    },
-    "overdrive": {
-      "path": "skills/overdrive",
-      "group": "autonomy",
-      "tier": 4,
-      "icon": "OD",
-      "theme": "plasma",
-      "title": "Overdrive",
-      "summary": "Autonomous plan, execute, and review loop.",
-      "provides": ["autonomous-orchestration"],
-      "requires": [],
-      "recommends": ["issue-tracker", "code-graph", "gate-runner", "sprint-planning", "backlog-execution", "sprint-review", "product-roadmap", "story-conventions"],
-      "unlockedBy": [],
-      "position": { "x": 92, "y": 54 }
-    },
-    "gauntlet": {
-      "path": "skills/gauntlet",
-      "group": "autonomy",
-      "tier": 4,
-      "icon": "GNT",
-      "theme": "plasma",
-      "title": "Gauntlet",
-      "summary": "Drive a visual subsystem through goal-backed build, capture, critique, and deterministic closure.",
-      "provides": ["autonomous-orchestration"],
-      "requires": ["issue-tracker"],
-      "recommends": ["code-graph", "image-generation"],
-      "unlockedBy": ["itr"],
-      "position": { "x": 92, "y": 66 }
-    },
-    "run-the-rivers-dry": {
-      "path": "skills/run-the-rivers-dry",
-      "group": "autonomy",
-      "tier": 5,
-      "icon": "DRY",
-      "theme": "plasma",
-      "title": "Run the Rivers Dry",
-      "summary": "Chronicle-voiced maximum-autonomy loop that scouts, swarms, verifies, repairs, and persists.",
-      "provides": ["maximum-autonomy"],
-      "requires": [],
-      "recommends": ["autonomous-orchestration", "issue-tracker", "code-graph", "gate-runner", "product-roadmap", "story-conventions"],
-      "unlockedBy": [],
-      "position": { "x": 92, "y": 78 }
+      "position": {
+        "x": 76,
+        "y": 64
+      }
     },
     "spec-writer": {
       "path": "skills/spec-writer",
@@ -693,38 +769,25 @@
         "y": 108
       }
     },
-    "feature-build": {
-      "path": "skills/feature-build",
-      "group": "execution",
-      "tier": 1,
-      "icon": "FEAT",
-      "theme": "wind",
-      "title": "Feature Build",
-      "summary": "Build one feature through its real user path",
-      "provides": [
-        "feature-delivery"
-      ],
-      "requires": [],
-      "recommends": [],
-      "unlockedBy": [],
-      "position": {
-        "x": 34,
-        "y": 108
-      }
-    },
     "mission": {
       "path": "skills/mission",
-      "group": "autonomy",
+      "group": "execution",
       "tier": 1,
       "icon": "MSN",
       "theme": "wind",
       "title": "Mission",
-      "summary": "Deliver a runnable core and finish proven gaps",
+      "summary": "Build a runnable core; investigate and review only where useful.",
       "provides": [
-        "core-first-delivery"
+        "core-first-delivery",
+        "feature-delivery"
       ],
       "requires": [],
-      "recommends": [],
+      "recommends": [
+        "code-graph",
+        "gate-runner",
+        "issue-tracker",
+        "backlog-execution"
+      ],
       "unlockedBy": [],
       "position": {
         "x": 52,
@@ -847,350 +910,38 @@
     }
   },
   "primitives": {
-    "primitive-architect-agent": {
-      "type": "agent",
-      "platforms": {
-        "claude": { "path": "agents/primitive-architect.md", "requires": [] },
-        "codex": { "path": "agents/primitive-architect.md", "requires": ["skill-authoring"] }
-      },
-      "scopes": ["global", "local"],
-      "group": "forge",
-      "tier": 1,
-      "icon": "AGT",
-      "theme": "ink",
-      "title": "Primitive Architect",
-      "summary": "Reviews cross-platform primitive layout, install scopes, and dependency contracts.",
-      "provides": ["primitive-architecture"],
-      "requires": ["skill-authoring"],
-      "recommends": ["code-graph"],
-      "unlockedBy": ["skill-creator"],
-      "position": { "x": 40, "y": 82 }
-    },
     "primitive-audit-command": {
       "type": "command",
       "platforms": {
-        "claude": { "path": "commands/primitive-audit.md" },
-        "codex": { "path": "commands/primitive-audit.md" }
+        "claude": {
+          "path": "commands/primitive-audit.md"
+        },
+        "codex": {
+          "path": "commands/primitive-audit.md"
+        }
       },
-      "scopes": ["global", "local"],
+      "scopes": [
+        "global",
+        "local"
+      ],
       "group": "forge",
       "tier": 2,
       "icon": "CMD",
       "theme": "electric",
       "title": "Primitive Audit Command",
-      "summary": "Slash command for checking primitive paths, install scopes, and graph integrity.",
-      "provides": ["primitive-audit"],
-      "requires": ["primitive-architecture"],
-      "recommends": ["skill-installation"],
-      "unlockedBy": ["primitive-architect-agent"],
-      "position": { "x": 55, "y": 84 }
-    },
-    "primitive-audit-summary-command": {
-      "type": "command",
-      "platforms": {
-        "claude": { "path": "commands/primitive-audit-summary.md" },
-        "codex": { "path": "commands/primitive-audit-summary.md" }
-      },
-      "scopes": ["global", "local"],
-      "group": "forge",
-      "tier": 2,
-      "icon": "SUM",
-      "theme": "wind",
-      "title": "Primitive Audit Summary",
-      "summary": "Slash command for summarizing provider choices, install scopes, and graph health.",
-      "provides": ["primitive-audit"],
-      "requires": ["primitive-architecture"],
-      "recommends": ["skill-installation"],
-      "unlockedBy": ["primitive-architect-agent"],
-      "position": { "x": 66, "y": 84 }
-    },
-    "accessibility-compliance-auditor-agent": {
-      "type": "agent",
-      "platforms": {
-        "codex": { "path": "agents/accessibility-compliance-auditor.md" }
-      },
-      "scopes": ["global", "local"],
-      "group": "execution",
-      "tier": 2,
-      "icon": "A11Y",
-      "theme": "wind",
-      "title": "Accessibility Auditor",
-      "summary": "Reviews UI accessibility, WCAG compliance, and assistive technology behavior.",
-      "provides": ["accessibility-audit"],
+      "summary": "Audit registry, installed state, provider choices, and drift.",
+      "provides": [
+        "primitive-audit"
+      ],
       "requires": [],
-      "recommends": ["code-graph"],
+      "recommends": [
+        "skill-installation"
+      ],
       "unlockedBy": [],
-      "position": { "x": 64, "y": 8 }
-    },
-    "e2e-test-architect-agent": {
-      "type": "agent",
-      "platforms": {
-        "codex": { "path": "agents/e2e-test-architect.md" }
-      },
-      "scopes": ["global", "local"],
-      "group": "execution",
-      "tier": 2,
-      "icon": "E2E",
-      "theme": "water",
-      "title": "E2E Test Architect",
-      "summary": "Designs stable end-to-end test suites for critical workflows.",
-      "provides": ["e2e-test-design"],
-      "requires": [],
-      "recommends": ["code-graph"],
-      "unlockedBy": [],
-      "position": { "x": 64, "y": 18 }
-    },
-    "backend-security-auditor-agent": {
-      "type": "agent",
-      "platforms": {
-        "codex": { "path": "agents/backend-security-auditor.md" }
-      },
-      "scopes": ["global", "local"],
-      "group": "execution",
-      "tier": 2,
-      "icon": "SEC",
-      "theme": "fire",
-      "title": "Backend Security Auditor",
-      "summary": "Reviews backend APIs, authentication, authorization, and data handling for security risk.",
-      "provides": ["backend-security-audit"],
-      "requires": ["system-security-audit"],
-      "recommends": ["code-graph"],
-      "unlockedBy": ["security-audit"],
-      "position": { "x": 64, "y": 28 }
-    },
-    "performance-test-engineer-agent": {
-      "type": "agent",
-      "platforms": {
-        "codex": { "path": "agents/performance-test-engineer.md" }
-      },
-      "scopes": ["global", "local"],
-      "group": "execution",
-      "tier": 2,
-      "icon": "PERF",
-      "theme": "electric",
-      "title": "Performance Test Engineer",
-      "summary": "Designs load tests, benchmarks, and bottleneck investigations.",
-      "provides": ["performance-testing"],
-      "requires": [],
-      "recommends": ["code-graph"],
-      "unlockedBy": [],
-      "position": { "x": 64, "y": 38 }
-    },
-    "api-contract-designer-agent": {
-      "type": "agent",
-      "platforms": {
-        "codex": { "path": "agents/api-contract-designer.md" }
-      },
-      "scopes": ["global", "local"],
-      "group": "planning",
-      "tier": 1,
-      "icon": "API",
-      "theme": "aether",
-      "title": "API Contract Designer",
-      "summary": "Designs REST, OpenAPI, GraphQL, gRPC, and event contracts from requirements.",
-      "provides": ["api-contract-design"],
-      "requires": [],
-      "recommends": ["openai-docs"],
-      "unlockedBy": [],
-      "position": { "x": 44, "y": 6 }
-    },
-    "database-schema-architect-agent": {
-      "type": "agent",
-      "platforms": {
-        "codex": { "path": "agents/database-schema-architect.md" }
-      },
-      "scopes": ["global", "local"],
-      "group": "planning",
-      "tier": 1,
-      "icon": "DB",
-      "theme": "earth",
-      "title": "Database Schema Architect",
-      "summary": "Designs schemas, migrations, indexes, and persistence boundaries.",
-      "provides": ["database-schema-design"],
-      "requires": [],
-      "recommends": ["code-graph"],
-      "unlockedBy": [],
-      "position": { "x": 44, "y": 16 }
-    },
-    "docker-compose-architect-agent": {
-      "type": "agent",
-      "platforms": {
-        "codex": { "path": "agents/docker-compose-architect.md" }
-      },
-      "scopes": ["global", "local"],
-      "group": "foundations",
-      "tier": 1,
-      "icon": "DKR",
-      "theme": "water",
-      "title": "Docker Compose Architect",
-      "summary": "Designs and troubleshoots Docker Compose development and test environments.",
-      "provides": ["docker-compose-design"],
-      "requires": [],
-      "recommends": [],
-      "unlockedBy": [],
-      "position": { "x": 44, "y": 26 }
-    },
-    "cicd-pipeline-architect-agent": {
-      "type": "agent",
-      "platforms": {
-        "codex": { "path": "agents/cicd-pipeline-architect.md" }
-      },
-      "scopes": ["global", "local"],
-      "group": "execution",
-      "tier": 2,
-      "icon": "CI",
-      "theme": "forge",
-      "title": "CI/CD Pipeline Architect",
-      "summary": "Designs CI/CD workflows, quality gates, and deployment automation.",
-      "provides": ["cicd-pipeline-design"],
-      "requires": [],
-      "recommends": ["code-graph"],
-      "unlockedBy": [],
-      "position": { "x": 64, "y": 48 }
-    },
-    "cloud-cost-optimizer-agent": {
-      "type": "agent",
-      "platforms": {
-        "codex": { "path": "agents/cloud-cost-optimizer.md" }
-      },
-      "scopes": ["global", "local"],
-      "group": "planning",
-      "tier": 1,
-      "icon": "COST",
-      "theme": "earth",
-      "title": "Cloud Cost Optimizer",
-      "summary": "Analyzes cloud spend and recommends cost-aware infrastructure improvements.",
-      "provides": ["cloud-cost-optimization"],
-      "requires": [],
-      "recommends": [],
-      "unlockedBy": [],
-      "position": { "x": 44, "y": 36 }
-    },
-    "analytics-event-architect-agent": {
-      "type": "agent",
-      "platforms": {
-        "codex": { "path": "agents/analytics-event-architect.md" }
-      },
-      "scopes": ["global", "local"],
-      "group": "planning",
-      "tier": 1,
-      "icon": "EVT",
-      "theme": "prism",
-      "title": "Analytics Event Architect",
-      "summary": "Designs event taxonomies, funnels, and privacy-conscious measurement plans.",
-      "provides": ["analytics-event-design"],
-      "requires": [],
-      "recommends": [],
-      "unlockedBy": [],
-      "position": { "x": 44, "y": 46 }
-    },
-    "data-pipeline-architect-agent": {
-      "type": "agent",
-      "platforms": {
-        "codex": { "path": "agents/data-pipeline-architect.md" }
-      },
-      "scopes": ["global", "local"],
-      "group": "planning",
-      "tier": 1,
-      "icon": "DATA",
-      "theme": "water",
-      "title": "Data Pipeline Architect",
-      "summary": "Designs batch, streaming, ETL, ELT, and data quality pipelines.",
-      "provides": ["data-pipeline-design"],
-      "requires": [],
-      "recommends": [],
-      "unlockedBy": [],
-      "position": { "x": 44, "y": 56 }
-    },
-    "changelog-curator-agent": {
-      "type": "agent",
-      "platforms": {
-        "codex": { "path": "agents/changelog-curator.md" }
-      },
-      "scopes": ["global", "local"],
-      "group": "execution",
-      "tier": 2,
-      "icon": "LOG",
-      "theme": "ink",
-      "title": "Changelog Curator",
-      "summary": "Creates changelogs, release notes, and stakeholder change summaries.",
-      "provides": ["changelog-curation"],
-      "requires": ["release-notes-authoring"],
-      "recommends": ["issue-tracker"],
-      "unlockedBy": ["changelog"],
-      "position": { "x": 64, "y": 58 }
-    },
-    "user-guide-writer-agent": {
-      "type": "agent",
-      "platforms": {
-        "codex": { "path": "agents/user-guide-writer.md" }
-      },
-      "scopes": ["global", "local"],
-      "group": "planning",
-      "tier": 1,
-      "icon": "GUIDE",
-      "theme": "wind",
-      "title": "User Guide Writer",
-      "summary": "Writes user-facing guides, onboarding docs, and feature documentation.",
-      "provides": ["user-documentation"],
-      "requires": [],
-      "recommends": [],
-      "unlockedBy": [],
-      "position": { "x": 44, "y": 66 }
-    },
-    "api-docs-generator-agent": {
-      "type": "agent",
-      "platforms": {
-        "codex": { "path": "agents/api-docs-generator-role.md" }
-      },
-      "scopes": ["global", "local"],
-      "group": "planning",
-      "tier": 1,
-      "icon": "DOCS",
-      "theme": "aether",
-      "title": "API Docs Generator",
-      "summary": "Creates API documentation from code, specifications, schemas, and behavior.",
-      "provides": ["api-documentation"],
-      "requires": [],
-      "recommends": ["api-contract-design", "openai-docs"],
-      "unlockedBy": [],
-      "position": { "x": 44, "y": 76 }
-    },
-    "tdd-workflow-coach-agent": {
-      "type": "agent",
-      "platforms": {
-        "codex": { "path": "agents/tdd-workflow-coach.md" }
-      },
-      "scopes": ["global", "local"],
-      "group": "execution",
-      "tier": 2,
-      "icon": "TDD",
-      "theme": "fire",
-      "title": "TDD Workflow Coach",
-      "summary": "Guides feature work through red, green, refactor, edge tests, and integration validation.",
-      "provides": ["tdd-coaching"],
-      "requires": [],
-      "recommends": ["code-graph"],
-      "unlockedBy": [],
-      "position": { "x": 64, "y": 68 }
-    },
-    "prd-task-generator-agent": {
-      "type": "agent",
-      "platforms": {
-        "codex": { "path": "agents/prd-task-generator.md" }
-      },
-      "scopes": ["global", "local"],
-      "group": "planning",
-      "tier": 1,
-      "icon": "PRD",
-      "theme": "forge",
-      "title": "PRD Task Generator",
-      "summary": "Turns PRDs and feature specs into implementation task lists.",
-      "provides": ["prd-task-breakdown"],
-      "requires": [],
-      "recommends": ["issue-tracker", "story-conventions"],
-      "unlockedBy": [],
-      "position": { "x": 44, "y": 86 }
+      "position": {
+        "x": 55,
+        "y": 84
+      }
     }
   }
 }

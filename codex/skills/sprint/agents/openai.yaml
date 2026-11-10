@@ -1,6 +1,6 @@
 interface:
   display_name: "Sprint Planning"
-  short_description: "Plan groomed Sprint backlogs"
-  default_prompt: "Use $sprint to turn this spec into a groomed sprint backlog."
+  short_description: "Break durable work into verifiable tasks"
+  default_prompt: "Use $sprint to break this work into tasks with acceptance criteria, dependencies, and ownership."
 policy:
   allow_implicit_invocation: false

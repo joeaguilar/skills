@@ -48,6 +48,17 @@ if [ ! -d "$ROOT" ]; then
   exit 1
 fi
 
+# Retired payloads must stay outside the installable roots.
+for primitive in skills agents commands; do
+  for archived in "$CODEX_ROOT/archived/$primitive"/*; do
+    [ -e "$archived" ] || continue
+    if [ -e "$CODEX_ROOT/$primitive/$(basename "$archived")" ]; then
+      echo "ERROR: archived $primitive/$(basename "$archived") is also active"
+      status=1
+    fi
+  done
+done
+
 while IFS= read -r skill_md; do
   skill_dir="$(dirname "$skill_md")"
   rel="${skill_dir#$ROOT/}"
@@ -80,9 +91,9 @@ while IFS= read -r skill_md; do
   fi
 
   case "$rel" in
-    blitz|bootstrap-project-docs|dual-blitz|gauntlet|itr|overdrive|roadmap|run-the-rivers-dry|shell-prompt|sprint|sprint-review|story-style)
+    blitz|roadmap|shell-prompt|sprint|sprint-review)
       if ! grep -Eq '^[[:space:]]+allow_implicit_invocation:[[:space:]]+false[[:space:]]*$' "$skill_dir/agents/openai.yaml"; then
-        echo "ERROR: $rel must disable implicit invocation because it performs durable or high-autonomy writes"
+        echo "ERROR: $rel must preserve its explicitly invoked workflow policy"
         status=1
       fi
       ;;

@@ -543,6 +543,18 @@ while IFS= read -r platform; do
     else
       source="$REPO_DIR/$platform/$primitive"
       target="$(target_root "$platform")/$primitive"
+      if [ "$platform" = "codex" ] && [ -f "$REPO_DIR/codex/archived/manifest.json" ]; then
+        case "$primitive" in
+          skills|agents|commands)
+            retire_args=(--home "$(target_root "$platform")" --root "$primitive")
+            [ "$APPLY" -eq 1 ] && retire_args+=(--apply)
+            if ! node "$REPO_DIR/codex/scripts/retire-archived-primitives.js" "${retire_args[@]}"; then
+              status=1
+              continue
+            fi
+            ;;
+        esac
+      fi
       if [ "$platform" = "codex" ] && [ "$primitive" = "skills" ]; then
         install_codex_skills "$source" "$target" || status=1
       else

@@ -61,6 +61,12 @@ echo "  Target:      $TARGET_DIR"
 echo "  Scope:       non-system skills only"
 echo "  Warning:     compatibility mode can duplicate names already loaded from ~/.codex/skills"
 
+if [ -f "$(dirname "$SOURCE_DIR")/archived/manifest.json" ]; then
+  retire_args=(--home "$AGENTS_HOME_DIR" --codex-root "$(dirname "$SOURCE_DIR")" --root skills)
+  [ "$APPLY" -eq 1 ] && retire_args+=(--apply)
+  node "$SCRIPT_DIR/retire-archived-primitives.js" "${retire_args[@]}"
+fi
+
 if [ "$APPLY" -eq 1 ]; then
   mkdir -p "$TARGET_DIR" "$BACKUP_ROOT"
 fi

@@ -101,6 +101,12 @@ echo "  Target:     $TARGET_DIR"
 echo "  Backup:     $backup_path (only when replacing a root symlink)"
 echo "  Action:     preserve a real .system directory; link non-system skills individually"
 
+if [ -f "$(dirname "$SOURCE_DIR")/archived/manifest.json" ]; then
+  retire_args=(--home "$CODEX_HOME_DIR" --codex-root "$(dirname "$SOURCE_DIR")" --root skills)
+  [ "$APPLY" -eq 1 ] && retire_args+=(--apply)
+  node "$SCRIPT_DIR/retire-archived-primitives.js" "${retire_args[@]}"
+fi
+
 if [ "$APPLY" -ne 1 ]; then
   echo "Dry run only. Re-run with --apply to make this change."
   exit 0

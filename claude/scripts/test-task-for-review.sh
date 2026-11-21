@@ -13,6 +13,14 @@ S="${1:-$REPO_DIR/claude/skills/task-for-review/scripts}"
 [ -f "$S/preflight.sh" ] || { echo "test-task-for-review: no scripts at $S" >&2; exit 2; }
 S="$(cd "$S" && pwd -P)"
 
+# Git variables inherited from a hook or a wrapper (GIT_DIR, GIT_INDEX_FILE,
+# GIT_WORK_TREE, injected config …) outrank `git -C` and would point the throwaway
+# repos below at a real one. Drop them before the first git command.
+# shellcheck disable=SC2046
+unset $(git rev-parse --local-env-vars 2>/dev/null) 2>/dev/null || true
+unset GIT_DIR GIT_WORK_TREE GIT_INDEX_FILE GIT_OBJECT_DIRECTORY GIT_ALTERNATE_OBJECT_DIRECTORIES \
+  GIT_COMMON_DIR GIT_NAMESPACE GIT_PREFIX GIT_CONFIG GIT_CONFIG_PARAMETERS GIT_CONFIG_COUNT 2>/dev/null || true
+
 # The cleanup below is `rm -rf "$WORK"`, so WORK must be the directory mktemp just
 # made and nothing else: an empty WORK once resolved to the caller's directory.
 WORK="$(mktemp -d "${TMPDIR:-/tmp}/tfr-test.XXXXXX")" || { echo "test-task-for-review: cannot create a temp directory" >&2; exit 2; }
@@ -487,8 +495,7 @@ same "seed prefilled, no identity: no repository made" "$([ -e "$WORK/pre/.git" 
 out="$(bash "$SEED" "$WORK/pre")"; code=$?
 same "seed prefilled: exit 0" "$code" "0"
 same "seed prefilled: one commit" "$(git -C "$WORK/pre" rev-list --count HEAD 2>/dev/null)" "1"
-same "seed prefilled: scaffolding committed" "$(git -C "$WORK/pre" ls-files | sort | tr '\n' ' ')" \
-  ".github/pull_request_template.md .gitignore AGENTS.md CLAUDE.md glossary.md "
+same "seed prefilled: files still on disk" "$([ -f "$WORK/pre/AGENTS.md" ] && echo present || echo absent)" "present"
 
 # --- seed: a mention of the mode is not the opt-in line ---------------------------------------------
 repo mention
@@ -579,6 +586,115 @@ same "assets diverged: exit 0" "$code" "0"
 same "assets diverged: every file kept" "$(git -C "$WORK/dva" ls-tree -r --name-only review-assets | sort | tr '\n' ',')" \
   "ka/a1.png,ka/a2.png,kb/b1.png,"
 same "assets diverged: remote matches" "$(git -C "$WORK/dv-remote.git" rev-parse review-assets)" "$(git -C "$WORK/dva" rev-parse review-assets)"
+
+# =============================================================================
+# Cases found by the second review round (2026-11-21). Each failed before its fix.
+# =============================================================================
+
+# --- usage: one ROOT only ------------------------------------------------------------------------
+bash "$PF" "$WORK/bare1" "$WORK/wt" >/dev/null 2>&1; same "preflight: a second ROOT is a usage error" "$?" "2"
+bash "$SEED" --dry-run "$WORK/dry" "$WORK/wt" >/dev/null 2>&1; same "seed: a second ROOT is a usage error" "$?" "2"
+
+# --- preflight: run from a subfolder, with an anchored ignore entry -----------------------------------
+repo anch
+mkdir -p "$WORK/anch/src"
+put "$WORK/anch" .gitignore "/.claude/worktrees/"
+out="$(bash "$PF" "$WORK/anch/src")"
+expect "preflight from a subfolder: ignore entry seen" "$out" "worktrees-ignored: yes"
+
+# --- preflight: only the whole opt-in sentence counts ---------------------------------------------------
+repo halfopt
+put "$WORK/halfopt" AGENTS.md "This project works in task-for-review mode only when separately requested; it is currently disabled."
+out="$(bash "$PF" "$WORK/halfopt")"
+expect "opt-in: half the sentence is not an opt-in" "$out" "opt-in: no"
+
+# --- preflight: a path with a slash before its colon is local ----------------------------------------------
+git -C "$WORK/kinds" remote add slashcolon "backup/repo:old.git"
+out="$(TFR_GH="$WORK/bin/gh-ok" bash "$PF" "$WORK/kinds")"
+expect "kinds: slash before the colon is local" "$out" "remote: slashcolon local backup/repo:old.git"
+
+# --- seed: files that were already there are not the seed's to commit -----------------------------------------
+mkdir -p "$WORK/priv"; printf 'private notes\n' > "$WORK/priv/glossary.md"
+out="$(bash "$SEED" "$WORK/priv")"; code=$?
+same "seed kept file: exit 0" "$code" "0"
+refuse "seed kept file: not committed" "$(git -C "$WORK/priv" ls-tree -r --name-only HEAD)" "glossary.md"
+same "seed kept file: untouched" "$(cat "$WORK/priv/glossary.md")" "private notes"
+expect_has "seed kept file: says it is left to the agent" "$out" "next: glossary.md was already here and is not committed"
+same "seed prefilled: nothing of the user's committed" "$(git -C "$WORK/pre" ls-tree -r --name-only HEAD)" ""
+same "seed prefilled: honest subject for an empty first commit" "$(git -C "$WORK/pre" log -1 --format=%s)" "chore(seed): start the repository"
+
+# --- seed: a name with an ampersand, and scaffolding the project's ignore file would hide ------------------------
+mkdir -p "$WORK/amp"
+bash "$SEED" --name 'R&D' "$WORK/amp" >/dev/null
+expect "seed: ampersand kept in the name" "$(cat "$WORK/amp/AGENTS.md")" "# R&D"
+mkdir -p "$WORK/ign"; printf 'AGENTS.md\n' > "$WORK/ign/.gitignore"
+out="$(bash "$SEED" "$WORK/ign" 2>&1)"; code=$?
+same "seed ignored scaffolding: exit 0" "$code" "0"
+expect_has "seed ignored scaffolding: AGENTS.md tracked" "$(git -C "$WORK/ign" ls-files)" "AGENTS.md"
+
+# --- changelog: diff.relative, and a path holding a run of backticks ----------------------------------------------
+git -C "$WORK/cl" config diff.relative true
+out="$(cd "$WORK/cl/src" && bash "$CL" HEAD~1 HEAD)"
+refuse "changelog: diff.relative does not hide files" "$out" "(no file changes)"
+git -C "$WORK/cl" config --unset diff.relative
+printf 'w\n' > "$WORK/cl/a\`\`b.txt"
+git -C "$WORK/cl" add -A; git -C "$WORK/cl" commit -q -m "fix(x): two backticks"
+out="$(cd "$WORK/cl" && bash "$CL" HEAD~1 HEAD)"
+expect_has "changelog: delimiter longer than the longest backtick run" "$out" '``` a``b.txt ```: WHY?'
+
+# --- assets: the main branch is refused even when this clone has no local copy of it ------------------------------
+repo topicsrc
+put "$WORK/topicsrc" code.txt "code"
+git -C "$WORK/topicsrc" branch topic
+git init -q --bare "$WORK/topic-remote.git"
+git -C "$WORK/topicsrc" push -q "$WORK/topic-remote.git" main topic
+git -C "$WORK/topic-remote.git" symbolic-ref HEAD refs/heads/main
+git clone -q --branch topic "$WORK/topic-remote.git" "$WORK/topicclone"
+git -C "$WORK/topicclone" branch -D main >/dev/null 2>&1 || true
+before="$(git -C "$WORK/topic-remote.git" rev-parse main)"
+out="$(cd "$WORK/topicclone" && bash "$AS" --branch main evidence "$WORK/shot.png" 2>&1)"; code=$?
+same "assets onto a remote-only main: exit 1" "$code" "1"
+same "assets onto a remote-only main: remote main did not move" "$(git -C "$WORK/topic-remote.git" rev-parse main)" "$before"
+
+# --- assets: links follow where the evidence is pushed ----------------------------------------------------------------
+repo pushurl
+git -C "$WORK/pushurl" remote add origin "https://github.com/acme/widget.git"
+git -C "$WORK/pushurl" remote set-url --push origin "gitea:blue/proj.git"
+out="$(cd "$WORK/pushurl" && bash "$AS" --no-push k "$WORK/shot.png")"
+expect_has "assets: link uses the push destination" "$out" "(http://gitea.test:3000/blue/proj/raw/commit/"
+
+# --- assets: a stale local copy never undoes newer evidence on the remote -----------------------------------------------
+repo sta
+git init -q --bare "$WORK/st-remote.git"
+git -C "$WORK/sta" remote add origin "$WORK/st-remote.git"
+git -C "$WORK/sta" push -q origin main
+mkdir -p "$WORK/old" "$WORK/new" "$WORK/mine"
+printf 'OLD' > "$WORK/old/screenshot.png"; printf 'NEW' > "$WORK/new/screenshot.png"
+printf 'A' > "$WORK/a-extra.png"; printf 'C' > "$WORK/c-extra.png"
+(cd "$WORK/sta" && bash "$AS" ev "$WORK/old/screenshot.png" >/dev/null)             # A publishes OLD
+git clone -q "$WORK/st-remote.git" "$WORK/stb"
+(cd "$WORK/sta" && bash "$AS" --no-push ev "$WORK/a-extra.png" >/dev/null)          # A adds, unpushed
+(cd "$WORK/stb" && bash "$AS" ev "$WORK/new/screenshot.png" >/dev/null)             # B publishes NEW
+out="$(cd "$WORK/sta" && bash "$AS" ev "$WORK/c-extra.png" 2>&1)"; code=$?          # A adds again, pushes
+same "assets stale: exit 0" "$code" "0"
+same "assets stale: the newer remote file survives" "$(git -C "$WORK/sta" cat-file blob review-assets:ev/screenshot.png)" "NEW"
+same "assets stale: every file present" "$(git -C "$WORK/sta" ls-tree -r --name-only review-assets | sort | tr '\n' ',')" \
+  "ev/a-extra.png,ev/c-extra.png,ev/screenshot.png,"
+
+# Both sides changed the same file differently: refuse, and move nothing.
+printf 'MINE' > "$WORK/mine/screenshot.png"; printf 'THEIRS' > "$WORK/theirs.png"
+(cd "$WORK/sta" && bash "$AS" --no-push ev "$WORK/mine/screenshot.png" >/dev/null)
+cp "$WORK/theirs.png" "$WORK/new/screenshot.png"
+(cd "$WORK/stb" && bash "$AS" ev "$WORK/new/screenshot.png" >/dev/null)
+tip="$(git -C "$WORK/sta" rev-parse review-assets)"
+out="$(cd "$WORK/sta" && bash "$AS" ev "$WORK/a-extra.png" 2>&1)"; code=$?
+same "assets conflict: exit 1" "$code" "1"
+expect_has "assets conflict: names the file" "$out" "ev/screenshot.png"
+same "assets conflict: local branch did not move" "$(git -C "$WORK/sta" rev-parse review-assets)" "$tip"
+# Supplying the file again settles it.
+out="$(cd "$WORK/sta" && bash "$AS" ev "$WORK/mine/screenshot.png" 2>&1)"; code=$?
+same "assets conflict settled: exit 0" "$code" "0"
+same "assets conflict settled: the supplied file wins" "$(git -C "$WORK/st-remote.git" cat-file blob review-assets:ev/screenshot.png)" "MINE"
 
 echo "task-for-review self-test: $pass passed, $fail failed"
 [ "$fail" -eq 0 ]

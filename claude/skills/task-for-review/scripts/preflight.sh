@@ -44,14 +44,16 @@ set -u
 # data and rewrites .git/index. It also covers the scripts this one calls.
 export GIT_OPTIONAL_LOCKS=0
 
-ROOT="."
+ROOT=""
 while [ $# -gt 0 ]; do
   case "$1" in
     -h|--help) awk 'NR > 1 && /^#/ { sub(/^# ?/, ""); print; next } NR > 1 { exit }' "${BASH_SOURCE[0]}"; exit 0 ;;
     -*) printf 'preflight: unknown option %s\n' "$1" >&2; exit 2 ;;
-    *) ROOT="$1"; shift ;;
+    *) [ -z "$ROOT" ] || { echo "preflight: only one ROOT may be given" >&2; exit 2; }
+       ROOT="$1"; shift ;;
   esac
 done
+[ -n "$ROOT" ] || ROOT="."
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd -P)"
 # shellcheck source=lib.sh
@@ -82,6 +84,13 @@ if ! git rev-parse --is-inside-work-tree >/dev/null 2>&1; then
   finish
 fi
 echo "git: present"
+# Everything below is asked of the checkout as a whole, so stand at its top: an
+# ignore rule or a file is looked up from there, not from a subfolder.
+TOP="$(git rev-parse --show-toplevel 2>/dev/null)"
+if [ -n "$TOP" ] && ! cd "$TOP" 2>/dev/null; then
+  printf 'preflight: cannot enter %s\n' "$TOP" >&2
+  exit 2
+fi
 
 HEAD_SHA="$(git rev-parse --short HEAD 2>/dev/null || true)"
 if [ -z "$HEAD_SHA" ]; then
@@ -146,9 +155,8 @@ else
   warn ".claude/worktrees/ is not gitignored, so every worktree shows up as untracked files -> run seed.sh (it adds only what is missing)"
 fi
 
-TOP="$(git rev-parse --show-toplevel 2>/dev/null)"
 # The whole sentence, so a line that only mentions the mode is not an opt-in.
-if grep -qsF 'This project works in task-for-review mode' "$TOP/AGENTS.md" "$TOP/CLAUDE.md"; then
+if tfr_has_opt_in "$TOP/AGENTS.md" "$TOP/CLAUDE.md"; then
   echo "opt-in: yes"
 else
   echo "opt-in: no"

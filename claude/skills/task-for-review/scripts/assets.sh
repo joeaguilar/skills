@@ -75,6 +75,11 @@ if git worktree list --porcelain | grep -qxF "branch refs/heads/$BRANCH"; then
   echo "assets: $BRANCH is checked out in a worktree, and moving it would leave that checkout stale. Remove that worktree, or check the branch out with --detach, and run again." >&2
   exit 1
 fi
+MAIN_NAME="$(tfr_main_branch)"
+if [ -n "$MAIN_NAME" ] && [ "$BRANCH" = "$MAIN_NAME" ]; then
+  echo "assets: $BRANCH is the main branch, not an assets branch. No branch was moved." >&2
+  exit 1
+fi
 if [ -n "$REMOTE" ] && [ "$PUSH" -eq 1 ]; then
   git fetch -q "$REMOTE" "+refs/heads/$BRANCH:refs/remotes/$REMOTE/$BRANCH" 2>/dev/null || true
 fi
@@ -86,25 +91,40 @@ fi
 if git show-ref --verify -q "refs/heads/$BRANCH"; then
   LOCAL_TIP="$(git rev-parse "refs/heads/$BRANCH")"
 fi
-CODE_REF="$(tfr_main_branch)"
-[ -n "$CODE_REF" ] || CODE_REF="HEAD"
+# Code history is whatever the main branch (here or on a remote) or the current
+# branch can reach. An assets tip that shares a commit with any of them is a code
+# branch named by mistake; a comparison that cannot be made is refused too.
+CODE_REFS=()
+if [ -n "$MAIN_NAME" ]; then
+  CODE_REFS+=("refs/heads/$MAIN_NAME" "refs/remotes/origin/$MAIN_NAME")
+  [ -n "$REMOTE" ] && CODE_REFS+=("refs/remotes/$REMOTE/$MAIN_NAME")
+fi
+CODE_REFS+=("HEAD")
 for tip in "$REMOTE_TIP" "$LOCAL_TIP"; do
   [ -z "$tip" ] && continue
-  if git merge-base "$tip" "$CODE_REF" >/dev/null 2>&1; then
-    echo "assets: $BRANCH shares history with $CODE_REF, so it is a code branch, not an assets branch. Nothing was changed." >&2
-    exit 1
-  fi
+  for ref in "${CODE_REFS[@]}"; do
+    git rev-parse -q --verify "$ref^{commit}" >/dev/null 2>&1 || continue
+    git merge-base "$tip" "$ref" >/dev/null 2>&1; rc=$?
+    if [ "$rc" -eq 0 ]; then
+      echo "assets: $BRANCH shares history with ${ref#refs/heads/}, so it is a code branch, not an assets branch. No branch was moved." >&2
+      exit 1
+    elif [ "$rc" -ne 1 ]; then
+      echo "assets: cannot compare $BRANCH with ${ref#refs/heads/}, so it cannot be shown to be an assets branch. No branch was moved." >&2
+      exit 1
+    fi
+  done
 done
 
 # --- the commit(s) the new one sits on -----------------------------------------------
 # One parent normally. When this clone and the remote each hold evidence the other
-# lacks, both become parents and both trees are kept: nothing is dropped, and the
-# push stays a fast-forward.
+# lacks, both become parents and the two are merged against what they share, so a
+# change made on either side survives and the push stays a fast-forward.
 PARENTS=()
+DIVERGED=0
 if [ -n "$REMOTE_TIP" ] && [ -n "$LOCAL_TIP" ]; then
   if git merge-base --is-ancestor "$REMOTE_TIP" "$LOCAL_TIP" 2>/dev/null; then PARENTS=("$LOCAL_TIP")
   elif git merge-base --is-ancestor "$LOCAL_TIP" "$REMOTE_TIP" 2>/dev/null; then PARENTS=("$REMOTE_TIP")
-  else PARENTS=("$REMOTE_TIP" "$LOCAL_TIP")
+  else PARENTS=("$REMOTE_TIP" "$LOCAL_TIP"); DIVERGED=1
   fi
 elif [ -n "$REMOTE_TIP" ]; then PARENTS=("$REMOTE_TIP")
 elif [ -n "$LOCAL_TIP" ]; then PARENTS=("$LOCAL_TIP")
@@ -114,17 +134,34 @@ fi
 TMP_INDEX="$(git rev-parse --path-format=absolute --git-dir)/tfr-assets-index.$$"
 trap 'rm -f "$TMP_INDEX" "$TMP_INDEX.lock"' EXIT
 export GIT_INDEX_FILE="$TMP_INDEX"
-if [ "${#PARENTS[@]}" -gt 0 ]; then
-  # Several trees are overlaid in order; on a clash the later (local) file wins.
-  git read-tree "${PARENTS[@]}" || { echo "assets: cannot read $BRANCH" >&2; exit 1; }
+if [ "$DIVERGED" -eq 1 ]; then
+  # A three-way merge of the two trees against their common ancestor (an empty
+  # tree when they share none). -i: this index has nothing to do with the worktree.
+  BASE="$(git merge-base "$REMOTE_TIP" "$LOCAL_TIP" 2>/dev/null || true)"
+  if [ -n "$BASE" ]; then BASE_TREE="$BASE^{tree}"; else BASE_TREE="$(git mktree < /dev/null)"; fi
+  git read-tree -i -m --aggressive "$BASE_TREE" "$REMOTE_TIP^{tree}" "$LOCAL_TIP^{tree}" \
+    || { echo "assets: cannot merge the local and remote $BRANCH" >&2; exit 1; }
+elif [ "${#PARENTS[@]}" -gt 0 ]; then
+  git read-tree "${PARENTS[0]}" || { echo "assets: cannot read $BRANCH" >&2; exit 1; }
 fi
 PATHS=()
 for f in "${FILES[@]}"; do
   blob="$(git hash-object -w --no-filters -- "$f")" || { echo "assets: cannot store $f" >&2; exit 1; }
   path="$KEY/$(basename "$f")"
+  # A file given now settles any clash on its own path: this is the version to keep.
+  git update-index --force-remove -- "$path" 2>/dev/null || true
   git update-index --add --cacheinfo "100644,$blob,$path" || { echo "assets: cannot stage $path" >&2; exit 1; }
   PATHS+=("$path")
 done
+CLASHES="$(git ls-files -u | cut -f2 | sort -u)"
+if [ -n "$CLASHES" ]; then
+  {
+    echo "assets: this clone and $REMOTE each changed the same evidence in different ways:"
+    printf '%s\n' "$CLASHES" | sed 's/^/assets:   /'
+    echo "assets: no branch was moved. Run again with the version to keep as a FILE under its KEY."
+  } >&2
+  exit 1
+fi
 TREE="$(git write-tree)" || { echo "assets: cannot write the tree" >&2; exit 1; }
 unset GIT_INDEX_FILE
 
@@ -149,7 +186,8 @@ fi
 PREFIX=""
 SUFFIX=""
 if [ -n "$REMOTE" ]; then
-  url="$(git remote get-url "$REMOTE" 2>/dev/null || true)"
+  # The push URL: the links must point at the host the evidence was pushed to.
+  url="$(git remote get-url --push "$REMOTE" 2>/dev/null | head -1)"
   web="$(tfr_web_base "$url")"
   case "$(tfr_remote_kind "$url")" in
     github) PREFIX="$web/blob/$COMMIT/"; SUFFIX="?raw=true" ;;

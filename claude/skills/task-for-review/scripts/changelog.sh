@@ -67,7 +67,7 @@ if [ "$FOLD" -eq 1 ]; then
 fi
 echo '| Commit | Change | Files |'
 echo '|---|---|---|'
-git -c core.quotePath=false log --reverse --no-merges --format='@@%H %s' --name-status -M "$BASE..$HEAD_REF" \
+git -c core.quotePath=false log --reverse --no-merges --format='@@%H %s' --name-status --no-relative -M "$BASE..$HEAD_REF" \
   | awk -v url="$COMMIT_URL" '
     # Prose cell: a bare pipe would end the cell, and a backslash would unescape the
     # pipe after it, so each gets a backslash.
@@ -81,10 +81,16 @@ git -c core.quotePath=false log --reverse --no-merges --format='@@%H %s' --name-
     }
     # Code span: only the pipe is special to the table, and a path that holds a
     # backtick needs a longer delimiter.
-    function code(s,   out, c, i) {
-      out = ""
-      for (i = 1; i <= length(s); i++) { c = substr(s, i, 1); out = out ((c == "|") ? "\\" c : c) }
-      return (index(s, "`") > 0) ? "`` " out " ``" : "`" out "`"
+    function code(s,   out, c, i, run, longest, d) {
+      out = ""; run = 0; longest = 0
+      for (i = 1; i <= length(s); i++) {
+        c = substr(s, i, 1)
+        if (c == "`") { run++; if (run > longest) longest = run } else run = 0
+        out = out ((c == "|") ? "\\" c : c)
+      }
+      if (longest == 0) return "`" out "`"
+      d = ""; for (i = 0; i <= longest; i++) d = d "`"   # one longer than the longest run inside
+      return d " " out " " d
     }
     function flush(   link) {
       if (sha == "") return

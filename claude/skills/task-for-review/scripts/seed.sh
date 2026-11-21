@@ -37,26 +37,29 @@
 # Test hook: TFR_ITR names the itr binary (default `itr`).
 set -u
 
-OPT_IN_LINE='This project works in task-for-review mode: load the task-for-review skill before changing any tracked file.'
 COMMIT_SUBJECT='chore(seed): add task-for-review scaffolding'
+EMPTY_COMMIT_SUBJECT='chore(seed): start the repository'
 
 NAME=""
 DRY=0
-ROOT="."
+ROOT=""
 while [ $# -gt 0 ]; do
   case "$1" in
     --name) NAME="${2:?--name needs a value}"; shift 2 ;;
     --dry-run) DRY=1; shift ;;
     -h|--help) awk 'NR > 1 && /^#/ { sub(/^# ?/, ""); print; next } NR > 1 { exit }' "${BASH_SOURCE[0]}"; exit 0 ;;
     -*) printf 'seed: unknown option %s\n' "$1" >&2; exit 2 ;;
-    *) ROOT="$1"; shift ;;
+    *) [ -z "$ROOT" ] || { echo "seed: only one ROOT may be given" >&2; exit 2; }
+       ROOT="$1"; shift ;;
   esac
 done
+[ -n "$ROOT" ] || ROOT="."
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd -P)"
 TEMPLATES="$SCRIPT_DIR/../templates"
 # shellcheck source=lib.sh
 . "$SCRIPT_DIR/lib.sh"
+OPT_IN_LINE="$TFR_OPT_IN_LINE"
 [ -d "$TEMPLATES" ] || { printf 'seed: templates folder missing at %s\n' "$TEMPLATES" >&2; exit 2; }
 if ! cd "$ROOT" 2>/dev/null; then
   printf 'seed: cannot enter %s\n' "$ROOT" >&2
@@ -84,7 +87,7 @@ PLAN=""
 plan() { PLAN="${PLAN}$1"$'\t'"$2"$'\t'"${3:-}"$'\n'; }
 has_line() { tr -d '\r' < "$1" | grep -qxF -- "$2"; }   # a whole line, whatever the file's line endings
 # The whole opt-in sentence, so a line that only mentions the mode does not count.
-has_opt_in() { grep -qF -- "$OPT_IN_LINE" "$1"; }
+has_opt_in() { tfr_has_opt_in "$1"; }
 
 if [ ! -f .gitignore ]; then plan create .gitignore
 elif ! has_line .gitignore '.claude/worktrees/'; then plan append .gitignore 'ignore .claude/worktrees/'
@@ -151,9 +154,14 @@ echo "mode: $MODE"
 
 # --- apply ------------------------------------------------------------------------
 render() { # template file -> stdout with {{name}} filled in
-  local body
+  # Spliced by hand: a pattern substitution would read `&` in the name as "the match".
+  local body out=""
   body="$(cat "$TEMPLATES/$1")"
-  printf '%s\n' "${body//\{\{name\}\}/$NAME}"
+  while [[ "$body" == *'{{name}}'* ]]; do
+    out="$out${body%%'{{name}}'*}$NAME"
+    body="${body#*'{{name}}'}"
+  done
+  printf '%s\n' "$out$body"
 }
 end_with_newline() { [ -z "$(tail -c 1 "$1" 2>/dev/null)" ] || printf '\n' >> "$1"; }
 append_line() { # file line — on its own line, after a blank line
@@ -165,14 +173,15 @@ if [ "$DRY" -eq 0 ] && [ "$IN_REPO" -eq 0 ]; then
   git init -q -b main . || { echo "seed: git init failed" >&2; exit 1; }
 fi
 
-# The paths this run commits: what it created or appended to, plus, for a new
-# project, the scaffolding files that were already there.
+# The paths this run commits: only what it created or appended to. A file that was
+# already there is the user's, and is left for them to commit.
 COMMIT_PATHS=()
+KEPT_PATHS=()
 while IFS=$'\t' read -r action path note; do
   [ -z "$action" ] && continue
   if [ "$action" = "kept" ]; then
     echo "kept: $path"
-    [ "$MODE" = "new" ] && COMMIT_PATHS+=("$path")
+    KEPT_PATHS+=("$path")
     continue
   fi
   if [ "$DRY" -eq 1 ]; then
@@ -217,9 +226,13 @@ if [ "$MODE" = "new" ] && command -v "$ITR_BIN" >/dev/null 2>&1; then
   if [ "$ITR_READY" -eq 1 ]; then
     if [ "$DRY" -eq 0 ]; then
       end_with_newline .gitignore
+      IGNORE_TOUCHED=0
       for line in '.itr.db' '.itr.db-*'; do
-        has_line .gitignore "$line" || printf '%s\n' "$line" >> .gitignore
+        has_line .gitignore "$line" || { printf '%s\n' "$line" >> .gitignore; IGNORE_TOUCHED=1; }
       done
+      if [ "$IGNORE_TOUCHED" -eq 1 ]; then   # the seed appended to it, so the seed commits it
+        case " ${COMMIT_PATHS[*]-} " in *" .gitignore "*) ;; *) COMMIT_PATHS+=(".gitignore") ;; esac
+      fi
     fi
     echo "tracker: itr ($ITR_NOTE, .itr.db gitignored)"
   fi
@@ -229,11 +242,24 @@ fi
 
 # --- commit: only the seed's own paths, whatever else is staged -------------------------
 if [ "$DRY" -eq 0 ] && [ "$WILL_COMMIT" -eq 1 ] && [ "${#COMMIT_PATHS[@]}" -gt 0 ]; then
-  git add -- "${COMMIT_PATHS[@]}" || { echo "seed: git add failed" >&2; exit 1; }
+  # -f: the scaffolding must be tracked even if the project's own ignore rules cover it.
+  git add -f -- "${COMMIT_PATHS[@]}" || { echo "seed: git add failed" >&2; exit 1; }
   if git commit -q -m "$COMMIT_SUBJECT" -- "${COMMIT_PATHS[@]}" >/dev/null; then
     echo "committed: $(git rev-parse --short HEAD) $COMMIT_SUBJECT"
   else
     echo "seed: the commit failed; the files are written and staged" >&2
+    exit 1
+  fi
+elif [ "$DRY" -eq 0 ] && [ "$MODE" = "new" ]; then
+  # Every scaffolding file was already there. The repository still needs a first
+  # commit to branch from, so make an empty one and leave the index as it is.
+  EMPTY_TREE="$(git mktree < /dev/null)"
+  FIRST="$(git commit-tree "$EMPTY_TREE" -m "$EMPTY_COMMIT_SUBJECT")"
+  HEAD_REF="$(git symbolic-ref -q HEAD || true)"
+  if [ -n "$FIRST" ] && [ -n "$HEAD_REF" ] && git update-ref "$HEAD_REF" "$FIRST"; then
+    echo "committed: $(git rev-parse --short HEAD) $EMPTY_COMMIT_SUBJECT"
+  else
+    echo "seed: could not make the first commit" >&2
     exit 1
   fi
 fi
@@ -243,6 +269,9 @@ if [ "$WILL_COMMIT" -eq 0 ]; then
   exit 0
 fi
 if [ "$MODE" = "new" ]; then
+  for path in ${KEPT_PATHS[@]+"${KEPT_PATHS[@]}"}; do
+    echo "next: $path was already here and is not committed; commit it yourself if it belongs in the repository"
+  done
   echo "next: initialise the language stack by judgment and commit it separately"
   [ "$ITR_READY" -eq 1 ] && echo "next: set up the tracker snapshot so issues travel with the repo (the itr-snapshot skill, where installed)"
   echo "next: fill in AGENTS.md and glossary.md with what is known about the project"

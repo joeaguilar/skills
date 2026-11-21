@@ -7,12 +7,21 @@
 
 TFR_LIB_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd -P)"
 
+# The line that opts a project in. seed.sh writes it; preflight.sh looks for it.
+TFR_OPT_IN_LINE='This project works in task-for-review mode: load the task-for-review skill before changing any tracked file.'
+
+tfr_has_opt_in() { # file... -> 0 when one of them holds the whole opt-in sentence
+  grep -qsF -- "$TFR_OPT_IN_LINE" "$@"
+}
+
 tfr_url_host() { # remote url -> lower-case hostname; empty for a local path
   local u="$1"
   case "$u" in
     file://*|/*|./*|../*|'~'*) u="" ;;                               # a path, whatever it contains
     *://*) u="${u#*://}"; u="${u%%/*}"; u="${u##*@}"; u="${u%%:*}" ;;
-    *:*)   u="${u%%:*}"; u="${u##*@}"; [ "${#u}" -le 1 ] && u="" ;;   # C:/path is a drive, not a host
+    *:*)   u="${u%%:*}"                                               # scp style host:path, unless…
+           case "$u" in */*) u="" ;; esac                            # …a slash comes first: git reads that as a path
+           u="${u##*@}"; [ "${#u}" -le 1 ] && u="" ;;                 # C:/path is a drive, not a host
     *)     u="" ;;
   esac
   printf '%s' "$u" | tr '[:upper:]' '[:lower:]'

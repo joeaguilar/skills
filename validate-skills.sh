@@ -32,6 +32,9 @@ set -uo pipefail
 #                     verify-gate table: the Codex tree ships the same bytes, no skill
 #                     or script spells the Rust gate without --all-targets, and (full
 #                     mode only) claude/scripts/test-preflight.sh passes.
+#   10. task-for-review — the skill's scripts and templates are the same bytes in both
+#                     trees, and (full mode only) claude/scripts/test-task-for-review.sh
+#                     passes.
 #
 # --frontmatter-only: run only the frontmatter checks (3 + the payload lint of
 # 3b), skipping parity/staleness/deep checks. This is the pre-commit gate mode:
@@ -325,6 +328,35 @@ if [ "$FRONTMATTER_ONLY" -eq 0 ] && [ -f "$PF_CLAUDE" ] && [ -f "$REPO_DIR/claud
   else
     printf '%s\n' "$pf_out" | sed 's/^/  /'
     echo "  ERROR: preflight self-test failed"; errors=$((errors+1))
+  fi
+fi
+
+echo
+echo "== 10. task-for-review scripts (same bytes in both trees, self-test) =="
+# The scripts and templates behind the task-for-review skill are shared, not ported:
+# the Codex tree ships the same bytes. Runs in every mode, for the reason §9 does.
+TFR_CLAUDE="$CLAUDE_SKILLS/task-for-review"
+TFR_CODEX="$CODEX_SKILLS/task-for-review"
+if [ ! -d "$TFR_CLAUDE/scripts" ]; then
+  echo "  ERROR: claude/skills/task-for-review/scripts is missing"; errors=$((errors+1))
+else
+  tfr_errs=0
+  while IFS= read -r f; do
+    rel="${f#$TFR_CLAUDE/}"
+    if [ ! -f "$TFR_CODEX/$rel" ]; then
+      echo "  ERROR: codex/skills/task-for-review/$rel is missing -> copy it from the claude tree"; errors=$((errors+1)); tfr_errs=$((tfr_errs+1))
+    elif ! cmp -s <(tr -d '\r' < "$f") <(tr -d '\r' < "$TFR_CODEX/$rel"); then
+      echo "  ERROR: task-for-review/$rel differs between the trees -> copy the claude file over the codex one"; errors=$((errors+1)); tfr_errs=$((tfr_errs+1))
+    fi
+  done < <(find "$TFR_CLAUDE/scripts" "$TFR_CLAUDE/templates" -type f | sort)
+  [ "$tfr_errs" -eq 0 ] && echo "  OK: both trees ship the same task-for-review scripts and templates"
+  if [ "$FRONTMATTER_ONLY" -eq 0 ] && [ -f "$REPO_DIR/claude/scripts/test-task-for-review.sh" ]; then
+    if tfr_out="$(bash "$REPO_DIR/claude/scripts/test-task-for-review.sh" 2>&1)"; then
+      echo "  OK: $(printf '%s\n' "$tfr_out" | tail -1)"
+    else
+      printf '%s\n' "$tfr_out" | sed 's/^/  /'
+      echo "  ERROR: task-for-review self-test failed"; errors=$((errors+1))
+    fi
   fi
 fi
 

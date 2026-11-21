@@ -48,6 +48,8 @@ Every rack blade = one setting of four knobs:
 | `pre-mortem` | 死 | by-failure-mode · parallel · ranked-guardrails · space-covered | before a risky plan — work backward from "it failed" |
 | `shuriken-storm` | 嵐 | target-per-shuriken · waved-volley · independent-land · all-thrown | ONE uniform op across MANY small disjoint targets — no synthesis, misses re-throw |
 
+**Stop on an exit code.** `drawn-steel`, `first-blood`, `shuriken-storm`, `whetstone` and `masamune` take `--bar-cmd="<command>"`: the orchestrator runs it, exit `0` = bar cleared, and the exit code overrules what an agent claims.
+
 ### Quiet kin — off the grammar
 
 | Blade | 印 | Nature | Draw it when |

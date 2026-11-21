@@ -19,7 +19,7 @@ Deliver .... which rung drew blood + rungs climbed + the bar it cleared
 ## Slash invocation
 
 ```
-/dojo drawn-steel <task> [--ladder="cheap,mid,expensive"] [--bar="acceptance test"] [--out=path] [--confirm]
+/dojo drawn-steel <task> [--ladder="cheap,mid,expensive"] [--bar="acceptance test"] [--bar-cmd="command"] [--out=path] [--confirm]
 ```
 
 | Arg | Default | Meaning |
@@ -27,6 +27,7 @@ Deliver .... which rung drew blood + rungs climbed + the bar it cleared
 | `<task>` | — | The single task. Inline prose, a spec path, or "the thing we just hit". |
 | `--ladder="r1,r2,…"` | auto | The rungs cheapest→costliest — role names, model names or effort words, used as given. Absent → orchestrator proposes a ladder of increasing cost/care, each rung one role up the `~/.claude/MODELS.md` escalation ladder: one quick single agent → one careful focused agent → a multi-agent consensus/verify rung. **Clamp 2–4 rungs** (`<2` → not a ladder, bump 2; `>4` → clamp 4 + warn: too tall wastes the cheapness). |
 | `--bar="…"` | inferred | What "passes" means at every rung — the acceptance test/criteria. Absent → infer the strictest reasonable bar and **say so** (a ladder with no bar can't check between rungs — it's theater). |
+| `--bar-cmd="…"` | none | The bar as a command: exit `0` = cleared, anything else = not. The orchestrator runs it after every rung that claims PASS, and the exit code overrules the claim. |
 | `--out=path` | conversation | Persist the deliverable. |
 | `--confirm` | off | The ONLY gate — print the ladder + bar and wait before the first rung. Default fires without asking. |
 
@@ -48,6 +49,7 @@ Speak twice: when the ladder is set, when a rung draws blood (or the ladder runs
 ```
 抜  soft hand first — climb on failure · bar: {the bar}
     rungs: {r1 cheap} → {r2 careful} → {r3 heavy}        [write→out=path]
+    {only with --bar-cmd:} cmd: {bar-cmd}   [{proves │ guard only}]
 ```
 
 **The pause** (only `--confirm`):
@@ -78,6 +80,8 @@ Speak twice: when the ladder is set, when a rung draws blood (or the ladder runs
 Resolve `--ladder`, `--bar`, `--out`, `--confirm`. Read the task once.
 
 **Set the bar** — the acceptance test every rung must clear (concrete: the property, cases, or criteria a passing answer satisfies). `--bar` set → use it. Absent → infer the strictest reasonable bar and **say so** in the Throw line. No bar = no between-rung check = not this blade.
+
+**`--bar-cmd` set → the bar is an exit code.** `0` = cleared, anything else = not. Run it yourself, never on a rung's word: `gatr run --tag dojo-drawn-steel -- <cmd>` when `gatr` is on PATH (then `gatr last` / `gatr errors`), the bare command otherwise. Run it once now, before rung 1: non-zero → it proves the work (must reach `0`); already `0` → it proves nothing and only guards (must stay `0`) — mark `guard only` in the Throw and keep judging `--bar` as before.
 
 **Order the ladder cheapest→costliest** — each rung a more capable/expensive agent config than the last. `--ladder` set → use those rungs in order. Absent → read the non-taste escalation ladder in `~/.claude/MODELS.md` (`floor → generalist → frontier → ceiling`) and propose (clamp 2–4):
 - **r1 (cheap):** one quick single agent, low effort — the soft hand. Role: the cheapest the task may start on — `floor` only when that file's floor guard holds (short, one-off, gated by a mechanical check, not risky), else `generalist`.
@@ -116,6 +120,10 @@ Task:
 
 The BAR you must clear (this is the pass/fail line — check yourself against it honestly):
 {bar — concrete acceptance test/criteria}
+{--bar-cmd: Bar command — exit 0 = cleared. Run it before you report. It is re-run after you
+return and THAT exit code decides, not your report: {bar-cmd}
+Running it needs your change on disk: if it is still non-zero when you stop, report FAIL and
+leave your edits in place — the next rung starts from them.}
 
 {cheaper rungs failed → why, so you don't repeat their miss:}
 What the cheaper rung(s) missed: {prior failure reasons, or "you are rung 1"}
@@ -135,6 +143,8 @@ Your final message IS your rung — return data, not chat. Report pass/fail plai
 
 **Check the rung against the bar** (orchestrator — the load-bearing step). Take the rung's self-reported pass/fail but verify it against the bar yourself; a rung that *claims* pass without clearing the bar is a FAIL.
 
+**With `--bar-cmd`** the check is a run, not a reading. Rung reports PASS → run the command. Non-zero → **FAIL, no appeal**, whatever the rung claimed: its failing tail goes into the next rung's `What the cheaper rung(s) missed`, and its edits stay on disk for the next rung to fix or replace. `0` → PASS — when the command only guards, or `--bar` was given too, your own reading of the bar must also hold. Rung reports FAIL → no run needed; it failed.
+
 - **PASS** → this rung cleared the bar. **Stop. Do not climb further.** Go to Phase 3 with this rung's result.
 - **FAIL** → escalate: hand the next, costlier rung the task + the bar + why this rung missed. Climb.
 - **Rung errored / didn't return** → treat as a FAIL of that rung; escalate (don't retry the same rung).
@@ -148,6 +158,8 @@ Your final message IS your rung — return data, not chat. Report pass/fail plai
 The merge is trivial by design: **the deliverable is the first rung that cleared the bar.** No vote, no synthesis across rungs — earlier rungs that failed are discarded (note only why they failed, for the climb map). If the ladder exhausted with none passing, the "merge" is the **best** rung (closest to the bar) plus what's still missing — surfaced as a failure, not laundered into a pass.
 
 The passing rung's change is already on disk; merge = confirm it's the only applied change.
+
+Ladder exhausted under `--bar-cmd` → the failed rungs (and any that claimed PASS and were overruled) left edits in the tree. Commit none of them; name the paths in the **Ladder exhausted** report and leave them for the user.
 
 ---
 
@@ -167,7 +179,7 @@ A pass means *this rung cleared this bar* — report which rung and how many you
 
 - **Split by cost.** Rungs are ordered cheapest→costliest, each a more careful/expensive config than the last — a costlier model role up the `~/.claude/MODELS.md` ladder, not only more effort on the same steel. The ladder is the cut.
 - **Serial, escalate only on failure.** Run one rung, check the bar, climb only when it fails. Never run rungs in parallel — that's a race, not a ladder.
-- **The between-rung check is load-bearing.** Escalate only on a real, checked failure against the bar. No bar, no check, no blade.
+- **The between-rung check is load-bearing.** Escalate only on a real, checked failure against the bar. No bar, no check, no blade. `--bar-cmd` makes the check an exit code — a rung's word neither climbs the ladder nor stops it.
 - **Stop the instant a rung passes.** The first rung to clear the bar is the deliverable — do not keep climbing. Cost-awareness is the whole point.
 - **Spend effort only where the cheap path breaks.** Don't burn a heavy multi-agent rung on what one quick agent solves; don't under-power a hard task either — climb until it clears.
 - **Right-size the ladder.** Default the proposed rungs, clamp 2–4; a trivial task gets a short ladder, often one rung.
@@ -180,6 +192,7 @@ A pass means *this rung cleared this bar* — report which rung and how many you
 - Don't gate, ask, or pause unless `--confirm` is set.
 - Don't run the rungs in parallel — they're serial, cheapest first; escalate only on a checked failure.
 - Don't escalate without checking the current rung against the bar — the check is the whole brain.
+- Don't take a rung's PASS over a non-zero `--bar-cmd`, and don't commit an overruled rung's edits.
 - Don't keep climbing after a rung passes — stop and deliver the cheapest rung that cleared the bar.
 - Don't build a tall ladder for a trivial task — clamp 2–4 rungs; fewer is fine.
 - Don't put `ceiling` on the ladder unless the user turned it on, and don't start on `floor` when its guard fails — start at `generalist`.

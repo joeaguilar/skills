@@ -19,6 +19,8 @@ Every blade obeys one contract. Forge to it; the rack stays consistent.
 
 9. **Judge ≠ writer.** A seat that critiques, challenges or judges runs on the `reviewer` role: resolve it from `~/.claude/MODELS.md` at spawn — never the model that wrote the work, other provider first. The blade names the role, never a model; that file is routing data, not a sibling blade. File unreadable or seat unreachable → a different Claude model than the writer, and the Return names the fallback. Workers, revisers and proposers inherit the session model, unless the model is the blade's cut (`masamune`, `silent-strike`, `drawn-steel`). *(Until 2026-11-21 no blade set a model for these seats, so the critic shared the writer's blind spots.)*
 
+10. **A bar a command can decide.** A blade whose bar picks an edge (pass → deliver, fail → climb / next pass / miss) takes an optional `--bar-cmd="<command>"`: exit `0` = bar cleared, anything else = not. The orchestrator runs it itself — `gatr run --tag dojo-<blade> -- <command>` when `gatr` is on PATH, the bare command otherwise — and the exit code overrules any agent's claim. Run it once at Frame: already `0` → it can only guard, not prove, and the Throw says `guard only`. Agents get the command and may run it; their report never picks the edge. A non-zero run commits nothing. *(Until 2026-11-21 every bar was self-reported or read by eye.)*
+
 ## The Meiyaku — the oath every thrown agent swears
 
 This block is the canon `validate-skills.sh` §7 compares every copy against.
@@ -58,6 +60,7 @@ Read-only and analysis agents (scouts, challengers, pre-mortem prophets) swear t
 |---|---|---|
 | `<task>` | — | … |
 | `--⟨width⟩=N` | ⟨default⟩ | ⟨clamp⟩ |
+| `--bar-cmd="…"` | none | ⟨only when a bar picks an edge⟩ the bar as a command — exit `0` = cleared; the orchestrator runs it, its exit code overrules the claim |
 | `--out=path` | conversation | persist deliverable |
 | `--confirm` | off | the ONLY gate — print plan, wait |
 

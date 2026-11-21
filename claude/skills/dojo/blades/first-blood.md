@@ -19,7 +19,7 @@ Deliver .... first blood — winner + the bar it cleared + how many abandoned
 ## Slash invocation
 
 ```
-/dojo first-blood <task> [--runners=N] [--bar="..."] [--first|--best] [--out=path] [--confirm]
+/dojo first-blood <task> [--runners=N] [--bar="..."] [--bar-cmd="command"] [--first|--best] [--out=path] [--confirm]
 ```
 
 | Arg | Default | Meaning |
@@ -27,6 +27,7 @@ Deliver .... first blood — winner + the bar it cleared + how many abandoned
 | `<task>` | — | The whole task. Every runner gets it entire — inline prose, a path, or "the thing we just hit". |
 | `--runners=N` | `3` | Rival strategies loosed. **Clamp 2–5** (`<2` → bump 2; `>5` → clamp 5 + warn: more angles but more wasted work — losers are thrown away). |
 | `--bar="..."` | inferred | What "winning" means — the acceptance criterion / test the winner must clear. Absent → infer the strictest reasonable bar and **say so** in the Throw. |
+| `--bar-cmd="…"` | none | The bar as a command: exit `0` = cleared, anything else = not. The orchestrator runs it on the winner-only tree before first blood is called; non-zero → a false cross, no blood. |
 | `--first` | on | First runner past the bar wins — **cancel the rest** the instant it lands. |
 | `--best` | off | Let all runners finish to a soft deadline, then take the **best** that cleared the bar (overrides `--first`). |
 | `--out=path` | conversation | Persist the winner + race map. Default → deliver inline. |
@@ -51,6 +52,7 @@ Speak twice: when the runners are loosed, when first blood is drawn. Silent thro
 韋  {N} runners loosed · race to the bar · take {first │ best}
     bar: {the acceptance criterion}                        [{inferred │ given}]
     paths: {S1 strategy} · {S2 strategy} · … · {SN strategy}   [write]
+    {only with --bar-cmd:} cmd: {bar-cmd}   [{proves │ guard only}]
 ```
 
 **The pause** (only `--confirm`):
@@ -81,6 +83,8 @@ Speak twice: when the runners are loosed, when first blood is drawn. Silent thro
 Resolve `--runners` (clamp 2–5), `--bar`, `--first`/`--best` (`--best` overrides), `--out`, `--confirm`. Read the task once.
 
 **Set the bar** — what does "winning" mean? The concrete acceptance criterion every runner self-checks against: the test that must pass, the property that must hold, the requirement that must be met. A race with no bar can't name a winner. `--bar` set → use it verbatim. Absent → infer the **strictest reasonable** bar from the task and **say so** in the Throw (don't pause — `--confirm` is the only pause).
+
+**`--bar-cmd` set → the bar is an exit code.** `0` = cleared, anything else = not. Run it yourself, never on a runner's word: `gatr run --tag dojo-first-blood -- <cmd>` when `gatr` is on PATH (then `gatr last` / `gatr errors`), the bare command otherwise. Run it once now, before loosing: non-zero → it proves the work (must reach `0`); already `0` → it proves nothing and only guards (must stay `0`) — mark `guard only` in the Throw and keep judging `--bar` as before.
 
 **Pick the rival strategies** — `--runners` *distinct approaches to the WHOLE task* (not slices of it). Each path should be a genuinely different bet — different algorithm, different library/tool, different framing, different data path, different design stance — so that if one approach is a dead end the others aren't. Don't manufacture near-duplicate paths; fewer real rivals beats N look-alikes. Name each path in one phrase.
 
@@ -128,6 +132,8 @@ THE BAR (what "winning" means — self-check against this):
 Before you report success, verify your result actually clears this bar — run the
 test, check the property, walk the requirement. A confident-but-unchecked claim is
 worse than an honest miss.
+{--bar-cmd: Bar command — exit 0 = cleared. Run it before you report YES. It is re-run on
+the winner's tree after the race and THAT exit code decides, not your report: {bar-cmd}}
 
 Files you OWN (edit only these): {owned file set}
 Do NOT edit/move/reformat anything outside this set — a rival is racing in nearby
@@ -155,6 +161,8 @@ Event-driven. Watch the runners as they report.
 - **Fallen / stalled / errored / denied runner** → it just **loses the race**. **No retry, no respawn.** One-line note, move on — a lost runner is expected and cheap.
 - **A runner reports `Cleared: NO`** → it's out of the race; it doesn't win, but its bar-shortfall feeds the "nearest" line if nobody crosses.
 
+**`--bar-cmd` → verify the cross before calling blood.** Order matters: rivals' half-cut files share the tree, and a red or a green with their debris in it proves nothing. (1) Take the crosser — `--first`: the first `Cleared: YES`; `--best`: the best crosser. (2) Cancel the rest and discard the losers' edits. (3) Run the command on the winner-only tree. `0` → first blood (when the command only guards, or `--bar` was given too, the bar-evidence must also be sound). Non-zero → a **false cross**: that runner is out, nothing is committed, its edits stay in the tree for the user, and the field is already cut — emit **No blood**, with the failing tail on the `nearest` line. One check, no second winner: a runner's own run of the command is what keeps false crosses rare.
+
 **Floor:** ≥1 runner cleared the bar → first blood, proceed to deliver. **0 cleared** (all reported NO, fell, or stalled) → the only real failure: emit the **No blood** template and stop.
 
 ---
@@ -175,7 +183,7 @@ Report the bar honestly — "cleared the bar" means *this bar, this race*, not "
 
 - **Rival strategies, not slices.** Every runner gets the whole task by a *different* approach — the bet is on which path lands, so make the paths genuinely distinct.
 - **The race is parallel; the win is first.** All rivals run at once; the first to clear the bar wins and the rest are cut. (`--best` trades a little latency for picking the strongest crosser.)
-- **The bar names the winner.** No bar, no race — set it concrete, self-check against it, never crown an unchecked claim.
+- **The bar names the winner.** No bar, no race — set it concrete, self-check against it, never crown an unchecked claim. With `--bar-cmd` the exit code names it — on the winner-only tree, after the field is cut.
 - **Nothing to land is not a miss.** A task with no disk surface (a pure question, an analysis) has nothing to land — the winner's answer is the deliverable, not a miss.
 - **Losers are abandoned, not mourned.** A fallen or cancelled runner is the cost of speculation — wasted work bought certainty and latency. No retry, no respawn.
 - **Fire without a gate; run to first blood.** `--confirm` is the only pause. Only hard stop: zero runners cleared the bar.
@@ -189,6 +197,7 @@ Report the bar honestly — "cleared the bar" means *this bar, this race*, not "
 - Don't hand the same strategy to two runners, or let one drift into a rival's path — distinct bets are the whole point.
 - Don't slice the task across runners — every runner gets the whole task, by a different approach.
 - Don't crown a runner that didn't show it cleared the bar — an unchecked "done" is not first blood.
+- Don't call first blood on a non-zero `--bar-cmd`, and don't run it while rivals' edits are still in the tree.
 - Don't retry, resume, or respawn a fallen runner — it just lost the race.
 - Don't give two runners a shared file — overlapping edits clobber the eventual winner.
 - Don't push or PR — commits stay local.

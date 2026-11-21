@@ -17,7 +17,7 @@ Fall ...... the tally + diff manifest · the misses, ready to storm again
 ## Slash invocation
 
 ```
-/dojo shuriken-storm <operation> --targets=<glob|list|file> [--width=8] [--bar="..."] [--out=path] [--confirm]
+/dojo shuriken-storm <operation> --targets=<glob|list|file> [--width=8] [--bar="..."] [--bar-cmd="command"] [--out=path] [--confirm]
 ```
 
 | Arg | Default | Meaning |
@@ -27,6 +27,7 @@ Fall ...... the tally + diff manifest · the misses, ready to storm again
 | `--substrate=…` | `workflow` | how the volley runs. **`workflow`** (preferred) — one `Workflow` script; the harness enforces the concurrency cap so a wide storm cannot rebound. **`agents`** — hand-rolled background `Agent` calls, capped by `--width` (fallback only; use when workflows aren't opted-in, and state the risk). |
 | `--width=N` | `8` | shuriken in flight at once — the rolling-volley cap. **Only governs the `agents` substrate.** Under `workflow` the harness cap (`min(16, cores-2)`) rules and `--width` is ignored. **Clamp 4–12** (`>12` → clamp 12 + warn: a wider volley rebounds as a rate-limit cascade; `<4` → bump 4). |
 | `--bar="..."` | inferred | what a clean land means per target — each shuriken self-verifies against it |
+| `--bar-cmd="…"` | none | the bar as a command — exit `0` = clean. With `{target}` in it → run once per claimed land; without → run once over the whole field. The orchestrator runs it after the volley and the exit code overrules a shuriken's `landed` |
 | `--out=path` | conversation | persist the tally (lands · misses · diff manifest) |
 | `--confirm` | off | the only gate — show the field size, the operation, and one sample shuriken, then wait |
 
@@ -42,7 +43,9 @@ No tracker/graph/sprint deps — stands alone. (For a groomed heterogeneous back
 
 ## Phase 0 — Frame (no gate)
 
-Resolve `--targets` into the concrete field (expand the glob / read the list-file / split the inline list), `--width` (clamp 4–12), `--bar`, `--out`, `--confirm`. Read the operation once.
+Resolve `--targets` into the concrete field (expand the glob / read the list-file / split the inline list), `--width` (clamp 4–12), `--bar`, `--bar-cmd`, `--out`, `--confirm`. Read the operation once.
+
+**`--bar-cmd` set → the land is an exit code.** `0` = clean, anything else = not. Yours to run, never a shuriken's word: `gatr run --tag dojo-shuriken-storm -- <cmd>` when `gatr` is on PATH (then `gatr last` / `gatr errors`), the bare command otherwise. A command with `{target}` in it is per target — put it in `{bar}` so each shuriken can run it on its own wood. A command without `{target}` covers the whole field — keep it out of the shuriken prompt (a project gate run by every shuriken at once is its own rebound) and run it once now: already `0` → it only guards (must stay `0`), say `guard only` in the Throw.
 
 **The field must be embarrassingly parallel.** Uniform: the *same* cut on every target — the storm throws one shape; if each target needs a *different* kind of work, this is the wrong blade.
 Disjoint: one shuriken per target, no shared wood (same file/function/site). Fold or drop overlaps before the volley.
@@ -158,6 +161,12 @@ Orchestrator's own work — and the tell that this is not `fan-of-agents`: **the
 3. **No-ops** — targets that needed no change (clean, not misses).
 4. **Manifest** — the union of what landed across the field (paths + one-line changes), for review.
 
+**`--bar-cmd` → run it before the tally stands.** After the volley, orchestrator's own run:
+- **`{target}` in the command** → once per claimed land, `{target}` replaced by that target (one loop, one run; collect the targets that exit non-zero). Non-zero flips that land to a **miss** → re-throw list. No-ops are checked too — a no-op that fails the command was not clean.
+- **No `{target}`** → once over the whole field. `0` → the claimed lands stand. Non-zero → the field is not clean: commit nothing; a target the failing output names flips to a miss, and if it names none, every land is unproven — say so in the Fall.
+
+A flipped target's edit stays on disk, uncommitted, for the re-throw. Commit only the lands the command left standing.
+
 ## Phase 3 — Fall (deliver)
 
 Terse. Emit, in order:
@@ -199,6 +208,7 @@ Speak twice: when the shuriken are loosed, when the field falls. `{slots}` are t
 - **Prefer the workflow substrate.** The harness-enforced cap is what keeps a wide storm from rebounding and blocking the whole session; hand-rolled agents are the fallback, and the fallback is where you get rate-limited. A storm without a harness cap is a storm aimed at yourself.
 - **Width is throughput, not ambition.** The storm is as wide as the field; under `agents`, `--width` caps how many fly at once; under `workflow`, the harness cap rules. Either way, the cap — not the field size — is what keeps the volley from rebounding.
 - **No synthesis — the tally is the product.** Shuriken land themselves; the deliverable is lands, misses, and a re-throw list.
+- **A land is evidence, not a claim.** With `--bar-cmd` the exit code decides each land (or the field); `landed: true` from a shuriken is only where to look.
 - **Tolerant volley.** A lost shuriken is a thinner field, noted and passed — no retry, no respawn mid-storm; misses re-throw.
 - **Lands on disk; the orchestrator seals it.** A thrown shuriken edits its target and never commits; the orchestrator commits the whole volley at the end (unless the user requested no commit).
 - **Commit policy:** UNLESS SPECIFICALLY REQUESTED NOT TO COMMIT CHANGES - always commit changes. Shuriken never commit — the orchestrator commits the volley; a field of pure no-ops has nothing to commit.
@@ -212,5 +222,6 @@ Speak twice: when the shuriken are loosed, when the field falls. `{slots}` are t
 - Don't loose the whole field at once — under `agents`, hold the rolling volley to `--width` in flight; under `workflow`, the harness already does.
 - Don't synthesize or merge the lands — there is nothing to stitch; tally them.
 - Don't retry or respawn a miss mid-volley — it goes on the re-throw list.
+- Don't count a land the `--bar-cmd` failed, and don't commit a field its whole-field run left red.
 - Don't run a project-wide formatter inside a shuriken — it reaches past the one target and clobbers siblings.
 - Don't push or PR — commits stay local. Shuriken never commit; the orchestrator commits the volley at the end (unless the user requested no commit).

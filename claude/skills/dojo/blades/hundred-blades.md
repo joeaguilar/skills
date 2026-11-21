@@ -131,7 +131,7 @@ Merge per mode:
 
 Weigh reasoning over self-reported confidence — a confident blade with weak reasoning loses to a careful one.
 
-**`--judge` → seat it off the blades' model.** The spawned judge runs on the `reviewer` role. Read `~/.claude/MODELS.md` at spawn and take its binding against the model the blades ran on (the session model): a different model, other provider first. Claude binding → pass `model`; GPT binding → launch it the way that file's Reach section says. File unreadable or seat unreachable → a different Claude model than the blades, and name the fallback in the Tally. Never the blades' own model — it would crown the answer it would have written.
+**`--judge` → seat it off the blades' model.** The spawned judge runs on the `reviewer` role. Read `~/.claude/MODELS.md` at spawn and take its binding against the model the blades ran on (the session model) — and, when the task revises an existing artifact whose author is known, against that author too. The seat must differ from both: a different model, other provider first. Claude binding → pass `model`; GPT binding → launch it the way that file's Reach section says. File unreadable or seat unreachable → a different Claude model than the blades, and name the fallback in the Tally. Never the blades' own model — it would crown the answer it would have written.
 
 ---
 

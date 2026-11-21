@@ -25,7 +25,7 @@ Deliver .... which rung drew blood + rungs climbed + the bar it cleared
 | Arg | Default | Meaning |
 |---|---|---|
 | `<task>` | — | The single task. Inline prose, a spec path, or "the thing we just hit". |
-| `--ladder="r1,r2,…"` | auto | The rungs cheapest→costliest — role names, model names or effort words, used as given. Absent → orchestrator proposes a ladder of increasing cost/care, each rung one role up the `~/.claude/MODELS.md` escalation ladder: one quick single agent → one careful focused agent → a multi-agent consensus/verify rung. **Clamp 2–4 rungs** (`<2` → not a ladder, bump 2 by adding the next rung up; `>4` → clamp 4 + warn: too tall wastes the cheapness). |
+| `--ladder="r1,r2,…"` | auto | The rungs cheapest→costliest — role names, model names or effort words; each entry is used as given, and only the count is clamped. Absent → orchestrator proposes a ladder of increasing cost/care, each rung one role up the `~/.claude/MODELS.md` escalation ladder: one quick single agent → one careful focused agent → a multi-agent consensus/verify rung. **Clamp 2–4 rungs** (`<2` → not a ladder, bump 2 by adding the next rung up — never the gated `ceiling`: with nothing ungated above, run the one rung and say so; `>4` → clamp 4 + warn: too tall wastes the cheapness). |
 | `--bar="…"` | inferred | What "passes" means at every rung — the acceptance test/criteria. Absent → infer the strictest reasonable bar and **say so** (a ladder with no bar can't check between rungs — it's theater). |
 | `--bar-cmd="…"` | none | The bar as a command: exit `0` = cleared, anything else = not. The orchestrator runs it after every rung that claims PASS, and the exit code overrules the claim. |
 | `--out=path` | conversation | Persist the deliverable. |
@@ -160,7 +160,7 @@ Your final message IS your rung — return data, not chat. Report pass/fail plai
 
 The merge is trivial by design: **the deliverable is the first rung that cleared the bar.** No vote, no synthesis across rungs — earlier rungs that failed are discarded (note only why they failed, for the climb map). If the ladder exhausted with none passing, the "merge" is the **best** rung (closest to the bar) plus what's still missing — surfaced as a failure, not laundered into a pass.
 
-The passing rung's change is already on disk; merge = confirm it's the only applied change.
+The passing rung's change is already on disk; merge = confirm it's the only applied change. Under `--bar-cmd` earlier rungs left edits for later ones to build on, so the deliverable is the **tree the command passed on** — the passing rung's work together with whatever it kept from the rungs below.
 
 Ladder exhausted under `--bar-cmd` → the failed rungs (and any that claimed PASS and were overruled) left edits in the tree. Commit none of them; name the paths in the **Ladder exhausted** report and leave them for the user.
 
@@ -195,9 +195,9 @@ A pass means *this rung cleared this bar* — report which rung and how many you
 - Don't gate, ask, or pause unless `--confirm` is set.
 - Don't run the rungs in parallel — they're serial, cheapest first; escalate only on a checked failure.
 - Don't escalate without checking the current rung against the bar — the check is the whole brain.
-- Don't take a rung's PASS over a non-zero `--bar-cmd`, and don't commit an overruled rung's edits.
+- Don't take a rung's PASS over a non-zero `--bar-cmd`, and don't commit a tree whose last `--bar-cmd` run was non-zero.
 - Don't keep climbing after a rung passes — stop and deliver the cheapest rung that cleared the bar.
 - Don't build a tall ladder for a trivial task — clamp 2–4 rungs; fewer is fine.
-- Don't propose `ceiling` as a rung unless the user turned it on, and don't propose `floor` as rung 1 when its guard fails — start the proposed ladder at `generalist`. (A `--ladder` the user wrote is theirs: use it as given.)
+- Don't propose `ceiling` as a rung unless the user turned it on, and don't propose `floor` as rung 1 when its guard fails — start the proposed ladder at `generalist`. (A `--ladder` the user wrote is theirs: use its entries as given; only the 2–4 count clamp applies to it.)
 - Don't launder an exhausted ladder into a pass — surface the best rung + what's still missing as a real failure.
 - Don't push or PR — and skip the commit only when the user specifically requested not to or the ladder exhausted; otherwise the orchestrator commits the landed change.

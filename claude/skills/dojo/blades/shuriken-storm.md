@@ -165,7 +165,7 @@ Orchestrator's own work — and the tell that this is not a synthesis fan: **the
 - **`{target}` in the command** → once per claimed land, `{target}` replaced by that target (one loop, one run; collect the targets that exit non-zero). Non-zero flips that land to a **miss** → re-throw list. `0` on a guard-only target, or with `--bar` given too, still needs bar-evidence that holds on your own reading. No-ops are checked too — a no-op that fails the command was not clean.
 - **No `{target}`** → once over the whole field. `0` → the claimed lands stand — but when `--bar` was given too, or the command only guards, a land also needs bar-evidence that holds on your own reading; one without it flips to a miss. Non-zero → the field is not clean: commit nothing; a target the failing output names flips to a miss, and if it names none, every land is unproven — say so in the Fall.
 
-A flipped target's edit stays on disk, uncommitted, for the re-throw. Commit only the lands the command left standing.
+A flipped target's edit stays on disk, uncommitted, for the re-throw. Commit only the lands the command left standing. A whole-field `0` speaks for the tree as it stood — a missed shuriken's half-edit included. Leaving any target's edit out of the commit → run the command once more on exactly what you will commit (set the left-out edits aside for that run), and commit only on that `0`.
 
 ## Phase 3 — Fall (deliver)
 

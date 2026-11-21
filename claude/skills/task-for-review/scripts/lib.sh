@@ -7,14 +7,39 @@
 
 TFR_LIB_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd -P)"
 
-tfr_url_host() { # remote url -> hostname; empty for a local path
+tfr_url_host() { # remote url -> lower-case hostname; empty for a local path
   local u="$1"
   case "$u" in
+    file://*|/*|./*|../*|'~'*) u="" ;;                               # a path, whatever it contains
     *://*) u="${u#*://}"; u="${u%%/*}"; u="${u##*@}"; u="${u%%:*}" ;;
     *:*)   u="${u%%:*}"; u="${u##*@}"; [ "${#u}" -le 1 ] && u="" ;;   # C:/path is a drive, not a host
     *)     u="" ;;
   esac
-  printf '%s' "$u"
+  printf '%s' "$u" | tr '[:upper:]' '[:lower:]'
+}
+
+tfr_url_path() { # remote url -> owner/repo: no scheme, host, port, leading or trailing slash, or .git
+  local p="$1"
+  case "$p" in
+    *://*) p="${p#*://}"; case "$p" in */*) p="${p#*/}" ;; *) p="" ;; esac ;;   # drop user@host:port
+    *:*)   p="${p#*:}" ;;                                                       # scp style host:path
+  esac
+  while [ "${p%/}" != "$p" ]; do p="${p%/}"; done
+  p="${p%.git}"
+  while [ "${p#/}" != "$p" ]; do p="${p#/}"; done
+  printf '%s' "$p"
+}
+
+tfr_urlencode_path() { # path -> the same path with every byte a URL could misread percent-encoded
+  local LC_ALL=C s="$1" out="" c i
+  for ((i = 0; i < ${#s}; i++)); do
+    c="${s:i:1}"
+    case "$c" in
+      [a-zA-Z0-9._~/-]) out="$out$c" ;;
+      *) out="$out$(printf '%%%02X' "'$c")" ;;
+    esac
+  done
+  printf '%s' "$out"
 }
 
 tfr_gitea_host() { # hostname behind the `gitea` SSH alias
@@ -50,8 +75,8 @@ tfr_web_base() { # remote url -> https://host/owner/repo; empty when the host ha
   local url="$1" slug web
   case "$(tfr_remote_kind "$url")" in
     github)
-      slug="${url##*github.com[:/]}"; slug="${slug%.git}"; slug="${slug%/}"
-      printf 'https://github.com/%s' "$slug"
+      slug="$(tfr_url_path "$url")"
+      [ -n "$slug" ] && printf 'https://github.com/%s' "$slug"
       ;;
     gitea)
       if tfr_have_gitea_bin; then

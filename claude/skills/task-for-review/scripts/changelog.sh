@@ -69,15 +69,27 @@ echo '| Commit | Change | Files |'
 echo '|---|---|---|'
 git -c core.quotePath=false log --reverse --no-merges --format='@@%H %s' --name-status -M "$BASE..$HEAD_REF" \
   | awk -v url="$COMMIT_URL" '
-    function esc(s,   n, part, i, out) {   # a bare pipe would end the table cell
-      n = split(s, part, "|"); out = part[1]
-      for (i = 2; i <= n; i++) out = out "\\|" part[i]
+    # Prose cell: a bare pipe would end the cell, and a backslash would unescape the
+    # pipe after it, so each gets a backslash.
+    function esc_text(s,   out, c, i) {
+      out = ""
+      for (i = 1; i <= length(s); i++) {
+        c = substr(s, i, 1)
+        out = out ((c == "\\" || c == "|") ? "\\" c : c)
+      }
       return out
+    }
+    # Code span: only the pipe is special to the table, and a path that holds a
+    # backtick needs a longer delimiter.
+    function code(s,   out, c, i) {
+      out = ""
+      for (i = 1; i <= length(s); i++) { c = substr(s, i, 1); out = out ((c == "|") ? "\\" c : c) }
+      return (index(s, "`") > 0) ? "`` " out " ``" : "`" out "`"
     }
     function flush(   link) {
       if (sha == "") return
       link = (url != "") ? "[`" short "`](" url sha ")" : "`" short "`"
-      printf "| %s | %s | %s |\n", link, esc(subj), (files == "" ? "(no file changes)" : files)
+      printf "| %s | %s | %s |\n", link, esc_text(subj), (files == "" ? "(no file changes)" : files)
     }
     /^@@/ {
       flush()
@@ -89,7 +101,7 @@ git -c core.quotePath=false log --reverse --no-merges --format='@@%H %s' --name-
     {
       n = split($0, f, "\t")
       path = (n >= 3) ? f[2] " -> " f[3] : f[2]
-      files = files (files == "" ? "" : "<br>") "`" substr(f[1], 1, 1) "` `" esc(path) "`: WHY?"
+      files = files (files == "" ? "" : "<br>") "`" substr(f[1], 1, 1) "` " code(path) ": WHY?"
     }
     END { flush() }'
 if [ "$FOLD" -eq 1 ]; then

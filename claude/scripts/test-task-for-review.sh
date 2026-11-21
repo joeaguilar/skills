@@ -13,8 +13,15 @@ S="${1:-$REPO_DIR/claude/skills/task-for-review/scripts}"
 [ -f "$S/preflight.sh" ] || { echo "test-task-for-review: no scripts at $S" >&2; exit 2; }
 S="$(cd "$S" && pwd -P)"
 
-WORK="$(mktemp -d "${TMPDIR:-/tmp}/tfr-test.XXXXXX")"
-WORK="$(cd "$WORK" && pwd -P)"
+# The cleanup below is `rm -rf "$WORK"`, so WORK must be the directory mktemp just
+# made and nothing else: an empty WORK once resolved to the caller's directory.
+WORK="$(mktemp -d "${TMPDIR:-/tmp}/tfr-test.XXXXXX")" || { echo "test-task-for-review: cannot create a temp directory" >&2; exit 2; }
+[ -n "$WORK" ] && [ -d "$WORK" ] || { echo "test-task-for-review: mktemp returned no directory" >&2; exit 2; }
+WORK="$(cd "$WORK" && pwd -P)" || exit 2
+case "$WORK" in
+  */tfr-test.*) ;;
+  *) echo "test-task-for-review: refusing to use $WORK as a scratch directory" >&2; exit 2 ;;
+esac
 trap 'rm -rf "$WORK"' EXIT
 pass=0
 fail=0
@@ -246,7 +253,7 @@ same "seed again: no new commit" "$(git -C "$WORK/newproj" rev-parse HEAD)" "$be
 mkdir -p "$WORK/newitr"
 out="$(TFR_ITR="$WORK/bin/itr-stub" bash "$SEED" "$WORK/newitr")"
 expect "seed itr: tracker" "$out" "tracker: itr (initialised, .itr.db gitignored)"
-expect_has "seed itr: next snapshot" "$out" "next: run the itr-snapshot skill"
+expect_has "seed itr: next snapshot" "$out" "next: set up the tracker snapshot so issues travel with the repo"
 expect "seed itr: db ignored" "$(cat "$WORK/newitr/.gitignore")" ".itr.db"
 expect "seed itr: sidecars ignored" "$(cat "$WORK/newitr/.gitignore")" ".itr.db-*"
 refuse "seed itr: db not committed" "$(git -C "$WORK/newitr" ls-files)" ".itr.db"
@@ -410,6 +417,168 @@ same "assets: missing file exits 1" "$code" "1"
 out="$(cd "$WORK/as" && bash "$AS" ../escape "$WORK/shot.png" 2>&1)"; code=$?
 same "assets: bad key exits 2" "$code" "2"
 same "assets: failures added no commit" "$(git -C "$WORK/as" rev-parse review-assets)" "$second"
+
+# =============================================================================
+# Cases found by adversarial review (2026-11-21). Each failed before its fix.
+# =============================================================================
+
+# --- preflight leaves the index alone, even when git would refresh it -----------------------
+repo ro
+put "$WORK/ro" file.txt "x"
+touch -d '2001-01-01 00:00:00' "$WORK/ro/file.txt"       # same content, new stat data
+before="$(git hash-object --no-filters "$WORK/ro/.git/index")"
+bash "$PF" "$WORK/ro" >/dev/null
+same "preflight: index not rewritten" "$(git hash-object --no-filters "$WORK/ro/.git/index")" "$before"
+
+# --- preflight: host spelling and local paths ---------------------------------------------------
+repo kinds
+git -C "$WORK/kinds" remote add up "https://GITHUB.COM/acme/r.git"
+git -C "$WORK/kinds" remote add fileurl "file://localhost/tmp/r.git"
+git -C "$WORK/kinds" remote add relpath "./a:b"
+git -C "$WORK/kinds" remote add sshport "ssh://git@github.com:22/acme/r.git"
+out="$(TFR_GH="$WORK/bin/gh-fail" bash "$PF" "$WORK/kinds")"
+expect "kinds: upper-case host is github" "$out" "remote: up github https://GITHUB.COM/acme/r.git"
+expect "kinds: file url is local" "$out" "remote: fileurl local file://localhost/tmp/r.git"
+expect "kinds: relative path with a colon is local" "$out" "remote: relpath local ./a:b"
+expect "kinds: ssh with a port is github" "$out" "remote: sshport github ssh://github.com:22/acme/r.git"
+expect "kinds: the gh blocker fires" "$out" "host-cli: gh not-logged-in"
+
+# --- preflight: a line that merely mentions the mode is not an opt-in ---------------------------
+repo nopt
+put "$WORK/nopt" AGENTS.md "# Do not enable task-for-review mode for this project."
+out="$(bash "$PF" "$WORK/nopt")"
+expect "opt-in: a mention is not an opt-in" "$out" "opt-in: no"
+
+# --- seed: the user's staged files stay out of the seed commit ----------------------------------
+mkdir -p "$WORK/staged"; git -C "$WORK/staged" init -q -b main
+printf 'secret\n' > "$WORK/staged/private.txt"; git -C "$WORK/staged" add private.txt
+out="$(bash "$SEED" "$WORK/staged")"; code=$?
+same "seed staged: exit 0" "$code" "0"
+refuse "seed staged: private file not committed" "$(git -C "$WORK/staged" ls-tree -r --name-only HEAD)" "private.txt"
+same "seed staged: private file still staged" "$(git -C "$WORK/staged" status --porcelain)" "A  private.txt"
+
+repo stagedold
+git -C "$WORK/stagedold" worktree add -q "$WORK/stagedold/.claude/worktrees/seed" -b chore/seed
+printf 'wip\n' > "$WORK/stagedold/.claude/worktrees/seed/wip.txt"
+git -C "$WORK/stagedold/.claude/worktrees/seed" add wip.txt
+bash "$SEED" "$WORK/stagedold/.claude/worktrees/seed" >/dev/null
+refuse "seed staged adopt: unrelated staged file not committed" \
+  "$(git -C "$WORK/stagedold/.claude/worktrees/seed" ls-tree -r --name-only HEAD)" "wip.txt"
+
+# --- seed: an existing project is never committed to on main, or on no branch ---------------------
+repo onmain
+git -C "$WORK/onmain" switch -q -c human
+git -C "$WORK/onmain" worktree add -q "$WORK/onmain-wt" main
+before="$(git -C "$WORK/onmain" rev-parse main)"
+out="$(bash "$SEED" "$WORK/onmain-wt" 2>&1)"; code=$?
+same "seed on main in a worktree: exit 1" "$code" "1"
+same "seed on main in a worktree: main did not move" "$(git -C "$WORK/onmain" rev-parse main)" "$before"
+same "seed on main in a worktree: nothing written" "$(git -C "$WORK/onmain-wt" status --porcelain)" ""
+git -C "$WORK/onmain" worktree add -q --detach "$WORK/onmain-det"
+out="$(bash "$SEED" "$WORK/onmain-det" 2>&1)"; code=$?
+same "seed detached: exit 1" "$code" "1"
+same "seed detached: nothing written" "$(git -C "$WORK/onmain-det" status --porcelain)" ""
+
+# --- seed: a folder that already holds the scaffolding still gets its first commit ----------------
+mkdir -p "$WORK/pre"; bash "$SEED" "$WORK/pre" >/dev/null; rm -rf "$WORK/pre/.git"
+out="$(GIT_CONFIG_GLOBAL="$WORK/gitconfig-empty" bash "$SEED" "$WORK/pre" 2>&1)"; code=$?
+same "seed prefilled, no identity: exit 1" "$code" "1"
+same "seed prefilled, no identity: no repository made" "$([ -e "$WORK/pre/.git" ] && echo present || echo absent)" "absent"
+out="$(bash "$SEED" "$WORK/pre")"; code=$?
+same "seed prefilled: exit 0" "$code" "0"
+same "seed prefilled: one commit" "$(git -C "$WORK/pre" rev-list --count HEAD 2>/dev/null)" "1"
+same "seed prefilled: scaffolding committed" "$(git -C "$WORK/pre" ls-files | sort | tr '\n' ' ')" \
+  ".github/pull_request_template.md .gitignore AGENTS.md CLAUDE.md glossary.md "
+
+# --- seed: a mention of the mode is not the opt-in line ---------------------------------------------
+repo mention
+put "$WORK/mention" AGENTS.md "# Do not enable task-for-review mode for this project."
+git -C "$WORK/mention" worktree add -q "$WORK/mention/.claude/worktrees/seed" -b chore/seed
+out="$(bash "$SEED" "$WORK/mention/.claude/worktrees/seed")"
+expect "seed mention: opt-in appended" "$out" "appended: AGENTS.md (opt-in line)"
+
+# --- seed: an existing tracker database gets its ignore entries ---------------------------------------
+mkdir -p "$WORK/hasdb"; : > "$WORK/hasdb/.itr.db"
+out="$(TFR_ITR="$WORK/bin/itr-stub" bash "$SEED" "$WORK/hasdb")"
+expect "seed existing db: ignored" "$(cat "$WORK/hasdb/.gitignore")" ".itr.db"
+same "seed existing db: tree clean" "$(git -C "$WORK/hasdb" status --porcelain)" ""
+
+# --- seed: a CRLF .gitignore that already holds the entry is left alone --------------------------------
+repo crlf
+printf '.claude/worktrees/\r\nnode_modules/\r\n' > "$WORK/crlf/.gitignore"
+git -C "$WORK/crlf" add .gitignore; git -C "$WORK/crlf" commit -q -m "chore(test): crlf ignore"
+git -C "$WORK/crlf" worktree add -q "$WORK/crlf-wt" -b chore/seed
+out="$(bash "$SEED" "$WORK/crlf-wt")"
+expect "seed crlf: ignore kept" "$out" "kept: .gitignore"
+
+# --- changelog: links survive an ssh port and a trailing slash ------------------------------------------
+git -C "$WORK/cl" remote set-url origin "ssh://git@github.com:22/acme/widget.git"
+out="$(cd "$WORK/cl" && bash "$CL")"
+expect_has "changelog: ssh port dropped from the link" "$out" "(https://github.com/acme/widget/commit/$sha3)"
+git -C "$WORK/cl" remote set-url origin "https://github.com/acme/widget.git/"
+out="$(cd "$WORK/cl" && bash "$CL")"
+expect_has "changelog: trailing slash dropped from the link" "$out" "(https://github.com/acme/widget/commit/$sha3)"
+git -C "$WORK/cl" remote remove origin
+
+# --- changelog: a backslash before a pipe, and a backtick in a path ---------------------------------------
+printf 'w\n' > "$WORK/cl/we\`ird.txt"
+git -C "$WORK/cl" add -A
+git -C "$WORK/cl" commit -q -m 'fix(x): literal \| pipe'
+out="$(cd "$WORK/cl" && bash "$CL" HEAD~1 HEAD)"
+expect_has "changelog: backslash and pipe both escaped" "$out" '| fix(x): literal \\\| pipe |'
+expect_has "changelog: backtick path uses a double-backtick span" "$out" '`` we`ird.txt ``: WHY?'
+
+# --- assets: never the branch someone has checked out, never a code branch ---------------------------------
+repo am
+put "$WORK/am" code.txt "code"
+before="$(git -C "$WORK/am" rev-parse main)"
+out="$(cd "$WORK/am" && bash "$AS" --no-push --branch main evidence "$WORK/shot.png" 2>&1)"; code=$?
+same "assets onto main: exit 1" "$code" "1"
+same "assets onto main: main did not move" "$(git -C "$WORK/am" rev-parse main)" "$before"
+git -C "$WORK/am" worktree add -q "$WORK/am-feat" -b feat/z
+out="$(cd "$WORK/am-feat" && bash "$AS" --no-push --branch main evidence "$WORK/shot.png" 2>&1)"; code=$?
+same "assets onto a code branch from another worktree: exit 1" "$code" "1"
+same "assets onto a code branch: main did not move" "$(git -C "$WORK/am" rev-parse main)" "$before"
+git -C "$WORK/am" branch feat/idle main                 # a code branch nobody has checked out
+out="$(cd "$WORK/am" && bash "$AS" --no-push --branch feat/idle evidence "$WORK/shot.png" 2>&1)"; code=$?
+same "assets onto an idle code branch: exit 1" "$code" "1"
+same "assets onto an idle code branch: it did not move" "$(git -C "$WORK/am" rev-parse feat/idle)" "$before"
+(cd "$WORK/am" && bash "$AS" --no-push k1 "$WORK/shot.png" >/dev/null)
+tip="$(git -C "$WORK/am" rev-parse review-assets)"
+git -C "$WORK/am" worktree add -q "$WORK/am-browse" review-assets
+out="$(cd "$WORK/am" && bash "$AS" --no-push k2 "$WORK/shot.png" 2>&1)"; code=$?
+same "assets while the branch is checked out: exit 1" "$code" "1"
+same "assets while the branch is checked out: tip did not move" "$(git -C "$WORK/am" rev-parse review-assets)" "$tip"
+
+# --- assets: two files with one name are refused -------------------------------------------------------------
+mkdir -p "$WORK/before" "$WORK/after"
+printf 'b' > "$WORK/before/pic.png"; printf 'a' > "$WORK/after/pic.png"
+tip="$(git -C "$WORK/as" rev-parse review-assets)"
+out="$(cd "$WORK/as" && bash "$AS" --no-push dup "$WORK/before/pic.png" "$WORK/after/pic.png" 2>&1)"; code=$?
+same "assets duplicate names: exit 2" "$code" "2"
+same "assets duplicate names: nothing committed" "$(git -C "$WORK/as" rev-parse review-assets)" "$tip"
+
+# --- assets: a file name that needs encoding ------------------------------------------------------------------
+printf 'h' > "$WORK/shot#1 (final).png"
+out="$(cd "$WORK/as" && bash "$AS" --remote hub --no-push feat/x "$WORK/shot#1 (final).png")"
+tip="$(git -C "$WORK/as" rev-parse review-assets)"
+same "assets: link path is percent-encoded" "$out" \
+  "![shot#1 (final).png](https://github.com/acme/widget/blob/$tip/feat/x/shot%231%20%28final%29.png?raw=true)"
+
+# --- assets: evidence saved locally survives a remote that moved on ----------------------------------------------
+repo dva
+git init -q --bare "$WORK/dv-remote.git"
+git -C "$WORK/dva" remote add origin "$WORK/dv-remote.git"
+git -C "$WORK/dva" push -q origin main
+git clone -q "$WORK/dv-remote.git" "$WORK/dvb"
+printf 'A1' > "$WORK/a1.png"; printf 'B1' > "$WORK/b1.png"; printf 'A2' > "$WORK/a2.png"
+(cd "$WORK/dva" && bash "$AS" --no-push ka "$WORK/a1.png" >/dev/null)
+(cd "$WORK/dvb" && bash "$AS" kb "$WORK/b1.png" >/dev/null)
+out="$(cd "$WORK/dva" && bash "$AS" ka "$WORK/a2.png" 2>&1)"; code=$?
+same "assets diverged: exit 0" "$code" "0"
+same "assets diverged: every file kept" "$(git -C "$WORK/dva" ls-tree -r --name-only review-assets | sort | tr '\n' ',')" \
+  "ka/a1.png,ka/a2.png,kb/b1.png,"
+same "assets diverged: remote matches" "$(git -C "$WORK/dv-remote.git" rev-parse review-assets)" "$(git -C "$WORK/dva" rev-parse review-assets)"
 
 echo "task-for-review self-test: $pass passed, $fail failed"
 [ "$fail" -eq 0 ]

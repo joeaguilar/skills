@@ -40,6 +40,10 @@
 # TFR_GITEA_HOST names the Gitea server's hostname.
 set -u
 
+# Read-only means the index too: without this, `git status` refreshes cached stat
+# data and rewrites .git/index. It also covers the scripts this one calls.
+export GIT_OPTIONAL_LOCKS=0
+
 ROOT="."
 while [ $# -gt 0 ]; do
   case "$1" in
@@ -143,7 +147,8 @@ else
 fi
 
 TOP="$(git rev-parse --show-toplevel 2>/dev/null)"
-if grep -qs 'task-for-review mode' "$TOP/AGENTS.md" "$TOP/CLAUDE.md"; then
+# The whole sentence, so a line that only mentions the mode is not an opt-in.
+if grep -qsF 'This project works in task-for-review mode' "$TOP/AGENTS.md" "$TOP/CLAUDE.md"; then
   echo "opt-in: yes"
 else
   echo "opt-in: no"

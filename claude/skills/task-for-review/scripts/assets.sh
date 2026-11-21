@@ -7,6 +7,11 @@
 # a file already there is replaced. The commit is built with git plumbing: the
 # working tree, the index and the checked-out branch are not touched.
 #
+# It refuses, changing nothing, when the assets branch is checked out in a worktree,
+# when it shares history with the main branch (a code branch was named by mistake),
+# or when two FILEs have the same name. Evidence already on the remote and evidence
+# only in this clone are both kept when the two have drifted apart.
+#
 # Prints one markdown line per FILE, ready to paste into the description: an image
 # link for a picture, a plain link otherwise. Links carry the commit hash, so they
 # keep working after later evidence is added.
@@ -44,8 +49,14 @@ KEY="${ARGS[0]}"
 KEY="${KEY#/}"; KEY="${KEY%/}"
 case "$KEY" in ''|*..*) echo "assets: KEY must be a plain folder path" >&2; exit 2 ;; esac
 FILES=("${ARGS[@]:1}")
+SEEN_NAMES=$'\n'
 for f in "${FILES[@]}"; do
   [ -f "$f" ] || { echo "assets: no such file $f" >&2; exit 1; }
+  name="$(basename "$f")"
+  case "$SEEN_NAMES" in
+    *$'\n'"$name"$'\n'*) echo "assets: two files are named $name and would land on the same path; rename one" >&2; exit 2 ;;
+  esac
+  SEEN_NAMES="$SEEN_NAMES$name"$'\n'
 done
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd -P)"
@@ -59,27 +70,53 @@ elif ! git remote | grep -qxF -- "$REMOTE"; then
   echo "assets: no remote named $REMOTE" >&2; exit 1
 fi
 
-# --- the commit the new one sits on -------------------------------------------------
-PARENT=""
+# --- the destination must be a free-standing assets branch nobody has checked out ------
+if git worktree list --porcelain | grep -qxF "branch refs/heads/$BRANCH"; then
+  echo "assets: $BRANCH is checked out in a worktree, and moving it would leave that checkout stale. Remove that worktree, or check the branch out with --detach, and run again." >&2
+  exit 1
+fi
 if [ -n "$REMOTE" ] && [ "$PUSH" -eq 1 ]; then
   git fetch -q "$REMOTE" "+refs/heads/$BRANCH:refs/remotes/$REMOTE/$BRANCH" 2>/dev/null || true
 fi
+REMOTE_TIP=""
+LOCAL_TIP=""
 if [ -n "$REMOTE" ] && git show-ref --verify -q "refs/remotes/$REMOTE/$BRANCH"; then
-  PARENT="$(git rev-parse "refs/remotes/$REMOTE/$BRANCH")"
+  REMOTE_TIP="$(git rev-parse "refs/remotes/$REMOTE/$BRANCH")"
 fi
 if git show-ref --verify -q "refs/heads/$BRANCH"; then
-  LOCAL="$(git rev-parse "refs/heads/$BRANCH")"
-  # A local tip the remote does not have yet (an earlier --no-push) wins when it
-  # already contains the remote tip; otherwise the remote tip is the base.
-  if [ -z "$PARENT" ] || git merge-base --is-ancestor "$PARENT" "$LOCAL" 2>/dev/null; then PARENT="$LOCAL"; fi
+  LOCAL_TIP="$(git rev-parse "refs/heads/$BRANCH")"
+fi
+CODE_REF="$(tfr_main_branch)"
+[ -n "$CODE_REF" ] || CODE_REF="HEAD"
+for tip in "$REMOTE_TIP" "$LOCAL_TIP"; do
+  [ -z "$tip" ] && continue
+  if git merge-base "$tip" "$CODE_REF" >/dev/null 2>&1; then
+    echo "assets: $BRANCH shares history with $CODE_REF, so it is a code branch, not an assets branch. Nothing was changed." >&2
+    exit 1
+  fi
+done
+
+# --- the commit(s) the new one sits on -----------------------------------------------
+# One parent normally. When this clone and the remote each hold evidence the other
+# lacks, both become parents and both trees are kept: nothing is dropped, and the
+# push stays a fast-forward.
+PARENTS=()
+if [ -n "$REMOTE_TIP" ] && [ -n "$LOCAL_TIP" ]; then
+  if git merge-base --is-ancestor "$REMOTE_TIP" "$LOCAL_TIP" 2>/dev/null; then PARENTS=("$LOCAL_TIP")
+  elif git merge-base --is-ancestor "$LOCAL_TIP" "$REMOTE_TIP" 2>/dev/null; then PARENTS=("$REMOTE_TIP")
+  else PARENTS=("$REMOTE_TIP" "$LOCAL_TIP")
+  fi
+elif [ -n "$REMOTE_TIP" ]; then PARENTS=("$REMOTE_TIP")
+elif [ -n "$LOCAL_TIP" ]; then PARENTS=("$LOCAL_TIP")
 fi
 
 # --- build the tree in a private index ------------------------------------------------
 TMP_INDEX="$(git rev-parse --path-format=absolute --git-dir)/tfr-assets-index.$$"
 trap 'rm -f "$TMP_INDEX" "$TMP_INDEX.lock"' EXIT
 export GIT_INDEX_FILE="$TMP_INDEX"
-if [ -n "$PARENT" ]; then
-  git read-tree "$PARENT" || { echo "assets: cannot read $BRANCH" >&2; exit 1; }
+if [ "${#PARENTS[@]}" -gt 0 ]; then
+  # Several trees are overlaid in order; on a clash the later (local) file wins.
+  git read-tree "${PARENTS[@]}" || { echo "assets: cannot read $BRANCH" >&2; exit 1; }
 fi
 PATHS=()
 for f in "${FILES[@]}"; do
@@ -91,15 +128,12 @@ done
 TREE="$(git write-tree)" || { echo "assets: cannot write the tree" >&2; exit 1; }
 unset GIT_INDEX_FILE
 
-if [ -n "$PARENT" ] && [ "$TREE" = "$(git rev-parse "$PARENT^{tree}")" ]; then
-  COMMIT="$PARENT"   # every file is already there, byte for byte
+if [ "${#PARENTS[@]}" -eq 1 ] && [ "$TREE" = "$(git rev-parse "${PARENTS[0]}^{tree}")" ]; then
+  COMMIT="${PARENTS[0]}"   # every file is already there, byte for byte
 else
-  MSG="chore(review-assets): add evidence for $KEY"
-  if [ -n "$PARENT" ]; then
-    COMMIT="$(git commit-tree "$TREE" -p "$PARENT" -m "$MSG")"
-  else
-    COMMIT="$(git commit-tree "$TREE" -m "$MSG")"
-  fi
+  PARENT_ARGS=()
+  for p in ${PARENTS[@]+"${PARENTS[@]}"}; do PARENT_ARGS+=(-p "$p"); done
+  COMMIT="$(git commit-tree "$TREE" ${PARENT_ARGS[@]+"${PARENT_ARGS[@]}"} -m "chore(review-assets): add evidence for $KEY")"
   [ -n "$COMMIT" ] || { echo "assets: cannot create the commit (is the git identity set?)" >&2; exit 1; }
 fi
 git update-ref "refs/heads/$BRANCH" "$COMMIT" || { echo "assets: cannot update $BRANCH" >&2; exit 1; }
@@ -125,12 +159,13 @@ fi
 for path in "${PATHS[@]}"; do
   name="$(basename "$path")"
   if [ -n "$PREFIX" ]; then
-    link="$PREFIX${path// /%20}$SUFFIX"
+    link="$PREFIX$(tfr_urlencode_path "$path")$SUFFIX"
   else
-    link="./${name// /%20}"   # no PR host: the description sits beside its evidence on the branch
+    link="./$(tfr_urlencode_path "$name")"   # no PR host: the description sits beside its evidence on the branch
   fi
+  label="${name//\[/\\[}"; label="${label//\]/\\]}"
   case "$name" in
-    *.png|*.PNG|*.jpg|*.JPG|*.jpeg|*.JPEG|*.gif|*.GIF|*.webp|*.WEBP|*.svg|*.SVG) printf '![%s](%s)\n' "$name" "$link" ;;
-    *) printf '[%s](%s)\n' "$name" "$link" ;;
+    *.png|*.PNG|*.jpg|*.JPG|*.jpeg|*.JPEG|*.gif|*.GIF|*.webp|*.WEBP|*.svg|*.SVG) printf '![%s](%s)\n' "$label" "$link" ;;
+    *) printf '[%s](%s)\n' "$label" "$link" ;;
   esac
 done

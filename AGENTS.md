@@ -199,7 +199,7 @@ node --check codex/scripts/skill-tree.js
 For registry or UI changes, run a local server and verify the explorer in a browser:
 
 - Launch from the repo root at `http://127.0.0.1:8765/` (or another free port).
-- Codex shows 36 active primitives: 35 skills (30 local + 5 system), no role
+- Codex shows 37 active primitives: 36 skills (31 local + 5 system), no role
   agents, and one slash command. Confirm counts from the registry when changing it.
 - Claude hides Codex-only payloads and system skills, loads its own markdown,
   and retains the active Claude peers declared in `PLATFORM_ONLY.tsv`.

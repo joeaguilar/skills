@@ -178,6 +178,9 @@
     },
     "unity-editor-control": {
       "label": "Unity Bridge"
+    },
+    "review-ready-delivery": {
+      "label": "Review-Ready Delivery"
     }
   },
   "skills": {
@@ -905,6 +908,29 @@
       "unlockedBy": [],
       "position": {
         "x": 70,
+        "y": 130
+      }
+    },
+    "task-for-review": {
+      "path": "skills/task-for-review",
+      "group": "execution",
+      "tier": 1,
+      "icon": "TFR",
+      "theme": "ink",
+      "title": "Task for Review",
+      "summary": "Shape work for human review: worktrees, small commits, stacked PRs, real-run evidence.",
+      "provides": [
+        "review-ready-delivery"
+      ],
+      "requires": [],
+      "recommends": [
+        "git-hosting",
+        "issue-tracker",
+        "gate-runner"
+      ],
+      "unlockedBy": [],
+      "position": {
+        "x": 88,
         "y": 130
       }
     }

@@ -1,7 +1,7 @@
 # Lean Codex fleet
 
-The active fleet contains 30 local skills, five bundled system copies, no
-standalone role agents, and one audit command: 36 primitives. The registry is
+The active fleet contains 31 local skills, five bundled system copies, no
+standalone role agents, and one audit command: 37 primitives. The registry is
 the source of truth for counts. Claude payloads and workflows are unchanged.
 
 ## Working defaults
@@ -25,6 +25,11 @@ This machine's global rules require every build, test, and lint gate through
   worker checks, and one integrated gate after writers finish. `--commit-waves`
   requests coordinator commits explicitly. No nested executors or fixed scout
   counts. Scope, evidence, and bounded recovery survive consolidation.
+- `task-for-review` is an opt-in working mode, not a workflow. It applies when
+  the user invokes it or a project's `AGENTS.md` carries its opt-in line. While
+  on, it decides how work is committed, branched, verified and written up for a
+  human reviewer, and it outranks conflicting commit and PR defaults here.
+  `mission` and `blitz` still decide what work is done.
 - Planning, roadmap, review, and specialist resources are on demand. Ask only
   about material unresolved decisions. Preserve required human acceptance.
 

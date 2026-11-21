@@ -182,3 +182,6 @@ capabilities:
     label: "React Review"
   unity-editor-control:
     label: "Unity Bridge"
+  review-ready-delivery:
+    label: "Review-Ready Delivery"
+    description: "Shape every change for a human reviewer: worktrees, small one-line commits, stacked PRs, real-run evidence, and a reviewer-facing PR description."

@@ -1,0 +1,4 @@
+interface:
+  display_name: "Task for Review"
+  short_description: "Shape work for a human reviewer"
+  default_prompt: "Use $task-for-review to do this work in a worktree, as small commits on stacked PRs with real-run evidence."

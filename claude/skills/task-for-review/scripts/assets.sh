@@ -1,0 +1,136 @@
+#!/usr/bin/env bash
+# assets.sh — put a PR's evidence on the orphan review-assets branch and print links.
+#
+# Screenshots, recordings and (for a project with no PR host) the description file
+# itself are committed to a branch that shares no history with the code, so they
+# never appear in a diff and never reach main. Each FILE lands at KEY/<file name>;
+# a file already there is replaced. The commit is built with git plumbing: the
+# working tree, the index and the checked-out branch are not touched.
+#
+# Prints one markdown line per FILE, ready to paste into the description: an image
+# link for a picture, a plain link otherwise. Links carry the commit hash, so they
+# keep working after later evidence is added.
+#
+# Usage: assets.sh [--remote NAME] [--branch NAME] [--no-push] KEY FILE...
+#   KEY            folder on the assets branch, normally the PR's branch name
+#   --remote NAME  remote to push to and link against (default: origin, else the first)
+#   --branch NAME  assets branch name (default: review-assets)
+#   --no-push      commit locally only
+# Exit: 0 done, 1 failed (reason on stderr), 2 usage error.
+#
+# A recording renders inline only as a GIF: hosts do not play a video file linked
+# from a repository.
+#
+# Test hook: TFR_GITEA names the gitea helper used to find a Gitea repo's web URL.
+set -u
+
+REMOTE=""
+BRANCH="review-assets"
+PUSH=1
+ARGS=()
+while [ $# -gt 0 ]; do
+  case "$1" in
+    --remote) REMOTE="${2:?--remote needs a name}"; shift 2 ;;
+    --branch) BRANCH="${2:?--branch needs a name}"; shift 2 ;;
+    --no-push) PUSH=0; shift ;;
+    -h|--help) awk 'NR > 1 && /^#/ { sub(/^# ?/, ""); print; next } NR > 1 { exit }' "${BASH_SOURCE[0]}"; exit 0 ;;
+    --) shift; while [ $# -gt 0 ]; do ARGS+=("$1"); shift; done ;;
+    -*) printf 'assets: unknown option %s\n' "$1" >&2; exit 2 ;;
+    *) ARGS+=("$1"); shift ;;
+  esac
+done
+[ "${#ARGS[@]}" -ge 2 ] || { echo "usage: assets.sh [--remote NAME] [--branch NAME] [--no-push] KEY FILE..." >&2; exit 2; }
+KEY="${ARGS[0]}"
+KEY="${KEY#/}"; KEY="${KEY%/}"
+case "$KEY" in ''|*..*) echo "assets: KEY must be a plain folder path" >&2; exit 2 ;; esac
+FILES=("${ARGS[@]:1}")
+for f in "${FILES[@]}"; do
+  [ -f "$f" ] || { echo "assets: no such file $f" >&2; exit 1; }
+done
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd -P)"
+# shellcheck source=lib.sh
+. "$SCRIPT_DIR/lib.sh"
+git rev-parse --is-inside-work-tree >/dev/null 2>&1 || { echo "assets: not a git repository" >&2; exit 1; }
+
+if [ -z "$REMOTE" ]; then
+  REMOTE="$(tfr_default_remote)"
+elif ! git remote | grep -qxF -- "$REMOTE"; then
+  echo "assets: no remote named $REMOTE" >&2; exit 1
+fi
+
+# --- the commit the new one sits on -------------------------------------------------
+PARENT=""
+if [ -n "$REMOTE" ] && [ "$PUSH" -eq 1 ]; then
+  git fetch -q "$REMOTE" "+refs/heads/$BRANCH:refs/remotes/$REMOTE/$BRANCH" 2>/dev/null || true
+fi
+if [ -n "$REMOTE" ] && git show-ref --verify -q "refs/remotes/$REMOTE/$BRANCH"; then
+  PARENT="$(git rev-parse "refs/remotes/$REMOTE/$BRANCH")"
+fi
+if git show-ref --verify -q "refs/heads/$BRANCH"; then
+  LOCAL="$(git rev-parse "refs/heads/$BRANCH")"
+  # A local tip the remote does not have yet (an earlier --no-push) wins when it
+  # already contains the remote tip; otherwise the remote tip is the base.
+  if [ -z "$PARENT" ] || git merge-base --is-ancestor "$PARENT" "$LOCAL" 2>/dev/null; then PARENT="$LOCAL"; fi
+fi
+
+# --- build the tree in a private index ------------------------------------------------
+TMP_INDEX="$(git rev-parse --path-format=absolute --git-dir)/tfr-assets-index.$$"
+trap 'rm -f "$TMP_INDEX" "$TMP_INDEX.lock"' EXIT
+export GIT_INDEX_FILE="$TMP_INDEX"
+if [ -n "$PARENT" ]; then
+  git read-tree "$PARENT" || { echo "assets: cannot read $BRANCH" >&2; exit 1; }
+fi
+PATHS=()
+for f in "${FILES[@]}"; do
+  blob="$(git hash-object -w --no-filters -- "$f")" || { echo "assets: cannot store $f" >&2; exit 1; }
+  path="$KEY/$(basename "$f")"
+  git update-index --add --cacheinfo "100644,$blob,$path" || { echo "assets: cannot stage $path" >&2; exit 1; }
+  PATHS+=("$path")
+done
+TREE="$(git write-tree)" || { echo "assets: cannot write the tree" >&2; exit 1; }
+unset GIT_INDEX_FILE
+
+if [ -n "$PARENT" ] && [ "$TREE" = "$(git rev-parse "$PARENT^{tree}")" ]; then
+  COMMIT="$PARENT"   # every file is already there, byte for byte
+else
+  MSG="chore(review-assets): add evidence for $KEY"
+  if [ -n "$PARENT" ]; then
+    COMMIT="$(git commit-tree "$TREE" -p "$PARENT" -m "$MSG")"
+  else
+    COMMIT="$(git commit-tree "$TREE" -m "$MSG")"
+  fi
+  [ -n "$COMMIT" ] || { echo "assets: cannot create the commit (is the git identity set?)" >&2; exit 1; }
+fi
+git update-ref "refs/heads/$BRANCH" "$COMMIT" || { echo "assets: cannot update $BRANCH" >&2; exit 1; }
+
+if [ -n "$REMOTE" ] && [ "$PUSH" -eq 1 ]; then
+  if ! git push -q "$REMOTE" "refs/heads/$BRANCH:refs/heads/$BRANCH"; then
+    echo "assets: push to $REMOTE failed; the evidence is committed locally on $BRANCH. Run again to retry." >&2
+    exit 1
+  fi
+fi
+
+# --- links ---------------------------------------------------------------------------
+PREFIX=""
+SUFFIX=""
+if [ -n "$REMOTE" ]; then
+  url="$(git remote get-url "$REMOTE" 2>/dev/null || true)"
+  web="$(tfr_web_base "$url")"
+  case "$(tfr_remote_kind "$url")" in
+    github) PREFIX="$web/blob/$COMMIT/"; SUFFIX="?raw=true" ;;
+    gitea) [ -n "$web" ] && PREFIX="$web/raw/commit/$COMMIT/" ;;
+  esac
+fi
+for path in "${PATHS[@]}"; do
+  name="$(basename "$path")"
+  if [ -n "$PREFIX" ]; then
+    link="$PREFIX${path// /%20}$SUFFIX"
+  else
+    link="./${name// /%20}"   # no PR host: the description sits beside its evidence on the branch
+  fi
+  case "$name" in
+    *.png|*.PNG|*.jpg|*.JPG|*.jpeg|*.JPEG|*.gif|*.GIF|*.webp|*.WEBP|*.svg|*.SVG) printf '![%s](%s)\n' "$name" "$link" ;;
+    *) printf '[%s](%s)\n' "$name" "$link" ;;
+  esac
+done

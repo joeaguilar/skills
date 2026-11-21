@@ -98,7 +98,8 @@ while [ $# -gt 0 ]; do
       case "$2" in *=*) ;; *) own_id="" ;; esac
       case "$own_id" in ''|*[!0-9]*) printf 'preflight: %s takes ID=path[,path...], got %s\n' "$1" "$2" >&2; exit 2 ;; esac
       case "$own_paths" in *[!,\ ]*) ;; *) printf 'preflight: %s %s names no path\n' "$1" "$2" >&2; exit 2 ;; esac
-      case "$own_paths" in ,*|*,|*,,*) printf 'preflight: %s %s has an empty path in its list\n' "$1" "$2" >&2; exit 2 ;; esac
+      own_bare="${own_paths// /}"; own_bare="${own_bare//	/}"   # an element of spaces alone is empty too
+      case "$own_bare" in ,*|*,|*,,*) printf 'preflight: %s %s has an empty path in its list\n' "$1" "$2" >&2; exit 2 ;; esac
       if [ "$1" = "--own" ]; then
         OWN_CLAIMS="$OWN_CLAIMS$own_id	$own_paths
 "
@@ -235,7 +236,7 @@ claim_of() {
     esac
     if [ "$wc_found" -eq 0 ] && [ "$wc_dir" -eq 0 ]; then
       wc_hit="$(printf '%s\n' "$WAVE_TRACKED" | awk -v p="$WC" '
-        $0 == p || (length($0) > length(p) + 1 && substr($0, length($0) - length(p)) == "/" p) { n++; m = $0 }
+        ($0 "") == (p "") || (length($0) > length(p) + 1 && substr($0, length($0) - length(p)) == "/" p) { n++; m = $0 }
         END { if (n == 1) print m }')"
       if [ -n "$wc_hit" ]; then WC="$wc_hit"; wc_found=1; fi
     fi
@@ -376,10 +377,10 @@ EOF_RAW
         for (j = 1; j <= m; j++) if (tg[j] == "visual-gate-only") st[t] = "deferred"
         if (st[t] == "cand" && nc[t] + 0 == 0) st[t] = "unowned"
       }
-      # open dependencies: blocked_by, and a parent that is not an epic
+      # open dependencies: blocked_by, and a parent that is not an epic. Kept for unowned and
+      # deferred tasks too, so a cycle that runs through one of them is still seen.
       for (i = 1; i <= nt; i++) {
         t = tid[i]
-        if (st[t] != "cand") continue
         m = split(blocked[t], bl, ",")
         if (parent[t] != "" && !(parent[t] in isepic)) { m++; bl[m] = parent[t] }
         k = 0
@@ -405,7 +406,11 @@ EOF_RAW
           if (ok) { peeled[t] = 1; ch = 1 }
         }
       } while (ch)
-      for (i = 1; i <= nt; i++) if (!(tid[i] in peeled)) { knot[tid[i]] = 1; st[tid[i]] = "held" }
+      for (i = 1; i <= nt; i++) {
+        if (tid[i] in peeled) continue
+        knot[tid[i]] = 1
+        if (st[tid[i]] == "cand") st[tid[i]] = "held"   # unowned and deferred keep their own group
+      }
       # hold whatever waits on an open task that will not be placed, transitively
       do {
         ch = 0

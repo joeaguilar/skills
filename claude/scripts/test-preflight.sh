@@ -289,6 +289,12 @@ if command -v itr >/dev/null 2>&1; then
   same "a cycle keeps its reason beside another hold" "$(wv)" \
     "$(head5 0 0; lines 'wave-unowned: #3' 'wave-held: #1 waits on #2 (cycle)' 'wave-held: #1 waits on #3 (unowned)' 'wave-held: #2 waits on #1 (cycle)')"
 
+  wr w-cyc3; mk a.rs c.rs
+  wi add one -k task --files a.rs; wi add two -k task --parent 1; wi add three -k task --files c.rs
+  wi depend 1 --on 2; wi depend 3 --on 1
+  same "a cycle through an unowned task still reads as a cycle" "$(wv)" \
+    "$(head5 0 0; lines 'wave-unowned: #2' 'wave-held: #1 waits on #2 (cycle)' 'wave-held: #3 waits on #1 (cycle)')"
+
   wr w-closedpar; mk a.rs b.rs
   wi add par -k task --files a.rs; wi add kid -k task --parent 1 --files b.rs; wi close 1 done
   same "a closed parent still named on its child is no constraint" "$(wv)" "$(head5 1 1; lines 'wave: 1 #2')"
@@ -296,6 +302,10 @@ if command -v itr >/dev/null 2>&1; then
   wr w-num; mk 01 1
   wi add one -k task --files 01; wi add two -k task --files 1
   same "claims that look like equal numbers are different files" "$(wv)" "$(head5 1 2; lines 'wave: 1 #1 #2')"
+  wr w-num2; mk 1
+  wi add one -k task --files 01; wi add two -k task --files 1
+  same "a missing numeric-looking claim does not match its numeric twin" "$(wv)" \
+    "$(head5 1 2; lines 'wave: 1 #1 #2' 'wave-path-absent: #1 01')"
 
   wr projx; mk src/a.rs src/b.rs lib/deep/u.rs x/amb.rs y/amb.rs
   wi add one -k task --files '.\src\a.rs'; wi add two -k task --files './src//a.rs'; wi add three -k task --files projx/src/b.rs
@@ -320,10 +330,10 @@ bash "$PF" --waves "$WORK/none" >/dev/null 2>&1; [ $? -eq 1 ] && pass=$((pass+1)
 for bad in 0 x -1 1.5 ''; do
   bash "$PF" --waves --concurrency "$bad" "$WORK/none" >/dev/null 2>&1; [ $? -eq 2 ] && pass=$((pass+1)) || { fail=$((fail+1)); echo "FAIL --concurrency '$bad' must exit 2"; }
 done
-for bad in abc 1 x=a.rs 1= '=a.rs' '1=,' '1=a.rs,,b.rs' '1=,a.rs' '1=a.rs,'; do
+for bad in abc 1 x=a.rs 1= '=a.rs' '1=,' '1=a.rs,,b.rs' '1=,a.rs' '1=a.rs,' '1=a.rs, ,b.rs'; do
   bash "$PF" --waves --own "$bad" "$WORK/none" >/dev/null 2>&1; [ $? -eq 2 ] && pass=$((pass+1)) || { fail=$((fail+1)); echo "FAIL --own '$bad' must exit 2"; }
 done
-for bad in abc 1 x=a.rs 1= '=a.rs' '1=,' '1=a.rs,,b.rs' '1=,a.rs' '1=a.rs,'; do
+for bad in abc 1 x=a.rs 1= '=a.rs' '1=,' '1=a.rs,,b.rs' '1=,a.rs' '1=a.rs,' '1=a.rs, ,b.rs'; do
   bash "$PF" --waves --also "$bad" "$WORK/none" >/dev/null 2>&1; [ $? -eq 2 ] && pass=$((pass+1)) || { fail=$((fail+1)); echo "FAIL --also '$bad' must exit 2"; }
 done
 for flag in "--concurrency 2" "--tag x" "--parent 1" "--own 1=a" "--also 1=a"; do

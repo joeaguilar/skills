@@ -45,7 +45,7 @@ No tracker/graph/sprint deps — stands alone. (For a groomed heterogeneous back
 
 Resolve `--targets` into the concrete field (expand the glob / read the list-file / split the inline list), `--width` (clamp 4–12), `--bar`, `--bar-cmd`, `--out`, `--confirm`. Read the operation once.
 
-**`--bar-cmd` set → the land is an exit code.** `0` = clean, anything else = not. Yours to run, never a shuriken's word: `gatr run --tag dojo-shuriken-storm -- <cmd>` when `gatr` is on PATH (then `gatr last` / `gatr errors`), the bare command otherwise. A command with `{target}` in it is per target — put it in `{bar}` so each shuriken can run it on its own wood. A command without `{target}` covers the whole field — keep it out of the shuriken prompt (a project gate run by every shuriken at once is its own rebound) and run it once now: already `0` → it only guards (must stay `0`), say `guard only` in the Throw.
+**`--bar-cmd` set → the land is an exit code.** `0` = clean, anything else = not. Yours to run, never a shuriken's word: `gatr run --tag dojo-shuriken-storm -- <cmd>` when `gatr` is on PATH (then `gatr last` / `gatr errors`), the bare command otherwise. A command with `{target}` in it is per target — put it in `{bar}` so each shuriken can run it on its own wood, and run it once now for every target (one loop, one run): a target that already exits `0` is **guard only** — the command can't prove that land, only that it stayed clean; count them in the Throw (`{k} guard only`). A command without `{target}` covers the whole field — keep it out of the shuriken prompt (a project gate run by every shuriken at once is its own rebound) and run it once now: already `0` → it only guards (must stay `0`), say `guard only` in the Throw.
 
 **The field must be embarrassingly parallel.** Uniform: the *same* cut on every target — the storm throws one shape; if each target needs a *different* kind of work, this is the wrong blade.
 Disjoint: one shuriken per target, no shared wood (same file/function/site). Fold or drop overlaps before the volley.
@@ -154,7 +154,7 @@ A shuriken that errors, stalls, or misses the bar is a **miss** — one-line not
 
 ## Phase 2 — Tally (no synthesis)
 
-Orchestrator's own work — and the tell that this is not `fan-of-agents`: **there is nothing to stitch.** Each shuriken already landed on its own target. Under `workflow` the script already returned `{ landed, misses, thrown }` — read it straight off. Under `agents`, collect the returns yourself. Either way, assemble:
+Orchestrator's own work — and the tell that this is not a synthesis fan: **there is nothing to stitch.** Each shuriken already landed on its own target. Under `workflow` the script already returned `{ landed, misses, thrown }` — read it straight off. Under `agents`, collect the returns yourself. Either way, assemble:
 
 1. **Lands** — targets struck clean (bar-evidence + one-line change each).
 2. **Misses** — targets that erred, stalled, or failed the bar → the **re-throw list** (verbatim target list, storm-able again as-is).
@@ -182,6 +182,7 @@ Speak twice: when the shuriken are loosed, when the field falls. `{slots}` are t
 **Throw** (volley loosed):
 ```
 嵐  {N} shuriken loosed · {operation, one phrase} · {width} in flight
+    {only with --bar-cmd:} cmd: {bar-cmd}   [{proves │ guard only │ {k} of {N} guard only}]
 ```
 
 **Fall** (field struck):

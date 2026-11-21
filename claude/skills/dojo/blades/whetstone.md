@@ -84,7 +84,7 @@ Resolve `--passes` (clamp 1–6), `--bar`, `--critic` (default: separate critic)
 
 **Set the bar** — the concrete criteria the artifact must meet for "sharp enough": the properties it must have, the standard it's judged against, what a sharp version looks like vs a dull one. `--bar` set → use it verbatim. Absent → infer reasonable criteria for the artifact type (prose: clear · tight · correct · well-ordered; a function: correct · readable · handles edges · no waste; a spec: complete · unambiguous · testable) and **state them** in the Throw. A loop with no bar can't tell sharp from spinning.
 
-**`--bar-cmd` set → the bar is an exit code.** `0` = met, anything else = not. Run it yourself, never on a critic's or reviser's word: `gatr run --tag dojo-whetstone -- <cmd>` when `gatr` is on PATH (then `gatr last` / `gatr errors`), the bare command otherwise. Run it once now, on the prior best: non-zero → it proves the work (must reach `0`); already `0` → it proves nothing and only guards (must stay `0`) — mark `guard only` in the Throw and keep judging `--bar` as before. Artifact has no file on disk → the command has nothing to read: drop the flag and say so in the Throw.
+**`--bar-cmd` set → the bar is an exit code.** `0` = met, anything else = not. Run it yourself, never on a critic's or reviser's word: `gatr run --tag dojo-whetstone -- <cmd>` when `gatr` is on PATH (then `gatr last` / `gatr errors`), the bare command otherwise. Run it once now, on the prior best: non-zero → it proves the work (must reach `0`); already `0` → it proves nothing and only guards (must stay `0`) — mark `guard only` in the Throw and keep judging `--bar` as before. Artifact has no file on disk → `--out` set: write the artifact there first and grind that file. No `--out` either → the command has nothing to read and the bar it names can't be checked: say so and stop before the first pass — a dropped gate is worse than no grind.
 
 Emit the **Throw** template, then grind. `--confirm` → emit **The pause** and wait.
 
@@ -96,7 +96,7 @@ One pass at a time on the **current best** version. Each pass = critique → rev
 
 **a. Critique.** Get concrete weaknesses against the bar. Default (`--critic`): spawn ONE critic agent — `subagent_type: general-purpose`, `run_in_background: true`, `description` e.g. `Critic pass {p}`. (Flag off → orchestrator self-critiques to the same shape.)
 
-**Seat the critic off the reviser's model.** The critic runs on the `reviewer` role. Read `~/.claude/MODELS.md` at spawn and take its binding against the model that writes the revisions (the reviser's — the session model): a different model, other provider first. Claude binding → pass `model`; GPT binding → launch it the way that file's Reach section says. File unreadable or seat unreachable → a different Claude model than the reviser, and name the fallback in the Return. Never the reviser's own model — it would only agree with itself.
+**Seat the critic off the reviser's model.** The critic runs on the `reviewer` role. Read `~/.claude/MODELS.md` at spawn and take its binding against **whoever wrote the version on the stone**: the artifact's author when that is known (stated by the user, or this session), and the reviser (the session model) from the first revision on. The seat must differ from both — a different model, other provider first. Claude binding → pass `model`; GPT binding → launch it the way that file's Reach section says. File unreadable or seat unreachable → a different Claude model than the author and the reviser, and name the fallback in the Return. Never the author's or the reviser's own model — it would only agree with itself.
 
 ### Critic prompt template
 
@@ -157,7 +157,7 @@ When the artifact is a file, apply the revision to its file(s) — same file, no
 - **Sharper** → it becomes the new best; log what this pass improved.
 - **Regressed** (worse against the bar — over-rewritten, lost a "Keep", introduced a flaw) → **discard it, keep the prior best.** Never let the artifact get worse. A regressed pass counts toward `--passes`.
 
-**With `--bar-cmd`** run the command after each revision lands in the file, before comparing. A revision that turns it from `0` to non-zero **regressed** — discard it, restore the prior best, whatever else it improved. **Bar met needs `0`:** while the command is non-zero the loop cannot stop on bar-met, whatever the critic's verdict says — and `0` alone meets the bar only when the command proves the work and no `--bar` was given beside it. It may still stop on convergence or spent passes → **No edge**, with the failing tail as the gap.
+**With `--bar-cmd`** run the command after each revision lands in the file, before comparing. A revision that turns it from `0` to non-zero **regressed** — discard it, restore the prior best, whatever else it improved. **Bar met needs `0`:** while the command is non-zero the loop cannot stop on bar-met, whatever the critic's verdict says — and `0` alone meets the bar only when the command proves the work and no `--bar` was given beside it. It may still stop on convergence or spent passes → **No edge**, with the failing tail as the gap — and then **nothing is committed**: the best version stays in the file, uncommitted, for the user. Only a version the command passed (`0`) is ever committed.
 
 **Stop** when: the best version **meets the bar** (→ done, stop early) · a pass yields **no meaningful gain** over the prior best (converged — grinding a dull stone; stop) · `--passes` **exhausted** (→ deliver best; if it still misses the bar, that's the **No edge** case). Two regressions in a row also = converged — stop.
 
@@ -179,7 +179,7 @@ Terse. Emit, in order:
 
 - **Return** template (or **No edge** if passes spent and the bar's unmet) — `{used}/{passes}`, bar met?, what each pass sharpened, which pass was best.
 - **The converged artifact** — the single best version (to `--out` if set; on disk when the artifact is a file; returned inline when it has no file).
-- **Commit** — when the artifact is a file, the orchestrator commits the sharpened version, unless the user asked for no commit.
+- **Commit** — when the artifact is a file, the orchestrator commits the sharpened version, unless the user asked for no commit — or `--bar-cmd` is set and its last run on that version was non-zero (then no commit).
 
 ---
 
@@ -194,7 +194,7 @@ Terse. Emit, in order:
 - **Independence sharpens.** A separate critic each pass sees what the reviser can't; default to it — and seat it on the `reviewer` role, a different model from the reviser's.
 - **Right-size the grind.** Default 3, clamp 1–6 — past 6 the stone takes off more than it sets.
 - **Fire without a gate; run to convergence.** `--confirm` is the only pause.
-- **Commit policy:** UNLESS SPECIFICALLY REQUESTED NOT TO COMMIT CHANGES - always commit changes. An artifact with no file on disk has nothing to commit.
+- **Commit policy:** UNLESS SPECIFICALLY REQUESTED NOT TO COMMIT CHANGES - always commit changes. An artifact with no file on disk has nothing to commit. One more exception: a version `--bar-cmd` left non-zero is never committed.
 
 ## Don't
 
@@ -206,5 +206,5 @@ Terse. Emit, in order:
 - Don't call the bar met while `--bar-cmd` exits non-zero, and don't keep a revision that broke it.
 - Don't over-revise: a pass changes what the critique calls out and preserves the rest.
 - Don't slice the artifact across agents or run independent attempts — this is one artifact, one loop.
-- Don't push or PR. The reviser never commits — the orchestrator commits the sharpened file, unless the user asked otherwise.
+- Don't push or PR. The reviser never commits — the orchestrator commits the sharpened file, unless the user asked otherwise or `--bar-cmd` still exits non-zero.
 - Don't exceed 6 passes — diminishing returns, and the stone starts grinding away what was good.

@@ -25,7 +25,7 @@ Deliver .... which rung drew blood + rungs climbed + the bar it cleared
 | Arg | Default | Meaning |
 |---|---|---|
 | `<task>` | — | The single task. Inline prose, a spec path, or "the thing we just hit". |
-| `--ladder="r1,r2,…"` | auto | The rungs cheapest→costliest — role names, model names or effort words, used as given. Absent → orchestrator proposes a ladder of increasing cost/care, each rung one role up the `~/.claude/MODELS.md` escalation ladder: one quick single agent → one careful focused agent → a multi-agent consensus/verify rung. **Clamp 2–4 rungs** (`<2` → not a ladder, bump 2; `>4` → clamp 4 + warn: too tall wastes the cheapness). |
+| `--ladder="r1,r2,…"` | auto | The rungs cheapest→costliest — role names, model names or effort words, used as given. Absent → orchestrator proposes a ladder of increasing cost/care, each rung one role up the `~/.claude/MODELS.md` escalation ladder: one quick single agent → one careful focused agent → a multi-agent consensus/verify rung. **Clamp 2–4 rungs** (`<2` → not a ladder, bump 2 by adding the next rung up; `>4` → clamp 4 + warn: too tall wastes the cheapness). |
 | `--bar="…"` | inferred | What "passes" means at every rung — the acceptance test/criteria. Absent → infer the strictest reasonable bar and **say so** (a ladder with no bar can't check between rungs — it's theater). |
 | `--bar-cmd="…"` | none | The bar as a command: exit `0` = cleared, anything else = not. The orchestrator runs it after every rung that claims PASS, and the exit code overrules the claim. |
 | `--out=path` | conversation | Persist the deliverable. |
@@ -88,7 +88,9 @@ Resolve `--ladder`, `--bar`, `--out`, `--confirm`. Read the task once.
 - **r2 (careful):** one focused agent, more effort/care/context — slower, sharper. Role: one up from r1.
 - **r3 (heavy, only if needed):** a multi-agent consensus/verify rung — several agents on the whole, reconciled — expensive, reserved for what the cheaper rungs couldn't clear. Role: one up from r2.
 
-A rung is a role, not a model name: resolve it to its model and effort when the rung is spawned, never here. `ceiling` is gated in that file — never a rung unless the user turned it on; the ladder tops out one role below. File unreadable, or a rung's seat unreachable → rungs of rising effort on the session model, and say so in the Throw (an honest ladder of care beats a silent one of the same steel).
+A **proposed** rung is a role, not a model name: resolve it to its model and effort when the rung is spawned, never here. `ceiling` is gated in that file — never a proposed rung unless the user turned it on; the ladder tops out one role below. A `--ladder` entry is taken as given: a role name → resolved the same way; a model name → that model; an effort word → that effort on the session model.
+
+**Check reach before the Throw.** Every rung's seat must be launchable now (a GPT binding needs the Codex CLI to answer). File unreadable, or a seat unreachable → rungs of rising effort on the session model, and say so in the Throw (an honest ladder of care beats a silent one of the same steel). A seat that fails only at launch is an errored rung: FAIL → escalate, named in the Return's climb map.
 
 **Right-size & clamp.** Don't build a tall ladder for a trivial task — a 2-rung ladder is fine, and a task the first rung obviously clears should stop there. More rungs ≠ better; each rung exists only to catch what the cheaper one missed.
 
@@ -98,7 +100,7 @@ Emit the **Throw** template, then climb. `--confirm` → emit **The pause** and 
 
 ## Phase 1 — Climb (serial, escalate on failure)
 
-Run **one rung at a time**, in order, cheapest first. Per rung spawn its agent config — `subagent_type: general-purpose` (specialized type only if one squarely fits), `run_in_background: true`, `description` e.g. `Rung {k}: {role} · {effort level}`. Seat it on the rung's role, resolved from `~/.claude/MODELS.md` now: Claude binding → pass `model` (and the role's effort); GPT binding → launch it the way that file's Reach section says. A heavy rung may itself be several agents reconciled by the orchestrator; describe it generically as a multi-agent consensus/verify rung — never name it as another blade.
+Run **one rung at a time**, in order, cheapest first. Per rung spawn its agent config — `subagent_type: general-purpose` (specialized type only if one squarely fits), `run_in_background: true`, `description` e.g. `Rung {k}: {role} · {effort level}`. Seat it as the rung says — a role → resolved from `~/.claude/MODELS.md` now; a model or effort named in `--ladder` → as given. Claude binding → pass `model` (and the effort); GPT binding → launch it the way that file's Reach section says. A heavy rung may itself be several agents reconciled by the orchestrator; describe it generically as a multi-agent consensus/verify rung — never name it as another blade.
 
 ### Per-rung prompt template
 
@@ -131,7 +133,8 @@ What the cheaper rung(s) missed: {prior failure reasons, or "you are rung 1"}
 Do the task at your effort level, then SELF-CHECK against the bar before answering.
 
 If you PASS, apply your change to its file(s) — note the path, edits disjoint.
-Do NOT commit, push, branch, or PR. If you FAIL, return the attempt as a report only.
+Do NOT commit, push, branch, or PR. If you FAIL, return the attempt as a report only
+{--bar-cmd: — except here, where a bar command is set: your edits stay on disk, as told above}.
 
 Return EXACTLY:
   - Result: your answer / artifact {in the form the task asks}.
@@ -143,7 +146,7 @@ Your final message IS your rung — return data, not chat. Report pass/fail plai
 
 **Check the rung against the bar** (orchestrator — the load-bearing step). Take the rung's self-reported pass/fail but verify it against the bar yourself; a rung that *claims* pass without clearing the bar is a FAIL.
 
-**With `--bar-cmd`** the check is a run, not a reading. Rung reports PASS → run the command. Non-zero → **FAIL, no appeal**, whatever the rung claimed: its failing tail goes into the next rung's `What the cheaper rung(s) missed`, and its edits stay on disk for the next rung to fix or replace. `0` → PASS — when the command only guards, or `--bar` was given too, your own reading of the bar must also hold. Rung reports FAIL → no run needed; it failed.
+**With `--bar-cmd`** the check is a run, not a reading — after **every** rung that returns, whatever it reports. Non-zero → **FAIL, no appeal**, even if the rung claimed PASS: its failing tail goes into the next rung's `What the cheaper rung(s) missed`, and its edits stay on disk for the next rung to fix or replace. `0` → PASS, even if the rung reported FAIL — unless the command only guards, or `--bar` was given too: then your own reading of the bar must also hold, and a rung's own FAIL report is evidence that it doesn't.
 
 - **PASS** → this rung cleared the bar. **Stop. Do not climb further.** Go to Phase 3 with this rung's result.
 - **FAIL** → escalate: hand the next, costlier rung the task + the bar + why this rung missed. Climb.

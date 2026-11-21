@@ -92,7 +92,7 @@ Each round, on the current version of the artifact:
 
 Spawn `--challengers` agents **in parallel** — `subagent_type: general-purpose`, `run_in_background: true`, `description` e.g. `Challenger r{round}.{i}`:
 
-**Seat the critics off the writer's model.** Challengers — and the `--judge` judge — run on the `reviewer` role. Read `~/.claude/MODELS.md` at spawn and take its binding against the model that holds the artifact (the proposer's — the session model): a different model, other provider first. Claude binding → pass `model`; GPT binding → launch it the way that file's Reach section says. File unreadable or seat unreachable → a different Claude model than the proposer, and say so on the Verdict's `scars` line. Never the proposer's own model — a critic with the writer's blind spots lands no strike the writer couldn't.
+**Seat the critics off the writer's model.** Challengers — and the `--judge` judge — run on the `reviewer` role. Read `~/.claude/MODELS.md` at spawn and take its binding against **whoever wrote the version under test**: the artifact's author when that is known (stated by the user, or this session), and the proposer (the session model) once a revision has landed. The seat must differ from both — a different model, other provider first. Claude binding → pass `model`; GPT binding → launch it the way that file's Reach section says. File unreadable or seat unreachable → a different Claude model than the author and the proposer, and say so on the Verdict's `scars` line. Never the author's or the proposer's own model — a critic with the writer's blind spots lands no strike the writer couldn't.
 
 ### Challenger prompt template
 

@@ -40,7 +40,7 @@ Your final message IS the cut: result · bar-evidence · doubt, if any.
 
 Orchestrator draws, waits, presents, and seals a clean cut with a commit — unless the user forbade it. No tracker deps.
 
-**`--bar-cmd` → the cut is an exit code.** `0` = clean, anything else = not. Orchestrator's own run, never the blade's word: `gatr run --tag dojo-masamune -- <cmd>` when `gatr` is on PATH (then `gatr last` / `gatr errors`), the bare command otherwise. Once before the Draw: already `0` → it only guards (must stay `0`) — say `guard only` in the Draw and judge `--bar` as before. Once after the cut: non-zero → **Miss**, whatever the blade claimed — no commit, the edit stays in the tree, sheathed. `0` → Cut.
+**`--bar-cmd` → the cut is an exit code.** `0` = clean, anything else = not. Orchestrator's own run, never the blade's word: `gatr run --tag dojo-masamune -- <cmd>` when `gatr` is on PATH (then `gatr last` / `gatr errors`), the bare command otherwise. Once before the Draw: already `0` → it only guards (must stay `0`) — say `guard only` in the Draw and judge `--bar` as before. Once after the cut: non-zero → **Miss**, whatever the blade claimed — no commit, the edit stays in the tree, sheathed. `0` → Cut — but when `--bar` was given too, or the command only guards, the bar must also hold on your own reading of the blade's evidence; if it doesn't → **Miss**.
 
 ## Voice — one cut, then stillness. 印 = 正
 

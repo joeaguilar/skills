@@ -202,7 +202,7 @@ Greedy bin-pack tasks into waves such that:
 - Tasks with `blocked-by` land after the blocker's wave.
 - File-conflicting tasks split into consecutive waves.
 
-With `itr`, the `wave:` lines from `preflight.sh --waves` **are** this bin-pack — take them as printed; do not re-derive them by eye. Layer only what the script could not know: a semantic conflict or a shared surface may push a task to a **later** wave (never earlier, and re-check the wave it lands in against the `wave-conflict:` lines and the cap). Note every hand move and its reason in the wave log, next to the command that produced the floor.
+With `itr`, the `wave:` lines from `preflight.sh --waves` **are** this bin-pack — take them as printed; do not re-derive them by eye. Layer only what the script could not know: a semantic conflict or a shared surface may push a task to a **later** wave — never earlier. A move ripples: everything that waits on the moved task (its `wave-order: #T after #B` lines, followed transitively) must still land strictly after it, so push those too, and re-check every wave you touched against the `wave-conflict:` lines and the cap. Note every hand move and its reason in the wave log, next to the command that produced the floor.
 
 ---
 

@@ -64,7 +64,8 @@
 # repeated `/`); one that does not exist is tried without the repo-name prefix, then as the one
 # tracked file it is the tail of. A directory claim covers everything beneath it. Tasks that
 # conflict, and tasks ordered by `blocked_by` or a non-epic parent, land in different waves; a
-# task whose open blocker is not placed is held. A path holding a comma cannot be claimed.
+# task whose open blocker is not placed is held. A path holding a comma cannot be claimed, and
+# spaces at either end of a claim are dropped (itr trims its own lists the same way).
 set -u
 
 GATE_ONLY=0
@@ -97,6 +98,7 @@ while [ $# -gt 0 ]; do
       case "$2" in *=*) ;; *) own_id="" ;; esac
       case "$own_id" in ''|*[!0-9]*) printf 'preflight: %s takes ID=path[,path...], got %s\n' "$1" "$2" >&2; exit 2 ;; esac
       case "$own_paths" in *[!,\ ]*) ;; *) printf 'preflight: %s %s names no path\n' "$1" "$2" >&2; exit 2 ;; esac
+      case "$own_paths" in ,*|*,|*,,*) printf 'preflight: %s %s has an empty path in its list\n' "$1" "$2" >&2; exit 2 ;; esac
       if [ "$1" = "--own" ]; then
         OWN_CLAIMS="$OWN_CLAIMS$own_id	$own_paths
 "
@@ -257,7 +259,8 @@ waves() {
   w_scoped="$(printf '%s\n' "$w_scoped" | tr -d '\r')"
   w_open="$(printf '%s\n' "$w_open" | tr -d '\r')"
   WAVE_TRACKED=""
-  [ "$git_state" = "present" ] && WAVE_TRACKED="$(git -c core.quotepath=off ls-files 2>/dev/null)"
+  # -z: without it git C-quotes a name holding a quote or a backslash, and the tail match misses it.
+  [ "$git_state" = "present" ] && WAVE_TRACKED="$(git ls-files -z 2>/dev/null | tr '\0' '\n')"
 
   # Claims per task: the `files` field, or the --own paths when given. Epics and
   # visual-gate-only tasks claim nothing.
@@ -332,9 +335,10 @@ EOF_RAW
     }
     function before(a, b) { return prio[a] < prio[b] || (prio[a] == prio[b] && a + 0 < b + 0) }
     function covers(c, e) {
-      if (c == e) return 1
+      # "" forces a string comparison: split() hands back strnums, and as numbers `01` == `1`.
+      if ((c "") == (e "")) return 1
       if (substr(c, length(c)) != "/") return 0
-      return c == "./" || substr(e, 1, length(c)) == c
+      return (c "") == "./" || substr(e, 1, length(c)) == (c "")
     }
     function clash(a, b,   i, j) {
       for (i = 1; i <= nc[a]; i++)
@@ -389,6 +393,19 @@ EOF_RAW
         sortnum(dtmp, k)
         for (j = 1; j <= k; j++) dl[t, j] = dtmp[j]
       }
+      # on or behind a dependency cycle: what a topological peel cannot remove. Found before the
+      # other holds, so a cycle keeps its reason when one of its tasks also waits on something else.
+      do {
+        ch = 0
+        for (i = 1; i <= nt; i++) {
+          t = tid[i]
+          if (t in peeled) continue
+          ok = 1
+          for (j = 1; j <= dn[t]; j++) if ((dl[t, j] in intask) && !(dl[t, j] in peeled)) { ok = 0; break }
+          if (ok) { peeled[t] = 1; ch = 1 }
+        }
+      } while (ch)
+      for (i = 1; i <= nt; i++) if (!(tid[i] in peeled)) { knot[tid[i]] = 1; st[tid[i]] = "held" }
       # hold whatever waits on an open task that will not be placed, transitively
       do {
         ch = 0
@@ -406,6 +423,7 @@ EOF_RAW
         if (st[t] != "held") continue
         for (j = 1; j <= dn[t]; j++) {
           b = dl[t, j]
+          if ((t in knot) && (b in knot)) { hr[t, b] = "cycle"; continue }
           if (b in intask && st[b] == "cand") continue
           if (b in isepic) why = "epic"
           else if (!(b in intask)) why = "out of scope"

@@ -44,7 +44,8 @@ reads declared files, blockers, parents, and tags from the tracker and prints
 researched ownership with `--own <id>=<paths>` and undeclared shared files with
 `--also <id>=<paths>`, then rerun. Treat the result as the floor: it cannot see
 semantic conflicts, shared contracts, or files a task never named, so move a
-task later when those apply and record why.
+task later when those apply, keep everything that waits on it after it, and
+record why.
 
 Files, directory claims, generated outputs, migrations, manifests, and shared
 API contracts count as ownership. Tasks sharing writes run serially. Consumers

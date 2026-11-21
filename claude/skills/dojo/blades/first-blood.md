@@ -160,7 +160,7 @@ File sets disjoint — every runner writes. Runners never commit — the orchest
 
 Event-driven. Watch the runners as they report.
 
-- **`--first` (default):** the **first** runner to report `Cleared: YES` with sound bar-evidence **wins**. The instant it lands, **cancel every other runner** (stop the background sessions) — their work is abandoned, won or not. Don't second-guess a clean cross to wait for a "nicer" one; first past the bar is the contract.
+- **`--first` (default):** the **first** runner to report `Cleared: YES` with sound bar-evidence **wins**. The instant it lands, **cancel every other runner** (stop the background sessions) — their work is abandoned, won or not. (Under `--bar-cmd` a cross "lands" only once your own run of the command in that runner's worktree exits `0` — see below; until then cancel no one.) Don't second-guess a clean cross to wait for a "nicer" one; first past the bar is the contract.
 - **`--best`:** don't stop on the first cross. Let runners finish to a soft deadline (the slowest reasonable runtime, or until the rest fall), then among those that reported `Cleared: YES` take the **best** (judge on result quality + bar-evidence, not self-reported confidence). Cancel anything still running past the deadline.
 - **Fallen / stalled / errored / denied runner** → it just **loses the race**. **No retry, no respawn.** One-line note, move on — a lost runner is expected and cheap.
 - **A runner reports `Cleared: NO`** → it's out of the race; it doesn't win, but its bar-shortfall feeds the "nearest" line if nobody crosses.

@@ -94,7 +94,7 @@ Emit the **Throw** template, then grind. `--confirm` → emit **The pause** and 
 
 One pass at a time on the **current best** version. Each pass = critique → revise → keep the better.
 
-**a. Critique.** Get concrete weaknesses against the bar. Default (`--critic`): spawn ONE critic agent — `subagent_type: general-purpose`, `run_in_background: true`, `description` e.g. `Critic pass {p}`. (Flag off → orchestrator self-critiques to the same shape.)
+**a. Critique.** Get concrete weaknesses against the bar. Default (`--critic`): spawn ONE critic agent — `subagent_type: general-purpose`, `run_in_background: true`, `description` e.g. `Critic pass {p}`. (Flag off → orchestrator self-critiques to the same shape. That is the user waiving the independent seat on purpose: the seat rule below does not apply, and the Return says `self-critiqued`.)
 
 **Seat the critic off the reviser's model.** The critic runs on the `reviewer` role. Read `~/.claude/MODELS.md` at spawn and take its binding against **whoever wrote the version on the stone**: the artifact's author when that is known (stated by the user, or this session), and the reviser (the session model) from the first revision on. The seat must differ from both — a different model, other provider first. Claude binding → pass `model`; GPT binding → launch it the way that file's Reach section says. File unreadable or seat unreachable → a different Claude model than the author and the reviser, and name the fallback in the Return. Never the author's or the reviser's own model — it would only agree with itself.
 
@@ -161,7 +161,7 @@ When the artifact is a file, apply the revision to its file(s) — same file, no
 
 **Stop** when: the best version **meets the bar** (→ done, stop early) · a pass yields **no meaningful gain** over the prior best (converged — grinding a dull stone; stop) · `--passes` **exhausted** (→ deliver best; if it still misses the bar, that's the **No edge** case). Two regressions in a row also = converged — stop.
 
-When the artifact is a file, only the best version stays on disk by default; if a pass regresses, restore the prior best to the file. When the artifact has no file on disk — pure prose, a spec, a design in words — the sharpened text is returned inline; that is the deliverable's natural form, not a miss. Revisers never commit; the orchestrator commits the sharpened file at the end — unless the user asked for no commit.
+When the artifact is a file, only the best version stays on disk by default; if a pass regresses, restore the prior best to the file. When the artifact has no file on disk — pure prose, a spec, a design in words — the sharpened text is returned inline; that is the deliverable's natural form, not a miss. Revisers never commit; the orchestrator commits the sharpened file at the end — unless the user asked for no commit, or `--bar-cmd` is set and its last run on that version was non-zero.
 
 ---
 

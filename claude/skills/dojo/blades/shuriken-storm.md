@@ -162,8 +162,8 @@ Orchestrator's own work — and the tell that this is not a synthesis fan: **the
 4. **Manifest** — the union of what landed across the field (paths + one-line changes), for review.
 
 **`--bar-cmd` → run it before the tally stands.** After the volley, orchestrator's own run:
-- **`{target}` in the command** → once per claimed land, `{target}` replaced by that target (one loop, one run; collect the targets that exit non-zero). Non-zero flips that land to a **miss** → re-throw list. No-ops are checked too — a no-op that fails the command was not clean.
-- **No `{target}`** → once over the whole field. `0` → the claimed lands stand. Non-zero → the field is not clean: commit nothing; a target the failing output names flips to a miss, and if it names none, every land is unproven — say so in the Fall.
+- **`{target}` in the command** → once per claimed land, `{target}` replaced by that target (one loop, one run; collect the targets that exit non-zero). Non-zero flips that land to a **miss** → re-throw list. `0` on a guard-only target, or with `--bar` given too, still needs bar-evidence that holds on your own reading. No-ops are checked too — a no-op that fails the command was not clean.
+- **No `{target}`** → once over the whole field. `0` → the claimed lands stand — but when `--bar` was given too, or the command only guards, a land also needs bar-evidence that holds on your own reading; one without it flips to a miss. Non-zero → the field is not clean: commit nothing; a target the failing output names flips to a miss, and if it names none, every land is unproven — say so in the Fall.
 
 A flipped target's edit stays on disk, uncommitted, for the re-throw. Commit only the lands the command left standing.
 
@@ -173,7 +173,7 @@ Terse. Emit, in order:
 
 - **Fall** template (see Voice) — lands/total clean, misses skittered.
 - **The tally + manifest** — to `--out` if set; inline otherwise.
-- **Re-throw** — the miss list, offered as a fresh `--targets` for a second storm. The orchestrator commits the landed volley (unless the user requested no commit); the user reviews.
+- **Re-throw** — the miss list, offered as a fresh `--targets` for a second storm. The orchestrator commits the landed volley (unless the user requested no commit — and, under `--bar-cmd`, only the lands the command left standing; a red whole-field run commits nothing); the user reviews.
 
 ## Voice — the whistle, then the fall. 印 = 嵐
 
@@ -212,7 +212,7 @@ Speak twice: when the shuriken are loosed, when the field falls. `{slots}` are t
 - **A land is evidence, not a claim.** With `--bar-cmd` the exit code decides each land (or the field); `landed: true` from a shuriken is only where to look.
 - **Tolerant volley.** A lost shuriken is a thinner field, noted and passed — no retry, no respawn mid-storm; misses re-throw.
 - **Lands on disk; the orchestrator seals it.** A thrown shuriken edits its target and never commits; the orchestrator commits the whole volley at the end (unless the user requested no commit).
-- **Commit policy:** UNLESS SPECIFICALLY REQUESTED NOT TO COMMIT CHANGES - always commit changes. Shuriken never commit — the orchestrator commits the volley; a field of pure no-ops has nothing to commit.
+- **Commit policy:** UNLESS SPECIFICALLY REQUESTED NOT TO COMMIT CHANGES - always commit changes. Shuriken never commit — the orchestrator commits the volley; a field of pure no-ops has nothing to commit. Under `--bar-cmd` a land the command failed is never committed, and neither is a field its whole-field run left red.
 
 ## Don't
 

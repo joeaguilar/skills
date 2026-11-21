@@ -90,7 +90,7 @@ Resolve `--ladder`, `--bar`, `--out`, `--confirm`. Read the task once.
 
 A **proposed** rung is a role, not a model name: resolve it to its model and effort when the rung is spawned, never here. `ceiling` is gated in that file — never a proposed rung unless the user turned it on; the ladder tops out one role below. A `--ladder` entry is taken as given: a role name → resolved the same way; a model name → that model; an effort word → that effort on the session model.
 
-**Check reach before the Throw.** Every rung's seat must be launchable now (a GPT binding needs the Codex CLI to answer). File unreadable, or a seat unreachable → rungs of rising effort on the session model, and say so in the Throw (an honest ladder of care beats a silent one of the same steel). A seat that fails only at launch is an errored rung: FAIL → escalate, named in the Return's climb map.
+**Check reach before the Throw.** Every rung's seat must be launchable now (a GPT binding needs the Codex CLI to answer). File unreadable, or a seat unreachable → rungs of rising effort on the session model, and say so in the Throw (an honest ladder of care beats a silent one of the same steel). A seat that passed this check and then fails at launch (never started on the task) is not a failed rung: run that rung on the session model at the rung's effort instead, and name the swap in the Return's climb map. Only a rung that started and errored counts as FAIL.
 
 **Right-size & clamp.** Don't build a tall ladder for a trivial task — a 2-rung ladder is fine, and a task the first rung obviously clears should stop there. More rungs ≠ better; each rung exists only to catch what the cheaper one missed.
 
@@ -172,7 +172,7 @@ Terse. Emit, in order:
 
 - **Return** template (rung that drew blood + rungs climbed + bar cleared) — or **Ladder exhausted** if no rung passed.
 - **The deliverable** — the passing rung's result (to `--out` if set; on disk). On exhaustion, the best rung's result + the explicit gap.
-- **Next step** — commit the landed change (the orchestrator commits; skipped only when the user specifically requested no commit).
+- **Next step** — commit the landed change (the orchestrator commits; skipped only when the user specifically requested no commit, or when the ladder exhausted — an exhausted ladder landed nothing, and edits a failed `--bar-cmd` rung left behind are never committed).
 
 A pass means *this rung cleared this bar* — report which rung and how many you spent, so the cost is visible. Don't inflate a cheap-rung pass into more certainty than the bar earned.
 
@@ -187,7 +187,7 @@ A pass means *this rung cleared this bar* — report which rung and how many you
 - **Spend effort only where the cheap path breaks.** Don't burn a heavy multi-agent rung on what one quick agent solves; don't under-power a hard task either — climb until it clears.
 - **Right-size the ladder.** Default the proposed rungs, clamp 2–4; a trivial task gets a short ladder, often one rung.
 - **Nothing to land is not a miss.** A task with no disk surface (a pure question, an analysis) has nothing to land — the passing rung's answer is the deliverable, not a miss. And nothing landed means nothing to commit.
-- **Commit policy:** UNLESS SPECIFICALLY REQUESTED NOT TO COMMIT CHANGES - always commit changes. Rung agents never commit (the orchestrator owns git); the orchestrator commits the landed change at Deliver.
+- **Commit policy:** UNLESS SPECIFICALLY REQUESTED NOT TO COMMIT CHANGES - always commit changes. Rung agents never commit (the orchestrator owns git); the orchestrator commits the landed change at Deliver. An exhausted ladder landed nothing: what failed `--bar-cmd` rungs left in the tree stays uncommitted.
 - **Fire without a gate; run to a pass or an exhausted ladder.** `--confirm` is the only pause.
 
 ## Don't
@@ -198,6 +198,6 @@ A pass means *this rung cleared this bar* — report which rung and how many you
 - Don't take a rung's PASS over a non-zero `--bar-cmd`, and don't commit an overruled rung's edits.
 - Don't keep climbing after a rung passes — stop and deliver the cheapest rung that cleared the bar.
 - Don't build a tall ladder for a trivial task — clamp 2–4 rungs; fewer is fine.
-- Don't put `ceiling` on the ladder unless the user turned it on, and don't start on `floor` when its guard fails — start at `generalist`.
+- Don't propose `ceiling` as a rung unless the user turned it on, and don't propose `floor` as rung 1 when its guard fails — start the proposed ladder at `generalist`. (A `--ladder` the user wrote is theirs: use it as given.)
 - Don't launder an exhausted ladder into a pass — surface the best rung + what's still missing as a real failure.
-- Don't push or PR — and skip the commit only when the user specifically requested not to; otherwise the orchestrator commits the landed change.
+- Don't push or PR — and skip the commit only when the user specifically requested not to or the ladder exhausted; otherwise the orchestrator commits the landed change.

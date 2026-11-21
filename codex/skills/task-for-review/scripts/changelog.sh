@@ -67,7 +67,7 @@ if [ "$FOLD" -eq 1 ]; then
 fi
 echo '| Commit | Change | Files |'
 echo '|---|---|---|'
-git -c core.quotePath=false log --reverse --no-merges --format='@@%H %s' --name-status --no-relative -M "$BASE..$HEAD_REF" \
+git -c core.quotePath=false log --reverse --no-merges --encoding=UTF-8 --format='@@%H %s' --name-status --no-relative -M "$BASE..$HEAD_REF" \
   | awk -v url="$COMMIT_URL" '
     # Prose cell: a bare pipe would end the cell, and a backslash would unescape the
     # pipe after it, so each gets a backslash.

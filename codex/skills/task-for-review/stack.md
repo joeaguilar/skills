@@ -50,7 +50,7 @@ git push --force-with-lease <remote> <each-branch-above-the-changed-one>
 git push <remote> <changed-branch>          # a plain push: it only gained commits
 ```
 
-`--update-refs` moves every branch between the changed one and the top. Without it (the `update-refs: no` line of preflight) rebase each branch onto the one below, bottom to top. Afterwards rerun `changelog.sh` and the evidence for the PRs whose commits moved, and update their descriptions.
+`--update-refs` moves every branch between the changed one and the top, except a branch that is checked out in another worktree: git leaves that one where it was. If the user has a middle branch checked out in the main checkout to test it, ask them to switch off it first, or the push will publish that layer stale. Check with `git worktree list` before restacking. Without it (the `update-refs: no` line of preflight) rebase each branch onto the one below, bottom to top. Afterwards rerun `changelog.sh` and the evidence for the PRs whose commits moved, and update their descriptions.
 
 ## After the user merges the bottom PR
 

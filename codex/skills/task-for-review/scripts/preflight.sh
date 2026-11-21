@@ -31,6 +31,7 @@
 #   tracker               as blitz's preflight.sh reports it | unknown
 #   verify-gate           as blitz's preflight.sh reports it | unknown
 #   remote …              `<name> <github|gitea|other|local> <url>` | none
+#   remote-push …         the same, for a push URL that differs from the fetch URL
 #   host-cli …            `gh ready|not-logged-in|absent`, `gitea ready|no-token|absent`
 #   assets-branch         local | remote | absent   (the orphan review-assets branch)
 #   blocker …, warn …     see above
@@ -188,17 +189,26 @@ REMOTES="$(git remote 2>/dev/null)"
 if [ -z "$REMOTES" ]; then
   echo "remote: none"
 else
-  while IFS= read -r name; do
-    [ -z "$name" ] && continue
-    url="$(git remote get-url "$name" 2>/dev/null)"
-    shown="$(printf '%s' "$url" | sed 's#://[^/@]*@#://#')"   # never print embedded credentials
-    kind="$(tfr_remote_kind "$url")"
+  note_url() { # key name url -> print the line and record which CLI that host needs
+    local shown kind
+    shown="$(printf '%s' "$3" | sed 's#://[^/@]*@#://#')"   # never print embedded credentials
+    kind="$(tfr_remote_kind "$3")"
     case "$kind" in
       github) NEED_GH=1 ;;
       gitea) NEED_GITEA=1 ;;
-      other) warn "remote '$name' is on $(tfr_url_host "$url"), which has no known PR CLI -> push branches there and write each PR description to a file" ;;
+      other) warn "remote '$2' is on $(tfr_url_host "$3"), which has no known PR CLI -> push branches there and write each PR description to a file" ;;
     esac
-    echo "remote: $name $kind $shown"
+    echo "$1: $2 $kind $shown"
+  }
+  while IFS= read -r name; do
+    [ -z "$name" ] && continue
+    url="$(git remote get-url "$name" 2>/dev/null)"
+    note_url remote "$name" "$url"
+    # A remote may push somewhere other than where it fetches from; branches and
+    # PRs go to the push side, so that host's CLI is needed as well.
+    while IFS= read -r push_url; do
+      if [ -n "$push_url" ] && [ "$push_url" != "$url" ]; then note_url remote-push "$name" "$push_url"; fi
+    done <<< "$(git remote get-url --push --all "$name" 2>/dev/null)"
   done <<< "$REMOTES"
 fi
 

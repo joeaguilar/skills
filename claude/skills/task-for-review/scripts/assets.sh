@@ -81,7 +81,12 @@ if [ -n "$MAIN_NAME" ] && [ "$BRANCH" = "$MAIN_NAME" ]; then
   exit 1
 fi
 if [ -n "$REMOTE" ] && [ "$PUSH" -eq 1 ]; then
-  git fetch -q "$REMOTE" "+refs/heads/$BRANCH:refs/remotes/$REMOTE/$BRANCH" 2>/dev/null || true
+  # Reconcile with the repository the push goes to. When a remote pushes somewhere
+  # other than where it fetches from, that is the push URL, not the remote's name.
+  FETCH_FROM="$REMOTE"
+  PUSH_URL="$(git remote get-url --push "$REMOTE" 2>/dev/null | head -1)"
+  [ -n "$PUSH_URL" ] && [ "$PUSH_URL" != "$(git remote get-url "$REMOTE" 2>/dev/null)" ] && FETCH_FROM="$PUSH_URL"
+  git fetch -q "$FETCH_FROM" "+refs/heads/$BRANCH:refs/remotes/$REMOTE/$BRANCH" 2>/dev/null || true
 fi
 REMOTE_TIP=""
 LOCAL_TIP=""
@@ -100,6 +105,18 @@ if [ -n "$MAIN_NAME" ]; then
   [ -n "$REMOTE" ] && CODE_REFS+=("refs/remotes/$REMOTE/$MAIN_NAME")
 fi
 CODE_REFS+=("HEAD")
+# A shallow clone hides ancestry, so "no shared commit" proves nothing there. Fall
+# back on the mark this script leaves: every commit it makes has this subject.
+if [ "$(git rev-parse --is-shallow-repository 2>/dev/null)" = "true" ]; then
+  for tip in "$REMOTE_TIP" "$LOCAL_TIP"; do
+    [ -z "$tip" ] && continue
+    case "$(git log -1 --format=%s "$tip" 2>/dev/null)" in
+      'chore(review-assets):'*) ;;
+      *) echo "assets: this clone is shallow, so $BRANCH cannot be shown to be free of code history, and its newest commit is not one this script made. No branch was moved." >&2
+         exit 1 ;;
+    esac
+  done
+fi
 for tip in "$REMOTE_TIP" "$LOCAL_TIP"; do
   [ -z "$tip" ] && continue
   for ref in "${CODE_REFS[@]}"; do

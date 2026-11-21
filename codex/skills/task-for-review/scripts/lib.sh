@@ -18,10 +18,11 @@ tfr_url_host() { # remote url -> lower-case hostname; empty for a local path
   local u="$1"
   case "$u" in
     file://*|/*|./*|../*|'~'*) u="" ;;                               # a path, whatever it contains
+    [A-Za-z]:[/\\]*) u="" ;;                                         # C:/path or C:\path: a drive, not a host
     *://*) u="${u#*://}"; u="${u%%/*}"; u="${u##*@}"; u="${u%%:*}" ;;
     *:*)   u="${u%%:*}"                                               # scp style host:path, unless…
            case "$u" in */*) u="" ;; esac                            # …a slash comes first: git reads that as a path
-           u="${u##*@}"; [ "${#u}" -le 1 ] && u="" ;;                 # C:/path is a drive, not a host
+           u="${u##*@}" ;;
     *)     u="" ;;
   esac
   printf '%s' "$u" | tr '[:upper:]' '[:lower:]'

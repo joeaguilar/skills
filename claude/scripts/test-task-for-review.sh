@@ -16,10 +16,10 @@ S="$(cd "$S" && pwd -P)"
 # Git variables inherited from a hook or a wrapper (GIT_DIR, GIT_INDEX_FILE,
 # GIT_WORK_TREE, injected config …) outrank `git -C` and would point the throwaway
 # repos below at a real one. Drop them before the first git command.
-# shellcheck disable=SC2046
-unset $(git rev-parse --local-env-vars 2>/dev/null) 2>/dev/null || true
-unset GIT_DIR GIT_WORK_TREE GIT_INDEX_FILE GIT_OBJECT_DIRECTORY GIT_ALTERNATE_OBJECT_DIRECTORIES \
-  GIT_COMMON_DIR GIT_NAMESPACE GIT_PREFIX GIT_CONFIG GIT_CONFIG_PARAMETERS GIT_CONFIG_COUNT 2>/dev/null || true
+# Every GIT_* variable goes, with a shell builtin and before git runs at all: a
+# GIT_TRACE file would otherwise be written by the very first git command.
+for tfr_var in $(compgen -v GIT_ 2>/dev/null); do unset "$tfr_var"; done
+unset tfr_var
 
 # The cleanup below is `rm -rf "$WORK"`, so WORK must be the directory mktemp just
 # made and nothing else: an empty WORK once resolved to the caller's directory.
@@ -695,6 +695,66 @@ same "assets conflict: local branch did not move" "$(git -C "$WORK/sta" rev-pars
 out="$(cd "$WORK/sta" && bash "$AS" ev "$WORK/mine/screenshot.png" 2>&1)"; code=$?
 same "assets conflict settled: exit 0" "$code" "0"
 same "assets conflict settled: the supplied file wins" "$(git -C "$WORK/st-remote.git" cat-file blob review-assets:ev/screenshot.png)" "MINE"
+
+# =============================================================================
+# Cases found by the third review round (2026-11-21). Each failed before its fix.
+# =============================================================================
+
+# --- seed: a scaffolding name taken by a folder is refused before anything is written --------------------
+mkdir -p "$WORK/dirclash/AGENTS.md"; printf 'private\n' > "$WORK/dirclash/AGENTS.md/private.txt"
+out="$(bash "$SEED" "$WORK/dirclash" 2>&1)"; code=$?
+same "seed name taken by a folder: exit 1" "$code" "1"
+same "seed name taken by a folder: no repository made" "$([ -e "$WORK/dirclash/.git" ] && echo present || echo absent)" "absent"
+same "seed name taken by a folder: nothing else written" "$(ls -A "$WORK/dirclash" | tr '\n' ' ')" "AGENTS.md "
+
+# --- preflight: a push URL on another host needs that host's CLI too -----------------------------------------
+repo pushhost
+git init -q --bare "$WORK/pushhost-fetch.git"
+git -C "$WORK/pushhost" remote add origin "$WORK/pushhost-fetch.git"
+git -C "$WORK/pushhost" remote set-url --push origin "https://github.com/acme/published.git"
+out="$(TFR_GH="$WORK/bin/no-such-gh" bash "$PF" "$WORK/pushhost")"; code=$?
+expect "preflight push url: reported" "$out" "remote-push: origin github https://github.com/acme/published.git"
+expect "preflight push url: gh checked" "$out" "host-cli: gh absent"
+same "preflight push url: exit 1" "$code" "1"
+
+# --- preflight: a one-letter ssh host is a host, a drive letter is a path -----------------------------------------
+git -C "$WORK/kinds" remote add onechar "git@x:team/repo.git"
+out="$(TFR_GH="$WORK/bin/gh-ok" bash "$PF" "$WORK/kinds")"
+expect "kinds: one-letter ssh host is a host" "$out" "remote: onechar other git@x:team/repo.git"
+
+# --- changelog: the log encoding setting cannot empty the table ------------------------------------------------------
+git -C "$WORK/cl" config i18n.logOutputEncoding UTF-16LE
+out="$(cd "$WORK/cl" && bash "$CL" HEAD~1 HEAD)"
+git -C "$WORK/cl" config --unset i18n.logOutputEncoding
+expect_has "changelog: rows survive a UTF-16 log encoding" "$out" "fix(x): two backticks"
+
+# --- assets: in a shallow clone, a code commit posing as the assets branch is still refused ----------------------------
+repo shsrc
+put "$WORK/shsrc" one.txt "1"
+git -C "$WORK/shsrc" branch review-assets          # a code commit, not evidence
+put "$WORK/shsrc" two.txt "2"
+shpath="$(cd "$WORK/shsrc" && { pwd -W 2>/dev/null || pwd; })"
+git clone -q --depth=1 --branch main "file:///${shpath#/}" "$WORK/shclone"
+before="$(git -C "$WORK/shsrc" rev-parse review-assets)"
+out="$(cd "$WORK/shclone" && bash "$AS" k "$WORK/shot.png" 2>&1)"; code=$?
+same "assets shallow: exit 1" "$code" "1"
+same "assets shallow: source branch did not move" "$(git -C "$WORK/shsrc" rev-parse review-assets)" "$before"
+same "assets shallow: no local branch made" "$(git -C "$WORK/shclone" rev-parse -q --verify refs/heads/review-assets || echo none)" "none"
+
+# --- assets: reconcile with the repository that is pushed to, not the one fetched from ------------------------------------
+git init -q --bare "$WORK/sp-fetch.git"; git init -q --bare "$WORK/sp-publish.git"
+repo spx
+git -C "$WORK/spx" remote add origin "$WORK/sp-publish.git"
+printf 'R' > "$WORK/r.png"; printf 'L' > "$WORK/l.png"; printf 'N' > "$WORK/n.png"
+(cd "$WORK/spx" && bash "$AS" k "$WORK/r.png" >/dev/null)
+repo spy
+git -C "$WORK/spy" remote add origin "$WORK/sp-fetch.git"
+git -C "$WORK/spy" remote set-url --push origin "$WORK/sp-publish.git"
+(cd "$WORK/spy" && bash "$AS" --no-push k "$WORK/l.png" >/dev/null)
+out="$(cd "$WORK/spy" && bash "$AS" k "$WORK/n.png" 2>&1)"; code=$?
+same "assets split urls: exit 0" "$code" "0"
+same "assets split urls: publish side holds everything" \
+  "$(git -C "$WORK/sp-publish.git" ls-tree -r --name-only review-assets 2>/dev/null | sort | tr '\n' ',')" "k/l.png,k/n.png,k/r.png,"
 
 echo "task-for-review self-test: $pass passed, $fail failed"
 [ "$fail" -eq 0 ]

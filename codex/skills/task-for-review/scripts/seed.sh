@@ -81,6 +81,18 @@ if git rev-parse --is-inside-work-tree >/dev/null 2>&1; then
 fi
 if [ "$HAS_COMMITS" -eq 1 ]; then MODE="adopt"; else MODE="new"; fi
 
+# --- a scaffolding name that is taken by something else: refuse, write nothing ----------
+for p in .gitignore AGENTS.md CLAUDE.md glossary.md .github/pull_request_template.md; do
+  if { [ -e "$p" ] || [ -L "$p" ]; } && [ ! -f "$p" ]; then
+    echo "seed: $p exists but is not a regular file, so it cannot be scaffolding. Nothing was written." >&2
+    exit 1
+  fi
+done
+if { [ -e .github ] || [ -L .github ]; } && [ ! -d .github ]; then
+  echo "seed: .github exists but is not a folder, so the PR template has nowhere to go. Nothing was written." >&2
+  exit 1
+fi
+
 # --- what is missing --------------------------------------------------------------
 # Each plan entry is `ACTION<TAB>PATH<TAB>NOTE`.
 PLAN=""
@@ -197,6 +209,7 @@ while IFS=$'\t' read -r action path note; do
       .github/pull_request_template.md) cat "$TEMPLATES/pr-description.md" > "$path" ;;
       glossary.md) render glossary.md > "$path" ;;
     esac
+    [ -s "$path" ] || { echo "seed: could not write $path" >&2; exit 1; }
     echo "created: $path"
   else
     case "$path" in

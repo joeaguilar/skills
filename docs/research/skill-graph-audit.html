@@ -153,6 +153,9 @@ figcaption { font-size: 13.5px; color: var(--muted); max-width: 78ch; }
 .opp .body { display: flex; flex-direction: column; gap: 10px; min-width: 0; }
 .opp h3 { font-size: 17px; display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px 12px; }
 .size { font: 600 11px/1 var(--f-mono); letter-spacing: 0.06em; color: var(--muted); border: 1px solid var(--line-strong); border-radius: 3px; padding: 3px 6px; white-space: nowrap; }
+.size.built { color: var(--code); border-color: var(--code); }
+.since { background: var(--code-wash); border-left: 3px solid var(--code); padding: 14px 18px; }
+.since p { font-size: 14px; max-width: 80ch; }
 .opp dl { margin: 0; display: grid; grid-template-columns: 74px minmax(0, 1fr); gap: 6px 14px; font-size: 14px; line-height: 1.5; }
 .opp dt { font: 600 11.5px/1.9 var(--f-mono); letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); }
 .opp dd { margin: 0; max-width: 74ch; }
@@ -377,30 +380,35 @@ figcaption { font-size: 13.5px; color: var(--muted); max-width: 78ch; }
   <h2>What is missing, in order of return</h2>
   <p>Every item moves a rule the skills already state into something computed or checked. None adds a new skill. Sizes are rough: S is an afternoon, M a few days, L a week or more with a proving run.</p>
 
+  <div class="since"><p><b>Since the audit.</b> The first three items were built the same day. Everything above this section, the matrix included, still describes the repo as it was at 679d776.</p></div>
+
   <div class="tier">Start here</div>
   <ol class="opps">
     <li class="opp"><div class="body">
-      <h3>Compute the waves <span class="size">M</span></h3>
+      <h3>Compute the waves <span class="size">M</span> <span class="size built">built e14aeb0</span></h3>
       <dl>
         <dt>Today</dt><dd>blitz, crossfire-blitz and proof-campaign build conflict-free waves by having the orchestrator read file lists and blocked-by fields and pack them. blitz says outright that an incomplete file map cannot be caught before fan-out.</dd>
         <dt>Add</dt><dd>A <code>waves</code> mode beside <code>preflight.sh</code>, where preflight facts already have one home. It takes <code>itr graph</code> and the declared files, widens each file set with <code>kgr query --who-imports</code>, and prints the waves as <code>key: value</code> lines.</dd>
         <dt>Return</dt><dd>The same plan on every run, a plan a resumed run can re-read, and fewer mid-wave collisions. This is the busiest graph in the repo and the one with the most model effort spent on arithmetic.</dd>
+        <dt>Built</dt><dd><code>preflight.sh --waves</code> reads files, blockers, parents and tags from <code>itr list</code> and prints the waves, the conflicts and every task it would not place. It takes planner results as <code>--own</code> and undeclared shared files as <code>--also</code>. The <code>kgr</code> widening was left out: the script reports the mechanical floor and blitz still layers semantic neighbours by hand. blitz only; crossfire-blitz and proof-campaign still pack by reading.</dd>
       </dl>
     </div></li>
     <li class="opp"><div class="body">
-      <h3>Seat the judge on another model in the dojo and forge-change <span class="size">S</span></h3>
+      <h3>Seat the judge on another model in the dojo and forge-change <span class="size">S</span> <span class="size built">built 9e851a6</span></h3>
       <dl>
         <dt>Today</dt><dd>crossfire-blitz, crucible, gauntlet, council and <code>feature-build --strict</code> all put the reviewer on a different model. shadow-duel, whetstone, <code>hundred-blades --judge</code> and forge-change's challengers set no model, so the critic runs on whatever wrote the work. drawn-steel is described on the rack as "cheapest model first" but its rungs raise effort only.</dd>
         <dt>Add</dt><dd>One line in each file: critic, challenger and judge seats resolve the <code>reviewer</code> role at spawn time, and drawn-steel's rungs follow the MODELS.md ladder.</dd>
         <dt>Return</dt><dd>The survey's first listed anti-pattern is the same agent writing and judging its own output. These are the four places it still happens.</dd>
+        <dt>Built</dt><dd>All four now resolve the <code>reviewer</code> role at spawn, against both the artifact's author and whoever revises it. drawn-steel's default rungs climb <code>floor</code>, <code>generalist</code>, <code>frontier</code>. FORGE.md carries it as rule 9.</dd>
       </dl>
     </div></li>
     <li class="opp"><div class="body">
-      <h3>Give the dojo a bar that a command decides <span class="size">S</span></h3>
+      <h3>Give the dojo a bar that a command decides <span class="size">S</span> <span class="size built">built 9a0bf57</span></h3>
       <dl>
         <dt>Today</dt><dd>No blade runs a command or reads an exit code. first-blood trusts a runner's "Cleared: YES", drawn-steel says to verify against the bar yourself, and shuriken-storm's <code>landed</code> is a self-reported boolean.</dd>
         <dt>Add</dt><dd>An optional <code>--bar-cmd</code> that the orchestrator runs through gatr. The exit code picks the edge: deliver, next rung, next round, or miss.</dd>
         <dt>Return</dt><dd>The evaluator writes state and code picks the edge, which is the pattern crucible already proves with <code>gate.mjs</code>.</dd>
+        <dt>Built</dt><dd><code>--bar-cmd</code> in drawn-steel, first-blood, shuriken-storm, whetstone and masamune, with FORGE.md rule 10. A run before the work marks whether the command proves the change or only guards it, and a non-zero run never reaches a commit. In first-blood each rival races in its own git worktree so the command judges one runner's edits at a time.</dd>
       </dl>
     </div></li>
   </ol>

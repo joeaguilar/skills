@@ -36,6 +36,16 @@ Map each ready task to acceptance, dependencies, owned files, and a meaningful
 worker check. Use `kgr` for structural unknowns. Batch missing ownership research
 instead of launching a planner per ticket. Verify paths and identify new files.
 
+With `itr`, compute the waves instead of packing them by eye: run
+`scripts/preflight.sh --waves --concurrency <N>` from the repository root. It
+reads declared files, blockers, parents, and tags from the tracker and prints
+`wave:` lines plus the conflicts, ordering, and every task it would not place
+(`wave-unowned`, `wave-deferred`, `wave-held`, `wave-path-absent`). Supply
+researched ownership with `--own <id>=<paths>` and undeclared shared files with
+`--also <id>=<paths>`, then rerun. Treat the result as the floor: it cannot see
+semantic conflicts, shared contracts, or files a task never named, so move a
+task later when those apply and record why.
+
 Files, directory claims, generated outputs, migrations, manifests, and shared
 API contracts count as ownership. Tasks sharing writes run serially. Consumers
 start after their required contracts exist. Never break a real dependency to

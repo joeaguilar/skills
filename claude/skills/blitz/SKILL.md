@@ -87,7 +87,7 @@ Blitz preflight
 Will execute:
   1. Audit — list open tasks; kgr check per repo (if present); read shared files
   2. Resolve file ownership — read declared file sets; one batched planner agent for any undeclared
-  3. Build wave plan — file conflicts and semantic neighbors; persist to sprint/{folder}/blitz/wave-{N}.md (or sprint/_unscoped/blitz-{ts}.md if no in-flight sprint) and tracker epic
+  3. Build wave plan — computed by preflight.sh --waves (file conflicts, dependencies), then semantic neighbors; persist to sprint/{folder}/blitz/wave-{N}.md (or sprint/_unscoped/blitz-{ts}.md if no in-flight sprint) and tracker epic
   4. Show wave plan and ask AGAIN before spawning Wave 1
   5. Run waves with full-repo verify gate between each; auto-retry then quarantine on failure
 
@@ -112,7 +112,7 @@ After Phase 0 is approved, run in parallel:
 
 ### Resolve file ownership
 
-For each task, look in its body for an explicit file list — itr's `--files` field, a `Files:` line in the description, or YAML frontmatter. Tasks with declared files are ready.
+For each task, look in its body for an explicit file list — itr's `--files` field, a `Files:` line in the description, or YAML frontmatter. Tasks with declared files are ready. (The wave script reads only the `--files` field: a file list that lives in a description or frontmatter reaches it through `--own`.)
 
 For tasks **without** declared files, dispatch a **single batched planner agent** (foreground, `subagent_type: general-purpose`) with this prompt — verbatim:
 
@@ -121,7 +121,7 @@ For tasks **without** declared files, dispatch a **single batched planner agent*
 > Tasks:
 > {tasks-as-json}
 
-Merge the planner's output back into the task list. Tasks the planner returned with `confidence: low` should be flagged in the wave plan for the user's attention.
+Merge the planner's output back into the task list. Tasks the planner returned with `confidence: low` should be flagged in the wave plan for the user's attention. With `itr` as the tracker, carry each inferred file set into the wave computation as `--own <id>=<path,path>` (see *Compute the mechanical floor*) — the tracker itself is not rewritten.
 
 ### Verify declared files exist (BLOCKING on anomalies)
 
@@ -134,6 +134,34 @@ Then, for the paths that survive normalization:
 - A path that resolves nowhere, or a symbol absent from its declared file, is a **plan-file mismatch**. Collect them all, print them under `plan-file mismatch` in the wave plan, and **pause for the user before spawning any agent**. Do not silently re-infer a replacement path.
 
 Know what this does and does not buy you. It catches the *stale* map — a ticket groomed against an older tree than the one it will execute on. *(sprint-11 #844 declared the right file but named `CommitTransform` at `action_handler.rs:1057-1138`; a prior story had renamed that handler, so the symbol was gone from the tree while the path stayed valid. The symbol grep flags it; an `ls` never would.)* It does **not** catch the *incomplete* map — a task that declares three files and does its real work in four others it never mentioned. Nothing you can check before fan-out will: those files don't exist yet, and the task body doesn't name them. That gap is covered downstream, by the agent self-report in the prompt template and the Phase 5 re-check — not here. Don't mistake a green check for a complete map.
+
+### Compute the mechanical floor (tracker `itr`)
+
+The file-conflict map, the dependency order and the bin-pack are arithmetic, so a script does them. Run the same preflight script in its `--waves` mode from the repo root that holds the tracker — read-only, like the rest of it:
+
+```bash
+bash <skill-dir>/scripts/preflight.sh --waves --concurrency <N> \
+  [--tag <sprint-tag> | --parent <epic-id>] \
+  [--own <id>=<path,path>]... [--also <id>=<path,path>]... .
+```
+
+It reads `files`, `blocked_by`, `parent` and tags straight from `itr` and prints `key: value` lines, and nothing else:
+
+| Line | What it tells you | What you do with it |
+|---|---|---|
+| `wave: N #a #b` | The tasks of wave N. No two share a claim, none exceeds `concurrency`, each sits after everything it waits on. | The floor of the wave plan. |
+| `wave-conflict: <claim> #a #b` | Tasks contending for one file, or for a directory and anything beneath it. | Copy into the wave log's `File conflicts`. |
+| `wave-order: #T after #B` | A `blocked-by` or non-epic `parent` edge it honoured. | Nothing — already in the waves. |
+| `wave-unowned: #T` | No declared files. Never placed. | The planner agent above; rerun with `--own`. |
+| `wave-deferred: #T visual-gate-only` | Tagged `visual-gate-only`. Never placed. | The set-aside list below. A ticket that is visual-gate-only by content but not by tag is still yours to spot. |
+| `wave-held: #T waits on #B (reason)` | T's open blocker is not in a wave: `unowned`, `deferred`, `held`, `epic`, `out of scope` or `cycle`. Never placed. | Show it in the wave plan. Resolve the blocker (give it files, widen the scope) and rerun, or leave T for a later blitz. A `cycle` goes to the user. |
+| `wave-path-absent: #T <path>` | The claim matches nothing after normalization: not at the repo root, not without the repo-name prefix, not as the unique tail of a tracked file. | The task marks it NEW → fine. Otherwise it is a **plan-file mismatch** (below). |
+
+`--own` **replaces** a task's claims for this run (the planner's inferred files). `--also` **adds** to them — the doc, spec or shared registry file a ticket did not list. Prefer feeding the script over moving tasks by hand: add the shared file to both tasks with `--also` and rerun, and the plan stays reproducible. Record the exact command in the wave log's `Config`.
+
+What the script cannot see is still your work, and the next three subsections say how: a stale symbol in a path that still exists, a doc nobody declared, a semantic conflict, a shared API surface, a file a task will touch but never named. *A green floor is not a complete map.* With several repos in scope, a claim inside a sibling repo prints `wave-path-absent`; resolve those by hand.
+
+With any other tracker there is no script — build the map and pack the waves by hand, to the rules below.
 
 ### Build the conflict map
 
@@ -173,6 +201,8 @@ Greedy bin-pack tasks into waves such that:
 - Wave size ≤ `concurrency`.
 - Tasks with `blocked-by` land after the blocker's wave.
 - File-conflicting tasks split into consecutive waves.
+
+With `itr`, the `wave:` lines from `preflight.sh --waves` **are** this bin-pack — take them as printed; do not re-derive them by eye. Layer only what the script could not know: a semantic conflict or a shared surface may push a task to a **later** wave (never earlier, and re-check the wave it lands in against the `wave-conflict:` lines and the cap). Note every hand move and its reason in the wave log, next to the command that produced the floor.
 
 ---
 

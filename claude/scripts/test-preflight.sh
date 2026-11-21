@@ -179,6 +179,143 @@ else
   expect "no tracker" "$(bash "$PF" "$WORK/none")" 'tracker: none'
 fi
 
+# --- waves -------------------------------------------------------------------
+# same LABEL GOT WANT — the whole output must equal WANT.
+same() {
+  if [ "$2" = "$3" ]; then
+    pass=$((pass+1))
+  else
+    fail=$((fail+1))
+    printf 'FAIL %s\n  wanted:\n%s\n  got:\n%s\n' "$1" "$(printf '%s\n' "$3" | sed 's/^/    /')" "$(printf '%s\n' "$2" | sed 's/^/    /')"
+  fi
+}
+lines() { printf '%s\n' "$@"; }
+wr() { WR="$WORK/$1"; repo "$1"; ( cd "$WR" && itr init >/dev/null 2>&1 ); }   # fresh repo + tracker, sets WR
+wi() { ( cd "$WR" && ITR_AGENT=test itr "$@" >/dev/null 2>&1 ); }              # run itr in WR
+mk() { local p; for p in "$@"; do mkdir -p "$(dirname "$WR/$p")"; : > "$WR/$p"; done; git -C "$WR" add -- "$@" >/dev/null 2>&1; }
+wv() { bash "$PF" --waves "$@" "$WR"; }
+head5() { lines 'wave-concurrency: 5' "wave-count: $1" "wave-placed: $2"; }
+
+if command -v itr >/dev/null 2>&1; then
+  wr w-share; mk src/x.rs src/z.rs
+  wi add one -k task --files src/x.rs; wi add two -k task --files src/x.rs; wi add three -k task --files src/z.rs
+  out="$(wv)"
+  same "a shared file splits two tasks" "$out" "$(head5 2 3; lines 'wave: 1 #1 #3' 'wave: 2 #2' 'wave-conflict: src/x.rs #1 #2')"
+  refuse "--waves prints only its own lines" "$out" 'root:'
+  same "two runs are byte-identical" "$(wv)" "$out"
+
+  wr w-dir; mk src/old.rs lib/a.rs
+  wi add one -k task --files src; wi add two -k task --files src/new.rs; wi add three -k task --files lib/a.rs; wi add four -k task --files src/old.rs
+  same "a directory claim covers files beneath it, existing or not" "$(wv)" \
+    "$(head5 2 4; lines 'wave: 1 #1 #3' 'wave: 2 #2 #4' 'wave-conflict: src/ #1 #2 #4' 'wave-path-absent: #2 src/new.rs')"
+
+  wr w-cap; mk f1.rs f2.rs f3.rs f4.rs f5.rs f6.rs f7.rs
+  for n in 1 2 3 4 5 6 7; do wi add "t$n" -k task --files "f$n.rs"; done
+  same "concurrency 3 packs 3/3/1" "$(wv --concurrency 3)" \
+    "$(lines 'wave-concurrency: 3' 'wave-count: 3' 'wave-placed: 7' 'wave: 1 #1 #2 #3' 'wave: 2 #4 #5 #6' 'wave: 3 #7')"
+  same "default concurrency is 5" "$(wv | sed -n '1,3p')" "$(head5 2 7)"
+
+  wr w-chain; mk d1.rs d2.rs d3.rs d4.rs
+  for n in 1 2 3 4; do wi add "t$n" -k task --files "d$n.rs"; done
+  wi depend 2 --on 1; wi depend 3 --on 2
+  same "a three-task chain takes three waves" "$(wv)" \
+    "$(head5 3 4; lines 'wave: 1 #1 #4' 'wave: 2 #2' 'wave: 3 #3' 'wave-order: #2 after #1' 'wave-order: #3 after #2')"
+
+  wr w-closed; mk d1.rs d2.rs
+  wi add one -k task --files d1.rs; wi add two -k task --files d2.rs; wi depend 2 --on 1; wi close 1 done
+  same "a closed blocker is no constraint" "$(wv)" "$(head5 1 1; lines 'wave: 1 #2')"
+
+  wr w-prio; mk f.rs
+  wi add lowone -k task -p low --files f.rs; wi add critone -k task -p critical --files f.rs
+  same "priority decides who gets wave 1" "$(wv)" "$(head5 2 2; lines 'wave: 1 #2' 'wave: 2 #1' 'wave-conflict: f.rs #1 #2')"
+
+  wr w-acct; mk a.rs b.rs c.rs v.rs
+  wi add epic -k epic; wi add vis -k task --tags visual-gate-only --files v.rs; wi add nofiles -k task
+  wi add free -k task --files a.rs; wi add waits -k task --files b.rs; wi add waitsvis -k task --files c.rs
+  wi depend 5 --on 3; wi depend 6 --on 2
+  out="$(wv)"
+  same "deferred, unowned and held groups" "$out" \
+    "$(head5 1 1; lines 'wave: 1 #4' 'wave-deferred: #2 visual-gate-only' 'wave-unowned: #3' 'wave-held: #5 waits on #3 (unowned)' 'wave-held: #6 waits on #2 (deferred)')"
+  for n in 2 3 4 5 6; do
+    c="$(printf '%s\n' "$out" | grep -cE "^(wave: .*|wave-(deferred|unowned|held): )#$n( |\$)")"
+    same "task #$n sits in exactly one group" "$c" 1
+  done
+  same "the epic is in no group" "$(printf '%s\n' "$out" | grep -cE '#1( |$)')" 0
+
+  wr w-own; mk src/a.rs src/b.rs src/c.rs
+  wi add one -k task; wi add two -k task --files src/b.rs; wi add three -k task --files src/c.rs
+  same "no --own leaves the file-less task unowned" "$(wv | sed -n '4,$p')" "$(lines 'wave: 1 #2 #3' 'wave-unowned: #1' | sed -n '1,2p')"
+  same "--own gives files to an unowned task and replaces declared ones" "$(wv --own 1=src/a.rs --own 2=src/c.rs)" \
+    "$(head5 2 3; lines 'wave: 1 #1 #2' 'wave: 2 #3' 'wave-conflict: src/c.rs #2 #3')"
+  same "--also adds a claim and keeps the declared ones" "$(wv --own 1=src/c.rs --also 3=src/b.rs)" \
+    "$(head5 2 3; lines 'wave: 1 #1 #2' 'wave: 2 #3' 'wave-conflict: src/b.rs #2 #3' 'wave-conflict: src/c.rs #1 #3')"
+  same "--also alone gives an unowned task its files" "$(wv --also 1=src/a.rs)" "$(head5 1 3; lines 'wave: 1 #1 #2 #3')"
+  same "--also adds to what --own set, and repeats add up" "$(wv --own 1=src/a.rs --also 1=src/b.rs --also 1=src/c.rs)" \
+    "$(head5 2 3; lines 'wave: 1 #1' 'wave: 2 #2 #3' 'wave-conflict: src/b.rs #1 #2' 'wave-conflict: src/c.rs #1 #3')"
+
+  wr w-trans; mk a.rs b.rs c.rs
+  wi add one -k task; wi add two -k task --files a.rs; wi add three -k task --files b.rs; wi add four -k task --files c.rs
+  wi depend 2 --on 1; wi depend 3 --on 2
+  same "holding is transitive" "$(wv)" "$(head5 1 1; lines 'wave: 1 #4' 'wave-unowned: #1' 'wave-held: #2 waits on #1 (unowned)' 'wave-held: #3 waits on #2 (held)')"
+  same "--own releases the hold" "$(wv --own 1=d.rs)" \
+    "$(head5 3 4; lines 'wave: 1 #1 #4' 'wave: 2 #2' 'wave: 3 #3' 'wave-order: #2 after #1' 'wave-order: #3 after #2' 'wave-path-absent: #1 d.rs')"
+
+  wr w-tag; mk f1.rs f2.rs
+  wi add inscope -k task --tags a --files f1.rs; wi add outscope -k task --tags b --files f2.rs; wi depend 1 --on 2
+  same "--tag scopes the backlog; an open blocker outside it holds" "$(wv --tag a)" "$(head5 0 0; lines 'wave-held: #1 waits on #2 (out of scope)')"
+  same "without the tag both are placed in order" "$(wv)" "$(head5 2 2; lines 'wave: 1 #2' 'wave: 2 #1' 'wave-order: #1 after #2')"
+
+  wr w-epic; mk a.rs b.rs c.rs d.rs
+  wi add epic -k epic; wi add kid -k task --parent 1 --files a.rs; wi add kid2 -k task --parent 1 --files b.rs
+  wi add outside -k task --files c.rs; wi add onepic -k task --files d.rs; wi depend 3 --on 4; wi depend 5 --on 1
+  same "an epic parent is no blocker; --parent scopes" "$(wv --parent 1)" \
+    "$(head5 1 1; lines 'wave: 1 #2' 'wave-held: #3 waits on #4 (out of scope)')"
+  same "an epic is skipped silently and holds its dependants" "$(wv)" \
+    "$(head5 2 3; lines 'wave: 1 #2 #4' 'wave: 2 #3' 'wave-order: #3 after #4' 'wave-held: #5 waits on #1 (epic)')"
+
+  wr w-parent; mk a.rs b.rs
+  wi add par -k task --files a.rs; wi add kid -k task --parent 1 --files b.rs
+  same "a non-epic parent is a dependency" "$(wv)" "$(head5 2 2; lines 'wave: 1 #1' 'wave: 2 #2' 'wave-order: #2 after #1')"
+
+  wr w-cycle; mk a.rs b.rs c.rs
+  wi add one -k task --files a.rs; wi add two -k task --parent 1 --files b.rs; wi add three -k task --files c.rs
+  wi depend 1 --on 2
+  same "a parent/blocker cycle is held, and the run ends" "$(wv)" \
+    "$(head5 1 1; lines 'wave: 1 #3' 'wave-held: #1 waits on #2 (cycle)' 'wave-held: #2 waits on #1 (cycle)')"
+
+  wr projx; mk src/a.rs src/b.rs lib/deep/u.rs x/amb.rs y/amb.rs
+  wi add one -k task --files '.\src\a.rs'; wi add two -k task --files './src//a.rs'; wi add three -k task --files projx/src/b.rs
+  wi add four -k task --files u.rs; wi add five -k task --files amb.rs; wi add six -k task --files lib/deep/u.rs
+  out="$(wv)"
+  same "normalisation: backslash, ./, //, repo-name prefix, unique suffix, ambiguous suffix" "$out" \
+    "$(head5 2 6; lines 'wave: 1 #1 #3 #4 #5' 'wave: 2 #2 #6' 'wave-conflict: lib/deep/u.rs #4 #6' 'wave-conflict: src/a.rs #1 #2' 'wave-path-absent: #5 amb.rs')"
+  same "normalised run is byte-identical" "$(wv)" "$out"
+
+  wr w-space; mk 'a b/c.rs' src/y.rs
+  wi add one -k task --files 'a b/c.rs,src/y.rs'; wi add two -k task --files 'a b/'
+  same "paths with spaces" "$(wv)" "$(head5 2 2; lines 'wave: 1 #1' 'wave: 2 #2' 'wave-conflict: a b/ #1 #2')"
+
+  wr w-ro; mk a.rs; wi add one -k task --files a.rs; wi add two -k task --files a.rs
+  before="$( (cd "$WR" && git status --porcelain; find . -path ./.git -prune -o -type f -exec cksum {} + | sort) )"
+  wv >/dev/null
+  after="$( (cd "$WR" && git status --porcelain; find . -path ./.git -prune -o -type f -exec cksum {} + | sort) )"
+  same "--waves writes nothing" "$after" "$before"
+fi
+
+bash "$PF" --waves "$WORK/none" >/dev/null 2>&1; [ $? -eq 1 ] && pass=$((pass+1)) || { fail=$((fail+1)); echo "FAIL --waves with no itr database must exit 1"; }
+for bad in 0 x -1 1.5 ''; do
+  bash "$PF" --waves --concurrency "$bad" "$WORK/none" >/dev/null 2>&1; [ $? -eq 2 ] && pass=$((pass+1)) || { fail=$((fail+1)); echo "FAIL --concurrency '$bad' must exit 2"; }
+done
+for bad in abc 1 x=a.rs 1= '=a.rs' '1=,'; do
+  bash "$PF" --waves --own "$bad" "$WORK/none" >/dev/null 2>&1; [ $? -eq 2 ] && pass=$((pass+1)) || { fail=$((fail+1)); echo "FAIL --own '$bad' must exit 2"; }
+done
+for bad in abc 1 x=a.rs 1= '=a.rs' '1=,'; do
+  bash "$PF" --waves --also "$bad" "$WORK/none" >/dev/null 2>&1; [ $? -eq 2 ] && pass=$((pass+1)) || { fail=$((fail+1)); echo "FAIL --also '$bad' must exit 2"; }
+done
+for flag in "--concurrency 2" "--tag x" "--parent 1" "--own 1=a" "--also 1=a"; do
+  bash "$PF" $flag "$WORK/none" >/dev/null 2>&1; [ $? -eq 2 ] && pass=$((pass+1)) || { fail=$((fail+1)); echo "FAIL '$flag' without --waves must exit 2"; }
+done
+
 # --- usage -------------------------------------------------------------------
 bash "$PF" --nope >/dev/null 2>&1; [ $? -eq 2 ] && pass=$((pass+1)) || { fail=$((fail+1)); echo "FAIL unknown option must exit 2"; }
 bash "$PF" "$WORK/does-not-exist" >/dev/null 2>&1; [ $? -eq 2 ] && pass=$((pass+1)) || { fail=$((fail+1)); echo "FAIL missing root must exit 2"; }

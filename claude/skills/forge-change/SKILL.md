@@ -109,6 +109,14 @@ terrain map, and the acceptance bar. Run 1–3 independent challengers, blind to
 each other, read-only. Give each one attack angle when useful: behavior and edge
 cases; integration and regressions; tests, errors, security, and operations.
 
+Seat every challenger on the `reviewer` role. Read `~/.claude/MODELS.md` when you
+spawn them and take a model different from the one that wrote the patch, the
+other provider first; launch a GPT binding the way that file's Reach section
+says. When the file cannot be read or the seat cannot be reached, use a
+different Claude model than the writer and record the fallback as a caveat in
+the verdict. A challenger on the writer's own model shares its blind spots, so
+never seat one there.
+
 Each challenger returns one strongest concrete strike or `no kill`, with proof,
 severity (`fatal`, `wound`, `scratch`, or `miss`), and confidence. Style taste is
 not a strike unless it violates the bar or repository rules.
@@ -162,6 +170,7 @@ and commit SHA/subject. Do not push, open a PR, deploy, or claim universal proof
 
 - One bounded change, one orchestrator, one final local commit.
 - Scouts and challengers are always read-only; worker agents never commit.
+- Challengers never run on the model that wrote the patch.
 - The strike stays narrower than the scout map.
 - Verification must be green before and after repairs.
 - A verdict is evidence bounded by the attacks run, not proof for all time.

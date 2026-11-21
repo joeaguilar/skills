@@ -26,7 +26,7 @@ Deliver .... verdict + hardened artifact + strongest surviving attack
 | `<thing-under-test>` | — | The claim / design / plan / fix. Inline, a path, or "what we just decided". |
 | `--rounds=N` | `3` | Max duel rounds. Survives a full round unbroken → stop early. |
 | `--challengers=N` | `2` | Assassins per round. **Clamp 1–4** (`>4` → clamp + warn; more angles, but the judge must weigh them all). |
-| `--judge` | orchestrator judges | Spawn a **separate** judge agent to rule each round (independence over speed). |
+| `--judge` | orchestrator judges | Spawn a **separate** judge agent to rule each round (independence over speed) — seated on the `reviewer` role, like the challengers. |
 | `--write` | off | Apply the surviving hardened version to disk (code fixes). Off → verdict + advice only. |
 | `--out=path` | conversation | Persist the verdict + hardened artifact. |
 | `--confirm` | off | The only gate — print the duel plan and wait before the first strike. |
@@ -37,7 +37,7 @@ Output is terse — the verdict is the product, not the blow-by-blow.
 
 - **You** — name the thing under test. No live decisions unless `--confirm`.
 - **Orchestrator** — frames the bar, runs the rounds, judges (unless `--judge`), writes the verdict.
-- **Challengers** (each round) — assassins. One job: **break it** — counterexample, failure case, missed requirement, false assumption. Default to "broken" when unsure.
+- **Challengers** (each round) — assassins, on the `reviewer` role: never the proposer's model. One job: **break it** — counterexample, failure case, missed requirement, false assumption. Default to "broken" when unsure.
 - **Proposer** (on a clean kill) — revises the artifact to answer the strike, without conceding more than the strike demands.
 - **Judge** — rules each strike real or deflected; declares the verdict.
 
@@ -91,6 +91,8 @@ Emit the **Throw** template, then fight. `--confirm` → emit **The pause** and 
 Each round, on the current version of the artifact:
 
 Spawn `--challengers` agents **in parallel** — `subagent_type: general-purpose`, `run_in_background: true`, `description` e.g. `Challenger r{round}.{i}`:
+
+**Seat the critics off the writer's model.** Challengers — and the `--judge` judge — run on the `reviewer` role. Read `~/.claude/MODELS.md` at spawn and take its binding against the model that holds the artifact (the proposer's — the session model): a different model, other provider first. Claude binding → pass `model`; GPT binding → launch it the way that file's Reach section says. File unreadable or seat unreachable → a different Claude model than the proposer, and say so on the Verdict's `scars` line. Never the proposer's own model — a critic with the writer's blind spots lands no strike the writer couldn't.
 
 ### Challenger prompt template
 
@@ -165,6 +167,7 @@ A verdict of HOLDS means *survived this duel*, not *proven for all time* — say
 ## Principles
 
 - **The critic kills, it does not coddle.** A challenger that tries to be helpful is useless — its only job is to break the thing.
+- **Critic ≠ writer.** Challengers and the spawned judge sit on the `reviewer` role — a different model from the proposer's, other provider first.
 - **A strike must be concrete.** Counterexample, case, or contradiction. A vague misgiving is not a kill and the judge discards it.
 - **Revise only as far as the strike demands.** Over-conceding turns a duel into a rewrite and loses what already worked.
 - **Survival ≠ proof.** HOLDS means it withstood this many rounds of this many assassins — report the bound, don't inflate it.
@@ -175,6 +178,7 @@ A verdict of HOLDS means *survived this duel*, not *proven for all time* — say
 
 - Don't gate, ask, or pause unless `--confirm` is set.
 - Don't let a challenger improve the artifact — that's the proposer's job, in a separate step.
+- Don't seat a challenger or the judge on the proposer's model — resolve the `reviewer` role, every round.
 - Don't accept a vague strike as a kill, and don't ignore a concrete one.
 - Don't declare HOLDS while a fatal strike stands unanswered.
 - Don't over-revise past the strike that landed.

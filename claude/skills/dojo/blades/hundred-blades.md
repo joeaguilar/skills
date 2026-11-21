@@ -26,7 +26,7 @@ Deliver .... the consensus + agreement map (who agreed, who dissented)
 | `<task>` | — | The whole task. Each blade gets it entire — inline, a path, or "the question we just hit". |
 | `--blades=N` | `5` | Independent attempts. **Clamp 3–9, odd preferred** (clean majority; `<3` → bump 3, `>9` → clamp 9 + warn). |
 | `--merge=...` | `vote` | `vote` = majority of equivalent answers · `best` = judge picks the single strongest · `merge` = fuse the agreed core, note divergence. |
-| `--judge` | orchestrator | Spawn a separate judge agent for `best`/`merge` (independence over speed). |
+| `--judge` | orchestrator | Spawn a separate judge agent for `best`/`merge` (independence over speed) — seated on the `reviewer` role: never the blades' model. |
 | `--write` | off | Apply the winning answer to disk. **Forces `--merge=best`** (you can't apply five diffs — warn if combined with `vote`/`merge`). |
 | `--out=path` | conversation | Persist the consensus + map. |
 | `--confirm` | off | The only gate — print the swarm plan and wait. |
@@ -131,6 +131,8 @@ Merge per mode:
 
 Weigh reasoning over self-reported confidence — a confident blade with weak reasoning loses to a careful one.
 
+**`--judge` → seat it off the blades' model.** The spawned judge runs on the `reviewer` role. Read `~/.claude/MODELS.md` at spawn and take its binding against the model the blades ran on (the session model): a different model, other provider first. Claude binding → pass `model`; GPT binding → launch it the way that file's Reach section says. File unreadable or seat unreachable → a different Claude model than the blades, and name the fallback in the Tally. Never the blades' own model — it would crown the answer it would have written.
+
 ---
 
 ## Phase 3 — Deliver
@@ -161,5 +163,6 @@ When agreement is *split* (no strong majority), say so — a thin consensus is a
 - Don't feed one blade another's answer — it poisons the independence the vote depends on.
 - Don't report a consensus below quorum — surface the thin return instead.
 - Don't trust self-reported confidence over the quality of the reasoning.
+- Don't seat the `--judge` judge on the blades' model — resolve the `reviewer` role.
 - Don't apply more than one answer in `--write` mode — `best` picks the single winner.
 - Don't push or PR in `--write` mode — commits stay local.

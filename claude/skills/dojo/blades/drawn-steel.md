@@ -25,7 +25,7 @@ Deliver .... which rung drew blood + rungs climbed + the bar it cleared
 | Arg | Default | Meaning |
 |---|---|---|
 | `<task>` | — | The single task. Inline prose, a spec path, or "the thing we just hit". |
-| `--ladder="r1,r2,…"` | auto | The rungs cheapest→costliest. Absent → orchestrator proposes a ladder of increasing cost/care: one quick single agent → one careful focused agent → a multi-agent consensus/verify rung. **Clamp 2–4 rungs** (`<2` → not a ladder, bump 2; `>4` → clamp 4 + warn: too tall wastes the cheapness). |
+| `--ladder="r1,r2,…"` | auto | The rungs cheapest→costliest — role names, model names or effort words, used as given. Absent → orchestrator proposes a ladder of increasing cost/care, each rung one role up the `~/.claude/MODELS.md` escalation ladder: one quick single agent → one careful focused agent → a multi-agent consensus/verify rung. **Clamp 2–4 rungs** (`<2` → not a ladder, bump 2; `>4` → clamp 4 + warn: too tall wastes the cheapness). |
 | `--bar="…"` | inferred | What "passes" means at every rung — the acceptance test/criteria. Absent → infer the strictest reasonable bar and **say so** (a ladder with no bar can't check between rungs — it's theater). |
 | `--out=path` | conversation | Persist the deliverable. |
 | `--confirm` | off | The ONLY gate — print the ladder + bar and wait before the first rung. Default fires without asking. |
@@ -36,7 +36,7 @@ Output is terse — the cleared deliverable is the product, not the climb commen
 
 - **You** — throw the task. No live decisions unless `--confirm`.
 - **Orchestrator** — orders the rungs cheapest→costliest, sets the bar, runs ONE rung at a time, checks each against the bar, escalates on fail, delivers the first pass. Sole author of the deliverable.
-- **Rung agents** — one rung run at a time (each a more capable/expensive config than the last — a quick single agent, then a careful focused agent, then a heavier multi-agent consensus/verify rung). Each does the task at its effort level **and self-reports pass/fail against the bar**.
+- **Rung agents** — one rung run at a time (each a more capable/expensive config than the last — a costlier model role and more effort: a quick single agent, then a careful focused agent, then a heavier multi-agent consensus/verify rung). Each does the task at its effort level **and self-reports pass/fail against the bar**.
 
 No tracker/graph/sprint deps — stands alone.
 
@@ -79,10 +79,12 @@ Resolve `--ladder`, `--bar`, `--out`, `--confirm`. Read the task once.
 
 **Set the bar** — the acceptance test every rung must clear (concrete: the property, cases, or criteria a passing answer satisfies). `--bar` set → use it. Absent → infer the strictest reasonable bar and **say so** in the Throw line. No bar = no between-rung check = not this blade.
 
-**Order the ladder cheapest→costliest** — each rung a more capable/expensive agent config than the last. `--ladder` set → use those rungs in order. Absent → propose (clamp 2–4):
-- **r1 (cheap):** one quick single agent, low effort — the soft hand.
-- **r2 (careful):** one focused agent, more effort/care/context — slower, sharper.
-- **r3 (heavy, only if needed):** a multi-agent consensus/verify rung — several agents on the whole, reconciled — expensive, reserved for what the cheaper rungs couldn't clear.
+**Order the ladder cheapest→costliest** — each rung a more capable/expensive agent config than the last. `--ladder` set → use those rungs in order. Absent → read the non-taste escalation ladder in `~/.claude/MODELS.md` (`floor → generalist → frontier → ceiling`) and propose (clamp 2–4):
+- **r1 (cheap):** one quick single agent, low effort — the soft hand. Role: the cheapest the task may start on — `floor` only when that file's floor guard holds (short, one-off, gated by a mechanical check, not risky), else `generalist`.
+- **r2 (careful):** one focused agent, more effort/care/context — slower, sharper. Role: one up from r1.
+- **r3 (heavy, only if needed):** a multi-agent consensus/verify rung — several agents on the whole, reconciled — expensive, reserved for what the cheaper rungs couldn't clear. Role: one up from r2.
+
+A rung is a role, not a model name: resolve it to its model and effort when the rung is spawned, never here. `ceiling` is gated in that file — never a rung unless the user turned it on; the ladder tops out one role below. File unreadable, or a rung's seat unreachable → rungs of rising effort on the session model, and say so in the Throw (an honest ladder of care beats a silent one of the same steel).
 
 **Right-size & clamp.** Don't build a tall ladder for a trivial task — a 2-rung ladder is fine, and a task the first rung obviously clears should stop there. More rungs ≠ better; each rung exists only to catch what the cheaper one missed.
 
@@ -92,7 +94,7 @@ Emit the **Throw** template, then climb. `--confirm` → emit **The pause** and 
 
 ## Phase 1 — Climb (serial, escalate on failure)
 
-Run **one rung at a time**, in order, cheapest first. Per rung spawn its agent config — `subagent_type: general-purpose` (specialized type only if one squarely fits), `run_in_background: true`, `description` e.g. `Rung {k}: {effort level}`. A heavy rung may itself be several agents reconciled by the orchestrator; describe it generically as a multi-agent consensus/verify rung — never name it as another blade.
+Run **one rung at a time**, in order, cheapest first. Per rung spawn its agent config — `subagent_type: general-purpose` (specialized type only if one squarely fits), `run_in_background: true`, `description` e.g. `Rung {k}: {role} · {effort level}`. Seat it on the rung's role, resolved from `~/.claude/MODELS.md` now: Claude binding → pass `model` (and the role's effort); GPT binding → launch it the way that file's Reach section says. A heavy rung may itself be several agents reconciled by the orchestrator; describe it generically as a multi-agent consensus/verify rung — never name it as another blade.
 
 ### Per-rung prompt template
 
@@ -163,7 +165,7 @@ A pass means *this rung cleared this bar* — report which rung and how many you
 
 ## Principles
 
-- **Split by cost.** Rungs are ordered cheapest→costliest, each a more careful/expensive config than the last. The ladder is the cut.
+- **Split by cost.** Rungs are ordered cheapest→costliest, each a more careful/expensive config than the last — a costlier model role up the `~/.claude/MODELS.md` ladder, not only more effort on the same steel. The ladder is the cut.
 - **Serial, escalate only on failure.** Run one rung, check the bar, climb only when it fails. Never run rungs in parallel — that's a race, not a ladder.
 - **The between-rung check is load-bearing.** Escalate only on a real, checked failure against the bar. No bar, no check, no blade.
 - **Stop the instant a rung passes.** The first rung to clear the bar is the deliverable — do not keep climbing. Cost-awareness is the whole point.
@@ -180,5 +182,6 @@ A pass means *this rung cleared this bar* — report which rung and how many you
 - Don't escalate without checking the current rung against the bar — the check is the whole brain.
 - Don't keep climbing after a rung passes — stop and deliver the cheapest rung that cleared the bar.
 - Don't build a tall ladder for a trivial task — clamp 2–4 rungs; fewer is fine.
+- Don't put `ceiling` on the ladder unless the user turned it on, and don't start on `floor` when its guard fails — start at `generalist`.
 - Don't launder an exhausted ladder into a pass — surface the best rung + what's still missing as a real failure.
 - Don't push or PR — and skip the commit only when the user specifically requested not to; otherwise the orchestrator commits the landed change.

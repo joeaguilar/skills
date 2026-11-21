@@ -27,7 +27,7 @@ Deliver .... the artifact + what each pass improved + bar met? (or the gap left)
 | `<artifact>` | — | The ONE thing to grind. Inline prose/design/spec, a file path, or "the draft we just wrote". |
 | `--passes=N` | `3` | Max grind passes. **Clamp 1–6** (`>6` → clamp 6 + warn: diminishing returns; `<1` → bump 1). Loop stops early on bar-met or convergence. |
 | `--bar="..."` | inferred | The criteria the artifact must meet — what "sharp enough" means. Absent → infer reasonable quality criteria for the artifact type and **state them** in the Throw. |
-| `--critic` | separate critic | Spawn a **separate** critic agent each pass for independent eyes (default — independence makes the critique honest). Turn the flag *off* only to have the orchestrator self-critique. |
+| `--critic` | separate critic | Spawn a **separate** critic agent each pass for independent eyes (default — independence makes the critique honest), seated on the `reviewer` role: never the reviser's model. Turn the flag *off* only to have the orchestrator self-critique. |
 | `--out=path` | conversation | Persist the converged artifact. |
 | `--confirm` | off | The only gate — print the grind plan and wait before the first pass. |
 
@@ -91,6 +91,8 @@ Emit the **Throw** template, then grind. `--confirm` → emit **The pause** and 
 One pass at a time on the **current best** version. Each pass = critique → revise → keep the better.
 
 **a. Critique.** Get concrete weaknesses against the bar. Default (`--critic`): spawn ONE critic agent — `subagent_type: general-purpose`, `run_in_background: true`, `description` e.g. `Critic pass {p}`. (Flag off → orchestrator self-critiques to the same shape.)
+
+**Seat the critic off the reviser's model.** The critic runs on the `reviewer` role. Read `~/.claude/MODELS.md` at spawn and take its binding against the model that writes the revisions (the reviser's — the session model): a different model, other provider first. Claude binding → pass `model`; GPT binding → launch it the way that file's Reach section says. File unreadable or seat unreachable → a different Claude model than the reviser, and name the fallback in the Return. Never the reviser's own model — it would only agree with itself.
 
 ### Critic prompt template
 
@@ -180,7 +182,7 @@ Terse. Emit, in order:
 - **Never ship a regression.** Keep the best version every pass; a worse revision is discarded, not delivered.
 - **No file, no miss.** An artifact with no file on disk (prose, a spec, a design in words) has nothing to land — the sharpened text returned is the deliverable, not a miss.
 - **Stop when it stops sharpening.** Bar met, or no meaningful gain — quit. Don't spin a dull stone for the remaining passes.
-- **Independence sharpens.** A separate critic each pass sees what the reviser can't; default to it.
+- **Independence sharpens.** A separate critic each pass sees what the reviser can't; default to it — and seat it on the `reviewer` role, a different model from the reviser's.
 - **Right-size the grind.** Default 3, clamp 1–6 — past 6 the stone takes off more than it sets.
 - **Fire without a gate; run to convergence.** `--confirm` is the only pause.
 - **Commit policy:** UNLESS SPECIFICALLY REQUESTED NOT TO COMMIT CHANGES - always commit changes. An artifact with no file on disk has nothing to commit.
@@ -189,6 +191,7 @@ Terse. Emit, in order:
 
 - Don't gate, ask, or pause unless `--confirm` is set.
 - Don't let the critic try to break or reject the artifact — it finds fixes, not fatal flaws.
+- Don't seat the critic on the reviser's model — resolve the `reviewer` role, every pass.
 - Don't deliver a version worse than an earlier pass produced — keep the best, always.
 - Don't keep grinding once the bar is met or a pass adds nothing — stop on convergence.
 - Don't over-revise: a pass changes what the critique calls out and preserves the rest.

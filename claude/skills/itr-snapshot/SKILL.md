@@ -79,8 +79,8 @@ itr's own tracker).
      `ITR_DB_PATH` in every recipe so a stray local `.itr.db` can never shadow
      the parent one.
    - task runner: `justfile` / `Makefile` / npm scripts / none. With none,
-     document the direct `python3 scripts/itr_snapshot_check.py …` commands
-     instead of inventing a runner.
+     document the direct `<python> scripts/itr_snapshot_check.py …` commands
+     (pick the interpreter with the probe below) instead of inventing a runner.
    - which doc owns the itr section (grep `itr` in CONTRIBUTING.md,
      CLAUDE.md, AGENTS.md, README.md; edit every copy that carries the same
      text — some repos keep CLAUDE.md and AGENTS.md as twins).
@@ -96,12 +96,20 @@ itr's own tracker).
 
    ```make
    itr-snapshot:            # regenerate .itr/issues.jsonl — run after tracker changes, commit with the work
-       python3 scripts/itr_snapshot_check.py --write
+       py=$(for c in python3 python "py -3" py; do $c -c 'import sys; sys.exit(0 if sys.version_info >= (3, 7) else 1)' >/dev/null 2>&1 && { echo "$c"; break; }; done); [ -n "$py" ] || { echo "no usable python (need Python >= 3.7; tried python3, python, py -3, py)" >&2; exit 1; }; $py scripts/itr_snapshot_check.py --write
    itr-snapshot-check:      # fail if the snapshot is stale vs the DB (surrogate row ids ignored)
-       python3 scripts/itr_snapshot_check.py
+       py=$(for c in python3 python "py -3" py; do $c -c 'import sys; sys.exit(0 if sys.version_info >= (3, 7) else 1)' >/dev/null 2>&1 && { echo "$c"; break; }; done); [ -n "$py" ] || { echo "no usable python (need Python >= 3.7; tried python3, python, py -3, py)" >&2; exit 1; }; $py scripts/itr_snapshot_check.py
    itr-restore:             # fresh clone: rebuild the DB from the snapshot (REPLACES colliding ids — a pull, not a merge)
-       python3 scripts/itr_snapshot_check.py --restore
+       py=$(for c in python3 python "py -3" py; do $c -c 'import sys; sys.exit(0 if sys.version_info >= (3, 7) else 1)' >/dev/null 2>&1 && { echo "$c"; break; }; done); [ -n "$py" ] || { echo "no usable python (need Python >= 3.7; tried python3, python, py -3, py)" >&2; exit 1; }; $py scripts/itr_snapshot_check.py --restore
    ```
+   Do not hard-code `python3`: on Windows it can be a Microsoft Store stub that
+   exits non-zero without running anything, and `python` can be Python 2. The
+   `py=$(…)` probe picks the first of `python3`, `python`, `py -3`, `py` that
+   runs and reports Python 3.7 or newer (what `itr_snapshot_check.py` needs). `py -3`
+   comes before bare `py` because the Windows launcher's bare `py` follows `PY_PYTHON`
+   and can resolve to Python 2. The probe is one line so it works inside a recipe
+   (each recipe line is its own shell), and the recipe stops with a message and exit
+   1 when nothing qualifies, instead of running an empty command.
    `just --list` shows the **last** comment line above a recipe, so put the
    one-line summary last.
 4. **File the itr issue for this work first** (the repo's own tracker,

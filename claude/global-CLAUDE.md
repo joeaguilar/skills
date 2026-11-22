@@ -1,5 +1,19 @@
 <!-- Managed by skills/claude/global-CLAUDE.md via `./install.sh claude --primitive config`. Edit the source, not this copy. -->
 
+- **Builds:** when I ask for something to be built, build it directly, in one run, and
+  come back when it runs. Do not use a planning or orchestration skill for it (spec-writer,
+  sprint, blitz, crossfire-blitz, sprint-review, the campaigns, crucible, gauntlet,
+  feature-build, forge-change and the like) and do not suggest one, unless I name it. Tool
+  skills (gatr, kgr, itr, gitea, impeccable, the language best-practice skills, codex-seat
+  for a reviewer) are fine. The program still applies, as part of the same run: set the
+  project up properly (git repository, `project.toml`, a `ci` gate), write unit tests, run a
+  proof test that drives the real product and keep the evidence (browser automation or
+  computer use for a UI; the real command on real data, from PowerShell, for a CLI), and
+  get one adversarial review. Ask only product questions, state your default, and keep
+  working; do not end the turn on a plan, a gate or a list of decisions. Why: twice a
+  process skill turned a build into a day of process with nothing to look at (mission on
+  street-yeet, 2026-07; sprint and blitz on status, 2026-11), where a direct build took
+  under an hour.
 - **Model routing (at spawn time):** whenever you launch a subagent, a Workflow
   agent, or `codex exec`, choose the model by **role** (bulk / generalist /
   ambiguous / taste / taste-hero / computer-use / reviewer) from `~/.claude/MODELS.md`,

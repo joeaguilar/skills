@@ -193,6 +193,32 @@ function checkSeq(rows, how) {
   assert.equal(wrong.length, 0, `${how}:\n${wrong.join('\n')}`);
 }
 
+// Prices: one request of 1M cache-read tokens per model, each in its own week, so a model
+// id that falls through to an older entry's price shows up as a wrong cost_usd.
+const priceCases = [
+  ['claude-fable-5-2', 0.2],
+  ['claude-fable-5-1', 0.25],
+  ['claude-opus-5-5', 0.2],
+  ['claude-sonnet-5-5', 0.1],
+];
+const priceRoot = path.join(tmp, 'prices', 'demo');
+fs.mkdirSync(priceRoot, { recursive: true });
+fs.writeFileSync(path.join(priceRoot, 'session.jsonl'), priceCases.map(([model], i) => JSON.stringify({
+  type: 'assistant', sessionId: 's3',
+  timestamp: new Date(Date.UTC(2028, 0, 5) + i * 7 * 86400000).toISOString(),
+  message: { id: `p${i}`, model, usage: { input_tokens: 0, output_tokens: 0, cache_read_input_tokens: 1_000_000 }, content: [] },
+})).join('\n') + '\n');
+
+function checkPrices() {
+  const rows = JSON.parse(execFileSync(process.execPath, [script, '--root', path.dirname(priceRoot), '--json'],
+    { encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'] }));
+  assert.equal(rows.length, priceCases.length, 'prices: one week row per model');
+  const wrong = priceCases.map(([model, want], i) => [model, want, rows[i].cost_usd])
+    .filter(([, want, got]) => Math.abs(got - want) > 0.005)
+    .map(([model, want, got]) => `  ${model}: 1M cache reads cost ${got} (want ${want})`);
+  assert.equal(wrong.length, 0, `prices:\n${wrong.join('\n')}`);
+}
+
 // Every check runs, so one failing group never hides another.
 const failures = [];
 const attempt = (fn) => { try { fn(); } catch (e) { failures.push(e.message); } };
@@ -205,8 +231,9 @@ try {
   const seqOut = path.join(tmp, 'rec-seq', 'sessions-test.tsv');
   runSeq('--record', '--out', seqOut);
   attempt(() => checkSeq(runSeq('--combined', '--out', seqOut), 'tool columns, --record / --combined'));
+  attempt(checkPrices);
   if (failures.length) { console.error(failures.join('\n\n')); process.exitCode = 1; }
-  else console.log(`session-metrics: all ${cases.length} counter cases and ${seqCases.length} tool-column cases passed`);
+  else console.log(`session-metrics: all ${cases.length} counter cases, ${seqCases.length} tool-column cases and ${priceCases.length} price cases passed`);
 } finally {
   fs.rmSync(tmp, { recursive: true, force: true });
 }

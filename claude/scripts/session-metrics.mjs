@@ -52,13 +52,14 @@ import { fileURLToPath } from 'node:url';
 // Source: the claude-api skill's model table (cached 2026-10-06); checked against a
 // cost Claude Code reported itself. Update when prices change.
 const PRICES = {
+  'claude-fable-5-2': { in: 8, out: 40, read: 0.2 },
   'claude-fable-5-1': { in: 10, out: 50, read: 0.25 },
   'claude-fable-5': { in: 10, out: 50, read: 1.0 },
   'claude-opus-5-5': { in: 4, out: 20, read: 0.2 },
   'claude-opus-5': { in: 5, out: 25, read: 0.5 },
   'claude-opus-4-8': { in: 5, out: 25, read: 0.5 },
   'claude-opus-4-7': { in: 5, out: 25, read: 0.5 },
-  'claude-sonnet-5-5': { in: 2, out: 10, read: 0.2 },
+  'claude-sonnet-5-5': { in: 2, out: 10, read: 0.1 },
   'claude-sonnet-5': { in: 2, out: 10, read: 0.2 },
   'claude-sonnet-4-6': { in: 3, out: 15, read: 0.3 },
   'claude-haiku-5-5': { in: 0.1, out: 0.5, read: 0.01, over100k: { in: 0.5, out: 2.5, read: 0.05 } },

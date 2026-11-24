@@ -11,8 +11,8 @@ export type LinkedFile = {
 /** The band above the prompt: the files of the latest reply that linked any. */
 export type Band = {
   files: LinkedFile[]
-  /** Which file the band's hotkeys act on. */
-  selected: number
+  /** The first file the band draws: Next moves it on when there are more files than rows. */
+  first: number
   isHidden: boolean
   /** The turn the files were linked in: a later turn's first links start a new list. */
   turn: number

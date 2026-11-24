@@ -297,6 +297,109 @@ export const parentOf = (path: string) => {
   return parent === '' || /^[A-Za-z]:$/.test(parent) ? path.slice(0, cut + 1) : parent
 }
 
+/**
+ * Types each system runs, rather than shows, when asked to open a file of
+ * them, whatever is installed. On Windows a script type is not in the list
+ * (`.js`, `.py`, `.sh`, `.vbs`): whether one runs or opens in an editor is
+ * the person's own choice of program, so Windows is asked at the press what
+ * the type would start (`windowsOpen`).
+ */
+const RUN_TYPES: Record<Platform, readonly string[]> = {
+  windows: [
+    'bat', 'cmd', 'com', 'exe', 'scr', 'pif', 'msi', 'msp', 'msc', 'cpl', 'lnk', 'url', 'hta', 'reg',
+    'pyz', 'pyzw', 'pyc', 'pyo', 'application', 'appref-ms', 'chm', 'diagcab', 'xbap', 'psc1',
+    'scf', 'settingcontent-ms', 'theme', 'themepack', 'deskthemepack', 'msstyles', 'msu', 'ppkg',
+  ],
+  macos: [
+    'app', 'command', 'tool', 'terminal', 'jar', 'pkg', 'mpkg', 'workflow', 'inetloc', 'fileloc', 'webloc',
+  ],
+  // Wine, and Windows itself under WSL, run a Windows program handed to `xdg-open`.
+  linux: [
+    'desktop', 'appimage', 'run', 'jar', 'exe', 'msi', 'com', 'bat', 'cmd', 'lnk',
+    'scr', 'pif', 'msp', 'cpl', 'msc', 'hta', 'reg', 'vbs', 'vbe', 'wsf',
+  ],
+}
+
+/**
+ * Programs that run the file Windows hands them, by name without `.exe`, as a
+ * pattern PowerShell matches whole and without regard to case.
+ */
+const WINDOWS_RUNNERS = [
+  'py|pyw|python[0-9.]*w?|git-bash|bash|sh|zsh|mintty|msys2|ucrt64|mingw(32|64)|clang64|wsl',
+  'wscript|cscript|powershell|pwsh|cmd|mshta|msiexec|wusa|provtool|msdt|presentationhost|hh',
+  'javaws?|javaw|node|deno|bun|perl|ruby|php|w?lua[0-9.]*|wish[0-9.]*|tclsh[0-9.]*',
+  'autohotkey[0-9a-z]*|autoit3(_x64)?|regedit|reg|mmc|control',
+].join('|')
+
+/** What Open's command prints when it showed a file it found marked as a program. */
+export const SHOWN_MARK = 'shown-in-folder'
+
+/** A name's type as its system reads it, lower case with no dot; empty for a name with none. */
+const typeOf = (path: string, platform: Platform) => {
+  const whole = path.replace(/[\\/]+$/, '')
+  const name = whole.slice(Math.max(whole.lastIndexOf('/'), whole.lastIndexOf('\\')) + 1)
+  // Windows drops a name's last dots and spaces before it reads the type, and
+  // takes `.bat` for a type with no name; elsewhere `.profile` is a name with no type.
+  const read = platform === 'windows' ? name.replace(/[. ]+$/, '') : name
+  const dot = read.lastIndexOf('.')
+  const type = dot < (platform === 'windows' ? 0 : 1) ? '' : read.slice(dot + 1).toLowerCase()
+
+  // `python3.12` ends in a version, not a type.
+  return platform !== 'windows' && /^[0-9]+$/.test(type) ? '' : type
+}
+
+/**
+ * Open on Windows. The shell is asked what the file's type would start, the
+ * person's own choice of program included: its open command and the program
+ * that command names. A file that is its own command (`"%1" %*`), or that is
+ * handed to a program that runs it (Git Bash for `.sh`, the script host for
+ * `.js`, the Python launcher for `.py`), is shown in its folder, with the
+ * mark printed. A Store app has no command to read, so Python's is told by
+ * the name it goes by.
+ *
+ * The question is the shell's own (`AssocQueryString`), reached through a
+ * method built in memory: compiling one would add seconds to a first press.
+ * Where a locked-down PowerShell refuses even that, Windows' own list of
+ * program types (`PATHEXT`) decides, so Open still opens what is only read.
+ * No double quote stands in the script: it is one argument of a command line.
+ */
+const windowsOpen = (held: string) =>
+  [
+    `$path = ${held}; $quote = [char]34; $runs = $false;`,
+    `if (-not (Test-Path -LiteralPath $path -PathType Container)) {`,
+    // The type as Windows reads it: after the name's last dot, its last dots and spaces dropped.
+    `$leaf = ($path -split '[\\\\/]')[-1].TrimEnd(' .'.ToCharArray()); $dot = $leaf.LastIndexOf('.');`,
+    `$type = if ($dot -ge 0) { $leaf.Substring($dot) } else { '' };`,
+    `if ($type -ne '') { try {`,
+    `$built = [AppDomain]::CurrentDomain.DefineDynamicAssembly((New-Object Reflection.AssemblyName 'OpenLinks'), 'Run').DefineDynamicModule('OpenLinks').DefineType('Shell', 'Public,Class');`,
+    `$asked = $built.DefinePInvokeMethod('AssocQueryString', 'shlwapi.dll', 'Public,Static,PinvokeImpl', 'Standard', [int], [Type[]]@([int], [int], [string], [string], [Text.StringBuilder], [int].MakeByRefType()), 'Winapi', 'Unicode');`,
+    `$asked.SetImplementationFlags('PreserveSig'); $shell = $built.CreateType();`,
+    // 1 asks for the open command, 2 for the program it names, 4 for the name that program goes by.
+    `$told = foreach ($kind in 1, 2, 4) { $size = 2048; $answer = New-Object Text.StringBuilder $size; if ($shell::AssocQueryString(0, $kind, $type, [NullString]::Value, $answer, [ref]$size) -eq 0) { $answer.ToString() } else { '' } };`,
+    `$itself = '^ *' + $quote + '?%[1lL]';`,
+    `$program = [IO.Path]::GetFileNameWithoutExtension($told[1].Trim().Trim($quote));`,
+    `$runs = ($told[0] -match $itself) -or ($told[1] -match $itself) -or ($program -match '^(${WINDOWS_RUNNERS})$') -or ($told[2] -match '^python')`,
+    `} catch { $runs = ($env:PATHEXT -split ';') -contains $type } } };`,
+    `if ($runs) { Start-Process explorer.exe -ArgumentList ('/select,' + $quote + $path + $quote); '${SHOWN_MARK}' }`,
+    `else { Invoke-Item -LiteralPath $path }`,
+  ].join(' ')
+
+/**
+ * True when opening the file would run it: Open then shows it in its folder,
+ * so a press never runs a program a reply happened to name. It is the part
+ * of the answer a name alone gives; `launchOf` holds what only the press can tell.
+ */
+export const isRunByOpen = (file: Pick<LinkedFile, 'path' | 'kind'>, platform: Platform) => {
+  // A folder opens in the file manager; on macOS an application is a folder.
+  if (file.kind === 'dir' && platform !== 'macos') {
+    return false
+  }
+
+  const type = typeOf(file.path, platform)
+
+  return type !== '' && RUN_TYPES[platform].includes(type)
+}
+
 const powershell = (script: string) => [
   'powershell.exe',
   '-NoProfile',
@@ -315,6 +418,7 @@ const octalOf = (path: string) =>
  * - `folder`: the file manager with the file (or the linked folder) selected:
  *   Explorer, Finder.
  * - `open`: the program the system opens that kind of file with (`ii`, `open`).
+ *   The caller asks `isRunByOpen` first and shows such a file in its folder.
  * - `cat`: a new terminal window that prints the file and stays open.
  */
 export const launchOf = (
@@ -352,7 +456,7 @@ export const launchOf = (
       }
     }
 
-    return { argv: powershell(`Invoke-Item -LiteralPath ${held}`), env }
+    return { argv: powershell(windowsOpen(held)), env }
   }
 
   if (platform === 'macos') {
@@ -374,6 +478,21 @@ export const launchOf = (
           `do script "${quoted}"`,
           '-e',
           'end tell',
+        ],
+        env: {},
+      }
+    }
+
+    if (action === 'open' && !isFolder && typeOf(file.path, 'macos') === '') {
+      // A file with no type opens in Terminal, as a program, when it is marked
+      // as one. Only the file system knows, so `sh` asks at the press and
+      // prints the mark when it showed the file instead. The path is `$0`.
+      return {
+        argv: [
+          '/bin/sh',
+          '-c',
+          `if [ -x "$0" ]; then open -R "$0" && echo ${SHOWN_MARK}; else open "$0"; fi`,
+          file.path,
         ],
         env: {},
       }

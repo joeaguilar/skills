@@ -2,7 +2,16 @@ import { atom, read, update } from 'claude-code'
 import type { EngineInterface, Register } from 'claude-code'
 
 import type { Band, LinkedFile } from '../types'
-import { attemptsOf, candidatesOf, isSamePath, labelOf, launchOf, typedCandidate } from './links'
+import {
+  attemptsOf,
+  candidatesOf,
+  isRunByOpen,
+  isSamePath,
+  labelOf,
+  launchOf,
+  SHOWN_MARK,
+  typedCandidate,
+} from './links'
 import type { Action, Candidate, Platform, Roots } from './links'
 
 const PANE = 'open-links'
@@ -11,17 +20,15 @@ const TITLE = 'Links'
 const BAND_ROWS = 3
 /** The session's list is bounded so the stored value and the pane's tree stay small. */
 const HISTORY_FILES = 200
-/** `[ h: Folder ] [ l: Open ] [ v: Cat ]` and the mark before the path, with room to spare. */
-const BUTTONS_COLUMNS = 44
+/** `[ Folder ] [ Open ] [ Cat ]` and the indent before the path, with room to spare. */
+const BUTTONS_COLUMNS = 32
 const LAUNCH_TIMEOUT_MS = 20_000
 
 const ACTIONS = ['folder', 'open', 'cat'] as const
 
+// No button of the band carries a hotkey: every mod's band shares one set of
+// letters, and this mod takes none of them.
 const LABELS: Record<Action, string> = { folder: 'Folder', open: 'Open', cat: 'Cat' }
-
-// Every mod's band shares one site: these four letters are no other mod's.
-const HOTKEYS: Record<Action, string> = { folder: 'h', open: 'l', cat: 'v' }
-const NEXT_HOTKEY = 'j'
 
 const DOING: Record<Action, string> = {
   folder: 'show it in its folder',
@@ -31,11 +38,11 @@ const DOING: Record<Action, string> = {
 
 const USAGE = 'Usage: /links, or /links folder|open|cat <path or number in the list>'
 
-const NO_FILES: Band = { files: [], selected: 0, isHidden: false, turn: 0 }
+const NO_FILES: Band = { files: [], first: 0, isHidden: false, turn: 0 }
 
 // Change a tag when the value's fields change: it declines what an earlier
 // version stored, which outlives a reload.
-const band = atom({ plugin: 'open-links', key: 'band' } as const, NO_FILES, { shape: 'band-2' })
+const band = atom({ plugin: 'open-links', key: 'band' } as const, NO_FILES, { shape: 'band-3' })
 const history = atom({ plugin: 'open-links', key: 'history' } as const, [], { shape: 'files-1' })
 
 /**
@@ -49,6 +56,14 @@ let turnNow = Date.now()
 type Place = { roots: Roots; platform: Platform; isCaseBlind: boolean }
 
 const isAction = (word: string): word is Action => (ACTIONS as readonly string[]).includes(word)
+
+/** Where the band's rows start: as stored, pulled back so the last rows are a full window. */
+const windowStart = (first: number, count: number) =>
+  Math.max(0, Math.min(first, count - BAND_ROWS))
+
+/** Where Next takes the band: the rows after, and from the last rows back to the first. */
+const windowAfter = (first: number, count: number) =>
+  windowStart(first, count) + BAND_ROWS >= count ? 0 : windowStart(first + BAND_ROWS, count)
 
 /** Where relative spellings are looked for, and which system opens what is found. */
 const placeOf = async ($: EngineInterface): Promise<Place> => {
@@ -163,19 +178,23 @@ const noteLinks = async ($: EngineInterface, text: string, turn: number) => {
   )
 }
 
-/** Takes a file that is gone off both lists, the selection staying inside the band. */
+/** Takes a file that is gone off both lists, the band keeping a full window of rows. */
 const forget = async ($: EngineInterface, gone: LinkedFile) => {
   const without = (files: readonly LinkedFile[]) => files.filter(file => file.path !== gone.path)
 
   await update($, band, (held): Band => {
     const files = without(held.files)
 
-    return { ...held, files, selected: Math.max(0, Math.min(held.selected, files.length - 1)) }
+    return { ...held, files, first: windowStart(held.first, files.length) }
   })
   await update($, history, (held): LinkedFile[] => without(held))
 }
 
-/** Runs the command behind a button; answers what went wrong, or nothing. */
+/**
+ * Runs the command behind a button. Answers what the person should be told:
+ * what went wrong, or that Open showed a program in its folder instead of
+ * running it; nothing when the command did as its button says.
+ */
 const launch = async ($: EngineInterface, action: Action, file: LinkedFile) => {
   // The file was on disk when the reply named it; it may have been deleted since.
   const stat = await $.fs.stat(file.path).catch(() => undefined)
@@ -187,28 +206,37 @@ const launch = async ($: EngineInterface, action: Action, file: LinkedFile) => {
   }
 
   const { platform } = await placeOf($)
-  const { argv, env } = launchOf(action, file, platform)
+  // What is there now decides, not what was there when the reply named it.
+  const found = { path: file.path, kind: stat.kind === 'dir' ? 'dir' : 'file' } as const
+  // Open never runs what a reply named: a program is shown where it is.
+  const done: Action = action === 'open' && isRunByOpen(found, platform) ? 'folder' : action
+  const { argv, env } = launchOf(done, found, platform)
 
   try {
     const ran = await $.process.run(argv, { env, timeoutMs: LAUNCH_TIMEOUT_MS })
 
     if (ran.exitCode === 0) {
-      return undefined
+      // Where only the press can tell (`launchOf`), the command says that it showed the file.
+      const isShown = action === 'open' && (done === 'folder' || ran.stdout.trim() === SHOWN_MARK)
+
+      return isShown
+        ? `Links: ${file.label} would run if opened, so it is shown in its folder`
+        : undefined
     }
 
     const said = ran.stderr.trim().split(/\r?\n/)[0] ?? ''
 
-    return `Links: could not ${DOING[action]} (${file.label}): ${said === '' ? `exit ${ran.exitCode}` : said}`
+    return `Links: could not ${DOING[done]} (${file.label}): ${said === '' ? `exit ${ran.exitCode}` : said}`
   } catch (error) {
-    return `Links: could not ${DOING[action]} (${file.label}): ${error instanceof Error ? error.message : String(error)}`
+    return `Links: could not ${DOING[done]} (${file.label}): ${error instanceof Error ? error.message : String(error)}`
   }
 }
 
 const press = async ($: EngineInterface, action: Action, file: LinkedFile) => {
-  const refusal = await launch($, action, file)
+  const told = await launch($, action, file)
 
-  if (refusal !== undefined) {
-    $.ui.toast(refusal)
+  if (told !== undefined) {
+    $.ui.toast(told)
   }
 }
 
@@ -233,10 +261,6 @@ const runTyped = async ($: EngineInterface, action: Action, named: string) => {
 
   return (await launch($, action, file)) ?? `Links: ${LABELS[action]} ${file.label}`
 }
-
-/** Where the band's window starts so the selected file stays inside it. */
-const windowStart = (selected: number, count: number) =>
-  Math.max(0, Math.min(selected - 1, count - BAND_ROWS))
 
 export const register: Register = on => {
   on('session.start', async ($, e, next) => {
@@ -321,8 +345,7 @@ export const register: Register = on => {
     }
 
     const { Box, Button, Text } = $.ui.resolve(e)
-    const selected = Math.min(held.selected, count - 1)
-    const first = windowStart(selected, count)
+    const first = windowStart(held.first, count)
     const shown = held.files.slice(first, first + BAND_ROWS)
     const room = Math.max(12, e.props.bodyColumns - BUTTONS_COLUMNS - (count === 1 ? 16 : 0))
     const width = Math.min(room, Math.max(...shown.map(file => file.label.length)))
@@ -335,17 +358,14 @@ export const register: Register = on => {
     )
     const rowOf = (file: LinkedFile, at: number) => (
       <Box flexDirection="row" columnGap={1}>
-        {count === 1 ? <Text bold>{TITLE}</Text> : <Text>{at === selected ? '›' : ' '}</Text>}
+        {count === 1 ? <Text bold>{TITLE}</Text> : <Text> </Text>}
         <Box width={width}>
-          <Text wrap="truncate-start" dimColor={at !== selected}>
-            {file.label}
-          </Text>
+          <Text wrap="truncate-start">{file.label}</Text>
         </Box>
         {ACTIONS.map(action => (
           <Button
             key={`band-${action}-${at}`}
             label={LABELS[action]}
-            {...(at === selected ? { hotkey: HOTKEYS[action] } : {})}
             onPress={() => press($, action, file)}
           />
         ))}
@@ -362,19 +382,22 @@ export const register: Register = on => {
         <Box flexDirection="row" columnGap={1}>
           <Text bold>{TITLE}</Text>
           <Text dimColor>
-            {selected + 1}/{count}
+            {count > BAND_ROWS
+              ? `${first + 1}-${first + shown.length} of ${count}`
+              : `${count} files`}
           </Text>
-          <Button
-            key="band-next"
-            label="Next"
-            hotkey={NEXT_HOTKEY}
-            onPress={() =>
-              update($, band, (now): Band => ({
-                ...now,
-                selected: now.files.length === 0 ? 0 : (now.selected + 1) % now.files.length,
-              }))
-            }
-          />
+          {count > BAND_ROWS && (
+            <Button
+              key="band-next"
+              label="Next"
+              onPress={() =>
+                update($, band, (now): Band => ({
+                  ...now,
+                  first: windowAfter(now.first, now.files.length),
+                }))
+              }
+            />
+          )}
           {hide}
         </Box>
         {shown.map((file, offset) => rowOf(file, first + offset))}

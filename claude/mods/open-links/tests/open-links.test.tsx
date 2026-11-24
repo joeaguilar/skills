@@ -2,7 +2,15 @@ import type { On } from 'claude-code'
 import { expect, mock, test } from 'claude-code/testing'
 import type { Engine, MockClock } from 'claude-code/testing'
 
-import { attemptsOf, candidatesOf, labelOf, launchOf, PATH_VAR } from '../hooks/links'
+import {
+  attemptsOf,
+  candidatesOf,
+  isRunByOpen,
+  labelOf,
+  launchOf,
+  PATH_VAR,
+  SHOWN_MARK,
+} from '../hooks/links'
 import type { Platform } from '../hooks/links'
 import type { Band, LinkedFile } from '../types'
 
@@ -40,7 +48,9 @@ type Options = {
   platform?: Platform
   exitCode?: number
   stderr?: string
+  stdout?: string
   hasPane?: boolean
+  env?: Readonly<Record<string, string>>
 }
 
 type Ran = { argv: readonly string[]; env: Readonly<Record<string, string>> | undefined }
@@ -57,7 +67,7 @@ const world = (on: On, options: Options = {}) => {
   const written = new Map<string, unknown>()
   const clock = mock.clock(on)
 
-  mock.env(on, { HOME: '/home/me', USERPROFILE: '/home/me' })
+  mock.env(on, { HOME: '/home/me', USERPROFILE: '/home/me', ...options.env })
   mock.session(on)
   on('session.start', (_$, e) => ({ cwd: e.cwd }))
   on('command.register', (_$, e) => ({ value: { command: e.name } }))
@@ -90,7 +100,7 @@ const world = (on: On, options: Options = {}) => {
     return {
       value: {
         exitCode: options.exitCode ?? 0,
-        stdout: '',
+        stdout: options.stdout ?? '',
         stderr: options.stderr ?? '',
         isStdoutTruncated: false,
         isStderrTruncated: false,
@@ -116,7 +126,7 @@ const world = (on: On, options: Options = {}) => {
   const band = () => stored<Band>('band')
   const history = () => stored<LinkedFile[]>('history') ?? []
 
-  return { toasts, ran, clock, band, history, files }
+  return { toasts, ran, clock, band, history, files, folders }
 }
 
 const start = ($: Engine) =>
@@ -267,7 +277,7 @@ test('on Windows: Explorer selects the file, Invoke-Item opens it, a new PowerSh
   expect(script('folder', file)).toContain(
     "Start-Process explorer.exe -ArgumentList ('/select,' + [char]34 + $env:OPEN_LINKS_PATH + [char]34)",
   )
-  expect(script('open', file)).toEndWith('Invoke-Item -LiteralPath $env:OPEN_LINKS_PATH')
+  expect(script('open', file)).toEndWith('else { Invoke-Item -LiteralPath $path }')
   expect(script('cat', file)).toContain("Start-Process powershell.exe -ArgumentList '-NoExit'")
   expect(script('cat', file)).toContain('Get-Content -Encoding UTF8 -LiteralPath $env:OPEN_LINKS_PATH')
   // A linked folder is listed instead of printed.
@@ -377,7 +387,7 @@ test('on Windows a press starts PowerShell with the path in the environment', as
 
   expect(ran).toHaveLength(1)
   expect(ran[0]?.argv[0]).toBe('powershell.exe')
-  expect(ran[0]?.argv[4]).toEndWith('Invoke-Item -LiteralPath $env:OPEN_LINKS_PATH')
+  expect(ran[0]?.argv[4]).toEndWith('else { Invoke-Item -LiteralPath $path }')
   expect(ran[0]?.env).toEqual({ [PATH_VAR]: '/repo/src/a.ts' })
 })
 
@@ -397,41 +407,61 @@ test('a command that fails says so in a toast, with the first line it wrote', as
   ])
 })
 
-test('the hotkeys act on the selected file, and Next moves the selection', async ($, on) => {
-  const { clock, band } = world(on)
+test('no button of the band carries a hotkey: the band’s letters are left to other mods', async ($, on) => {
+  const names = ['a', 'b', 'c', 'd', 'e'].map(name => `/repo/${name}.md`)
+  const { clock } = world(on, { files: names })
   const hotkeys = async () => {
     const ui = await $.ui.mount({ ...BAND, surface: 'terminal' })
-    const found = (await ui.findAll({ type: 'Button' }))
-      .filter(button => button.props['hotkey'] !== undefined)
-      .map(button => `${String(button.props['hotkey'])}=${button.key}`)
+    const buttons = await ui.findAll({ type: 'Button' })
 
     await ui.unmount()
 
-    return found
+    return {
+      count: buttons.length,
+      armed: buttons
+        .filter(button => button.props['hotkey'] !== undefined)
+        .map(button => `${String(button.props['hotkey'])}=${button.key}`),
+    }
   }
+
+  await start($)
+  await says($, clock, 'See `a.md`.')
+
+  // One file: its three buttons and Hide.
+  expect(await hotkeys()).toEqual({ count: 4, armed: [] })
+
+  await says($, clock, 'And b.md c.md d.md e.md')
+
+  // Five files: Next, Hide and three rows of three.
+  expect(await hotkeys()).toEqual({ count: 11, armed: [] })
+})
+
+test('a band that shows every file has no Next and marks no row', async ($, on) => {
+  const { clock } = world(on)
 
   await start($)
   await says($, clock, 'See `src/a.ts` and `README.md`.')
 
-  expect(await hotkeys()).toEqual(['j=band-next', 'h=band-folder-0', 'l=band-open-0', 'v=band-cat-0'])
-
   const ui = await $.ui.mount({ ...BAND, surface: 'terminal' })
+  const keys = (await ui.findAll({ type: 'Button' })).map(button => button.key)
+  const texts = (await ui.findAll({ type: 'Text' })).map(found => found.text)
 
-  await ui.press({ key: 'band-next' })
   await ui.unmount()
 
-  expect(band()?.selected).toBe(1)
-  expect(await hotkeys()).toEqual(['j=band-next', 'h=band-folder-1', 'l=band-open-1', 'v=band-cat-1'])
-
-  const again = await $.ui.mount({ ...BAND, surface: 'terminal' })
-
-  await again.press({ key: 'band-next' })
-  await again.unmount()
-
-  expect(band()?.selected).toBe(0)
+  expect(keys).toEqual([
+    'band-hide',
+    'band-folder-0',
+    'band-open-0',
+    'band-cat-0',
+    'band-folder-1',
+    'band-open-1',
+    'band-cat-1',
+  ])
+  expect(texts).toContain('2 files')
+  expect(texts).not.toContain('›')
 })
 
-test('one linked file is one row, its hotkeys armed, with no Next', async ($, on) => {
+test('one linked file is one row, with no Next', async ($, on) => {
   const { clock } = world(on)
 
   await start($)
@@ -445,16 +475,16 @@ test('one linked file is one row, its hotkeys armed, with no Next', async ($, on
   expect(keys).toEqual(['band-folder-0', 'band-open-0', 'band-cat-0', 'band-hide'])
 })
 
-test('more files than the band draws stay reachable: its window follows the selection', async ($, on) => {
-  const names = ['a', 'b', 'c', 'd', 'e'].map(name => `/repo/${name}.md`)
-  const { clock } = world(on, { files: names })
+test('more files than the band draws stay reachable: Next shows the rows after, then the first again', async ($, on) => {
+  const names = ['a', 'b', 'c', 'd', 'e', 'f', 'g'].map(name => `/repo/${name}.md`)
+  const { clock, band } = world(on, { files: names })
   const shown = async () => {
     const ui = await $.ui.mount({ ...BAND, surface: 'terminal' })
     const texts = (await ui.findAll({ type: 'Text' })).map(found => found.text)
 
     await ui.unmount()
 
-    return texts.filter(text => text.endsWith('.md'))
+    return texts.filter(text => text.endsWith('.md') || text.includes(' of '))
   }
   const next = async () => {
     const ui = await $.ui.mount({ ...BAND, surface: 'terminal' })
@@ -464,16 +494,59 @@ test('more files than the band draws stay reachable: its window follows the sele
   }
 
   await start($)
+  await says($, clock, 'Files: a.md b.md c.md d.md e.md f.md g.md')
+
+  expect(await shown()).toEqual(['1-3 of 7', 'a.md', 'b.md', 'c.md'])
+
+  await next()
+
+  expect(await shown()).toEqual(['4-6 of 7', 'd.md', 'e.md', 'f.md'])
+
+  await next()
+
+  // The last rows are a full window, not a lone file.
+  expect(await shown()).toEqual(['5-7 of 7', 'e.md', 'f.md', 'g.md'])
+
+  const ui = await $.ui.mount({ ...BAND, surface: 'terminal' })
+
+  // A button's number is its file's place in the list, whichever rows are shown.
+  expect((await ui.findAll({ type: 'Button' })).map(button => button.key).slice(0, 5)).toEqual([
+    'band-next',
+    'band-hide',
+    'band-folder-4',
+    'band-open-4',
+    'band-cat-4',
+  ])
+  await ui.unmount()
+  await next()
+
+  expect(await shown()).toEqual(['1-3 of 7', 'a.md', 'b.md', 'c.md'])
+  expect(band()?.first).toBe(0)
+})
+
+test('a file that leaves a long list leaves the band a full window', async ($, on) => {
+  const names = ['a', 'b', 'c', 'd', 'e'].map(name => `/repo/${name}.md`)
+  const { clock, band, files } = world(on, { files: names })
+
+  await start($)
   await says($, clock, 'Files: a.md b.md c.md d.md e.md')
 
-  expect(await shown()).toEqual(['a.md', 'b.md', 'c.md'])
+  const ui = await $.ui.mount({ ...BAND, surface: 'terminal' })
 
-  await next()
-  await next()
-  await next()
-  await next()
+  await ui.press({ key: 'band-next' })
+  await ui.unmount()
 
-  expect(await shown()).toEqual(['c.md', 'd.md', 'e.md'])
+  expect(band()?.first).toBe(2)
+
+  files.delete('/repo/e.md')
+
+  const again = await $.ui.mount({ ...BAND, surface: 'terminal' })
+
+  await again.press({ key: 'band-cat-4' })
+  await again.unmount()
+
+  expect(labels(band()?.files)).toEqual(['a.md', 'b.md', 'c.md', 'd.md'])
+  expect(band()?.first).toBe(1)
 })
 
 test('the list stays through the next turn’s start, and that turn’s first links replace it', async ($, on) => {
@@ -498,7 +571,7 @@ test('the list stays through the next turn’s start, and that turn’s first li
   await says($, clock, 'Wrote `docs/b c.md`.')
 
   expect(labels(band()?.files)).toEqual(['docs/b c.md'])
-  expect(band()?.selected).toBe(0)
+  expect(band()?.first).toBe(0)
   // The session's list keeps them all, newest first.
   expect(labels(history())).toEqual(['docs/b c.md', 'README.md', 'src/a.ts'])
 })
@@ -655,7 +728,7 @@ test('Folder selects a linked folder in the folder that holds it; Open opens it'
     launchOf(action, { path: 'C:\\repo\\src', kind: 'dir' }, 'windows').argv[4] ?? ''
 
   expect(windows('folder')).toContain("'/select,'")
-  expect(windows('open')).toEndWith('Invoke-Item -LiteralPath $env:OPEN_LINKS_PATH')
+  expect(windows('open')).toEndWith('else { Invoke-Item -LiteralPath $path }')
   expect(launchOf('folder', { path: '/repo/src', kind: 'dir' }, 'macos').argv).toEqual(['open', '-R', '/repo/src'])
   expect(launchOf('folder', { path: '/repo/src', kind: 'dir' }, 'linux').argv).toEqual(['xdg-open', '/repo'])
 })
@@ -864,4 +937,362 @@ test('on Linux two spellings that differ only in case are two files', async ($, 
   await says($, clock, 'See `README.md` and `readme.md`.')
 
   expect(labels(band()?.files)).toEqual(['README.md', 'readme.md'])
+})
+
+// ---- Open never runs what a reply named ----
+
+test('a file the system would run when opened is told by its type, on each system', () => {
+  const file = (path: string) => ({ path, kind: 'file' as const })
+  const folder = (path: string) => ({ path, kind: 'dir' as const })
+
+  for (const name of ['tool.bat', 'tool.CMD', 'setup.exe', 'x.Scr', 'x.lnk', 'x.msi', 'x.reg']) {
+    expect(isRunByOpen(file(`C:\\repo\\${name}`), 'windows')).toBe(true)
+  }
+
+  // A script's name does not say whether Windows runs it or opens it in an
+  // editor: that is the person's choice of program, asked about at the press.
+  for (const name of ['x.js', 'x.vbs', 'x.py', 'x.sh', 'x.jar']) {
+    expect(isRunByOpen(file(`C:\\repo\\${name}`), 'windows')).toBe(false)
+  }
+
+  // Windows drops a name's last dots and spaces before it reads the type.
+  expect(isRunByOpen(file('C:\\repo\\tool.bat.'), 'windows')).toBe(true)
+  expect(isRunByOpen(file('C:\\repo\\tool.exe '), 'windows')).toBe(true)
+
+  for (const name of ['a.ts', 'README.md', 'x.ps1', 'x.py', 'Makefile', 'bat', 'notes.bat.txt']) {
+    expect(isRunByOpen(file(`C:\\repo\\${name}`), 'windows')).toBe(false)
+  }
+
+  // A folder is opened in the file manager, whatever it is called.
+  expect(isRunByOpen(folder('C:\\repo\\tools.exe'), 'windows')).toBe(false)
+  // A dot in a folder's name above is no type of the file's.
+  expect(isRunByOpen(file('C:\\repo\\v1.exe\\notes'), 'windows')).toBe(false)
+
+  expect(isRunByOpen(file('/repo/run.command'), 'macos')).toBe(true)
+  expect(isRunByOpen(folder('/repo/My Tool.app'), 'macos')).toBe(true)
+  expect(isRunByOpen(file('/repo/a.sh'), 'macos')).toBe(false)
+  expect(isRunByOpen(file('/repo/tool.bat'), 'macos')).toBe(false)
+  expect(isRunByOpen(folder('/repo/src'), 'macos')).toBe(false)
+
+  expect(isRunByOpen(file('/repo/x.desktop'), 'linux')).toBe(true)
+  expect(isRunByOpen(file('/repo/x.AppImage'), 'linux')).toBe(true)
+  expect(isRunByOpen(file('/repo/a.sh'), 'linux')).toBe(false)
+})
+
+test('on Windows, Open shows a program in its folder instead of running it, and says so', async ($, on) => {
+  const { clock, ran, toasts } = world(on, {
+    files: ['/repo/tool.bat', '/repo/src/a.ts'],
+    platform: 'windows',
+  })
+
+  await start($)
+  await says($, clock, 'Run `tool.bat`, or read `src/a.ts`.')
+
+  const ui = await $.ui.mount({ ...BAND, surface: 'terminal' })
+
+  await ui.press({ key: 'band-open-0' })
+
+  expect(ran).toHaveLength(1)
+  expect(ran[0]?.argv[4]).toContain("Start-Process explorer.exe -ArgumentList ('/select,'")
+  expect(ran[0]?.argv[4]).not.toContain('Invoke-Item')
+  expect(ran[0]?.env).toEqual({ [PATH_VAR]: '/repo/tool.bat' })
+  expect(toasts).toEqual(['Links: tool.bat would run if opened, so it is shown in its folder'])
+
+  // A file that is only read is opened as before, with nothing said.
+  await ui.press({ key: 'band-open-1' })
+  await ui.unmount()
+
+  expect(ran[1]?.argv[4]).toEndWith('else { Invoke-Item -LiteralPath $path }')
+  expect(toasts).toHaveLength(1)
+})
+
+test('Folder and Cat of a program are as for any file', async ($, on) => {
+  const { clock, ran, toasts } = world(on, { files: ['/repo/tool.bat'], platform: 'windows' })
+
+  await start($)
+  await says($, clock, 'Run `tool.bat`.')
+
+  const ui = await $.ui.mount({ ...BAND, surface: 'terminal' })
+
+  await ui.press({ key: 'band-folder-0' })
+  await ui.press({ key: 'band-cat-0' })
+  await ui.unmount()
+
+  expect(ran[0]?.argv[4]).toContain('Start-Process explorer.exe')
+  expect(ran[1]?.argv[4]).toContain('Get-Content -Encoding UTF8 -LiteralPath')
+  expect(toasts).toEqual([])
+})
+
+test('/links open of a program answers that it was shown, and the pane’s Open does the same', async ($, on) => {
+  const { clock, ran, toasts } = world(on, { files: ['/repo/tool.bat'], platform: 'windows' })
+
+  await start($)
+
+  expect((await links($, 'open tool.bat')).text).toBe(
+    'Links: tool.bat would run if opened, so it is shown in its folder',
+  )
+  expect(ran[0]?.argv[4]).toContain('Start-Process explorer.exe')
+
+  await says($, clock, 'Run `tool.bat`.')
+
+  const ui = await $.ui.mount({ ...PANE, surface: 'terminal' })
+
+  await ui.press({ key: 'pane-open-0' })
+  await ui.unmount()
+
+  expect(ran[1]?.argv[4]).toContain('Start-Process explorer.exe')
+  expect(toasts).toEqual(['Links: tool.bat would run if opened, so it is shown in its folder'])
+})
+
+test('a script that Windows opens in an editor is opened, though Windows lists its type as a program', async ($, on) => {
+  // PATHEXT names `.PY` and `.JS` on a machine whose owner opens both in an
+  // editor: what the type would start is asked at the press, not read off a list.
+  const { ran } = world(on, {
+    files: ['/repo/x.py', '/repo/x.js'],
+    platform: 'windows',
+    env: { PATHEXT: '.COM;.EXE;.BAT;.CMD;.VBS;.JS;.PY;.PYW' },
+  })
+
+  await start($)
+
+  expect((await links($, 'open x.py')).text).toBe('Links: Open x.py')
+  expect((await links($, 'open x.js')).text).toBe('Links: Open x.js')
+  expect(ran.map(one => one.argv[4]?.includes('AssocQueryString'))).toEqual([true, true])
+  expect(ran[0]?.argv[4]).toEndWith('else { Invoke-Item -LiteralPath $path }')
+})
+
+test('the same script is shown in its folder when Windows answers that a program would run it', async ($, on) => {
+  const { ran } = world(on, {
+    files: ['/repo/x.py'],
+    platform: 'windows',
+    stdout: `${SHOWN_MARK}\r\n`,
+  })
+
+  await start($)
+
+  expect((await links($, 'open x.py')).text).toBe(
+    'Links: x.py would run if opened, so it is shown in its folder',
+  )
+  expect(ran).toHaveLength(1)
+})
+
+test('on macOS a .command file and an application are revealed in Finder, not opened', async ($, on) => {
+  const { clock, ran, toasts } = world(on, {
+    files: ['/repo/run.command'],
+    folders: ['/repo/My.app'],
+    platform: 'macos',
+  })
+
+  await start($)
+  await says($, clock, 'See `run.command` and `My.app`.')
+
+  const ui = await $.ui.mount({ ...BAND, surface: 'terminal' })
+
+  await ui.press({ key: 'band-open-0' })
+  await ui.press({ key: 'band-open-1' })
+  await ui.unmount()
+
+  expect(ran.map(one => one.argv)).toEqual([
+    ['open', '-R', '/repo/run.command'],
+    ['open', '-R', '/repo/My.app'],
+  ])
+  expect(toasts).toEqual([
+    'Links: run.command would run if opened, so it is shown in its folder',
+    'Links: My.app would run if opened, so it is shown in its folder',
+  ])
+})
+
+test('on macOS a file with no type is opened only when it is not marked as a program', async ($, on) => {
+  const { argv } = launchOf('open', { path: '/repo/bin/tool', kind: 'file' }, 'macos')
+
+  // The path is `$0`, an argument: no shell reads it as a script.
+  expect(argv.slice(0, 2)).toEqual(['/bin/sh', '-c'])
+  expect(argv[2]).toContain('[ -x "$0" ]')
+  expect(argv[2]).toContain('open -R "$0"')
+  expect(argv.at(-1)).toBe('/repo/bin/tool')
+  expect(argv).toHaveLength(4)
+  // A name with a type, and any folder, is opened without the question.
+  expect(launchOf('open', { path: '/repo/a.ts', kind: 'file' }, 'macos').argv).toEqual(['open', '/repo/a.ts'])
+  expect(launchOf('open', { path: '/repo/bin', kind: 'dir' }, 'macos').argv).toEqual(['open', '/repo/bin'])
+  // A dot in a folder's name above is no type of the file's.
+  expect(launchOf('open', { path: '/repo/v1.2/tool', kind: 'file' }, 'macos').argv[0]).toBe('/bin/sh')
+  // A name that only starts with a dot has no type either.
+  expect(launchOf('open', { path: '/repo/.hook', kind: 'file' }, 'macos').argv[0]).toBe('/bin/sh')
+
+  // The shell answers which it did; the mod says so when the file was only shown.
+  const { clock, toasts } = world(on, {
+    files: ['/repo/bin/tool'],
+    folders: ['/repo/bin'],
+    platform: 'macos',
+    stdout: 'shown-in-folder\n',
+  })
+
+  await start($)
+  await says($, clock, 'Run `bin/tool`.')
+
+  const ui = await $.ui.mount({ ...BAND, surface: 'terminal' })
+
+  await ui.press({ key: 'band-open-0' })
+  await ui.unmount()
+
+  expect(toasts).toEqual(['Links: bin/tool would run if opened, so it is shown in its folder'])
+})
+
+test('on macOS a file with no type that is no program is opened with nothing said', async ($, on) => {
+  const { clock, ran, toasts } = world(on, { files: ['/repo/Makefile'], platform: 'macos' })
+
+  await start($)
+  await says($, clock, 'See `Makefile`.')
+
+  const ui = await $.ui.mount({ ...BAND, surface: 'terminal' })
+
+  await ui.press({ key: 'band-open-0' })
+  await ui.unmount()
+
+  expect(ran[0]?.argv[0]).toBe('/bin/sh')
+  expect(toasts).toEqual([])
+})
+
+test('on Linux a launcher file is shown in the folder that holds it', async ($, on) => {
+  const { ran } = world(on, { files: ['/repo/app/x.desktop'], folders: ['/repo/app'], platform: 'linux' })
+
+  await start($)
+
+  expect((await links($, 'open app/x.desktop')).text).toBe(
+    'Links: app/x.desktop would run if opened, so it is shown in its folder',
+  )
+  expect(ran.map(one => one.argv)).toEqual([['xdg-open', '/repo/app']])
+})
+
+test('a band an earlier version stored, with its selected row, is declined', async ($, on) => {
+  // The band is the one value its drawing reads.
+  on('state.get', () => ({
+    value: {
+      value: {
+        shape: 'band-2',
+        value: {
+          files: [{ path: '/repo/old.md', label: 'old.md', kind: 'file' }],
+          // Even a value this version could draw is declined by its tag alone.
+          first: 0,
+          selected: 0,
+          isHidden: false,
+          turn: 1,
+        },
+      },
+      version: 1,
+    },
+  }))
+  on('ui.render', { component: 'AbovePrompt' }, ($, e) => {
+    const { Box } = $.ui.resolve(e)
+
+    return <Box />
+  })
+
+  const ui = await $.ui.mount({ ...BAND, surface: 'terminal' })
+
+  expect(await ui.findAll({ type: 'Button' })).toEqual([])
+  await ui.unmount()
+})
+
+// ---- found by the third review ----
+
+test('on Windows the shell itself is asked, at the press, what opening the file would start', async ($, on) => {
+  const script = launchOf('open', { path: 'C:\\repo\\install.sh', kind: 'file' }, 'windows').argv[4] ?? ''
+
+  // The question, the two answers that mean "it would run", and both ways out.
+  expect(script).toContain('AssocQueryString')
+  expect(script).toContain('git-bash')
+  expect(script).toContain('%[1lL]')
+  expect(script).toContain("Start-Process explorer.exe -ArgumentList ('/select,'")
+  expect(script).toContain(`'${SHOWN_MARK}'`)
+  expect(script).toContain('Invoke-Item -LiteralPath $path')
+  // Nothing is compiled at a press: the question is a method built in memory.
+  expect(script).not.toContain('Add-Type')
+  expect(script).toContain('DefinePInvokeMethod')
+  // Where the question cannot be asked, Windows' own list of program types decides.
+  expect(script).toContain("catch { $runs = ($env:PATHEXT -split ';') -contains $type }")
+  // A script's own interpreter runs it, as a shell does.
+  expect(script).toContain('autohotkey')
+  // The path rides in the environment, and no double quote stands in the script.
+  expect(script).toContain(`$path = $env:${PATH_VAR}`)
+  expect(script).not.toContain('install.sh')
+  expect(script).not.toContain('"')
+
+  // Windows answered that Git Bash would run it: the mod says the file was shown.
+  const { clock, ran, toasts } = world(on, {
+    files: ['/repo/install.sh'],
+    platform: 'windows',
+    stdout: `${SHOWN_MARK}\r\n`,
+  })
+
+  await start($)
+  await says($, clock, 'Run `install.sh` to relink.')
+
+  const ui = await $.ui.mount({ ...BAND, surface: 'terminal' })
+
+  await ui.press({ key: 'band-open-0' })
+  await ui.unmount()
+
+  expect(ran[0]?.argv[4]).toBe(script)
+  expect(toasts).toEqual(['Links: install.sh would run if opened, so it is shown in its folder'])
+})
+
+test('a path that was a folder when linked and is a program at the press is not run', async ($, on) => {
+  const { clock, ran, toasts, files, folders } = world(on, {
+    files: [],
+    folders: ['/repo/out', '/repo/out/app.exe'],
+    platform: 'windows',
+  })
+
+  await start($)
+  await says($, clock, 'The build wrote `out/app.exe`.')
+  folders.delete('/repo/out/app.exe')
+  files.add('/repo/out/app.exe')
+
+  const ui = await $.ui.mount({ ...BAND, surface: 'terminal' })
+
+  await ui.press({ key: 'band-open-0' })
+  await ui.press({ key: 'band-cat-0' })
+  await ui.unmount()
+
+  expect(ran[0]?.argv[4]).toContain('Start-Process explorer.exe')
+  expect(ran[0]?.argv[4]).not.toContain('Invoke-Item')
+  expect(toasts).toEqual(['Links: out/app.exe would run if opened, so it is shown in its folder'])
+  // Cat prints what is there now: a file's text, not a folder's listing.
+  expect(ran[1]?.argv[4]).toContain('Get-Content')
+})
+
+test('more types Windows runs on open: Python’s own, ClickOnce, help, settings and theme files', () => {
+  for (const type of [
+    'pyz', 'pyzw', 'pyc', 'pyo', 'application', 'appref-ms', 'chm', 'diagcab', 'xbap', 'psc1',
+    'scf', 'settingcontent-ms', 'theme', 'themepack',
+    // Found by the fourth review: applied or installed at once, through a program no list of runners names.
+    'deskthemepack', 'msstyles', 'msu', 'ppkg',
+  ]) {
+    expect(isRunByOpen({ path: `C:\\repo\\x.${type}`, kind: 'file' }, 'windows')).toBe(true)
+  }
+})
+
+test('under WSL more Windows program types reach Windows, and a macOS link file is shown like its kin', () => {
+  for (const type of ['scr', 'pif', 'msp', 'cpl', 'msc', 'hta', 'reg', 'vbs', 'vbe', 'wsf']) {
+    expect(isRunByOpen({ path: `/mnt/c/r/x.${type}`, kind: 'file' }, 'linux')).toBe(true)
+  }
+
+  // A script that an editor opens on Linux stays opened.
+  expect(isRunByOpen({ path: '/repo/x.js', kind: 'file' }, 'linux')).toBe(false)
+  expect(isRunByOpen({ path: '/repo/x.webloc', kind: 'file' }, 'macos')).toBe(true)
+})
+
+test('on Linux a Windows program is shown too: Wine, or Windows itself under WSL, would run it', () => {
+  for (const name of ['setup.exe', 'setup.msi', 'tool.bat', 'tool.cmd', 'x.com', 'x.lnk']) {
+    expect(isRunByOpen({ path: `/repo/${name}`, kind: 'file' }, 'linux')).toBe(true)
+  }
+})
+
+test('on macOS a name that ends in a version number has no type: it may be a program', () => {
+  const venv = { path: '/repo/.venv/bin/python3.12', kind: 'file' as const }
+
+  expect(launchOf('open', venv, 'macos').argv[0]).toBe('/bin/sh')
+  // A type with a letter in it is a type.
+  expect(launchOf('open', { path: '/repo/a.mp4', kind: 'file' }, 'macos').argv).toEqual(['open', '/repo/a.mp4'])
 })

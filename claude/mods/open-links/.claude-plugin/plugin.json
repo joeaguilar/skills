@@ -1,0 +1,6 @@
+{
+  "name": "open-links",
+  "version": "0.1.0",
+  "description": "Lists the files a reply links above the prompt, each with buttons to show it in Explorer or Finder, open it in its own program, or print it in a new terminal window; /links keeps the session's list",
+  "types": "./types/index.d.ts"
+}
